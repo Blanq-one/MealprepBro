@@ -141,8 +141,10 @@ class StoreTotalOut(BaseModel):
 class CostsOut(BaseModel):
     """cash + from_inventory = eaten + frozen_portions + leftover (staples aren't counted)."""
 
-    cash_cents: int  # this trip, whole packages
+    cash_cents: int  # this trip, whole packages: regular + stock-up
     cash_display: str
+    regular_cash_cents: int  # what a shop-mode budget covers
+    stock_up_cash_cents: int  # long-life items bought occasionally ("also buy this week")
     eaten_cents: int  # food eaten this week
     eaten_display: str
     from_inventory_cents: int
@@ -225,6 +227,7 @@ class GroceryItemOut(BaseModel):
     expected_remainder: str | None
     kind: str
     note: str | None
+    stock_up: bool
 
 
 class GroceryGroupOut(BaseModel):
@@ -239,6 +242,8 @@ class GroceryListOut(BaseModel):
     plan_id: int
     total_cents: int
     total_display: str
+    regular_cents: int
+    stock_up_cents: int
     complete: bool
     unpriced: list[str]
     split: bool

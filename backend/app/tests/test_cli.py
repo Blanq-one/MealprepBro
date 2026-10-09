@@ -50,8 +50,9 @@ def test_plan_week_prints_the_week_from_seeds_with_zero_llm_calls(use_test_db, c
     assert "Week of Mon Oct 12, 2026" in out and "0 LLM calls, 0 tokens" in out
     assert "TUE Oct 13 | leftovers, no cooking" in out and "FRI Oct 16 | leftovers, no cooking" in out
     assert out.count("  Day ") == 7 and "  WEEK " in out
-    assert "Grocery cost by store" in out and "Stop & Shop" in out and "Price Rite" in out
-    assert "protein powder, double chocolate (no price yet, so the cost is incomplete)" in out
+    assert "Regular groceries by store" in out and "Stop & Shop" in out and "Price Rite" in out
+    assert "Also buy this week (stock-up, lasts beyond this week)" in out and "protein powder" in out
+    assert "regular +" in out and "stock-up" in out
     assert "Mode:      shop: your inventory first, then the grocery list (no budget" in out
     assert "| target 100 g/day, week >= 700 g (a floor; more earns nothing)" in out
     assert "Cash this trip" in out and "Food eaten" in out and "Expected waste" in out
@@ -61,11 +62,12 @@ def test_plan_week_prints_the_week_from_seeds_with_zero_llm_calls(use_test_db, c
 
 
 def test_plan_week_explains_an_infeasible_week(use_test_db, capsys):
-    code = cli.main(["plan-week", "--week", "2026-10-12", "--no-llm", "--dry-run", "--budget", "80"])
+    args = ["--slot", "dinner=550", "--slot", "drink=100"]  # no drink recipe, and generation is off
+    code = cli.main(["plan-week", "--week", "2026-10-12", "--no-llm", "--dry-run", *args])
     assert code == 1
     out = capsys.readouterr().out
     assert "INFEASIBLE" in out and "No plan fits this week" in out
-    assert "protein powder, double chocolate has no price" in out
+    assert "No drink recipes are available" in out
 
 
 @pytest.mark.parametrize(

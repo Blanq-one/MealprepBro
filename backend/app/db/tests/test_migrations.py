@@ -1,5 +1,6 @@
-"""AC 0.1: `alembic upgrade head` creates exactly the 31 tables of 0001 (0002 is data only); `downgrade base`
-removes them; `alembic check` reports no drift. Runs in its own throwaway database."""
+"""AC 0.1: `alembic upgrade head` creates exactly the 31 tables of 0001 (0002 is data only, 0003 adds a
+column); `downgrade base` removes them; `alembic check` reports no drift. Runs in its own throwaway
+database."""
 
 from collections.abc import Iterator
 
@@ -123,5 +124,26 @@ def test_0002_moves_the_budget_out_of_settings_and_adds_the_protein_target(scrat
         assert (
             version == 1 and settings["budget_is_hard"] is False and "daily_protein_target_g" not in settings
         )
+    finally:
+        engine.dispose()
+
+
+def test_0003_adds_stock_up_and_store_kinds(scratch_db_url):
+    cfg = alembic_config(scratch_db_url)
+    command.upgrade(cfg, "0002")
+    engine = create_engine(scratch_db_url)
+    try:
+        with engine.begin() as conn:
+            conn.execute(text("INSERT INTO store (name, priority) VALUES ('Stop & Shop', 1)"))
+        command.upgrade(cfg, "head")
+        with engine.connect() as conn:
+            kind = conn.execute(text("SELECT kind FROM store")).scalar_one()
+            columns = {c["name"] for c in inspect(conn).get_columns("ingredient")}
+        assert kind == "grocery" and "stock_up" in columns  # existing stores are grocery stores
+        command.downgrade(cfg, "0002")
+        with engine.connect() as conn:
+            store_columns = {c["name"] for c in inspect(conn).get_columns("store")}
+            columns = {c["name"] for c in inspect(conn).get_columns("ingredient")}
+        assert "kind" not in store_columns and "stock_up" not in columns
     finally:
         engine.dispose()

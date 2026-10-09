@@ -129,14 +129,15 @@ def test_seed_recipes_endpoint(client):
     assert all(r["is_draft"] for r in recipes)
     by_title = {r["title"]: r for r in recipes}
     assert all(r["status"] == "complete" and r["incomplete_reasons"] == [] for r in recipes)
+    for recipe in recipes:  # costs at your grocery stores only: "Other" isn't a store you shop at
+        assert [c["store_name"] for c in recipe["costs"]] == ["Stop & Shop", "Price Rite"]
     for title in (
         "Double chocolate protein pudding",
         "Chocolate protein overnight oats",
         "Chocolate protein chia pudding",
     ):
-        # nutrition complete, cost pending: no protein powder price yet
-        assert all(c["unpriced"] == ["protein powder, double chocolate"] for c in by_title[title]["costs"])
-        assert not any(c["complete"] for c in by_title[title]["costs"])
+        # the powder is priced where it comes from ("Other"), so the cost is complete at both stores
+        assert all(c["complete"] and c["unpriced"] == [] for c in by_title[title]["costs"])
     pudding = by_title["Double chocolate protein pudding"]["per_serving"]
     assert _nutrient(pudding, "protein_g")["amount"] == "42.9"  # 24 g per scoop now, not 25
     for recipe in recipes:

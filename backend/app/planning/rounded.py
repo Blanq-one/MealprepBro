@@ -88,6 +88,7 @@ class GroceryItem:
     perishable: bool = False
     recipes: tuple[str, ...] = ()
     note: str | None = None
+    stock_up: bool = False  # long-life, bought occasionally: listed apart, outside a shop-mode budget
 
 
 @dataclass(frozen=True)
@@ -102,6 +103,11 @@ class GroceryPlan:
     savings_cents: int
     forced_elsewhere: tuple[str, ...] = ()
     inventory_takes: tuple[tuple[int, Decimal], ...] = ()  # (lot id, quantity in the lot's planning unit)
+    stock_up_cents: int = 0  # the part of total_cents spent on stock-up items
+
+    @property
+    def regular_cents(self) -> int:
+        return self.total_cents - self.stock_up_cents
 
 
 @dataclass(frozen=True)
@@ -167,7 +173,7 @@ class CostSummary:
     cash + from_inventory = eaten + frozen_portions + leftover. Staples ("check you have") aren't counted;
     unpriced items make it incomplete."""
 
-    cash_cents: int  # spent this trip, whole packages: the grocery list total
+    cash_cents: int  # spent this trip, whole packages: the grocery list total (regular + stock-up)
     eaten_cents: int  # food eaten this week, whether bought now or taken from inventory
     from_inventory_cents: int  # what the week takes from inventory, at current prices
     leftover_cents: int  # bought and not used this week; carries into your inventory
@@ -175,10 +181,17 @@ class CostSummary:
     expected_waste_cents: int  # the at-risk part of the leftovers, plus inventory expiring unused
     complete: bool
     unpriced: tuple[str, ...] = ()
+    stock_up_cash_cents: int = 0  # the part of cash_cents spent on stock-up items
+
+    @property
+    def regular_cash_cents(self) -> int:
+        return self.cash_cents - self.stock_up_cash_cents
 
     def to_json(self) -> dict[str, Any]:
         return {
             "cash_cents": self.cash_cents,
+            "regular_cash_cents": self.regular_cash_cents,
+            "stock_up_cash_cents": self.stock_up_cash_cents,
             "eaten_cents": self.eaten_cents,
             "from_inventory_cents": self.from_inventory_cents,
             "leftover_cents": self.leftover_cents,

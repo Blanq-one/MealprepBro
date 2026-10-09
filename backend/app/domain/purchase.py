@@ -1,6 +1,9 @@
 """What to buy, and where: the exact cheapest way to cover a need from a store's offers, and the store-split
 rule (R4): buy at the secondary store only when that saves at least the threshold for the week.
 
+Stock-up items (rice, oil, protein powder) are bought as whole packages of the cheapest offer per unit,
+since the rest stays in the pantry for later weeks; they follow the store decision but don't drive it.
+
 All quantities are in one base unit per ingredient (the caller converts). Money is integer cents: a
 package costs its package price; a loose purchase is rounded half-up once per line (§7.1).
 """
@@ -120,10 +123,35 @@ def cheapest_cover(need: Decimal, offers: Sequence[Offer], tolerance: Decimal = 
     )
 
 
+def per_unit_cover(need: Decimal, offers: Sequence[Offer], tolerance: Decimal = Decimal(0)) -> Cover | None:
+    """A stock-up item: enough whole packages of the offer that is cheapest per unit (a 5 lb tub over a
+    small one), or loose. Ties go to the smaller package, then the lower store id, then the lower ref."""
+    if need <= tolerance:
+        return Cover((), need, Decimal(0), 0)
+    if not offers:
+        return None
+    best = min(offers, key=lambda o: (o.cents_per_unit, o.package_amount or Decimal(0), o.store_id, o.ref))
+    if best.package_amount is None:
+        buy = _loose(need, best)
+        return Cover((buy,), need, need, buy.cents)
+    assert best.package_cents is not None
+    count = max(1, _ceil((need - tolerance) / best.package_amount))
+    amount = best.package_amount * count
+    return Cover(
+        (Buy(best, count, amount, best.package_cents * count),), need, amount, best.package_cents * count
+    )
+
+
+def _per_unit(cover: Cover | None) -> Decimal:
+    if cover is None or not cover.buys:
+        return Decimal(0)
+    return min(b.offer.cents_per_unit for b in cover.buys)
+
+
 @dataclass(frozen=True)
 class StoreChoice:
     covers: dict[int, Cover | None]  # ingredient id -> chosen cover (None = no price anywhere)
-    split: bool  # True when anything is bought at a store other than the primary
+    split: bool  # True when the R4 rule sends items your primary store sells to another store
     primary_only_cents: int | None  # all-primary cost for the items the primary sells
     chosen_cents: int
     savings_cents: int  # primary-only minus chosen, over the items the primary sells
@@ -137,11 +165,14 @@ def choose_stores(
     primary_store_id: int,
     threshold_cents: int,
     tolerance: Mapping[int, Decimal] | None = None,
+    *,
+    stock_up_ids: frozenset[int] = frozenset(),
 ) -> StoreChoice:
     """Everything at the primary store, unless buying some items elsewhere saves ≥ threshold (R4).
 
     Items the primary store doesn't price are bought wherever they are priced and listed as forced; they
-    don't count toward the savings comparison."""
+    don't count toward the savings comparison, and neither do stock-up items (cheapest per unit wherever
+    this week's trips go)."""
     tolerance = tolerance or {}
     primary: dict[int, Cover | None] = {}
     best: dict[int, Cover | None] = {}
@@ -149,9 +180,16 @@ def choose_stores(
         need = needs[ingredient_id]
         tol = tolerance.get(ingredient_id, Decimal(0))
         all_offers = list(offers.get(ingredient_id, ()))
-        primary[ingredient_id] = cheapest_cover(
-            need, [o for o in all_offers if o.store_id == primary_store_id], tol
-        )
+        at_primary = [o for o in all_offers if o.store_id == primary_store_id]
+        if ingredient_id in stock_up_ids:
+            primary[ingredient_id] = per_unit_cover(need, at_primary, tol)
+            best_cover = per_unit_cover(need, all_offers, tol)
+            p = primary[ingredient_id]
+            if p is not None and best_cover is not None and _per_unit(p) <= _per_unit(best_cover):
+                best_cover = p  # a tie stays at the primary store
+            best[ingredient_id] = best_cover
+            continue
+        primary[ingredient_id] = cheapest_cover(need, at_primary, tol)
         best_cover = cheapest_cover(need, all_offers, tol)
         # a tie stays at the primary store
         if primary[ingredient_id] is not None and best_cover is not None:
@@ -162,7 +200,7 @@ def choose_stores(
         best[ingredient_id] = best_cover
     forced = tuple(i for i in sorted(needs) if primary[i] is None and best[i] is not None)
     unpriced = tuple(i for i in sorted(needs) if best[i] is None)
-    comparable = [i for i in sorted(needs) if primary[i] is not None]
+    comparable = [i for i in sorted(needs) if primary[i] is not None and i not in stock_up_ids]
     primary_cents = sum(c.cents for i in comparable if (c := primary[i]) is not None)
     best_cents = sum(c.cents for i in comparable if (c := best[i]) is not None)
     savings = primary_cents - best_cents
@@ -172,7 +210,10 @@ def choose_stores(
         chosen[i] = best[i] if (split or primary[i] is None) else primary[i]
     chosen_cents = sum(c.cents for c in chosen.values() if c is not None)
     uses_other = any(
-        b.offer.store_id != primary_store_id for c in chosen.values() if c is not None for b in c.buys
+        b.offer.store_id != primary_store_id
+        for i, c in chosen.items()
+        if c is not None and i not in forced
+        for b in c.buys
     )
     return StoreChoice(
         covers=chosen,

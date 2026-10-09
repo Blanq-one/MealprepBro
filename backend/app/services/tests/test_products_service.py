@@ -21,10 +21,17 @@ def ids(session):
     return powder, stores
 
 
-def test_entering_the_protein_powder_price_makes_it_priced(seeded_db):
+def small_tub(session, powder):
+    return session.scalars(
+        select(Product).where(Product.ingredient_id == powder, Product.name.like("%682 g%"))
+    ).one()
+
+
+def test_entering_a_protein_powder_price_at_a_store(seeded_db):
     powder, stores = ids(seeded_db)
-    product = seeded_db.scalars(select(Product).where(Product.ingredient_id == powder)).one()
-    assert current_prices(seeded_db, [powder]) == []
+    product = small_tub(seeded_db, powder)
+    before = current_prices(seeded_db, [powder])
+    assert {p.store_name for p in before} == {"Other"} and all(p.is_estimate for p in before)
     obs = service.add_price(
         seeded_db,
         product_id=product.id,
@@ -35,13 +42,14 @@ def test_entering_the_protein_powder_price_makes_it_priced(seeded_db):
         observed_on=date(2026, 10, 9),
     )
     assert obs.priced_quantity == Decimal("682.000") and obs.source == "manual"
-    (price,) = current_prices(seeded_db, [powder])
-    assert price.price_cents == 3499 and price.store_name == "Stop & Shop"
+    prices = {(p.store_name, p.product_id): p for p in current_prices(seeded_db, [powder])}
+    price = prices[("Stop & Shop", product.id)]
+    assert price.price_cents == 3499 and not price.is_estimate
 
 
 def test_a_price_needs_a_known_store(seeded_db):
     powder, _ = ids(seeded_db)
-    product = seeded_db.scalars(select(Product).where(Product.ingredient_id == powder)).one()
+    product = small_tub(seeded_db, powder)
     with pytest.raises(ProductError, match="store 999999 not found"):
         service.add_price(
             seeded_db,

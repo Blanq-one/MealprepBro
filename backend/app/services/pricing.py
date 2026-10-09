@@ -37,10 +37,13 @@ class StorePrice:
         return self.source == "estimate"
 
 
-def active_stores(session: Session) -> list[Store]:
-    return list(
-        session.scalars(select(Store).where(Store.is_active.is_(True)).order_by(Store.priority, Store.id))
-    )
+def active_stores(session: Session, kind: str | None = None) -> list[Store]:
+    """Active stores by priority; kind "grocery" (stores you shop at) or "other" (sources for items your
+    stores don't carry), or both."""
+    query = select(Store).where(Store.is_active.is_(True))
+    if kind is not None:
+        query = query.where(Store.kind == kind)
+    return list(session.scalars(query.order_by(Store.priority, Store.id)))
 
 
 def current_prices(session: Session, ingredient_ids: Iterable[int]) -> list[StorePrice]:

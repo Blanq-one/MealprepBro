@@ -21,12 +21,17 @@ from app.db.base import UNIT_CHECK_SQL, Base, created_at_column, updated_at_colu
 
 
 class Store(Base):
+    """kind: grocery = a store you shop at (your settings order them); other = where items your stores don't
+    carry come from (protein powder, online or in-store). Other stores are always a source, never a trip."""
+
     __tablename__ = "store"
+    __table_args__ = (CheckConstraint("kind IN ('grocery', 'other')", name="kind"),)
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
     name: Mapped[str] = mapped_column(Text, unique=True)
     priority: Mapped[int] = mapped_column(SmallInteger)
     region_code: Mapped[str | None] = mapped_column(Text)
+    kind: Mapped[str] = mapped_column(Text, server_default="grocery")
     is_active: Mapped[bool] = mapped_column(Boolean, server_default="true")
     notes: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = created_at_column()

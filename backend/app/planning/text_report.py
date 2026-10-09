@@ -41,7 +41,7 @@ def mode_line(plan: RoundedPlan) -> str:
     first = "shop: your inventory first, then the grocery list"
     if limit is None:
         return f"{first} (no budget: the cost is minimized)"
-    return f"{first} (budget: {_money(limit)} cash this trip, a hard limit)"
+    return f"{first} (budget: {_money(limit)} on regular groceries this trip, a hard limit; stock-up apart)"
 
 
 def protein_line(plan: RoundedPlan) -> str:
@@ -148,18 +148,21 @@ def format_plan(
     lines.append("")
     if c.planning_mode is PlanningMode.INVENTORY:
         lines += topup_lines(plan, store_names)
-    lines.append("Grocery cost by store (estimated prices unless you entered them):")
+    lines.append("Regular groceries by store (estimated prices unless you entered them):")
     buy_counts: dict[int, int] = {}
+    regular_cents: dict[int, int] = {}
     for item in g.items:
-        if item.kind == "buy" and item.store_id is not None:
+        if item.kind == "buy" and item.store_id is not None and not item.stock_up:
             buy_counts[item.store_id] = buy_counts.get(item.store_id, 0) + 1
+            regular_cents[item.store_id] = regular_cents.get(item.store_id, 0) + (item.cost_cents or 0)
     for store_id in c.store_ids:
-        cents = g.store_cents.get(store_id, 0)
+        if store_id in c.store_ids[2:] and store_id not in regular_cents:
+            continue  # "Other" and further stores only when something regular is bought there
         lines.append(
-            f"  {store_names.get(store_id, store_id):14} {_money(cents):>9}  "
+            f"  {store_names.get(store_id, store_id):14} {_money(regular_cents.get(store_id, 0)):>9}  "
             f"({buy_counts.get(store_id, 0)} items)"
         )
-    total = f"  {'Total':14} {_money(g.total_cents):>9}"
+    total = f"  {'Total':14} {_money(g.regular_cents):>9}"
     if g.unpriced:
         total += f" + {', '.join(g.unpriced)} (no price yet, so the cost is incomplete)"
     lines.append(total)
@@ -181,6 +184,7 @@ def format_plan(
     from_inventory = sorted({item.name for item in g.items if item.kind == "from_inventory"})
     if from_inventory:
         lines.append(f"  From your inventory: {', '.join(from_inventory)}")
+    lines += stock_up_lines(plan, store_names)
     if plan.freeze:
         lines += ["", "Freeze on shopping day (raw meat, poultry and fish past their fridge life):"]
         lines += [f"  - {freeze_text(f, _amount(f.quantity, f.unit))}" for f in plan.freeze]
@@ -204,18 +208,35 @@ def money_lines(plan: RoundedPlan) -> list[str]:
     left = f"  Left over          {_money(m.leftover_cents):>9}  carries into your inventory"
     if parts:
         left += f" ({', '.join(parts)})"
-    lines = [
-        "Money (estimated prices unless you entered them; staples not counted):",
-        f"  Cash this trip     {_money(m.cash_cents):>9}  whole packages",
-        eaten,
-        left,
-    ]
+    cash = f"  Cash this trip     {_money(m.cash_cents):>9}  whole packages"
+    if m.stock_up_cash_cents:
+        cash += f": {_money(m.regular_cash_cents)} regular + {_money(m.stock_up_cash_cents)} stock-up"
+    lines = ["Money (estimated prices unless you entered them; staples not counted):", cash, eaten, left]
     if m.frozen_portions_cents:
         frozen = _money(m.frozen_portions_cents)
         lines.append(f"  Frozen portions    {frozen:>9}  cooked extras for later weeks")
     lines.append(f"  Expected waste     {_money(m.expected_waste_cents):>9}  perishables likely to spoil")
     if not m.complete:
         lines.append(f"  Incomplete: no price yet for {', '.join(m.unpriced)}")
+    return lines
+
+
+def stock_up_lines(plan: RoundedPlan, store_names: Mapping[int, str]) -> list[str]:
+    """Stock-up purchases: long-life items bought occasionally, outside a shop-mode budget."""
+    bought = [item for item in plan.grocery.items if item.kind == "buy" and item.stock_up]
+    if not bought:
+        return []
+    lines = [
+        "",
+        f"Also buy this week (stock-up, lasts beyond this week): {_money(plan.grocery.stock_up_cents)}",
+    ]
+    for item in bought:
+        if item.packages:
+            what = f"{item.packages} pack" + ("" if item.packages == 1 else "s")
+        else:
+            what = _amount(item.bought or item.to_buy, item.unit)
+        store = store_names.get(item.store_id or 0, "?")
+        lines.append(f"  {item.name:40} {what:>10}  {_money(item.cost_cents or 0):>8}  at {store}")
     return lines
 
 

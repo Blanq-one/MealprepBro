@@ -207,9 +207,13 @@ def test_usda_units_link_to_portions(seeded_db):
 
 
 def test_every_price_has_a_store(seeded_db):
-    assert _count(seeded_db, PriceObservation) == 52
+    assert _count(seeded_db, PriceObservation) == 58  # + 2 powder tubs, + regular chicken packs at 2 stores
     stores = {s.name: s for s in seeded_db.scalars(select(Store))}
-    assert {(s.name, s.priority) for s in stores.values()} == {("Stop & Shop", 1), ("Price Rite", 2)}
+    assert {(s.name, s.priority, s.kind) for s in stores.values()} == {
+        ("Stop & Shop", 1, "grocery"),
+        ("Price Rite", 2, "grocery"),
+        ("Other", 3, "other"),  # where protein powder comes from (online or in-store)
+    }
     observations = seeded_db.scalars(select(PriceObservation)).all()
     assert all(o.store_id in {s.id for s in stores.values()} for o in observations)
 
@@ -346,20 +350,24 @@ def test_all_seed_recipes_have_complete_nutrition(seeded_db):
         "Chocolate protein chia pudding",
     }
     for title, calc in views.items():
-        if title in powder_recipes:  # protein powder price still pending
-            assert all(c.total.unpriced == ("protein powder, double chocolate",) for c in calc.costs), title
-        else:
-            assert all(c.total.complete for c in calc.costs), title
+        assert [c.store_name for c in calc.costs] == ["Stop & Shop", "Price Rite"], title  # grocery stores
+        assert all(c.total.complete for c in calc.costs), title  # powder priced from "Other"
+    assert powder_recipes <= set(views)
 
 
-def test_powder_product_has_no_price_yet(seeded_db):
+def test_powder_tubs_are_estimated_prices_at_other(seeded_db):
     powder = _slug(seeded_db, "protein-powder-double-chocolate")
-    product = seeded_db.scalars(select(Product).where(Product.ingredient_id == powder.id)).one()
-    assert (product.package_amount, product.package_unit) == (Decimal("682.000"), "g")
-    observations = seeded_db.scalars(
-        select(PriceObservation).where(PriceObservation.product_id == product.id)
-    )
-    assert observations.all() == []
+    rows = seeded_db.execute(
+        select(Product.package_amount, PriceObservation.price_cents, PriceObservation.source, Store.name)
+        .join(PriceObservation, PriceObservation.product_id == Product.id)
+        .join(Store, Store.id == PriceObservation.store_id)
+        .where(Product.ingredient_id == powder.id)
+        .order_by(Product.package_amount)
+    ).all()
+    assert [tuple(r) for r in rows] == [
+        (Decimal("682.000"), 2631, "estimate", "Other"),  # 5 lb per-gram price + 40% small-tub premium
+        (Decimal("2268.000"), 6250, "estimate", "Other"),  # your estimate, $60-65
+    ]
 
 
 def _copy_data(tmp_path):

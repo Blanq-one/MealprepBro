@@ -6,12 +6,14 @@ seed                     load seed data (idempotent; run after usda-import)
 ingredient-report        data-quality report: errors, placeholders, held items, Atwater mismatches
 safety-table             print the hardcoded food-safety table and its citation
 plan-week [--mode M]     plan a week from your current settings and print it (Phase 1 demo)
+simulate-weeks           dry run: plan consecutive weeks, each from the last one's leftovers
 """
 
 import argparse
 import sys
 from collections.abc import Sequence
 from datetime import UTC, date, datetime, timedelta
+from decimal import Decimal
 from pathlib import Path
 
 from sqlalchemy import select
@@ -35,6 +37,7 @@ from app.seed.report import build_report, format_report
 from app.services.plans import run_plan_now
 from app.services.pricing import active_stores
 from app.services.settings import current_user
+from app.services.simulation import format_table, simulate
 from app.usda.importer import import_release
 from app.usda.release import find_releases
 from app.usda.subset import build_subset
@@ -140,6 +143,38 @@ def _safety_table() -> int:
 
 def _next_monday(today: date) -> date:
     return today + timedelta(days=(7 - today.weekday()) % 7 or 7)
+
+
+def _simulate_weeks(args: argparse.Namespace) -> int:
+    week_start = args.week or _next_monday(datetime.now(UTC).astimezone().date())
+    with Session(get_engine()) as session:
+        user = current_user(session)
+        sim = simulate(
+            session,
+            user.id,
+            week_start,
+            args.weeks,
+            budget_cents=_cents(args.budget),
+            last_week_budget_cents=_cents(args.last_week_budget),
+        )
+        print(format_table(sim))
+        for n, carried in enumerate(sim.carried, start=1):
+            print()
+            print(f"Carried from week {n} into week {n + 1} (at-risk perishables are not carried):")
+            for lot in carried:
+                print(f"  {lot.name:40} {lot.quantity.quantize(Decimal(1)):>8} {lot.unit:5} {lot.location}")
+        for run in sim.runs:
+            if run.plan is None:
+                print()
+                print(f"{run.label}: {format_failure(run.outcome)}")
+            else:
+                for note in (n for n in run.plan.notes if n.startswith("Your budget is tight")):
+                    print()
+                    print(f"{run.label}: {note}")
+        session.rollback()
+    print()
+    print("(dry run: nothing was saved)")
+    return 0 if all(run.plan is not None for run in sim.runs) else 1
 
 
 def _cents(dollars: float | None) -> int | None:
@@ -256,6 +291,19 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     plan.add_argument("--accept", action="store_true", help="make the new plan the week's active plan")
     plan.add_argument("--dry-run", action="store_true", help="print the plan but save nothing")
+    sim = sub.add_parser(
+        "simulate-weeks", help="dry run: consecutive weeks, each from the last one's leftovers"
+    )
+    sim.add_argument(
+        "--week", type=date.fromisoformat, help="first week's Monday, YYYY-MM-DD (default: next)"
+    )
+    sim.add_argument("--weeks", type=int, default=2)
+    sim.add_argument("--budget", type=float, help="shop-mode budget for regular groceries, every week")
+    sim.add_argument(
+        "--last-week-budget",
+        type=float,
+        help="also plan the last week again from the same inventory with this budget",
+    )
     args = parser.parse_args(argv)
     if args.command == "usda-import":
         return _usda_import(args.paths)
@@ -269,6 +317,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _mapping_review(args.out)
     if args.command == "plan-week":
         return _plan_week(args)
+    if args.command == "simulate-weeks":
+        return _simulate_weeks(args)
     return _safety_table()
 
 

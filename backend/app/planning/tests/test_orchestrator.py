@@ -1,13 +1,13 @@
 """Planning runs end to end on the seeded database (deliverable 17; AC 1.1–1.3, 1.7, 1.8)."""
 
 import json
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 
 import pytest
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 
-from app.db.models import GenerationRun, Ingredient, MealPlan, PlanCookBatch, PlanMeal
+from app.db.models import GenerationRun, Ingredient, MealPlan, PlanCookBatch, PlanMeal, Product
 from app.domain.enums import MealSlot, PlanningMode, StorageLocation
 from app.llm.fake import FakeLLMClient, fixture_response, fixture_text, response
 from app.planning import orchestrator as orch
@@ -146,10 +146,21 @@ def test_identical_rerun_makes_zero_llm_calls(seeded_db):
 
 
 def test_rounding_over_a_limit_is_re_solved_and_the_validator_sees_whole_eggs(seeded_db, monkeypatch):
-    # the first solve ignores what rounding does, and the joint snap is off, so rounding has to be caught by
-    # the validator and fixed by a re-solve
+    # the first solve ignores what rounding does, the joint snap is off, and the first plan is reported a
+    # little over the week's ceiling, so the validator's re-solve has to run
     monkeypatch.setattr(orch, "rounding_fit", lambda problem, nutrient="energy_kcal": RoundingFit({}, {}))
     monkeypatch.setattr(post_solve, "snap_batches", lambda problem, solution: None)
+    checked = []
+
+    def first_over(plan, reference):
+        report = validate_plan(plan, reference)
+        checked.append(report)
+        if len(checked) > 1:
+            return report
+        over = Issue("KCAL_WEEK_OVER_CEILING", "the week is 10 kcal over", amount=10)
+        return ValidationReport((*report.errors, over), report.warnings, report.day_kcal, report.week_kcal, 0)
+
+    monkeypatch.setattr(orch, "validate_plan", first_over)
     seen = []
     out = run(seeded_db, FakeLLMClient.failing(), spy=seen.append)
     assert out.status == "succeeded", out.error
@@ -212,19 +223,28 @@ def test_llm_failure_fails_the_run_and_persists_nothing(seeded_db):
     )
 
 
+def unprice(session, slug):
+    ingredient = session.scalars(select(Ingredient.id).where(Ingredient.slug == slug)).one()
+    session.execute(
+        update(Product).where(Product.ingredient_id == ingredient).values(archived_at=datetime.now(UTC))
+    )
+    session.flush()
+
+
 @pytest.mark.parametrize("budget_cents", [15000, None])
-def test_unpriced_protein_powder_with_and_without_a_budget(seeded_db, budget_cents):
-    """Your rule: a budget (always a hard limit now) excludes recipes with unpriced ingredients and says why;
-    without a budget they stay and the cost is marked incomplete."""
+def test_an_unpriced_regular_item_with_and_without_a_budget(seeded_db, budget_cents):
+    """Your rule: a budget (a hard limit on regular groceries) excludes recipes with unpriced regular
+    ingredients and says why; without a budget they stay and the cost is marked incomplete."""
+    unprice(seeded_db, "greek-yogurt-nonfat")
     out = run(seeded_db, None, budget_cents=budget_cents, allow_llm=False)
     if budget_cents is not None:
         assert out.status == "infeasible"
         text = " ".join(d.message for d in out.diagnostics)
-        assert "protein powder, double chocolate has no price" in text and "budget can't be checked" in text
+        assert "Greek yogurt, plain nonfat has no price" in text and "budget can't be checked" in text
     else:
         assert out.status == "succeeded", out.error
         assert not out.plan.totals.cost_complete and not out.plan.costs.complete
-        assert out.plan.totals.unpriced == ("protein powder, double chocolate",)
+        assert out.plan.totals.unpriced == ("Greek yogurt, plain nonfat",)
         assert any(w.code == "COST_INCOMPLETE" for w in out.report.warnings)
 
 

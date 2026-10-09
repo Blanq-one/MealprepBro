@@ -1,6 +1,6 @@
 # Mealbro Build Plan
 
-**Status:** v3, **approved** 2026-10-08 with the changes recorded in §12.1. Phase 0 approved. Phase 1 built 2026-10-09; D1–D13 and C1–C3 approved; the fix-up round (C4–C8, D14–D22) is done and waiting for your approval (outcome notes at the end of Phase 1 in §9; decisions in §12.1).
+**Status:** v3, **approved** 2026-10-08 with the changes recorded in §12.1. Phase 0 approved. Phase 1 approved 2026-10-09 (with C1–C8 and D1–D22); a post-approval round (C9–C14, D23–D28) is done. A3 is answered in `docs/hosting.md`. Phase 2 not started.
 **Source documents:** `CLAUDE.md` (build rules, wins on conflict), `docs/PRD.md` (product vision).
 
 This plan covers Phases 0–6. One phase per session. A phase is done only when its acceptance criteria are met, its tests pass, and the test output has been shown.
@@ -17,7 +17,7 @@ This plan covers Phases 0–6. One phase per session. A phase is done only when 
 | — | Build plan | Approved (v3) | 2026-10-08 | 2026-10-08 | v1 reviewed → v2 (seed library, per-phase migrations, narrow prose filter, rounded-plan validator, strict/best-effort). v3 = approval changes: table audit (§4.2a), exposure logging → Phase 2, beef-only exclusion + pork frequency cap, R1–R7 answers, A2 label values. |
 | 0 | Data foundation | Approved | 2026-10-08 | 2026-10-08 | 321 tests pass (local + Docker), domain coverage 99.6% (domain tests alone), ruff/mypy clean. 185 ingredients, 649 aliases, 9 draft seeds. Open: FoodSafety.gov chart (A1), powder carbs/fat (A2), R8. Deviations in the Phase 0 outcome note (§9). |
 | — | Pre-Phase 1 tasks | Done | 2026-10-08 | 2026-10-08 | Package-label data (tortillas, protein powder), USDA mapping review sheet (`docs/review/usda_mappings.md`), raw/dry/as-sold rule + check (§7.8), CLAUDE.md machine-boundaries rule. Round 2: FoodSafety.gov chart transcribed (53 rows, §7.2), top-25 mappings approved, tortilla renamed, Docker rule clarified, fresh-clone check made a per-phase step. |
-| 1 | Planning brain | Fix-up round done, awaiting approval | 2026-10-08 | 2026-10-09 | First pass: 645 tests, fresh-clone check passed; D1–D13 and C1–C3 approved 2026-10-09. Fix-up round (C4–C8: budget per request with inventory/shop modes, cash vs food eaten, freeze-on-shopping-day and waste, 100 g protein floor, elapsed time): 705 tests pass (the opt-in live test skips), domain coverage 99%, ruff/mypy clean, fresh-clone check passed; deviations D14–D22 in the fix-up note. |
+| 1 | Planning brain | Approved 2026-10-09; post-approval round done | 2026-10-08 | 2026-10-09 | First pass: 645 tests, fresh-clone check passed; D1–D13 and C1–C3 approved 2026-10-09. Fix-up round (C4–C8: budget per request with inventory/shop modes, cash vs food eaten, freeze-on-shopping-day and waste, 100 g protein floor, elapsed time): 705 tests pass (the opt-in live test skips), domain coverage 99%, ruff/mypy clean, fresh-clone check passed; deviations D14–D22 in the fix-up note. Approved 2026-10-09. Post-approval round (C9–C14: powder prices, stock-up items, shelf-life fix, regular chicken packs, two-week steady-state check, A3 hosting): 721 tests pass (the opt-in live test skips), domain coverage 99%; deviations D23–D28. |
 | 2 | Mobile PWA + cloud deploy | Not started | | | |
 | 3 | Feedback loop | Not started | | | |
 | 4 | Daily overrides | Not started | | | |
@@ -1543,6 +1543,39 @@ What changed from the plan, and why:
 
 Open: the protein powder price (any budget or top-up leaves out every powder recipe until it has a price or is in your inventory; that includes both protein desserts, so `--budget` weeks are infeasible today, by your Phase 1 rule); lemon and lime juice are marked perishable in the seed data, so their leftovers count as at risk; A3 is due before Phase 2; R8 is still open.
 
+**Post-approval round (2026-10-09).** You approved Phase 1 with D14–D22 and asked for six more things (C9–C14 in §12.1).
+
+- **C9. Protein powder prices.** Two products at a new store "Other" (online or in-store, varies), both estimates:
+  - 5 lb tub (2,268 g): $62.50, your estimate ($60–65).
+  - 682 g tub: $26.31, derived from the 5 lb price per gram plus a typical 40% small-tub premium.
+  - The solver and the grocery list buy the pack that is cheaper per gram. Food eaten counts the powder by the gram, about $0.85 a 31 g scoop.
+- **C10. Stock-up items.** `ingredient.stock_up` (migration 0003) marks long-life items bought occasionally: powder, rice, oats, flours, oils, seeds, nut butters, sweeteners, cocoa, vanilla, bottled condiments, lemon and lime juice, bouillon.
+  - A shop-mode budget covers regular groceries only.
+  - Stock-up purchases are listed as "Also buy this week", and cash this trip shows regular + stock-up = total.
+  - In the solver they cost what the week uses, at the per-unit price of the cheapest pack.
+  - Spices, salt and baking powder/soda are flagged too, but stay "check you have" staples (never bought).
+- **C11. Shelf life.** Bottled lemon and lime juice are no longer perishable (they keep for months refrigerated); fresh lemons are. The same mistake was fixed for frozen spinach, peas, corn and edamame.
+- **C12. Regular chicken packs.** Thigh and breast at both grocery stores, 1.25 lb (packs run 1–1.5 lb), at the family-pack price per lb + 20%, as estimates. The solver chooses between pack sizes.
+- **C13. Steady-state check.** `cli simulate-weeks` is a dry run: each week plans from the leftovers of the one before (raw protein frozen, stock-up remainders kept, at-risk perishables dropped as waste). `--last-week-budget` re-plans the last week with a budget.
+- **C14. Hosting (A3).** `docs/hosting.md` compares Railway, Fly.io + Neon, home PC + Tailscale, a VPS + Caddy, Render and Cloud Run. It recommends Railway Hobby, about $5/mo.
+
+What changed from the plan, and why:
+
+- **D23. Store kinds.** Stores now have a kind: `grocery` (yours, ordered in settings) or `other` (where items your stores don't carry come from). Other stores are always a source after your store order, never a trip:
+  - The store-split charge applies only to items your primary store also prices.
+  - The grocery list's "split" means a real store choice, not an item priced only elsewhere.
+  - Per-store recipe costs list your grocery stores and price powder from "Other".
+- **D24. Stock-up and limits.** A shop budget excludes stock-up items. An inventory-mode top-up still covers everything bought ("purchases off by default"), at the pack the list would buy.
+- **D25. Unpriced rule.** A limit excludes a recipe for an unpriced item only if that limit covers the item: regular items for a shop budget, anything for an inventory top-up.
+- **D26. Cheapest-plan fallback.** When a budget leaves the solver no time to find any plan, the cheapest plan that meets every limit is used, and the plan says so.
+- **D27. Infeasibility explanations** now also say which recipes were left out and why.
+- **D28. Seed week vs a $50 budget.** From an empty inventory, the cheapest seed week is about $52.60 of regular groceries, so a fresh week doesn't fit $50. Week 2, which plans from week 1's leftovers, does. The requested test is therefore synthetic: a week whose regular groceries fit $50 still buys a $62.50 tub as stock-up, shown separately.
+
+Also flagged, not changed:
+- Long-keeping fresh items still marked perishable: onions, garlic, potatoes, sweet potatoes, butter, hard cheeses. They weren't bottled, jarred or shelf-stable, so they're left for your call.
+- The alias "fresh lemon juice" maps to the bottled-juice ingredient.
+- Solver timings this round ran on a busy machine (last round's own seed week took ~20 s instead of ~6 s), so the 12 s limit was often reached, and plans came back "feasible" rather than proven optimal.
+
 ---
 
 ### Phase 2: Mobile PWA + cloud deploy
@@ -1909,6 +1942,12 @@ No other dependencies are planned. Auth uses the stdlib, and the solver uses HiG
 | C6 | Perishable leftovers (fix-up) | Raw meat, poultry or fish with no planned use inside its fridge life (FoodSafety.gov chart) gets "freeze on shopping day"; the solver penalizes opening a perishable package for a small fraction of it; expected waste is shown. |
 | C7 | Protein target (fix-up) | A daily protein floor of 100 g (configurable), within the daily/weekly mode rules; protein above it earns no reward. |
 | C8 | Elapsed time (fix-up) | Each cook day shows total elapsed cooking time next to hands-on time. |
+| C9 | Protein powder prices (post-approval) | 5 lb tub (2,268 g) at an estimated $62.50 ($60-65) and the 682 g tub at a derived estimate (+40% per gram), store "Other" (varies). The cheaper pack per gram is bought; food eaten uses the per-gram cost. |
+| C10 | Stock-up items (post-approval) | A stock_up flag for long-life items bought occasionally (powder, rice, oils, spices...). A budget covers regular groceries only; stock-up purchases are listed separately; cash this trip shows regular, stock-up and total. |
+| C11 | Shelf life (post-approval) | Bottled lemon and lime juice aren't perishable within a week once opened; fresh lemons and limes are. Check other bottled, jarred or shelf-stable items for the same mistake. |
+| C12 | Regular chicken packs (post-approval) | A regular pack (about 1-1.5 lb) for thigh and breast at both stores, at an estimated per-lb premium; the solver chooses between pack sizes. |
+| C13 | Steady-state check (post-approval) | A two-week dry-run simulation where week 2 plans from week 1's leftovers, reported with and without --budget 50. |
+| C14 | Hosting (A3, post-approval) | docs/hosting.md: options, costs, setup, cold starts, Postgres, HTTPS, single-user auth; one recommendation. No code, no accounts. |
 
 ### 12.2 Remaining questions (from applying your answers)
 

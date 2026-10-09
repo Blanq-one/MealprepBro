@@ -21,7 +21,9 @@ def _setup(session):
     thigh = session.scalars(
         select(Ingredient).where(Ingredient.slug == "chicken-thigh-boneless-skinless")
     ).one()
-    product = session.scalars(select(Product).where(Product.ingredient_id == thigh.id)).one()
+    product = session.scalars(
+        select(Product).where(Product.ingredient_id == thigh.id, Product.name.like("%family pack%"))
+    ).one()
     return stores, thigh, product
 
 
@@ -92,7 +94,7 @@ def test_inactive_store_and_unknown_product(seeded_db):
     stores["Price Rite"].is_active = False
     seeded_db.flush()
     assert {p.store_name for p in current_prices(seeded_db, [thigh.id])} == {"Stop & Shop"}
-    assert [s.name for s in active_stores(seeded_db)] == ["Stop & Shop"]
+    assert [s.name for s in active_stores(seeded_db, "grocery")] == ["Stop & Shop"]
     assert current_price(seeded_db, 10**9, stores["Stop & Shop"].id) is None
     assert current_prices(seeded_db, []) == []
 

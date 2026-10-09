@@ -6,7 +6,7 @@ ingredient ids (§7.4). The planning mode and its money limit come from the requ
 buys nothing unless you allow a top-up; shop mode's budget is optional.
 """
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import timedelta
 
@@ -43,7 +43,10 @@ def build_constraints(
     request: PlanRequest,
     diet: DietInputs,
     store_ids_by_name: Mapping[str, int],
+    other_store_ids: Sequence[int] = (),
 ) -> PlanConstraints:
+    """`store_ids_by_name`: your grocery stores; `other_store_ids`: sources for items they don't carry
+    (protein powder at "Other"), always appended after your store order."""
     allocations = {a.slot: a.kcal for a in settings.slot_allocations}
     for slot, kcal in request.slot_kcal.items():
         if kcal == 0:
@@ -87,6 +90,7 @@ def build_constraints(
     store_ids = tuple(store_ids_by_name[name] for name in settings.store_order if name in store_ids_by_name)
     if not store_ids:
         raise ConstraintError("none of the stores in your settings is active")
+    store_ids += tuple(i for i in other_store_ids if i not in store_ids)
     excluded = frozenset(i for i, s in diet.statuses.items() if s is not ExclusionStatus.ALLOWED)
     held = frozenset(i for i, s in diet.statuses.items() if s is ExclusionStatus.HELD)
     caps = tuple(

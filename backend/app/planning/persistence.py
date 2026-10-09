@@ -47,6 +47,7 @@ def save_plan(
                 "savings_cents": plan.grocery.savings_cents,
                 "primary_only_cents": plan.grocery.primary_only_cents,
                 "forced_elsewhere": list(plan.grocery.forced_elsewhere),
+                "stock_up_cents": plan.grocery.stock_up_cents,
             },
             "costs": plan.costs.to_json(),
             "leftovers": [item.to_json() for item in plan.leftovers],
@@ -121,6 +122,7 @@ def save_plan(
                     "note": item.note,
                     "is_estimate": item.is_estimate,
                     "perishable": item.perishable,
+                    "stock_up": item.stock_up,
                     "to_buy_total": str(item.to_buy.quantize(_Q3)),
                 },
             )

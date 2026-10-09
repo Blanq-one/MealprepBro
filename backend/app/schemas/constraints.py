@@ -99,8 +99,9 @@ class PlanConstraints(_Frozen):
     secondary_priority: NutritionPriority | None = None
     grocery_mode: GroceryMode = GroceryMode.BALANCED
     planning_mode: PlanningMode = PlanningMode.SHOP
-    # Hard limit on the cash spent this trip (whole packages). Shop mode: your optional budget (None = no
-    # limit; the cost is still minimized). Inventory mode: the top-up allowance (0 = buy nothing).
+    # Hard limit on the cash spent this trip (whole packages). Shop mode: your optional budget for regular
+    # groceries (stock-up items are outside it; None = no limit, the cost is still minimized). Inventory
+    # mode: the top-up allowance for everything bought (0 = buy nothing).
     purchase_limit_cents: int | None = Field(default=None, ge=0)
     default_portion_size: PortionSize = PortionSize.NORMAL
     portion_nudge_pct: float = Field(default=10.0, ge=0, le=25)  # solver may use ±10% portion variants
@@ -182,6 +183,13 @@ class PlanConstraints(_Frozen):
     @property
     def has_purchase_limit(self) -> bool:
         return self.purchase_limit_cents is not None
+
+    def limit_covers(self, stock_up: bool) -> bool:
+        """Whether the purchase limit applies to an item: a shop-mode budget covers regular groceries only
+        (stock-up items are listed apart); an inventory-mode top-up covers everything bought."""
+        if self.purchase_limit_cents is None:
+            return False
+        return self.planning_mode is PlanningMode.INVENTORY or not stock_up
 
     @property
     def week_protein_target_g(self) -> int:

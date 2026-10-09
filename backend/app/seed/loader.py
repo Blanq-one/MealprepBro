@@ -115,7 +115,7 @@ def _stores(session: Session, files: SeedFiles) -> dict[str, Store]:
     stores: dict[str, Store] = {}
     for s in files.stores.stores:
         row = session.scalars(select(Store).where(Store.name == s.name)).first() or Store(name=s.name)
-        row.priority, row.region_code, row.notes = s.priority, s.region_code, s.notes
+        row.priority, row.region_code, row.notes, row.kind = s.priority, s.region_code, s.notes, s.kind
         session.add(row)
         stores[s.name] = row
     session.flush()
@@ -288,6 +288,7 @@ def _apply_ingredient(row: Ingredient, seed: SeedIngredient, files: SeedFiles, c
     row.safety_category = seed.safety_category.value if seed.safety_category else None
     row.is_perishable, row.typical_location = seed.is_perishable, seed.typical_location.value
     row.assume_in_stock, row.nutrition_source = seed.assume_in_stock, seed.nutrition_source.value
+    row.stock_up = seed.stock_up
     row.fdc_id, row.notes = seed.fdc_id, seed.notes
     if seed.nutrition_reviewed_on is not None:  # never clears a review recorded elsewhere
         row.nutrition_reviewed_at = datetime.combine(seed.nutrition_reviewed_on, time(), tzinfo=UTC)

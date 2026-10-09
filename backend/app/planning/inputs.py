@@ -24,5 +24,6 @@ def diet_inputs(session: Session, user_id: int) -> DietInputs:
 
 def constraints_for(session: Session, user_id: int, request: PlanRequest) -> PlanConstraints:
     settings = load_settings(session, user_id)
-    stores = {s.name: s.id for s in active_stores(session)}
-    return build_constraints(settings, request, diet_inputs(session, user_id), stores)
+    stores = {s.name: s.id for s in active_stores(session, "grocery")}
+    others = tuple(s.id for s in active_stores(session, "other"))
+    return build_constraints(settings, request, diet_inputs(session, user_id), stores, others)

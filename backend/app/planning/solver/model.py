@@ -12,10 +12,14 @@ Decisions:
   * inventory used (open packages and expiring lots are rewarded).
 
 Hard constraints: every slot filled once, no recipe twice a day, the weekly variety cap on meals, cook
-minutes, calorie limits per mode, the protein floor per mode, the purchase limit (shop-mode budget or
-inventory-mode top-up), frequency caps, portion requests, supply ≥ need.
+minutes, calorie limits per mode, the protein floor per mode, the purchase limit (shop-mode budget on
+regular groceries, or inventory-mode top-up on everything), frequency caps, portion requests, supply ≥ need.
 The secondary store carries a fixed charge equal to the split threshold, so it is used only when it
-saves at least that much (R4); the grocery list re-checks the rule exactly on the rounded plan.
+saves at least that much (R4); items your primary store doesn't price (protein powder at "Other") are
+bought where they are priced, with no charge. The grocery list re-checks the rule on the rounded plan.
+
+Stock-up items (rice, oil, protein powder) last many weeks, so the objective counts what the week uses at
+the per-unit price of the cheapest pack; a shop-mode budget doesn't cover them.
 
 Waste: perishable food bought and not used is penalized, and more steeply once less than a quarter of a
 package is used (opening a pack for a sliver of it).
@@ -94,7 +98,7 @@ class SolvedMeal:
 
 @dataclass(frozen=True)
 class SolverSolution:
-    status: str  # optimal | feasible
+    status: str  # optimal | feasible | cheapest (the budget fallback: cheapest plan that fits every limit)
     objective: float
     batches: tuple[SolvedBatch, ...]
     meals: tuple[SolvedMeal, ...]
@@ -153,6 +157,7 @@ class _Model:
     day_protein: dict[date, Any] = field(default_factory=dict)
     # per ingredient: (amount bought in its planning unit, cents spent on it)
     purchases: dict[int, tuple[Any, Any]] = field(default_factory=dict)
+    limited_cost: Any = 0  # the cents the purchase limit applies to
 
 
 def _f(value: Decimal | int | float) -> float:
@@ -225,8 +230,15 @@ def _day_limits(problem: PlanningProblem, day: date) -> tuple[float, float]:
 
 
 def build_model(
-    problem: PlanningProblem, *, elastic: bool = False, allowed_store_ids: Iterable[int] | None = None
+    problem: PlanningProblem,
+    *,
+    elastic: bool = False,
+    cheapest: bool = False,
+    allowed_store_ids: Iterable[int] | None = None,
 ) -> _Model:
+    """The weekly MILP. elastic: every hard limit relaxed with penalized slack (diagnostics). cheapest:
+    every limit hard, the objective just the cost (a fallback when a tight budget leaves no time to find
+    the best plan)."""
     c = problem.constraints
     w = weights_for(c.grocery_mode)
     batches = batch_plan(problem)
@@ -445,7 +457,9 @@ def build_model(
     never_favored_ids = frozenset(
         i for cap in c.frequency_caps if cap.never_favor for i in cap.member_ingredient_ids
     )
-    cost_terms: list[Any] = []
+    cost_terms: list[Any] = []  # cash estimate for everything bought (reporting)
+    objective_cost: list[Any] = []  # regular items at cash, stock-up items at what the week uses
+    limited_terms: list[Any] = []  # what the purchase limit covers
     waste_terms: list[Any] = []
     sliver_terms: list[Any] = []
     purchases_by_ingredient: dict[int, tuple[Any, Any]] = {}
@@ -495,10 +509,13 @@ def build_model(
                 for label, avail, var in inv_parts:
                     if label in ("open", "exp"):
                         inventory_bonus.append(var * (1 / avail))
+        limited = c.limit_covers(plan.stock_up)
         if not offers:
-            if c.has_purchase_limit:
+            if limited:
                 prob += inventory >= need, f"unpriced_from_inventory_{ingredient_id}"
             continue
+        # a store split is a choice only for items your primary store also prices (R4)
+        gated = any(o.store_id == primary for o in offers)
         bought = []
         spent = []
         all_whole = True
@@ -517,16 +534,24 @@ def build_model(
                 q = pulp.LpVariable(f"ls_{ingredient_id}_{o.ref}", lowBound=0, upBound=max_need + 1)
                 bought.append(q)
                 spent.append(_f(o.cents_per_unit) * q)
-            if o.store_id != primary:
+            if o.store_id != primary and gated:
                 secondary_offer_vars[o.store_id].append(q)
         purchases = pulp.lpSum(bought)
         per_unit = pulp.lpSum(spent)
         cost: Any = per_unit
         packs = [o for o in offers if o.package_cents is not None]
         # The first package is whole: nobody sells a third of a bottle. Only for ingredients sold in packages
-        # alone, with no inventory that might cover them (then the floor could overcharge).
-        if packs and len(packs) == len(offers) and not all_whole and not inv_parts:
-            first_pack = min(o.package_cents for o in packs if o.package_cents is not None)
+        # alone, with no inventory that might cover them (then the floor could overcharge). A stock-up item's
+        # cash matters only when the limit covers it (an inventory-mode top-up).
+        cash_matters = not plan.stock_up or limited
+        if cash_matters and packs and len(packs) == len(offers) and not all_whole and not inv_parts:
+            # a stock-up item is bought as the pack that is cheapest per unit (the grocery list does the same)
+            first_offer = (
+                min(packs, key=lambda o: o.cents_per_unit)
+                if plan.stock_up
+                else min(packs, key=lambda o: o.package_cents or 0)
+            )
+            first_pack = first_offer.package_cents or 0
             used = pulp.LpVariable(f"used_{ingredient_id}", lowBound=0, upBound=1)
             users = {b.index for _, b in need_terms[ingredient_id]}
             for _, b in need_terms[ingredient_id]:
@@ -541,6 +566,9 @@ def build_model(
             prob += cost >= per_unit, f"cash_units_{ingredient_id}"
             prob += cost >= first_pack * used, f"cash_first_pack_{ingredient_id}"
         cost_terms.append(cost)
+        objective_cost.append(per_unit if plan.stock_up else cost)
+        if limited:
+            limited_terms.append(cost)
         purchases_by_ingredient[ingredient_id] = (purchases, cost)
         prob += inventory + purchases >= need, f"supply_{ingredient_id}"
         if plan.perishable:
@@ -561,11 +589,12 @@ def build_model(
             big = q.upBound if q.upBound is not None else 1000
             prob += q <= big * used, f"store_gate_{store_id}_{q.name}"
     purchase_cost = pulp.lpSum(cost_terms)
+    limited_cost = pulp.lpSum(limited_terms)
 
     if c.purchase_limit_cents is not None:
         limit = max(c.purchase_limit_cents - t.budget_cents, 0)
         extra = slack("budget", "budget") if elastic else 0
-        prob += purchase_cost <= limit + extra, "purchase_limit"
+        prob += limited_cost <= limit + extra, "purchase_limit"
 
     # ---- objective ----
     if elastic:
@@ -585,7 +614,7 @@ def build_model(
         # a tiny cost term, so the purchases inside the limit are the cheapest ones too (the diagnostics list
         # what would have to be bought)
         penalty = pulp.lpSum(weights[kind] * var for kind, group in slacks.items() for var in group.values())
-        prob += -penalty - 0.0001 * purchase_cost
+        prob += -penalty - 0.0001 * pulp.lpSum(objective_cost)
         return _Model(
             prob,
             batches,
@@ -599,6 +628,25 @@ def build_model(
             dict(slacks),
             day_protein,
             purchases_by_ingredient,
+            limited_cost,
+        )
+
+    if cheapest:  # the cost, and fewer batches to break ties
+        prob += -pulp.lpSum(objective_cost) / 100 - 0.01 * pulp.lpSum(y.values())
+        return _Model(
+            prob,
+            batches,
+            x,
+            y,
+            nudge,
+            frozen,
+            day_kcal,
+            purchase_cost,
+            store_used,
+            dict(slacks),
+            day_protein,
+            purchases_by_ingredient,
+            limited_cost,
         )
 
     primary_scores = {r.version_id: nutrient_score(r, c.nutrition_priority) for r in problem.candidates}
@@ -653,7 +701,7 @@ def build_model(
             objective.append(-w.slot_deviation_per_kcal * (dev_plus + dev_minus))
     # aim for the target, not the 97% floor (the ceilings stop it at the target)
     objective.append(w.week_kcal_toward_target * pulp.lpSum(day_kcal.values()))
-    objective.append(-w.cost_per_dollar / 100 * purchase_cost)
+    objective.append(-w.cost_per_dollar / 100 * pulp.lpSum(objective_cost))
     for used in store_used.values():
         objective.append(-w.cost_per_dollar / 100 * c.store_split_min_savings_cents * used)
     objective.extend(-w.waste_per_dollar / 100 * term for term in waste_terms)  # all in cents
@@ -675,6 +723,7 @@ def build_model(
         dict(slacks),
         day_protein,
         purchases_by_ingredient,
+        limited_cost,
     )
 
 
@@ -687,7 +736,9 @@ def _value(var: Any) -> float:
     return float(v) if v is not None else 0.0
 
 
-def extract(problem: PlanningProblem, model: _Model, sol_status: int) -> SolverSolution:
+def extract(
+    problem: PlanningProblem, model: _Model, sol_status: int, status: str | None = None
+) -> SolverSolution:
     c = problem.constraints
     batches: list[SolvedBatch] = []
     meals: list[SolvedMeal] = []
@@ -720,7 +771,7 @@ def extract(problem: PlanningProblem, model: _Model, sol_status: int) -> SolverS
     }
     stores = {c.primary_store_id} | {sid for sid, var in model.store_used.items() if _value(var) > 0.5}
     return SolverSolution(
-        status="optimal" if sol_status == pulp.LpSolutionOptimal else "feasible",
+        status=status or ("optimal" if sol_status == pulp.LpSolutionOptimal else "feasible"),
         objective=_value(model.prob.objective),
         batches=tuple(batches),
         meals=tuple(meals),

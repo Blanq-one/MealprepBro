@@ -49,7 +49,8 @@ def _about(quantity: float, unit: str) -> str:
 
 
 def shopping_gap(problem: PlanningProblem, model: _Model) -> list[tuple[str, str, int]]:
-    """What the relaxed plan buys: (ingredient, about how much, cents), most expensive first."""
+    """What the relaxed plan buys under the purchase limit: (ingredient, about how much, cents), most
+    expensive first. Stock-up items are left out in shop mode (the budget doesn't cover them)."""
 
     def value(expr: object) -> float:
         v = pulp.value(expr)
@@ -58,6 +59,8 @@ def shopping_gap(problem: PlanningProblem, model: _Model) -> list[tuple[str, str
     items = []
     for ingredient_id, (amount, cents) in model.purchases.items():
         plan = problem.ingredients[ingredient_id]
+        if not problem.constraints.limit_covers(plan.stock_up):
+            continue
         bought = value(amount)
         if bought < MIN_LISTED.get(plan.planning_unit, 1.0):
             continue
@@ -87,15 +90,31 @@ def held_diagnostic(excluded: tuple[ExcludedRecipe, ...]) -> Diagnostic | None:
     )
 
 
-def empty_pool_error(problem: PlanningProblem) -> EmptyCandidatePoolError:
-    reasons = tuple(f"{e.title}: {'; '.join(e.reasons)}" for e in problem.excluded)
+def _reason_summary(excluded: tuple[ExcludedRecipe, ...]) -> str:
     counts: dict[str, int] = defaultdict(int)
-    for e in problem.excluded:
+    for e in excluded:
         for reason in e.reasons:
             counts[reason] += 1
-    summary = "; ".join(
+    return "; ".join(
         f"{n} × {why}" if n > 1 else why for why, n in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
     )
+
+
+def left_out_diagnostic(excluded: tuple[ExcludedRecipe, ...]) -> Diagnostic | None:
+    """Why recipes are missing from the pool, for an infeasible week (fewer recipes, fewer ways to fit)."""
+    if not excluded:
+        return None
+    n = len(excluded)
+    return Diagnostic(
+        "RECIPES_LEFT_OUT",
+        f"{n} recipe{'s were' if n > 1 else ' was'} left out of this week: {_reason_summary(excluded)}.",
+        amount=n,
+    )
+
+
+def empty_pool_error(problem: PlanningProblem) -> EmptyCandidatePoolError:
+    reasons = tuple(f"{e.title}: {'; '.join(e.reasons)}" for e in problem.excluded)
+    summary = _reason_summary(problem.excluded)
     message = "No recipe can be planned with these settings"
     if summary:
         message += f" ({summary})"
@@ -296,8 +315,8 @@ def _report(problem: PlanningProblem, model: _Model) -> tuple[Diagnostic, ...]:
             out.append(Diagnostic("INVENTORY_SHORT", message, amount=cents))
         else:
             message = (
-                f"The cheapest plan that fits costs about {_money(needed)}, {_money(cents)} over your budget "
-                f"of {_money(purchase_limit)}."
+                f"The cheapest plan that fits costs about {_money(needed)} in regular groceries, "
+                f"{_money(cents)} over your budget of {_money(purchase_limit)}."
             )
             if gap:
                 message += f" It would buy: {_gap_text(gap)}."
@@ -327,4 +346,6 @@ def _report(problem: PlanningProblem, model: _Model) -> tuple[Diagnostic, ...]:
     held = held_diagnostic(problem.excluded)
     if held is not None:
         out.append(held)
+    elif (left_out := left_out_diagnostic(problem.excluded)) is not None:
+        out.append(left_out)
     return tuple(out)

@@ -313,6 +313,8 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
         costs=CostsOut(
             cash_cents=costs["cash_cents"],
             cash_display=money(costs["cash_cents"]),
+            regular_cash_cents=costs["regular_cash_cents"],
+            stock_up_cash_cents=costs["stock_up_cash_cents"],
             eaten_cents=costs["eaten_cents"],
             eaten_display=money(costs["eaten_cents"]),
             from_inventory_cents=costs["from_inventory_cents"],
@@ -432,6 +434,7 @@ def grocery_view(session: Session, user_id: int, plan_id: int, group_by_store: b
                 else None,
                 kind=kind,
                 note=reason.get("note"),
+                stock_up=bool(reason.get("stock_up")),
             )
         )
     groups: dict[int | None, list[GroceryItemOut]] = defaultdict(list)
@@ -454,11 +457,18 @@ def grocery_view(session: Session, user_id: int, plan_id: int, group_by_store: b
     threshold = plan.constraints["store_split_min_savings_cents"]
     split_info = totals.get("grocery", {})
     savings = int(split_info.get("savings_cents") or 0)
-    split = any(i.store_id not in (None, primary_id) for i in out_items)
+    stock_up_cents = int(split_info.get("stock_up_cents") or 0)
+    split = bool(split_info.get("split"))  # the store choice (R4), not items only priced elsewhere
     note = None
     if split:
         others = sorted(
-            {stores[i.store_id] for i in out_items if i.store_id is not None and i.store_id != primary_id}
+            {
+                stores[i.store_id]
+                for i in out_items
+                if i.store_id is not None
+                and i.store_id != primary_id
+                and i.note != "only priced at another store"
+            }
         )
         note = (
             f"Buying at {', '.join(others)} saves {money(savings)} this week compared with "
@@ -475,6 +485,8 @@ def grocery_view(session: Session, user_id: int, plan_id: int, group_by_store: b
         plan_id=plan.id,
         total_cents=totals["cost_cents"],
         total_display=money(totals["cost_cents"]),
+        regular_cents=totals["cost_cents"] - stock_up_cents,
+        stock_up_cents=stock_up_cents,
         complete=totals["cost_complete"],
         unpriced=list(totals["unpriced"]),
         split=split,

@@ -172,6 +172,7 @@ def load_ingredient_plans(
             profile=d.profile,
             count_rounding_step=d.count_rounding_step,
             staple=d.assume_in_stock,
+            stock_up=d.stock_up,
             perishable=d.is_perishable,
             shelf_life_days_fridge=d.shelf_life_days_fridge,
             location=d.typical_location,
@@ -237,7 +238,7 @@ def build_problem(session: Session, user_id: int, constraints: PlanConstraints) 
             plan = plans[line.ingredient_id]
             if plan.staple or plan.offers:
                 continue
-            if c.has_purchase_limit and plan.available <= 0:
+            if c.limit_covers(plan.stock_up) and plan.available <= 0:
                 unpriced.append(plan.name)
         if unpriced:
             names = ", ".join(sorted(set(unpriced)))

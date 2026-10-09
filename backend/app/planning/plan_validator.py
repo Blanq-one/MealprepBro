@@ -542,21 +542,27 @@ def validate_plan(plan: RoundedPlan, ref: ReferenceData) -> ValidationReport:
                 details={"unpriced": list(grocery.unpriced)},
             )
         )
-        if c.has_purchase_limit:
+        limited_unpriced = [
+            item.name for item in grocery.items if item.kind == "unpriced" and c.limit_covers(item.stock_up)
+        ]
+        if limited_unpriced:
             errors.append(
                 Issue(
                     "UNPRICED_WITH_PURCHASE_LIMIT",
-                    f"a purchase limit can't be checked without prices for {', '.join(grocery.unpriced)}",
+                    f"a purchase limit can't be checked without prices for {', '.join(limited_unpriced)}",
                 )
             )
     purchase_limit = c.purchase_limit_cents
-    if purchase_limit is not None and grocery.total_cents > purchase_limit:
-        over = grocery.total_cents - purchase_limit
-        what = "top-up" if c.planning_mode is PlanningMode.INVENTORY else "budget"
+    if c.planning_mode is PlanningMode.INVENTORY:
+        limited, what = grocery.total_cents, "top-up"
+    else:
+        limited, what = grocery.regular_cents, "budget for regular groceries"
+    if purchase_limit is not None and limited > purchase_limit:
+        over = limited - purchase_limit
         errors.append(
             Issue(
                 "PURCHASE_LIMIT_OVER",
-                f"this trip costs {_money(grocery.total_cents)}, {_money(over)} over your "
+                f"this trip costs {_money(limited)}, {_money(over)} over your "
                 f"{_money(purchase_limit)} {what}",
                 amount=over,
             )

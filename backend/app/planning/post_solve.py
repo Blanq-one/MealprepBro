@@ -213,6 +213,11 @@ def build_rounded_plan(
     solution = replace(solution, batches=snapped)
     batches = [round_batch(problem, b) for b in solution.batches]
     notes = exclusion_notes(problem)
+    if solution.status == "cheapest":
+        notes.append(
+            "Your budget is tight: the solver ran out of time looking for the best plan within it, so this "
+            "is the cheapest plan that meets all your limits"
+        )
     if absorb:
         batches, absorbed_notes = absorption_pass(problem, solution, batches)
         notes.extend(absorbed_notes)

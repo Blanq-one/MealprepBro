@@ -2,6 +2,7 @@
  "schema_version": 1,
  "stores": [
   {"name": "Stop & Shop", "priority": 1, "region_code": "MA", "notes": "Primary store."},
-  {"name": "Price Rite", "priority": 2, "region_code": "MA", "notes": "Secondary store. Chicken is generally cheaper here."}
+  {"name": "Price Rite", "priority": 2, "region_code": "MA", "notes": "Secondary store. Chicken is generally cheaper here."},
+  {"name": "Other", "priority": 3, "region_code": null, "kind": "other", "notes": "Varies: online or in-store. For items your grocery stores don't carry (protein powder)."}
  ]
 }

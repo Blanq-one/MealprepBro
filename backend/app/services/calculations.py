@@ -101,12 +101,20 @@ def calculate(session: Session, lines: Sequence[LineInput], portions: int) -> Re
             reasons.append(_label_reason(r.ingredient, missing_core))
 
     prices = current_prices(session, [r.ingredient.id for r in counted])
+    others = [s.id for s in active_stores(session, "other")]
     costs = []
-    for store in active_stores(session):
+    for store in active_stores(session, "grocery"):
         cost_lines = []
         estimates = False
         for r in counted:
             best = best_price_at_store(prices, r.ingredient.id, store.id, r.unit, r.ingredient.units)
+            if best is None:  # not carried here: priced where it comes from (protein powder at "Other")
+                options = [
+                    o
+                    for sid in others
+                    if (o := best_price_at_store(prices, r.ingredient.id, sid, r.unit, r.ingredient.units))
+                ]
+                best = min(options, key=lambda pc: pc[1]) if options else None
             if best is not None and best[0].is_estimate:
                 estimates = True
             cost_lines.append(

@@ -97,6 +97,7 @@ class IngredientPlan:
     profile: NutritionProfile
     count_rounding_step: Decimal = Decimal(1)
     staple: bool = False  # assume_in_stock: never bought by the plan, listed as "check you have"
+    stock_up: bool = False  # long-life, bought occasionally: outside a shop-mode budget, listed separately
     perishable: bool = False
     shelf_life_days_fridge: int | None = None
     location: str | None = None  # where it usually lives: fridge | freezer | pantry

@@ -49,8 +49,8 @@ def test_plan_run_202_then_poll_then_summary(api):
     summary = api.get(f"/api/v1/plans/{run['plan_id']}").json()
     assert summary["status"] == "draft" and summary["meals_count"] == 28
     assert summary["kcal_target_week"] == 12600 and 12222 <= summary["kcal_planned_week"] <= 12600
-    assert summary["nutrition_focus"] == "protein" and summary["cost_complete"] is False
-    assert "protein powder" in summary["cost_note"]
+    assert summary["nutrition_focus"] == "protein" and summary["cost_complete"] is True
+    assert summary["cost_note"] is None  # the powder is priced (at "Other") now
     assert len(summary["days"]) == 7 and all(len(d["meals"]) == 4 for d in summary["days"])
     tuesday = summary["days"][1]
     assert tuesday["is_cook_day"] is False and tuesday["hands_on_minutes"] == 0
@@ -60,7 +60,8 @@ def test_plan_run_202_then_poll_then_summary(api):
     assert summary["planning_mode"] == "shop" and summary["purchase_limit_cents"] is None
     assert summary["protein_target_g_per_day"] == 100 and Decimal(summary["protein_g_week"]) >= 700
     costs = summary["costs"]
-    assert costs["cash_cents"] == summary["estimated_cost_cents"] and not costs["complete"]
+    assert costs["cash_cents"] == summary["estimated_cost_cents"] and costs["complete"]
+    assert costs["regular_cash_cents"] + costs["stock_up_cash_cents"] == costs["cash_cents"]
     assert costs["cash_cents"] + costs["from_inventory_cents"] == (
         costs["eaten_cents"] + costs["frozen_portions_cents"] + costs["leftover_cents"]
     )
@@ -85,11 +86,14 @@ def test_grocery_list_groups_by_store(api, seeded_db):
         assert group["store_name"] == stores[group["store_id"]]
         assert all(item["store_id"] == group["store_id"] for item in group["items"])
     assert sum(g["subtotal_cents"] for g in glist["groups"]) == glist["total_cents"]
-    assert glist["unpriced"] == ["protein powder, double chocolate"] and not glist["complete"]
+    assert glist["unpriced"] == [] and glist["complete"]
+    assert glist["regular_cents"] + glist["stock_up_cents"] == glist["total_cents"]
+    stock_up = [i for g in glist["groups"] for i in g["items"] if i["stock_up"] and i["kind"] == "buy"]
+    assert stock_up and sum(i["estimated_cost_cents"] for i in stock_up) == glist["stock_up_cents"]
     if glist["split"]:
         assert glist["savings_cents"] >= glist["split_threshold_cents"] and "saves" in glist["note"]
     kinds = {item["kind"] for g in glist["groups"] for item in g["items"]}
-    assert {"buy", "staple", "unpriced"} <= kinds
+    assert {"buy", "staple"} <= kinds
     flat = api.get(f"/api/v1/plans/{run['plan_id']}/grocery-list?group_by=none").json()
     assert len(flat["groups"]) == 1
 

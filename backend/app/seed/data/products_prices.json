@@ -35,6 +35,40 @@
    ]
   },
   {
+   "ingredient": "chicken-thigh-boneless-skinless",
+   "name": "Chicken thighs, boneless skinless, regular pack (about 1-1.5 lb)",
+   "package": {
+    "amount": "1.25",
+    "unit": "lb"
+   },
+   "is_variable_weight": true,
+   "price_basis": "per_weight",
+   "display_unit": "lb",
+   "is_default": false,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 539,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated: the family-pack price per lb plus a typical 20% regular-pack premium"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 419,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated: the family-pack price per lb plus a typical 20% regular-pack premium"
+    }
+   ]
+  },
+  {
    "ingredient": "chicken-breast-boneless-skinless",
    "name": "Chicken breasts, boneless skinless, family pack",
    "package": {
@@ -63,6 +97,40 @@
       "unit": "lb"
      },
      "source": "estimate"
+    }
+   ]
+  },
+  {
+   "ingredient": "chicken-breast-boneless-skinless",
+   "name": "Chicken breasts, boneless skinless, regular pack (about 1-1.5 lb)",
+   "package": {
+    "amount": "1.25",
+    "unit": "lb"
+   },
+   "is_variable_weight": true,
+   "price_basis": "per_weight",
+   "display_unit": "lb",
+   "is_default": false,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 599,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated: the family-pack price per lb plus a typical 20% regular-pack premium"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 479,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated: the family-pack price per lb plus a typical 20% regular-pack premium"
     }
    ]
   },
@@ -808,6 +876,29 @@
   },
   {
    "ingredient": "protein-powder-double-chocolate",
+   "name": "Double chocolate whey protein, 5 lb tub (2,268 g, about 73 scoops)",
+   "package": {
+    "amount": "2268",
+    "unit": "g"
+   },
+   "price_basis": "per_package",
+   "display_unit": "tub",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Other",
+     "price_cents": 6250,
+     "per": {
+      "amount": "2268",
+      "unit": "g"
+     },
+     "source": "estimate",
+     "note": "your estimate: $60-65, varies by store and sale"
+    }
+   ]
+  },
+  {
+   "ingredient": "protein-powder-double-chocolate",
    "name": "Double chocolate whey protein, 682 g (22 scoops)",
    "package": {
     "amount": "682",
@@ -815,8 +906,19 @@
    },
    "price_basis": "per_package",
    "display_unit": "tub",
-   "is_default": true,
-   "prices": []
+   "is_default": false,
+   "prices": [
+    {
+     "store": "Other",
+     "price_cents": 2631,
+     "per": {
+      "amount": "682",
+      "unit": "g"
+     },
+     "source": "estimate",
+     "note": "derived: the 5 lb tub's price per gram ($62.50 / 2,268 g) plus a typical 40% small-tub premium"
+    }
+   ]
   }
  ]
 }

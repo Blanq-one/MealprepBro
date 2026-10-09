@@ -2,7 +2,8 @@
 
 need − inventory (open packages first, then earliest expiry) → exact package covers per (product, store) →
 the store-split rule (R4): Stop & Shop unless buying some items at Price Rite saves ≥ the threshold this
-week. Staples (assume_in_stock) are listed as "check you have"; unknown prices are flagged, never guessed.
+week. Stock-up items (rice, oil, protein powder) are whole packages of the cheapest pack per unit, listed
+apart. Staples (assume_in_stock) are listed as "check you have"; unknown prices are flagged, never guessed.
 Money: each line is rounded once; totals are sums of lines (§7.1).
 """
 
@@ -78,6 +79,7 @@ def build_grocery(
         constraints.primary_store_id,
         constraints.store_split_min_savings_cents,
         tolerance,
+        stock_up_ids=frozenset(i for i in to_buy if ingredients[i].stock_up),
     )
     unpriced: list[str] = []
     for ingredient_id in sorted(to_buy):
@@ -92,6 +94,7 @@ def build_grocery(
             kind="buy",
             perishable=plan.perishable,
             recipes=tuple(used_by[ingredient_id]),
+            stock_up=plan.stock_up,
         )
         cover = choice.covers.get(ingredient_id)
         if to_buy[ingredient_id] <= tolerance[ingredient_id]:
@@ -123,6 +126,7 @@ def build_grocery(
         if line.cost_cents is not None and line.store_id is not None:
             store_cents[line.store_id] += line.cost_cents
     total = sum(store_cents.values())
+    stock_up = sum(line.cost_cents or 0 for line in items if line.stock_up and line.store_id is not None)
     return GroceryPlan(
         items=tuple(items),
         store_cents=dict(store_cents),
@@ -134,4 +138,5 @@ def build_grocery(
         savings_cents=choice.savings_cents,
         forced_elsewhere=tuple(ingredients[i].name for i in choice.forced_elsewhere),
         inventory_takes=tuple(takes),
+        stock_up_cents=stock_up,
     )

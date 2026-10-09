@@ -1,6 +1,6 @@
 """The week's money, from the rounded batches and the exact grocery plan (item 2 of the Phase 1 fix-up):
 
-  cash          spent this trip on whole packages (the grocery list total)
+  cash          spent this trip on whole packages (the grocery list total): regular + stock-up
   eaten         food eaten this week, whether bought now or taken from inventory
   leftover      bought and not used this week; it carries into your inventory
   frozen        cooked extra portions frozen for later weeks
@@ -99,6 +99,7 @@ def cost_summary(
             if expiring and lot.id not in taken and rate is not None and not frozen_lot:
                 waste += round_cents(lot.quantity * rate)
     summary = CostSummary(
+        stock_up_cash_cents=grocery.stock_up_cents,
         cash_cents=grocery.total_cents,
         eaten_cents=eaten,
         from_inventory_cents=from_inventory,

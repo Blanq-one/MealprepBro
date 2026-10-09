@@ -1,17 +1,18 @@
 """Database → PlanningProblem: hard filters keep their reasons; offers and needs share one unit per
 ingredient."""
 
-from datetime import date
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 
-from app.db.models import Ingredient
+from app.db.models import Ingredient, Product
 from app.domain.enums import Equipment, PlanningMode, StorageLocation
 from app.domain.exclusions import Preference
 from app.planning.inputs import constraints_for
 from app.planning.loader import build_problem
 from app.schemas.plans import PlanRequest
+from app.services.ingredient_data import load_ingredients
 from app.services.inventory import LotInput, add_lot
 from app.services.settings import current_user, set_preference
 
@@ -49,25 +50,52 @@ POWDER_RECIPES = (
     "Chocolate protein overnight oats",
     "Chocolate protein chia pudding",
 )
+YOGURT_RECIPES = (
+    "Chicken over rice with garlic yogurt sauce",
+    "Air-fryer chicken over rice with broccoli",
+    "Sheet-pan chicken and peppers over rice",
+    "Yogurt chicken gravy",
+    "Double chocolate protein pudding",
+    "Chocolate protein overnight oats",
+)
 
 
-def test_a_budget_excludes_unpriced_recipes_and_says_why(seeded_db):
+def unprice(session, slug):
+    """No current price at any store: archive the ingredient's products (rolled back with the test)."""
+    session.execute(
+        update(Product)
+        .where(Product.ingredient_id == slug_id(session, slug))
+        .values(archived_at=datetime.now(UTC))
+    )
+    session.flush()
+
+
+def test_a_budget_excludes_recipes_with_an_unpriced_regular_item_and_says_why(seeded_db):
+    unprice(seeded_db, "greek-yogurt-nonfat")
     p = problem(seeded_db, budget_cents=10000)
     left_out = {e.title: e for e in p.excluded}
-    for title in POWDER_RECIPES:
-        assert left_out[title].unpriced_ingredients == ("protein powder, double chocolate",)
+    assert sorted(left_out) == sorted(YOGURT_RECIPES)
+    for title in YOGURT_RECIPES:
+        assert left_out[title].unpriced_ingredients == ("Greek yogurt, plain nonfat",)
         assert "your budget can't be checked" in " ".join(left_out[title].reasons)
-    assert len(p.candidates) == 7
+
+
+def test_an_unpriced_stock_up_item_doesnt_block_a_budget(seeded_db):
+    unprice(seeded_db, "protein-powder-double-chocolate")
+    p = problem(seeded_db, budget_cents=10000)  # the budget covers regular groceries only
+    assert len(p.candidates) == 10 and p.excluded == ()
 
 
 def test_inventory_mode_excludes_unpriced_items_you_dont_have(seeded_db):
-    p = problem(seeded_db, mode=PlanningMode.INVENTORY, topup_cents=2000)
+    unprice(seeded_db, "protein-powder-double-chocolate")
+    p = problem(seeded_db, mode=PlanningMode.INVENTORY, topup_cents=2000)  # a top-up covers everything
     left_out = {e.title: e for e in p.excluded}
     for title in POWDER_RECIPES:
         assert "isn't in your inventory and has no price" in " ".join(left_out[title].reasons)
 
 
 def test_no_budget_keeps_unpriced_recipes(seeded_db):
+    unprice(seeded_db, "greek-yogurt-nonfat")
     p = problem(seeded_db)
     assert len(p.candidates) == 10 and p.excluded == ()
 
@@ -81,7 +109,8 @@ def test_raw_protein_carries_its_chart_fridge_life(seeded_db):
     assert rice.fridge_life is None
 
 
-def test_inventory_lets_a_budget_use_an_unpriced_item(seeded_db):
+def test_inventory_lets_a_top_up_use_an_unpriced_item(seeded_db):
+    unprice(seeded_db, "protein-powder-double-chocolate")
     user = current_user(seeded_db)
     add_lot(
         seeded_db,
@@ -93,10 +122,8 @@ def test_inventory_lets_a_budget_use_an_unpriced_item(seeded_db):
             StorageLocation.PANTRY,
         ),
     )
-    p = problem(seeded_db, budget_cents=10000)
-    assert len(p.candidates) == 10  # the powder comes from what you have, so no price is needed
     p = problem(seeded_db, mode=PlanningMode.INVENTORY)
-    assert len(p.candidates) == 10
+    assert len(p.candidates) == 10  # the powder comes from what you have, so no price is needed
     lot = p.ingredients[slug_id(seeded_db, "protein-powder-double-chocolate")].lots[0]
     assert lot.location == "pantry"
 
@@ -114,11 +141,55 @@ def test_offers_and_needs_share_one_unit(seeded_db):
     p = problem(seeded_db)
     chicken = p.ingredients[slug_id(seeded_db, "chicken-thigh-boneless-skinless")]
     assert chicken.planning_unit == "g"
-    by_store = {o.store_id: o for o in chicken.offers}
-    assert {o.package_cents for o in by_store.values()} == {1347, 1047}  # 3 lb at $4.49 / $3.49 per lb
+    family = {o.package_cents for o in chicken.offers if o.package_amount and o.package_amount > 1000}
+    assert family == {1347, 1047}  # 3 lb at $4.49 / $3.49 per lb
     onion = p.ingredients[slug_id(seeded_db, "onion-red")]
     sheet_pan = next(c for c in p.candidates if c.title.startswith("Sheet-pan"))
     assert onion.planning_unit == "g"  # priced per pound…
     assert sheet_pan.need_per_portion[onion.id] == onion.units.count_unit_weight_g / 4  # …authored as 1 onion
     salt = p.ingredients[slug_id(seeded_db, "salt")]
     assert salt.staple and salt.id not in sheet_pan.need_per_portion
+
+
+def test_other_stores_come_after_your_store_order(seeded_db):
+    p = problem(seeded_db)
+    assert [p.store_names[i] for i in p.constraints.store_ids] == ["Stop & Shop", "Price Rite", "Other"]
+
+
+def test_protein_powder_is_priced_at_other_as_estimates_and_is_stock_up(seeded_db):
+    p = problem(seeded_db)
+    powder = p.ingredients[slug_id(seeded_db, "protein-powder-double-chocolate")]
+    assert powder.stock_up and not powder.perishable
+    assert {p.store_names[o.store_id] for o in powder.offers} == {"Other"}
+    assert all(o.is_estimate for o in powder.offers)
+    tubs = sorted((o.package_amount, o.package_cents) for o in powder.offers)
+    assert tubs == [(Decimal("682.000"), 2631), (Decimal("2268.000"), 6250)]  # small tub: +40% per gram
+    big = max(powder.offers, key=lambda o: o.package_amount or 0)
+    assert (big.cents_per_unit * 31).quantize(Decimal("0.1")) == Decimal("85.4")  # about $0.85 a scoop
+
+
+def test_chicken_comes_in_family_and_regular_packs_at_both_stores(seeded_db):
+    p = problem(seeded_db)
+    for slug in ("chicken-thigh-boneless-skinless", "chicken-breast-boneless-skinless"):
+        chicken = p.ingredients[slug_id(seeded_db, slug)]
+        for store_id in (1, 2):
+            packs = sorted(
+                (o for o in chicken.offers if o.store_id == store_id), key=lambda o: o.package_amount or 0
+            )
+            regular, family = packs
+            assert regular.package_amount.quantize(Decimal(1)) == 567  # 1.25 lb
+            assert family.package_amount.quantize(Decimal(1)) == 1361  # 3 lb
+            premium = regular.cents_per_unit / family.cents_per_unit
+            assert Decimal("1.19") < premium < Decimal("1.21") and regular.is_estimate
+
+
+def test_shelf_life_fixes_for_bottled_and_frozen_items(seeded_db):
+    p = problem(seeded_db)
+    data = {d.slug: d for d in load_ingredients(seeded_db).values()}
+    for slug in ("lemon-juice", "lime-juice", "spinach-frozen", "peas-frozen", "corn-frozen", "edamame"):
+        assert not data[slug].is_perishable, slug
+    assert data["lemon"].is_perishable  # fresh lemons stay perishable
+    assert data["lemon-juice"].stock_up and data["rice-long-grain-white"].stock_up
+    assert data["cumin-ground"].stock_up and data["cumin-ground"].assume_in_stock  # still "check you have"
+    assert not data["chicken-thigh-boneless-skinless"].stock_up
+    assert p.candidates  # the week still plans

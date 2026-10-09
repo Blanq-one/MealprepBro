@@ -6,7 +6,7 @@ import pytest
 
 from app.domain.cook_time import day_minutes, mood_allows, mood_time_error
 from app.domain.enums import RecipeMood
-from app.domain.purchase import Offer, cheapest_cover, choose_stores
+from app.domain.purchase import Offer, cheapest_cover, choose_stores, per_unit_cover
 
 LB = Decimal("453.59237")
 PRIMARY, SECONDARY = 1, 2
@@ -94,7 +94,40 @@ def test_item_only_priced_elsewhere_is_forced_and_listed():
     assert choice.forced_elsewhere == (12,)
     assert choice.unpriced == (13,)
     assert choice.covers[13] is None
-    assert choice.split  # something is bought at the secondary store
+    assert not choice.split  # bought where it's priced: not a store choice
+
+
+OTHER = 3
+TUB_5LB = pack(41, 2268, 6250, OTHER)  # 2.76¢/g
+TUB_SMALL = pack(42, 682, 2631, OTHER)  # 3.86¢/g
+
+
+def test_a_stock_up_item_buys_the_cheapest_pack_per_gram_not_the_cheapest_total():
+    need = Decimal(310)  # 10 scoops this week
+    assert cheapest_cover(need, [TUB_5LB, TUB_SMALL]).cents == 2631  # a regular item would take the small tub
+    cover = per_unit_cover(need, [TUB_5LB, TUB_SMALL])
+    assert cover is not None and [(b.offer.ref, b.packages) for b in cover.buys] == [(41, 1)]
+    assert cover.cents == 6250 and cover.remainder == Decimal(1958)  # the rest stays in the pantry
+    assert per_unit_cover(Decimal(3000), [TUB_5LB, TUB_SMALL]).buys[0].packages == 2
+    assert per_unit_cover(Decimal(0), [TUB_5LB]).cents == 0
+    assert per_unit_cover(need, []) is None
+
+
+def test_stock_up_items_follow_the_store_choice_but_dont_drive_it():
+    rice = {20: [pack(21, 2268, 499), pack(22, 2268, 199, SECONDARY)]}  # $3.00 cheaper at the secondary
+    choice = choose_stores({20: Decimal(300)}, rice, PRIMARY, 500, stock_up_ids=frozenset({20}))
+    assert not choice.split and choice.covers[20].buys[0].offer.store_id == PRIMARY  # no trip for rice
+    offers = {**rice, 10: [pack(11, 1000, 1500), pack(12, 1000, 900, SECONDARY)]}  # $6.00 on chicken
+    choice = choose_stores(
+        {10: Decimal(900), 20: Decimal(300)}, offers, PRIMARY, 500, stock_up_ids=frozenset({20})
+    )
+    assert choice.split and choice.savings_cents == 600  # the chicken decides; the rice comes along
+    assert choice.covers[20].buys[0].offer.store_id == SECONDARY
+
+
+def test_an_item_only_priced_at_another_store_is_not_a_split():
+    choice = choose_stores({40: Decimal(310)}, {40: [TUB_5LB]}, PRIMARY, 500, stock_up_ids=frozenset({40}))
+    assert choice.forced_elsewhere == (40,) and not choice.split
 
 
 @pytest.mark.parametrize(

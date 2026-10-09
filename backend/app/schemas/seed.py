@@ -86,6 +86,7 @@ class SeedIngredient(_Strict):
     is_perishable: bool
     typical_location: StorageLocation
     assume_in_stock: bool = False
+    stock_up: bool = False  # long-life, bought occasionally; listed apart from regular groceries
     count_rounding_step: Decimal = Field(default=Decimal(1), gt=0)
     density: PortionRef | None = None
     count_unit_weight: PortionRef | LabelRef | None = None
@@ -148,6 +149,7 @@ class SeedStore(_Strict):
     name: str
     priority: int = Field(ge=1)
     region_code: str | None = None
+    kind: Literal["grocery", "other"] = "grocery"  # other: items your stores don't carry (never a trip)
     notes: str | None = None
 
 

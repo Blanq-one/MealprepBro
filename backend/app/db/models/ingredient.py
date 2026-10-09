@@ -46,6 +46,8 @@ class Ingredient(Base):
     shelf_life_days_freezer: Mapped[int | None] = mapped_column(SmallInteger)
     typical_location: Mapped[str | None] = mapped_column(Text)
     assume_in_stock: Mapped[bool] = mapped_column(Boolean, server_default="false")
+    # long-life, bought occasionally (protein powder, rice, oil, spices): outside a shop-mode budget
+    stock_up: Mapped[bool] = mapped_column(Boolean, server_default="false")
     nutrition_source: Mapped[str] = mapped_column(Text)
     fdc_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("usda_food.fdc_id"))
     nutrition_reviewed_at: Mapped[datetime | None]

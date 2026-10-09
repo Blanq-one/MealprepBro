@@ -34,6 +34,7 @@ class IngredientData:
     is_perishable: bool = False
     shelf_life_days_fridge: int | None = None
     typical_location: str | None = None
+    stock_up: bool = False
 
     @property
     def cap_view(self) -> CapIngredient:
@@ -85,6 +86,7 @@ def _build(
         is_perishable=ingredient.is_perishable,
         shelf_life_days_fridge=ingredient.shelf_life_days_fridge,
         typical_location=ingredient.typical_location,
+        stock_up=ingredient.stock_up,
     )
 
 

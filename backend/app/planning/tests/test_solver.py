@@ -512,7 +512,7 @@ def test_shop_budget_too_low_is_infeasible_and_says_what_the_plan_would_cost():
     assert isinstance(result, SolverInfeasible)
     (short,) = [d for d in result.diagnostics if d.code == "BUDGET_SHORT"]
     assert short.amount == 1347 + 499 - 500  # whole packages: the cheapest plan is $18.46
-    assert "costs about $18.46, $13.46 over your budget of $5.00" in short.message
+    assert "costs about $18.46 in regular groceries, $13.46 over your budget of $5.00" in short.message
     assert "chicken about" in short.message and "rice about" in short.message
 
 

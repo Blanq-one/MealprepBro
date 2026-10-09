@@ -67,7 +67,8 @@ uv run python -m app.cli plan-week --slot dinner=550 --slot drink=100 --minutes 
 ```
 
 Modes: `shop` (default) uses your inventory first, then builds the grocery list; `--budget` is a hard limit on cash
-this trip, and without it the cost is minimized and reported. `inventory` buys nothing unless you allow `--topup`;
+this trip for regular groceries (stock-up items such as protein powder, rice and oil are listed separately as "also buy
+this week"), and without it the cost is minimized and reported. `inventory` buys nothing unless you allow `--topup`;
 when nothing fits it says exactly what's missing. The daily protein target (default 100 g, `--protein`) is a floor,
 never a reward.
 
@@ -76,6 +77,12 @@ week's money (cash this trip, food eaten, leftovers carried into inventory, expe
 Price Rite split rule) or the top-up buy list, freeze-on-shopping-day instructions for raw protein, notes and
 warnings, or the reasons no plan fits. Without `--dry-run` the plan is saved as a draft; `--accept` makes it the
 week's active plan.
+
+Steady-state check (dry run): `uv run python -m app.cli simulate-weeks --week 2026-10-12 --weeks 2 --last-week-budget 50`
+plans each week from the leftovers of the week before and prints regular cash, stock-up cash, food eaten, expected
+waste and protein per day.
+
+Hosting options for Phase 2 are compared in `docs/hosting.md`.
 
 LLM tests use scripted responses. One opt-in smoke test calls Groq for real:
 `RUN_LIVE_LLM_TESTS=1 uv run pytest -m live_llm -s`.
