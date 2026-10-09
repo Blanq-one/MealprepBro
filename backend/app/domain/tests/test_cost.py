@@ -30,10 +30,10 @@ def test_consumed_vs_purchase_cost_for_chicken():
     assert package_cost(1, 398) == 398
 
 
-def test_price_rite_tortillas_eight_of_thirty():
-    per_tortilla = unit_price(199, D(30))
-    assert line_cost_exact(D(8), per_tortilla).quantize(D("0.01")) == D("53.07")
-    assert consumed_cost([CostLine("flour tortilla, small", D(8), per_tortilla)]).cents == 53
+def test_price_rite_tortillas_eight_of_twenty():
+    per_tortilla = unit_price(199, D(20))  # $1.99 per 20-count bag
+    assert line_cost_exact(D(8), per_tortilla) == D("79.6")
+    assert consumed_cost([CostLine("flour tortilla, small", D(8), per_tortilla)]).cents == 80
 
 
 def test_rice_five_pound_bag():

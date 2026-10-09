@@ -1415,7 +1415,7 @@
    "slug": "flour-tortilla-small",
    "category": "grain",
    "default_unit_kind": "count",
-   "nutrition_source": "usda",
+   "nutrition_source": "package_label",
    "fdc_id": 167535,
    "aliases": [
     "flour tortilla",
@@ -1441,7 +1441,7 @@
      "label": "flour-tortilla-small"
     }
    ],
-   "notes": "Piece weight is an ESTIMATE from the Price Rite 30-count bag (≈652 g); replace with label values. Some brands use lard (pork_trace, allowed)."
+   "notes": "Nutrition from the Price Rite package label (20 per bag, 37 g each, 740 g). Nutrients the label doesn't list come from USDA FDC 167535. Some brands use lard (pork_trace, allowed)."
   },
   {
    "name": "corn tortilla",
@@ -1732,7 +1732,9 @@
     "firm tofu",
     "extra firm tofu"
    ],
-   "diet_tags": [],
+   "diet_tags": [
+    "soy"
+   ],
    "heme_iron_fraction": "0",
    "safety_category": null,
    "is_perishable": true,
@@ -1750,7 +1752,9 @@
     "edamame",
     "shelled edamame"
    ],
-   "diet_tags": [],
+   "diet_tags": [
+    "soy"
+   ],
    "heme_iron_fraction": "0",
    "safety_category": null,
    "is_perishable": true,
@@ -4041,7 +4045,9 @@
     "soya sauce",
     "low sodium soy sauce"
    ],
-   "diet_tags": [],
+   "diet_tags": [
+    "soy"
+   ],
    "heme_iron_fraction": "0",
    "safety_category": null,
    "is_perishable": false,
@@ -4432,7 +4438,7 @@
    "slug": "protein-powder-double-chocolate",
    "category": "supplement",
    "default_unit_kind": "mass",
-   "nutrition_source": "label",
+   "nutrition_source": "package_label",
    "fdc_id": null,
    "aliases": [
     "protein powder",
@@ -4441,7 +4447,10 @@
     "double chocolate protein powder",
     "protein powder double chocolate"
    ],
-   "diet_tags": [],
+   "diet_tags": [
+    "dairy",
+    "soy"
+   ],
    "heme_iron_fraction": "0",
    "safety_category": null,
    "is_perishable": false,
@@ -4453,7 +4462,7 @@
      "label": "protein-powder-double-chocolate"
     }
    ],
-   "notes": "Nutrition from your label (A2): scoop 31 g, 120 kcal, 25 g protein. Carbs and fat per scoop still needed."
+   "notes": "Double chocolate whey. Nutrition from your package label: 1 scoop = 31 g, 120 kcal, 24 g protein; 22 scoops per 682 g container. Allergens: milk, soy. Price pending."
   }
  ]
 }

@@ -35,6 +35,7 @@ from app.db.models import (
 )
 from app.domain.enums import NutritionSource, RecipeOrigin
 from app.domain.exclusions import HELD_TAG, PORK_COMPONENT_TAG
+from app.domain.food_state import line_state_error
 from app.domain.frequency_caps import CapTarget
 from app.domain.nutrition import energy_from_usda, label_per_100g
 from app.domain.quantities import parse_quantity
@@ -198,15 +199,28 @@ NutritionRow = tuple[int, Decimal, str, int | None]  # (nutrient_id, amount_per_
 def _nutrition_rows(
     files: SeedFiles, cache: _UsdaCache, seed: SeedIngredient, nutrients: list[SeedNutrient]
 ) -> list[NutritionRow]:
-    if seed.nutrition_source is NutritionSource.LABEL:
-        label = files.labels.labels.get(seed.slug)
-        if label is None:
-            raise SeedError(f"{seed.slug}: label-sourced ingredient missing from label_inputs.json")
-        conversion = label_per_100g(label.per_serving, label.serving_grams)
-        by_code = {n.code: n.id for n in nutrients}
-        return [(by_code[code], value, "label", None) for code, value in conversion.per_100g.items()]
-    assert seed.fdc_id is not None  # enforced by the schema
-    return _usda_rows(seed.fdc_id, cache.values.get(seed.fdc_id, {}), nutrients)
+    if seed.nutrition_source is not NutritionSource.PACKAGE_LABEL:
+        assert seed.fdc_id is not None  # enforced by the schema
+        return _usda_rows(seed.fdc_id, cache.values.get(seed.fdc_id, {}), nutrients)
+    label = files.labels.labels.get(seed.slug)
+    if label is None:
+        raise SeedError(f"{seed.slug}: package-label ingredient missing from label_inputs.json")
+    by_code = {n.code: n.id for n in nutrients}
+    if unknown := sorted(set(label.per_serving) - set(by_code)):
+        raise SeedError(
+            f"{seed.slug}: label values for untracked nutrients {unknown}; put them in other_values"
+        )
+    conversion = label_per_100g(label.per_serving, label.serving_grams)
+    source = NutritionSource.PACKAGE_LABEL.value
+    rows: list[NutritionRow] = [
+        (by_code[code], value, source, None) for code, value in conversion.per_100g.items()
+    ]
+    if seed.fdc_id is not None:
+        # The label overrides the USDA mapping; USDA fills only nutrients the label doesn't list.
+        on_label = {nutrient_id for nutrient_id, *_ in rows} | {by_code[c] for c in label.placeholders}
+        usda = _usda_rows(seed.fdc_id, cache.values.get(seed.fdc_id, {}), nutrients)
+        rows += [row for row in usda if row[0] not in on_label]
+    return rows
 
 
 def usda_nutrition_rows(session: Session, fdc_id: int, nutrients: list[SeedNutrient]) -> list[NutritionRow]:
@@ -288,7 +302,7 @@ def _wanted_units(
             wanted[name] = (_q3(_grams_per_portion(portion)), "usda_portion", portion.id)
         else:
             assert unit.label is not None
-            wanted[name] = (_label_piece_grams(files, unit.label), "label", None)
+            wanted[name] = (_label_piece_grams(files, unit.label), NutritionSource.PACKAGE_LABEL.value, None)
     return wanted
 
 
@@ -491,6 +505,9 @@ def _recipes(session: Session, files: SeedFiles, user: AppUser, report: SeedRepo
                     f"{file_name}: '{line.ingredient}' is tagged {sorted(forbidden)}; "
                     "seed recipes may not use beef, held items or pork components"
                 )
+            ingredient = data[line.ingredient]
+            if problem := line_state_error(ingredient.name, line.state, ingredient.mapping_state):
+                raise SeedError(f"{file_name}: {problem}")
         family = session.scalars(
             select(RecipeFamily).where(RecipeFamily.user_id == user.id, RecipeFamily.name == seed.family)
         ).first()

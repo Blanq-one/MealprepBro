@@ -153,11 +153,20 @@ def test_daily_value_label_without_dv():
 
 
 def test_label_conversion_for_the_protein_powder():
+    # your label: 1 scoop = 31 g, 120 kcal, 24 g protein, 3 g carbs, 1.5 g fat
     conv = label_per_100g(
-        {"energy_kcal": D(120), "protein_g": D(25), "carbohydrate_g": None, "fat_g": None}, D(31)
+        {"energy_kcal": D(120), "protein_g": D(24), "carbohydrate_g": D(3), "fat_g": D("1.5")}, D(31)
     )
-    assert conv.per_100g == {"energy_kcal": D("387.097"), "protein_g": D("80.645")}
-    assert conv.missing == ("carbohydrate_g", "fat_g")
+    assert conv.per_100g == {
+        "energy_kcal": D("387.097"),
+        "protein_g": D("77.419"),
+        "carbohydrate_g": D("9.677"),
+        "fat_g": D("4.839"),
+    }
+    assert conv.missing == ()
+    partial = label_per_100g({"energy_kcal": D(110), "iron_mg": None}, D(37))
+    assert partial.per_100g == {"energy_kcal": D("297.297")}  # one 37 g tortilla
+    assert partial.missing == ("iron_mg",)
     with pytest.raises(ValueError):
         label_per_100g({}, D(0))
 

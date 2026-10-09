@@ -26,6 +26,7 @@ docker compose run --rm backend uv run --frozen python -m app.cli usda-import \
 docker compose run --rm backend uv run --frozen python -m app.cli seed
 docker compose run --rm backend uv run --frozen python -m app.cli ingredient-report
 docker compose run --rm backend uv run --frozen python -m app.cli safety-table
+docker compose run --rm backend uv run --frozen python -m app.cli mapping-review   # docs/review/usda_mappings.md
 
 docker compose up backend                # API on http://localhost:8000 (docs at /docs)
 ```

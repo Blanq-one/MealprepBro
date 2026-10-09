@@ -6,7 +6,6 @@ transaction that is rolled back.
 """
 
 from collections.abc import Iterator
-from pathlib import Path
 
 import pytest
 from alembic import command
@@ -101,8 +100,3 @@ def client(seeded_db: Session) -> Iterator[TestClient]:
     app.dependency_overrides[get_session] = lambda: seeded_db
     with TestClient(app) as test_client:
         yield test_client
-
-
-@pytest.fixture
-def fixtures_dir() -> Path:
-    return BACKEND_DIR / "app" / "testing" / "fixtures"

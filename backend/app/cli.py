@@ -10,6 +10,7 @@ safety-table             print the hardcoded food-safety table and its citation
 import argparse
 import sys
 from collections.abc import Sequence
+from datetime import UTC, datetime
 from pathlib import Path
 
 from sqlalchemy.orm import Session
@@ -19,11 +20,13 @@ from app.db.session import get_engine
 from app.domain import food_safety as fs
 from app.seed.files import load_seed_files
 from app.seed.loader import seed_all
+from app.seed.mapping_review import build_rows, flag_summary, render_markdown
 from app.seed.report import build_report, format_report
 from app.usda.importer import import_release
 from app.usda.release import find_releases
 from app.usda.subset import build_subset
 
+REVIEW_SHEET = BACKEND_DIR.parent / "docs" / "review" / "usda_mappings.md"
 SUBSET_DIR = BACKEND_DIR / "app" / "testing" / "fixtures" / "usda_subset"
 
 
@@ -79,6 +82,18 @@ def _ingredient_report() -> int:
     return 1 if report.errors else 0
 
 
+def _mapping_review(out: Path) -> int:
+    with Session(get_engine()) as session:
+        rows = build_rows(session)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    today = datetime.now(UTC).astimezone().date()
+    out.write_text(render_markdown(rows, today), encoding="utf-8", newline="\n")
+    print(f"wrote {out} ({len(rows)} ingredients)")
+    for line in flag_summary(rows):
+        print(f"  {line}")
+    return 0
+
+
 def _safety_table() -> int:
     reheat = fs.LEFTOVERS_REHEAT
 
@@ -109,6 +124,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     sub.add_parser("seed", help="load seed data (idempotent)")
     sub.add_parser("ingredient-report", help="data-quality report")
     sub.add_parser("safety-table", help="print the food-safety table with its citation")
+    review = sub.add_parser("mapping-review", help="write the USDA mapping review sheet")
+    review.add_argument("--out", type=Path, default=REVIEW_SHEET)
     args = parser.parse_args(argv)
     if args.command == "usda-import":
         return _usda_import(args.paths)
@@ -118,6 +135,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _seed()
     if args.command == "ingredient-report":
         return _ingredient_report()
+    if args.command == "mapping-review":
+        return _mapping_review(args.out)
     return _safety_table()
 
 

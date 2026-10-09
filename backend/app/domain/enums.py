@@ -115,7 +115,7 @@ class StorageLocation(StrEnum):
 
 class NutritionSource(StrEnum):
     USDA = "usda"
-    LABEL = "label"
+    PACKAGE_LABEL = "package_label"  # shown as "package label"
     MANUAL = "manual"
     DERIVED = "derived"
 

@@ -1,11 +1,6 @@
-import json
-import shutil
-
 from sqlalchemy import select, text
 
 from app.db.models import Ingredient
-from app.seed.files import DATA_DIR
-from app.seed.loader import seed_all
 
 PROBLEM = "application/problem+json"
 
@@ -34,8 +29,11 @@ def test_ingredient_search(client):
 
 def test_ingredient_detail_and_404(client, seeded_db):
     tortilla = client.get(f"/api/v1/ingredients/{_id(seeded_db, 'flour-tortilla-small')}").json()
-    assert tortilla["count_unit_weight_g"] == "21.733"
-    assert "ESTIMATE" in tortilla["notes"]
+    assert tortilla["count_unit_weight_g"] == "37.000"
+    assert tortilla["nutrition_source"] == "package_label"
+    assert "package label" in tortilla["notes"]
+    energy = next(n for n in tortilla["nutrients"] if n["code"] == "energy_kcal")
+    assert (energy["amount_per_100g"], energy["source"]) == ("297.2970", "package_label")
     assert {(p["store_name"], p["price_cents"], p["is_estimate"]) for p in tortilla["prices"]} == {
         ("Price Rite", 199, False),
         ("Stop & Shop", 279, True),
@@ -130,40 +128,19 @@ def test_seed_recipes_endpoint(client):
     assert len(recipes) == 9
     assert all(r["is_draft"] for r in recipes)
     by_title = {r["title"]: r for r in recipes}
-    pudding = by_title["Double chocolate protein pudding"]
-    assert pudding["status"] == "incomplete"
-    assert pudding["incomplete_reasons"] == [
-        "incomplete: protein powder, double chocolate label values missing (carbohydrate_g, fat_g)"
-    ]
-    assert all(c["unpriced"] == ["protein powder, double chocolate"] for c in pudding["costs"])
-    complete = [r for r in recipes if r["status"] == "complete"]
-    assert len(complete) == 7
-    for recipe in complete:
+    assert all(r["status"] == "complete" and r["incomplete_reasons"] == [] for r in recipes)
+    for title in ("Double chocolate protein pudding", "Chocolate protein overnight oats"):
+        # nutrition complete, cost pending: no protein powder price yet
+        assert all(c["unpriced"] == ["protein powder, double chocolate"] for c in by_title[title]["costs"])
+        assert not any(c["complete"] for c in by_title[title]["costs"])
+    pudding = by_title["Double chocolate protein pudding"]["per_serving"]
+    assert _nutrient(pudding, "protein_g")["amount"] == "42.9"  # 24 g per scoop now, not 25
+    for recipe in recipes:
         assert recipe["per_serving"]["kcal"] > 0
-        assert all(c["complete"] for c in recipe["costs"])
     wraps = by_title["Egg, spinach and pepper breakfast wraps"]
     pr = next(c for c in wraps["costs"] if c["store_name"] == "Price Rite")
     ss = next(c for c in wraps["costs"] if c["store_name"] == "Stop & Shop")
-    assert pr["total_cents"] < ss["total_cents"]  # $1.99 / 30 tortillas at Price Rite
-
-
-def test_pudding_becomes_complete_with_label_values(client, seeded_db, tmp_path, fixtures_dir):
-    data_dir = tmp_path / "data"
-    shutil.copytree(DATA_DIR, data_dir)
-    labels = json.loads((data_dir / "label_inputs.json").read_text(encoding="utf-8"))
-    fixture = json.loads((fixtures_dir / "label_values.json").read_text(encoding="utf-8"))
-    labels["labels"]["protein-powder-double-chocolate"]["per_serving"].update(
-        fixture["protein-powder-double-chocolate"]
-    )
-    (data_dir / "label_inputs.json").write_text(json.dumps(labels), encoding="utf-8")
-    seed_all(seeded_db, data_dir)
-    pudding = next(
-        r
-        for r in client.get("/api/v1/recipes/seed").json()
-        if r["title"] == "Double chocolate protein pudding"
-    )
-    assert pudding["status"] == "complete"
-    assert pudding["incomplete_reasons"] == []
+    assert pr["total_cents"] < ss["total_cents"]  # $1.99 / 20 tortillas at Price Rite
 
 
 def test_unknown_route_is_problem_json(client):

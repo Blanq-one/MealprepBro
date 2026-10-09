@@ -1,30 +1,47 @@
 {
  "schema_version": 1,
  "labels": {
+  "flour-tortilla-small": {
+   "serving_unit": "tortilla",
+   "serving_grams": "37",
+   "per_serving": {
+    "energy_kcal": "110",
+    "fat_g": "2",
+    "saturated_fat_g": "1",
+    "sodium_mg": "340",
+    "carbohydrate_g": "19",
+    "fiber_g": "2",
+    "sugars_g": "1",
+    "protein_g": "3"
+   },
+   "other_values": {"trans_fat_g": "0", "cholesterol_mg": "0", "added_sugars_g": "0"},
+   "source": "package label",
+   "note": "Price Rite flour tortillas ($1.99/bag): 20 per bag, 1 tortilla = 37 g, net weight 740 g. From your package label (2026-10-08). The label values given don't include iron, calcium, potassium or vitamins; those come from the USDA mapping (FDC 167535)."
+  },
   "protein-powder-double-chocolate": {
    "serving_unit": "scoop",
    "serving_grams": "31",
    "per_serving": {
     "energy_kcal": "120",
-    "protein_g": "25",
-    "carbohydrate_g": null,
-    "fat_g": null,
-    "fiber_g": null,
-    "sugars_g": null,
-    "sodium_mg": null,
-    "iron_mg": null,
-    "calcium_mg": null
+    "fat_g": "1.5",
+    "saturated_fat_g": "1",
+    "sodium_mg": "130",
+    "carbohydrate_g": "3",
+    "fiber_g": "0.5",
+    "sugars_g": "1",
+    "protein_g": "24",
+    "calcium_mg": "130",
+    "iron_mg": "0.7",
+    "potassium_mg": "200"
    },
-   "placeholders": ["carbohydrate_g", "fat_g"],
-   "source": "Your label (A2, 2026-10-08): scoop 31 g, 120 kcal, 25 g protein. Fill carbs and fat (and any other values listed) from the label."
+   "other_values": {"cholesterol_mg": "55"},
+   "allergens": ["milk", "soy"],
+   "source": "package label",
+   "note": "Double chocolate whey: 1 scoop = 31 g, 22 servings per container (682 g). Fiber is printed as <1 g and stored as 0.5 g. Iron is non-heme. From your package label (2026-10-08). Price pending."
   }
  },
  "packages": {
-  "flour-tortilla-small": {
-   "count": 30,
-   "net_weight_g": "652",
-   "is_estimate": true,
-   "source": "Price Rite small flour tortillas, 30 count: net weight ≈ 23 oz (652 g), an estimate from a 20–26 oz range (A2, 2026-10-08). Replace with the exact net weight and serving size from the bag."
-  }
+  "flour-tortilla-small": {"count": 20, "net_weight_g": "740", "is_estimate": false, "source": "package label"},
+  "protein-powder-double-chocolate": {"count": 22, "net_weight_g": "682", "is_estimate": false, "source": "package label"}
  }
 }

@@ -20,6 +20,7 @@ from app.domain.enums import (
 )
 from app.domain.exclusions import KNOWN_DIET_TAGS
 from app.domain.food_safety import SafetyCategory
+from app.domain.food_state import FoodState
 from app.domain.quantities import parse_quantity
 from app.domain.units import UnitKind
 
@@ -72,7 +73,9 @@ class SeedIngredient(_Strict):
     slug: str = Field(pattern=r"^[a-z0-9]+(-[a-z0-9]+)*$")
     category: IngredientCategory
     default_unit_kind: UnitKind
-    nutrition_source: Literal[NutritionSource.USDA, NutritionSource.LABEL]
+    nutrition_source: Literal[NutritionSource.USDA, NutritionSource.PACKAGE_LABEL]
+    # A package-label ingredient may keep an fdc_id: label values override it, and USDA fills only the
+    # nutrients the label doesn't list (each row records its own source).
     fdc_id: int | None
     aliases: list[str] = Field(default_factory=list)
     diet_tags: list[str] = Field(default_factory=list)
@@ -117,13 +120,16 @@ class SeedIngredientFile(_Strict):
 class LabelNutrition(_Strict):
     serving_unit: str
     serving_grams: Decimal = Field(gt=0)
-    per_serving: dict[str, Decimal | None]
+    per_serving: dict[str, Decimal | None]  # tracked nutrient codes; None = not filled in yet
+    other_values: dict[str, Decimal] = Field(default_factory=dict)  # on the label, not tracked as nutrients
+    allergens: list[str] = Field(default_factory=list)
     placeholders: list[str] = Field(default_factory=list)  # values still to be filled from the label
-    source: str
+    source: Literal["package label"]
+    note: str | None = None
 
 
 class LabelPackage(_Strict):
-    count: int = Field(gt=0)
+    count: int = Field(gt=0)  # pieces or servings per package
     net_weight_g: Decimal = Field(gt=0)
     is_estimate: bool
     source: str
@@ -171,7 +177,7 @@ class SeedProduct(_Strict):
     price_basis: PriceBasis
     display_unit: str
     is_default: bool = False
-    prices: list[SeedPrice] = Field(min_length=1)
+    prices: list[SeedPrice] = Field(default_factory=list)  # empty = price not known yet
 
 
 class SeedProductFile(_Strict):
@@ -213,6 +219,8 @@ class SeedRecipeIngredient(_Strict):
     role: IngredientRole
     component: str | None = None
     optional: bool = False
+    # Quantities are raw / dry / as-sold weights; set this only when a line is something else ("cooked").
+    state: FoodState | None = None
 
     @field_validator("quantity")
     @classmethod

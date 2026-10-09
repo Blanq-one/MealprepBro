@@ -96,29 +96,80 @@ def test_fdc_ids_exist(seeded_db):
 
 
 def test_nutrition_complete(seeded_db):
-    """Every ingredient has energy/protein/carbs/fat, except label placeholders and pepperoni (held, and
-    USDA has no proximates for it yet)."""
+    """Every ingredient has energy/protein/carbs/fat, except pepperoni (held, and USDA has no proximates
+    for it yet)."""
     data = load_by_slug(seeded_db)
     gaps = {slug: [c for c in CORE_CODES if c not in d.profile.per_100g] for slug, d in data.items()}
     gaps = {slug: missing for slug, missing in gaps.items() if missing}
-    assert gaps == {
-        "protein-powder-double-chocolate": ["carbohydrate_g", "fat_g"],
-        "pepperoni": ["energy_kcal", "protein_g", "carbohydrate_g", "fat_g"],
+    assert gaps == {"pepperoni": ["energy_kcal", "protein_g", "carbohydrate_g", "fat_g"]}
+
+
+def _sources(session, slug):
+    ingredient = _slug(session, slug)
+    rows = session.execute(
+        select(Nutrient.code, IngredientNutrient.amount_per_100g, IngredientNutrient.source)
+        .join(Nutrient, Nutrient.id == IngredientNutrient.nutrient_id)
+        .where(IngredientNutrient.ingredient_id == ingredient.id)
+    ).all()
+    return {code: (amount, source) for code, amount, source in rows}
+
+
+def test_protein_powder_comes_from_the_package_label(seeded_db):
+    rows = _sources(seeded_db, "protein-powder-double-chocolate")
+    per_100g = {code: amount for code, (amount, _) in rows.items()}
+    # per scoop / 31 g x 100
+    assert per_100g == {
+        "energy_kcal": Decimal("387.0970"),
+        "protein_g": Decimal("77.4190"),
+        "fat_g": Decimal("4.8390"),
+        "saturated_fat_g": Decimal("3.2260"),
+        "carbohydrate_g": Decimal("9.6770"),
+        "fiber_g": Decimal("1.6130"),
+        "sugars_g": Decimal("3.2260"),
+        "sodium_mg": Decimal("419.3550"),
+        "calcium_mg": Decimal("419.3550"),
+        "iron_mg": Decimal("2.2580"),
+        "potassium_mg": Decimal("645.1610"),
     }
+    assert {source for _, source in rows.values()} == {"package_label"}
+    powder = _slug(seeded_db, "protein-powder-double-chocolate")
+    assert (powder.nutrition_source, powder.fdc_id, powder.heme_iron_fraction) == ("package_label", None, 0)
+    assert sorted(powder.diet_tags) == ["dairy", "soy"]  # allergens: milk, soy
+    units = load_by_slug(seeded_db)["protein-powder-double-chocolate"].units.named_units
+    assert units == {"scoop": Decimal("31.000")}
 
 
-def test_label_conversion_for_protein_powder(seeded_db):
-    data = load_by_slug(seeded_db)["protein-powder-double-chocolate"]
-    assert data.profile.per_100g == {"energy_kcal": Decimal("387.0970"), "protein_g": Decimal("80.6450")}
-    assert data.units.named_units == {"scoop": Decimal("31.000")}
-
-
-def test_tortilla_piece_weight_is_flagged_estimate(seeded_db):
+def test_tortilla_label_overrides_usda_and_usda_fills_the_gaps(seeded_db):
+    rows = _sources(seeded_db, "flour-tortilla-small")
+    on_label = {
+        "energy_kcal",
+        "protein_g",
+        "fat_g",
+        "saturated_fat_g",
+        "carbohydrate_g",
+        "fiber_g",
+        "sugars_g",
+        "sodium_mg",
+    }
+    assert {code for code, (_, source) in rows.items() if source == "package_label"} == on_label
+    assert rows["energy_kcal"] == (Decimal("297.2970"), "package_label")  # 110 kcal / 37 g
+    assert rows["sodium_mg"] == (Decimal("918.9190"), "package_label")  # 340 mg / 37 g
+    assert rows["protein_g"][0] == Decimal("8.1080")
+    assert rows["iron_mg"][1] == "usda"  # not among the label values: from USDA FDC 167535
     tortilla = _slug(seeded_db, "flour-tortilla-small")
-    assert tortilla.count_unit_weight_g == Decimal("21.733")
-    assert "ESTIMATE" in tortilla.notes
+    assert (tortilla.nutrition_source, tortilla.fdc_id) == ("package_label", 167535)
+
+
+def test_tortilla_piece_weight_from_the_label(seeded_db):
+    tortilla = _slug(seeded_db, "flour-tortilla-small")
+    assert tortilla.count_unit_weight_g == Decimal("37.000")  # 740 g / 20
+    assert "ESTIMATE" not in (tortilla.notes or "")
     unit = seeded_db.scalars(select(IngredientUnit).where(IngredientUnit.ingredient_id == tortilla.id)).one()
-    assert (unit.unit_name, unit.grams, unit.source) == ("tortilla", Decimal("21.733"), "label")
+    assert (unit.unit_name, unit.grams, unit.source) == ("tortilla", Decimal("37.000"), "package_label")
+    files = load_seed_files()
+    package = files.labels.packages["flour-tortilla-small"]
+    assert (package.count, package.net_weight_g, package.is_estimate) == (20, Decimal("740"), False)
+    assert {label.source for label in files.labels.labels.values()} == {"package label"}
 
 
 def test_usda_units_link_to_portions(seeded_db):
@@ -155,9 +206,10 @@ def test_price_rite_tortilla_price_is_exact_and_manual(seeded_db):
     observation, product = obs
     assert (observation.price_cents, observation.priced_quantity, observation.priced_unit) == (
         199,
-        Decimal("30.000"),
+        Decimal("20.000"),
         "count",
     )
+    assert product.name == "Flour tortillas, 20 ct (740 g)"
     assert observation.source == "manual"
     assert product.store_id == price_rite.id  # store brand
     others = seeded_db.scalars(select(PriceObservation).where(PriceObservation.id != observation.id)).all()
@@ -265,35 +317,107 @@ def test_default_settings(seeded_db):
     )
 
 
-def test_seven_recipes_complete_and_powder_recipes_incomplete(seeded_db):
+def test_all_seed_recipes_have_complete_nutrition(seeded_db):
     user = seeded_db.scalars(select(AppUser)).one()
     views = {v.version.title: v.calculation for v in seed_recipes(seeded_db, user.id)}
-    incomplete = {t for t, c in views.items() if not c.nutrition_complete}
-    assert incomplete == {"Double chocolate protein pudding", "Chocolate protein overnight oats"}
-    for title in incomplete:
-        assert views[title].incomplete_reasons == (
-            "incomplete: protein powder, double chocolate label values missing (carbohydrate_g, fat_g)",
-        )
+    assert all(c.nutrition_complete for c in views.values())
+    powder_recipes = {"Double chocolate protein pudding", "Chocolate protein overnight oats"}
     for title, calc in views.items():
-        if title not in incomplete:
+        if title in powder_recipes:  # protein powder price still pending
+            assert all(c.total.unpriced == ("protein powder, double chocolate",) for c in calc.costs), title
+        else:
             assert all(c.total.complete for c in calc.costs), title
 
 
-def test_powder_recipes_complete_once_label_values_are_filled(seeded_db, tmp_path, fixtures_dir):
+def test_powder_product_has_no_price_yet(seeded_db):
+    powder = _slug(seeded_db, "protein-powder-double-chocolate")
+    product = seeded_db.scalars(select(Product).where(Product.ingredient_id == powder.id)).one()
+    assert (product.package_amount, product.package_unit) == (Decimal("682.000"), "g")
+    observations = seeded_db.scalars(
+        select(PriceObservation).where(PriceObservation.product_id == product.id)
+    )
+    assert observations.all() == []
+
+
+def _copy_data(tmp_path):
     data_dir = tmp_path / "data"
     shutil.copytree(DATA_DIR, data_dir)
-    labels = json.loads((data_dir / "label_inputs.json").read_text(encoding="utf-8"))
-    fixture = json.loads((fixtures_dir / "label_values.json").read_text(encoding="utf-8"))
-    powder = labels["labels"]["protein-powder-double-chocolate"]
-    powder["per_serving"].update(fixture["protein-powder-double-chocolate"])
-    powder["placeholders"] = []
-    (data_dir / "label_inputs.json").write_text(json.dumps(labels), encoding="utf-8")
+    return data_dir
 
+
+def _base_recipe(data_dir):
+    return json.loads((data_dir / "recipes" / "1b_air_fryer_chicken_rice_broccoli.json").read_text("utf-8"))
+
+
+def test_a_missing_label_value_makes_recipes_incomplete(seeded_db, tmp_path):
+    data_dir = _copy_data(tmp_path)
+    labels = json.loads((data_dir / "label_inputs.json").read_text(encoding="utf-8"))
+    powder = labels["labels"]["protein-powder-double-chocolate"]
+    powder["per_serving"]["fat_g"] = None
+    powder["placeholders"] = ["fat_g"]
+    (data_dir / "label_inputs.json").write_text(json.dumps(labels), encoding="utf-8")
     seed_all(seeded_db, data_dir)
     user = seeded_db.scalars(select(AppUser)).one()
     views = {v.version.title: v.calculation for v in seed_recipes(seeded_db, user.id)}
-    assert views["Double chocolate protein pudding"].nutrition_complete
-    assert views["Chocolate protein overnight oats"].nutrition_complete
+    assert views["Double chocolate protein pudding"].incomplete_reasons == (
+        "incomplete: protein powder, double chocolate label values missing (fat_g)",
+    )
+
+
+def test_untracked_label_values_are_rejected(seeded_db, tmp_path):
+    data_dir = _copy_data(tmp_path)
+    labels = json.loads((data_dir / "label_inputs.json").read_text(encoding="utf-8"))
+    labels["labels"]["flour-tortilla-small"]["per_serving"]["cholesterol_mg"] = "0"
+    (data_dir / "label_inputs.json").write_text(json.dumps(labels), encoding="utf-8")
+    with pytest.raises(SeedError, match="other_values"):
+        seed_all(seeded_db, data_dir)
+
+
+def test_line_marked_cooked_with_a_dry_mapping_fails(seeded_db, tmp_path):
+    data_dir = _copy_data(tmp_path)
+    recipe = _base_recipe(data_dir)
+    recipe["title"] = "Cooked-rice bowl"
+    recipe["ingredients"] = [
+        dict(line, state="cooked") if line["ingredient"] == "rice-long-grain-white" else line
+        for line in recipe["ingredients"]
+    ]
+    (data_dir / "recipes" / "9y_cooked_rice.json").write_text(json.dumps(recipe), encoding="utf-8")
+    with pytest.raises(SeedError, match="the line says cooked, but its nutrition is for dry food"):
+        seed_all(seeded_db, data_dir)
+
+
+def test_raw_weight_line_with_a_cooked_mapping_fails(seeded_db, tmp_path):
+    # remap pasta (dry) to a cooked USDA food, then use it with the default raw / dry quantity
+    seeded_db.add(
+        UsdaFood(
+            fdc_id=9990001,
+            data_type="sr_legacy_food",
+            source_release="test",
+            description="Pasta, cooked, enriched, without added salt",
+        )
+    )
+    seeded_db.flush()
+    data_dir = _copy_data(tmp_path)
+    ingredients = json.loads((data_dir / "ingredients.json").read_text(encoding="utf-8"))
+    for item in ingredients["ingredients"]:
+        if item["slug"] == "pasta-dry":
+            item["fdc_id"] = 9990001
+    (data_dir / "ingredients.json").write_text(json.dumps(ingredients), encoding="utf-8")
+    recipe = _base_recipe(data_dir)
+    recipe["title"] = "Chicken pasta"
+    recipe["ingredients"] = [
+        dict(line, ingredient="pasta-dry") if line["ingredient"] == "rice-long-grain-white" else line
+        for line in recipe["ingredients"]
+    ]
+    (data_dir / "recipes" / "9x_pasta.json").write_text(json.dumps(recipe), encoding="utf-8")
+    with pytest.raises(SeedError, match="its nutrition is for cooked food, but recipe quantities are raw"):
+        seed_all(seeded_db, data_dir)
+
+
+def test_seed_lines_match_their_mappings(seeded_db):
+    data = {d.id: d for d in load_by_slug(seeded_db).values()}
+    for line in seeded_db.scalars(select(RecipeIngredient)):
+        assert data[line.ingredient_id].mapping_state.value != "cooked"
 
 
 def test_seed_rejects_a_recipe_with_a_pork_component(seeded_db, tmp_path):
@@ -319,8 +443,9 @@ def test_ingredient_report_has_zero_errors(seeded_db):
     report = build_report(seeded_db)
     assert report.errors == []
     text = format_report(report)
-    assert "carbohydrate_g, fat_g per scoop not filled yet" in text
-    assert "ESTIMATE" in text
+    assert "not filled yet" not in text
+    assert "ESTIMATE" not in text
+    assert report.placeholders == ["food-safety storage chart: 12 rows pending transcription (A1)"]
     held = " ".join(report.held)
     assert "gelatin, unflavored" in held and "pepperoni" in held
     assert any("ground beef" in e for e in report.excluded)

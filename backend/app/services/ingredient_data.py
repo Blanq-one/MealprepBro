@@ -7,9 +7,10 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db.models import Ingredient, IngredientNutrient, IngredientUnit, Nutrient
+from app.db.models import Ingredient, IngredientNutrient, IngredientUnit, Nutrient, UsdaFood
 from app.domain.exclusions import TaggedIngredient
 from app.domain.food_safety import SafetyCategory
+from app.domain.food_state import FoodState, mapping_state
 from app.domain.frequency_caps import CapIngredient
 from app.domain.nutrition import NutritionProfile
 from app.domain.units import IngredientUnits, UnitKind
@@ -28,14 +29,24 @@ class IngredientData:
     profile: NutritionProfile
     tagged: TaggedIngredient
     nutrition_source: str
+    fdc_id: int | None = None
+    usda_description: str | None = None
 
     @property
     def cap_view(self) -> CapIngredient:
         return CapIngredient(self.id, self.slug, self.tagged.diet_tags)
 
+    @property
+    def mapping_state(self) -> FoodState:
+        """The state (raw / dry / cooked / as-sold) its nutrition describes."""
+        return mapping_state(self.usda_description, self.category, self.nutrition_source)
+
 
 def _build(
-    ingredient: Ingredient, units: list[IngredientUnit], nutrients: dict[str, Decimal]
+    ingredient: Ingredient,
+    units: list[IngredientUnit],
+    nutrients: dict[str, Decimal],
+    usda_description: str | None,
 ) -> IngredientData:
     return IngredientData(
         id=ingredient.id,
@@ -66,6 +77,8 @@ def _build(
             review_note=ingredient.diet_review_note,
         ),
         nutrition_source=ingredient.nutrition_source,
+        fdc_id=ingredient.fdc_id,
+        usda_description=usda_description,
     )
 
 
@@ -89,7 +102,16 @@ def load_ingredients(session: Session, ids: Iterable[int] | None = None) -> dict
     )
     for ingredient_id, code, amount in rows:
         nutrients[ingredient_id][code] = amount
-    return {i.id: _build(i, units[i.id], nutrients[i.id]) for i in ingredients}
+    fdc_ids = {i.fdc_id for i in ingredients if i.fdc_id is not None}
+    descriptions = dict(
+        session.execute(select(UsdaFood.fdc_id, UsdaFood.description).where(UsdaFood.fdc_id.in_(fdc_ids)))
+        .tuples()
+        .all()
+    )
+    return {
+        i.id: _build(i, units[i.id], nutrients[i.id], descriptions.get(i.fdc_id) if i.fdc_id else None)
+        for i in ingredients
+    }
 
 
 def load_by_slug(session: Session) -> dict[str, IngredientData]:

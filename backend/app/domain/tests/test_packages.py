@@ -74,7 +74,7 @@ def test_bone_in_purchase_quantity_from_edible_fraction():
 
 
 def test_tortillas_covered_by_an_open_bag():
-    plan = purchase_need(D(10), D(25), D(30), "count")
+    plan = purchase_need(D(10), D(15), D(20), "count")  # 15 left in a 20-count bag
     assert plan.packages == 0
 
 

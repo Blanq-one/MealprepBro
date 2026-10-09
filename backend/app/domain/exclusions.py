@@ -23,6 +23,7 @@ KNOWN_DIET_TAGS = frozenset(
         "shellfish",
         "egg",
         "dairy",
+        "soy",
         "lamb",
         "beef",
         HELD_TAG,

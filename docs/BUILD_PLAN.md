@@ -1,6 +1,6 @@
 # Mealbro Build Plan
 
-**Status:** v3, **approved** 2026-10-08 with the changes recorded in §12.1. Phase 0 built; waiting for your review.
+**Status:** v3, **approved** 2026-10-08 with the changes recorded in §12.1. Phase 0 approved; pre-Phase 1 tasks done. Waiting for your go-ahead on Phase 1.
 **Source documents:** `CLAUDE.md` (build rules, wins on conflict), `docs/PRD.md` (product vision).
 
 This plan covers Phases 0–6. One phase per session. A phase is done only when its acceptance criteria are met, its tests pass, and the test output has been shown.
@@ -15,7 +15,8 @@ This plan covers Phases 0–6. One phase per session. A phase is done only when 
 |---|---|---|---|---|---|
 | — | Repo setup (git init, .gitignore, initial commit) | Done | 2026-10-08 | 2026-10-08 | Commit `3c7a499`. Done before Phase 0 per instruction. |
 | — | Build plan | Approved (v3) | 2026-10-08 | 2026-10-08 | v1 reviewed → v2 (seed library, per-phase migrations, narrow prose filter, rounded-plan validator, strict/best-effort). v3 = approval changes: table audit (§4.2a), exposure logging → Phase 2, beef-only exclusion + pork frequency cap, R1–R7 answers, A2 label values. |
-| 0 | Data foundation | Built, awaiting your review | 2026-10-08 | 2026-10-08 | 321 tests pass (local + Docker), domain coverage 99.6% (domain tests alone), ruff/mypy clean. 185 ingredients, 649 aliases, 9 draft seeds. Open: FoodSafety.gov chart (A1), powder carbs/fat (A2), R8. Deviations in the Phase 0 outcome note (§9). |
+| 0 | Data foundation | Approved | 2026-10-08 | 2026-10-08 | 321 tests pass (local + Docker), domain coverage 99.6% (domain tests alone), ruff/mypy clean. 185 ingredients, 649 aliases, 9 draft seeds. Open: FoodSafety.gov chart (A1), powder carbs/fat (A2), R8. Deviations in the Phase 0 outcome note (§9). |
+| — | Pre-Phase 1 tasks | Done | 2026-10-08 | 2026-10-08 | Package-label data (tortillas, protein powder), USDA mapping review sheet (`docs/review/usda_mappings.md`), raw/dry/as-sold rule + check (§7.8), CLAUDE.md machine-boundaries rule. |
 | 1 | Planning brain | Not started | | | |
 | 2 | Mobile PWA + cloud deploy | Not started | | | |
 | 3 | Feedback loop | Not started | | | |
@@ -330,7 +331,7 @@ ingredient
   shelf_life_days_freezer smallint NULL
   typical_location        text NULL
   assume_in_stock         bool NN DEFAULT false   -- salt, pepper, water, common spices
-  nutrition_source        text NN      -- usda | label | manual
+  nutrition_source        text NN      -- usda | package_label | manual
   fdc_id                  integer NULL FK→usda_food.fdc_id
   nutrition_reviewed_at   timestamptz NULL
   notes                   text NULL
@@ -350,7 +351,7 @@ ingredient_nutrient                             -- nutrition source of truth, pe
   ingredient_id     bigint FK→ingredient
   nutrient_id       smallint FK→nutrient
   amount_per_100g   numeric(12,4) NN
-  source            text NN      -- usda | label | manual | derived
+  source            text NN      -- usda | package_label | manual | derived (per nutrient row)
   fdc_id            integer NULL
   PK (ingredient_id, nutrient_id)               -- missing row = unknown, never zero
 
@@ -359,7 +360,7 @@ ingredient_unit                                 -- named portions; override dens
   ingredient_id     bigint NN FK→ingredient
   unit_name         text NN      -- clove | head | slice | can | scoop | tortilla | cup_chopped | large | …
   grams             numeric(10,3) NN CHECK > 0
-  source            text NN      -- usda_portion | label | manual
+  source            text NN      -- usda_portion | package_label | manual
   usda_portion_id   bigint NULL FK→usda_food_portion
   UQ (ingredient_id, unit_name)
 
@@ -1204,6 +1205,22 @@ How the filter decides:
 - REST under `/api/v1`. Errors are `application/problem+json`. Long operations return `202` + a run id.
 - Environment-only config; `.env.example` updated in every phase.
 
+### 7.8 Raw / dry / as-sold rule (added before Phase 1)
+
+- **Recipe quantities are raw, dry or as-sold weights** unless a line explicitly says otherwise (`state`:
+  `raw`, `dry`, `cooked` or `as_sold`).
+- **Every nutrition mapping has a state,** read from its USDA description by `domain/food_state.py`. A
+  segment that starts with a cooking word (cooked, boiled, roasted, fried…) means `cooked`; "dry",
+  "dried", "uncooked" or a spice means `dry`; USDA's "raw" for grains and legumes means `dry`;
+  canned / frozen / cured / packaged foods are `as_sold`. Package-label foods are always `as_sold`.
+- **The check** (`line_state_error`) fails a line when:
+  - it uses the default (raw/dry/as-sold) and the mapping is cooked;
+  - it says `cooked` and the mapping isn't;
+  - it says `dry` or `raw` and the mapping is as-sold, which may be canned and hydrated.
+
+  The seed loader enforces it today, and the Phase 1 recipe validator will reuse it.
+- Explicit line states are validated but not stored yet: `recipe_ingredient` has no state column, and no line needs one. If Phase 1 needs one, I'll flag it before adding a column.
+
 ---
 
 ## 8. PRD coverage map
@@ -1375,7 +1392,7 @@ How the filter decides:
 6. **Prompts** (`candidate_generation`, `recipe_revision`), each with `PROMPT_VERSION`. They include the slot/mood/kcal-per-portion target, the ingredient vocabulary minus excluded, held and never-favored capped items (pork components), the **never-use list** (beef and everything derived from it, unspecified gelatin and other held items), inventory and open packages to use up, the "use flour tortillas where a recipe calls for chapati/roti" rule, and raw/dry quantity rules.
 7. **Ingredient resolver:** exact alias → normalized alias → trigram with margin → unresolved (suggestions in the retry message; logged for the "suggested new ingredients" queue derived from `llm_call.error_detail`, approved via `POST /api/v1/ingredients/suggested/{name}/approve`).
 8. **Accepted substitutions applied:** a resolved `chapati` becomes `flour tortilla, small` via `ingredient_substitution` (count for count), recorded as `adjustment=substituted`.
-9. **Recipe validator:** exclusions (ingredient level + step text naming an excluded food); units valid for the ingredient; plausible per-serving amounts; equipment ⊆ available; time and complexity vs mood; **prose filter §7.3**.
+9. **Recipe validator:** exclusions (ingredient level + step text naming an excluded food); raw/dry/as-sold state of every line vs its mapping (§7.8); units valid for the ingredient; plausible per-serving amounts; equipment ⊆ available; time and complexity vs mood; **prose filter §7.3**.
 10. **Candidate pool:** seed drafts + saved versions first (0 calls) → gap analysis → batch generation only for uncovered (slot, mood) → targeted revision → dedupe → persist.
 11. **Rendering:** sections, injected safety lines, code storage/reheating text, "≈ X g per container", nutrient labels, a "draft" badge for seed versions.
 12. **Solver (PuLP + CBC):**
@@ -1810,6 +1827,16 @@ No other dependencies are planned. Auth uses the stdlib, and the solver uses PuL
 | A2 | Label values | Protein powder (double chocolate): scoop 31 g, 120 kcal, 25 g protein. Price Rite small flour tortillas (30 ct, $1.99): net weight ≈ 23 oz (652 g), ≈ 22 g each, an **estimate** from a 20–26 oz range, flagged for exact label values (net weight, serving size) later. |
 | A1 | FoodSafety.gov | Retried in Phase 0; if still blocked, you'll save the chart as a PDF into `docs/sources/`. |
 
+**Pre-Phase 1 (2026-10-08)**
+
+| # | Topic | Decision |
+|---|---|---|
+| L1 | Package labels | Tortillas and protein powder are package-label ingredients (source "package label") that override their USDA mappings. Tortillas: 20 per bag, 37 g each, 740 g, $1.99 (replaces the 30-count / 23 oz estimate; "estimated" flag removed). Powder: 31 g scoop, 120 kcal, 24 g protein (not 25), 22 scoops / 682 g, allergens milk and soy; price pending. |
+| L2 | USDA mapping review | `docs/review/usda_mappings.md`: every mapping sorted by share of seed calories, with state and auto-flags; top 25 marked "Krish to review". |
+| L3 | Raw / dry rule | Recipe quantities are raw / dry / as-sold unless a line says otherwise; the check is in §7.8. |
+| L4 | Pepperoni, salami | Stay held. No further action. |
+| L5 | Machine boundaries | CLAUDE.md: never install system-level software, change machine settings, or start/stop applications outside the repo without asking first. |
+
 ### 12.2 Remaining questions (from applying your answers)
 
 - **R8. Other possibly-beef items.** I applied your gelatin rule ("source not stated → excluded by default, since it may be bovine") to the other items from the old R2 list that could contain beef. All are **held** (excluded until you allow them), and none is in a seed recipe, so nothing is blocked today:
@@ -1817,15 +1844,15 @@ No other dependencies are planned. Auth uses the stdlib, and the solver uses PuL
   - bouillon/stock cubes and "natural flavors" (may contain beef fat or extract)
   - collagen peptides (often bovine)
   - marshmallows (gelatin)
-  - generic pepperoni and salami (often pork + beef; a pork-only product can be allowed and then counts toward the pork cap)
+  - generic pepperoni and salami (often pork + beef). **Decided (L4): they stay held.**
 
-  Allow any of these outright (e.g. "all cheese is fine"), per product, or keep them held?
+  Still open for cheese, bouillon cubes, collagen and marshmallows: allow outright (e.g. "all cheese is fine"), per product, or keep them held?
 - *Resolved by R2 (pork allowed):* chicken/turkey sausage in pork casing and refried beans made with lard are now `pork_trace` (unlimited); lard itself is `pork_trace` too, since it's a cooking fat rather than a meal component.
 
 ### 12.3 Action items for you
 
-- **A1. FoodSafety.gov chart.** The page returned HTTP 403 again at the Phase 0 retry (2026-10-08, both fetch methods). Please save it as a PDF into `docs/sources/`. Until then, every chart-derived storage value is stored as *pending* and is never shown or used; your fixed values (leftovers 3 days, reheat 165 F) are live.
-- **A2 (remaining).** Protein powder: **carbs and fat per scoop** (plus fiber, sugar, sodium and iron if listed) — the pudding and overnight oats stay "incomplete" until these are in `backend/app/seed/data/label_inputs.json`. Tortillas: exact net weight and serving size from the bag, to replace the 652 g estimate.
+- **A1. FoodSafety.gov chart.** The page returned HTTP 403 to automated fetches (twice). **You saved the PDF to `docs/sources/` (2026-10-08).** It isn't transcribed yet, so every chart-derived storage value is still *pending*; your fixed values (leftovers 3 days, reheat 165 F) are live. Transcription needs your go-ahead.
+- **A2. Label values: done** (L1). Only the protein powder price is still pending.
 - **A3. Cloud provider (before Phase 2).** At the end of Phase 1 I'll bring a short comparison (cost, managed Postgres, HTTPS, cold starts) for you to choose from.
 
 ---
@@ -1863,7 +1890,7 @@ All seeds are loaded as `origin=seed`, `created_by=system`, `is_draft=true`. The
 - **3a. Double chocolate protein pudding.** Simple · no-cook · base 2 · ≈ 5 min + chill 30 min.
   - *Ingredients:* protein powder, double chocolate 2 scoops (31 g each, from your label) · Greek yogurt, plain nonfat 340 g · unsweetened cocoa powder 1 tbsp · milk (2%) 60 ml · vanilla extract ½ tsp (optional).
   - *Outline:* whisk powder, cocoa and milk into a smooth paste; fold into the yogurt; divide into 2 cups; chill.
-  - *Note:* not plannable until the powder's carbs and fat per scoop are filled (A2).
+  - *Note:* nutrition complete from your package label (L1); cost pending until you give the powder's price.
 
 **Family 4: Egg breakfast** (breakfast; R3)
 
@@ -1876,4 +1903,4 @@ All seeds are loaded as `origin=seed`, `created_by=system`, `is_draft=true`. The
 - **5a. Chocolate protein overnight oats.** Simple · no-cook · base 2 · ≈ 5 min + refrigerate overnight.
   - *Ingredients:* old-fashioned rolled oats 80 g · protein powder, double chocolate 2 scoops · milk (2%) 300 ml · Greek yogurt, plain nonfat 100 g · chia seeds 12 g (USDA has no spoon measure for chia, so it's authored in grams) · banana 1 (optional, for topping).
   - *Outline:* whisk powder into the milk until smooth; stir in yogurt, oats and chia; divide into 2 jars; refrigerate overnight; top with sliced banana when serving.
-  - *Note:* not plannable until the powder's carbs and fat per scoop are filled (A2).
+  - *Note:* nutrition complete from your package label (L1); cost pending until you give the powder's price.

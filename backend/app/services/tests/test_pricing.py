@@ -77,13 +77,13 @@ def test_tortilla_options_compare_per_tortilla(seeded_db):
     prices = current_prices(seeded_db, [data.id])
     pr = best_price_at_store(prices, data.id, stores["Price Rite"], "count", data.units)
     ss = best_price_at_store(prices, data.id, stores["Stop & Shop"], "count", data.units)
-    assert pr[1] == Decimal(199) / 30
+    assert pr[1] == Decimal(199) / 20
     assert ss[1] == Decimal(279) / 10
     best, _ = cheapest_current_option(prices, data.id, "count", data.units)
     assert best.store_name == "Price Rite"
-    # grams bridge through the estimated piece weight
+    # grams bridge through the label piece weight (37 g)
     per_g = best_price_at_store(prices, data.id, stores["Price Rite"], "g", data.units)[1]
-    expected = Decimal(199) / 30 / Decimal("21.733")
+    expected = Decimal(199) / 20 / Decimal(37)
     assert abs(per_g - expected) < Decimal("1e-20")
 
 

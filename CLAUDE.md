@@ -75,6 +75,10 @@ Safe internal temperatures and storage/reheating guidance come from a hardcoded 
 6. If something in the plan turns out to be wrong mid-phase, stop and tell me before changing direction.
 7. Commit at the end of each phase with a clear message.
 
+## Machine boundaries
+
+- Never install system-level software, change machine settings, or start/stop applications outside the repo without asking me first.
+
 ## Code conventions
 
 - Type hints everywhere. Pydantic models at every API boundary.

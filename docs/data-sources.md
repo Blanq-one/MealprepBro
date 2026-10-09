@@ -23,15 +23,25 @@ price-related is ever taken from the LLM.
   ingredient's FDC food and really is the stated measure.
 - **Test fixture:** `backend/app/testing/fixtures/usda_subset/` holds only the ~180 foods the seed references
   (rebuild with `python -m app.cli usda-subset`). Tests and a fresh clone seed from it without the download.
-- **Mappings to review:** every USDA mapping starts unreviewed (`nutrition_reviewed_at` is empty).
-  `garam masala` has no USDA entry and is approximated by curry powder (flagged in `ingredient-report`).
+- **Mappings to review:** every USDA mapping starts unreviewed (`nutrition_reviewed_at` is empty). The
+  review sheet is [`docs/review/usda_mappings.md`](review/usda_mappings.md) (regenerate with
+  `python -m app.cli mapping-review`). `garam masala` has no USDA entry and is approximated by curry powder.
+- **States:** recipe quantities are raw / dry / as-sold weights unless a line says otherwise, and each
+  mapping's state is read from its USDA description (BUILD_PLAN §7.8).
 
-## Your labels (`backend/app/seed/data/label_inputs.json`)
+## Package labels (`backend/app/seed/data/label_inputs.json`, source "package label")
 
-- Protein powder, double chocolate: scoop 31 g, 120 kcal, 25 g protein (your values, 2026-10-08).
-  **Carbs and fat per scoop are still empty**, so recipes using the powder are reported as incomplete.
-- Price Rite small flour tortillas, 30 count: net weight ≈ 23 oz (652 g), **an estimate** from a 20–26 oz
-  range; piece weight = 652 / 30 = 21.733 g, computed by the loader. Replace with the exact label values.
+Package-label values override the USDA mapping. Per-serving values are converted to per 100 g by code.
+
+- **Price Rite flour tortillas** ($1.99/bag): 20 per bag, 1 tortilla = 37 g, net weight 740 g. Per tortilla:
+  110 kcal, fat 2 g (sat 1 g, trans 0 g), cholesterol 0 mg, sodium 340 mg, carbs 19 g, fiber 2 g, total sugars
+  1 g (0 g added), protein 3 g. The values given don't include iron, calcium, potassium or vitamins; those
+  come from the USDA mapping (FDC 167535), and each nutrient row records its own source.
+- **Double chocolate whey protein powder**: 1 scoop = 31 g, 22 servings per container (682 g). Per scoop:
+  120 kcal, fat 1.5 g (sat 1 g), cholesterol 55 mg, sodium 130 mg, carbs 3 g, fiber <1 g (stored as 0.5 g),
+  total sugars 1 g, protein 24 g, calcium 130 mg, iron 0.7 mg (non-heme), potassium 200 mg. Allergens: milk,
+  soy. No USDA mapping.
+- Trans fat, cholesterol and added sugars are recorded in the label file but aren't tracked nutrients yet.
 
 ## Food safety
 
@@ -39,15 +49,16 @@ price-related is ever taken from the LLM.
   `backend/app/domain/food_safety.py`.
 - Storage durations: to be transcribed from the FoodSafety.gov Cold Food Storage Chart,
   <https://www.foodsafety.gov/food-safety-charts/cold-food-storage-charts>. The page returned HTTP 403 to
-  automated fetches on 2026-10-08 (twice). Until a saved copy is in `docs/sources/`, every chart value is
-  **pending** and unused. Values are never taken from secondary sources.
+  automated fetches on 2026-10-08 (twice). You saved the PDF to `docs/sources/` on 2026-10-08; it isn't
+  transcribed yet, so every chart value is still **pending** and unused. Values are never taken from
+  secondary sources.
 - Your fixed values (live now): cooked leftovers 3 days in the fridge; reheat to 165 °F.
 
 ## Prices (`backend/app/seed/data/products_prices.json`)
 
 - Stores: Stop & Shop (primary), Price Rite (secondary).
-- One real price: Price Rite small flour tortillas, 30 count, $1.99 (`source = manual`).
+- One real price: Price Rite flour tortillas, 20 per bag, $1.99 (`source = manual`).
 - Every other price is an **estimate** (`source = estimate`, observed 2026-10-08), with Price Rite chicken
   set below Stop & Shop. Estimates are shown as "est." and never produce "cheap" or "deal" labels. Real
   entries supersede them per store.
-- Protein powder has no price yet.
+- Protein powder has no price yet (product: 682 g tub, 22 scoops).

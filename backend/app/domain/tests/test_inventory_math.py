@@ -8,7 +8,7 @@ from app.domain.units import IngredientUnits, UnitKind
 
 D = Decimal
 CHICKEN = IngredientUnits("chicken thigh", UnitKind.MASS)
-TORTILLA = IngredientUnits("flour tortilla, small", UnitKind.COUNT, count_unit_weight_g=D("21.733"))
+TORTILLA = IngredientUnits("flour tortilla, small", UnitKind.COUNT, count_unit_weight_g=D("37"))
 
 
 def test_fifo_by_expiry():
@@ -49,10 +49,10 @@ def test_partial_lot_and_shortfall():
 
 def test_cross_unit_lots():
     # need 10 tortillas; one lot recorded in grams, one in count
-    lots = [Lot(1, D("108.665"), "g", expires_on=date(2026, 10, 10)), Lot(2, D(25), "count")]
+    lots = [Lot(1, D(185), "g", expires_on=date(2026, 10, 10)), Lot(2, D(15), "count")]
     alloc = allocate(D(10), "count", lots, TORTILLA)
     assert alloc.takes[0].lot_id == 1
-    assert alloc.takes[0].quantity == D("108.665")  # 5 tortillas, whole lot
+    assert alloc.takes[0].quantity == D(185)  # 5 tortillas of 37 g, whole lot
     assert alloc.takes[1].quantity == D(5)
     assert alloc.shortfall == 0
 

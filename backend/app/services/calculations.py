@@ -7,6 +7,7 @@ from decimal import Decimal
 from sqlalchemy.orm import Session
 
 from app.domain.cost import CostLine, CostTotal, consumed_cost, per_portion_cents
+from app.domain.enums import NutritionSource
 from app.domain.nutrition import CORE_CODES, NutritionLine, NutritionTotals, divide, total
 from app.domain.scaling import ScaledLine, scale_factor, scale_line
 from app.domain.units import grams_of, normalize_unit, to_base
@@ -77,7 +78,7 @@ def _resolve(lines: Sequence[LineInput], data: dict[int, IngredientData]) -> lis
 
 
 def _label_reason(data: IngredientData, missing: Sequence[str]) -> str:
-    if data.nutrition_source == "label":
+    if data.nutrition_source == NutritionSource.PACKAGE_LABEL:
         return f"incomplete: {data.name} label values missing ({', '.join(missing)})"
     return f"incomplete: {data.name} has no {', '.join(missing)} in its nutrition source"
 

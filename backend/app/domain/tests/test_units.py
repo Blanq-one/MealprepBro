@@ -38,7 +38,7 @@ ONION = IngredientUnits(
     count_unit_weight_g=D("110"),
     named_units={"cup_chopped": D("160")},
 )
-TORTILLA = IngredientUnits("flour tortilla, small", UnitKind.COUNT, count_unit_weight_g=D(652) / D(30))
+TORTILLA = IngredientUnits("flour tortilla, small", UnitKind.COUNT, count_unit_weight_g=D(740) / D(20))
 NO_DATA = IngredientUnits("mystery", UnitKind.MASS)
 
 
@@ -111,9 +111,9 @@ def test_named_unit_wins_over_generic_unit_with_the_same_name():
     assert to_base(D(1), "cup", rice) == Quantity(D(185), BaseUnit.G)
 
 
-def test_thirty_tortillas_weigh_the_estimated_bag_weight():
-    assert grams_of(D(30), "count", TORTILLA).quantize(D("0.001")) == D("652.000")
-    assert convert(D(652), "g", "count", TORTILLA).quantize(D("0.001")) == D("30.000")
+def test_a_bag_of_twenty_tortillas_weighs_740_g():
+    assert grams_of(D(20), "count", TORTILLA) == D(740)  # the bag: 20 x 37 g
+    assert convert(D(740), "g", "count", TORTILLA) == D(20)
 
 
 def test_cross_kind_conversions():
