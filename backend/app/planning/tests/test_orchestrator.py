@@ -2,19 +2,23 @@
 
 import json
 from datetime import date, timedelta
+from decimal import Decimal
 
 import pytest
 from sqlalchemy import func, select
 
-from app.db.models import GenerationRun, MealPlan, PlanCookBatch, PlanMeal
-from app.domain.enums import MealSlot
+from app.db.models import GenerationRun, Ingredient, MealPlan, PlanCookBatch, PlanMeal
+from app.domain.enums import MealSlot, PlanningMode, StorageLocation
 from app.llm.fake import FakeLLMClient, fixture_response, fixture_text, response
 from app.planning import orchestrator as orch
+from app.planning import post_solve
 from app.planning.orchestrator import Orchestrator
 from app.planning.persistence import accept_plan
 from app.planning.plan_validator import Issue, ValidationReport, validate_plan
+from app.planning.post_solve import RoundingFit
 from app.planning.reference import load_reference
 from app.schemas.plans import DayOverride, PlanRequest
+from app.services.inventory import LotInput, add_lot
 from app.services.settings import current_user
 from app.testing.llm import FakeClock, make_settings
 
@@ -142,7 +146,10 @@ def test_identical_rerun_makes_zero_llm_calls(seeded_db):
 
 
 def test_rounding_over_a_limit_is_re_solved_and_the_validator_sees_whole_eggs(seeded_db, monkeypatch):
-    monkeypatch.setattr(orch, "initial_rounding_bias", lambda problem: {})  # first solve ignores rounding
+    # the first solve ignores what rounding does, and the joint snap is off, so rounding has to be caught by
+    # the validator and fixed by a re-solve
+    monkeypatch.setattr(orch, "rounding_fit", lambda problem, nutrient="energy_kcal": RoundingFit({}, {}))
+    monkeypatch.setattr(post_solve, "snap_batches", lambda problem, solution: None)
     seen = []
     out = run(seeded_db, FakeLLMClient.failing(), spy=seen.append)
     assert out.status == "succeeded", out.error
@@ -205,19 +212,59 @@ def test_llm_failure_fails_the_run_and_persists_nothing(seeded_db):
     )
 
 
-@pytest.mark.parametrize("budget_is_hard", [True, False])
-def test_unpriced_protein_powder_in_hard_vs_soft_budget(seeded_db, budget_is_hard):
-    """Your rule: a hard budget excludes recipes with unpriced ingredients and says why; a soft budget keeps
-    them and marks the cost incomplete."""
-    out = run(seeded_db, None, weekly_budget_cents=15000, budget_is_hard=budget_is_hard, allow_llm=False)
-    if budget_is_hard:
+@pytest.mark.parametrize("budget_cents", [15000, None])
+def test_unpriced_protein_powder_with_and_without_a_budget(seeded_db, budget_cents):
+    """Your rule: a budget (always a hard limit now) excludes recipes with unpriced ingredients and says why;
+    without a budget they stay and the cost is marked incomplete."""
+    out = run(seeded_db, None, budget_cents=budget_cents, allow_llm=False)
+    if budget_cents is not None:
         assert out.status == "infeasible"
         text = " ".join(d.message for d in out.diagnostics)
-        assert (
-            "protein powder, double chocolate has no price" in text and "hard budget can't be checked" in text
-        )
+        assert "protein powder, double chocolate has no price" in text and "budget can't be checked" in text
     else:
         assert out.status == "succeeded", out.error
-        assert not out.plan.totals.cost_complete
+        assert not out.plan.totals.cost_complete and not out.plan.costs.complete
         assert out.plan.totals.unpriced == ("protein powder, double chocolate",)
         assert any(w.code == "COST_INCOMPLETE" for w in out.report.warnings)
+
+
+def add_powder(session, scoops=40):
+    user = current_user(session)
+    powder = session.scalars(
+        select(Ingredient.id).where(Ingredient.slug == "protein-powder-double-chocolate")
+    ).one()
+    add_lot(session, user.id, LotInput(powder, Decimal(scoops), "scoop", StorageLocation.PANTRY))
+
+
+def test_inventory_mode_with_an_empty_fridge_explains_exactly_what_is_missing(seeded_db):
+    add_powder(seeded_db)  # the powder is the only thing in stock
+    out = run(seeded_db, None, mode=PlanningMode.INVENTORY, allow_llm=False)
+    assert out.status == "infeasible"
+    (short,) = [d for d in out.diagnostics if d.code == "INVENTORY_SHORT"]
+    assert short.message.startswith("Your inventory doesn't cover this week.")
+    assert "The smallest top-up that makes a plan is about $" in short.message
+    assert "chicken" in short.message and "protein powder" not in short.message
+    assert out.error["code"] == "infeasible" and plans(seeded_db) == 0
+
+
+def test_shop_budget_too_low_for_the_seed_week_says_what_the_cheapest_plan_costs(seeded_db):
+    add_powder(seeded_db)  # with the powder in stock, the budget can be checked
+    out = run(seeded_db, None, budget_cents=3000, allow_llm=False)
+    assert out.status == "infeasible"
+    (short,) = [d for d in out.diagnostics if d.code == "BUDGET_SHORT"]
+    assert "over your budget of $30.00" in short.message and short.amount > 0
+    assert "It would buy:" in short.message
+
+
+def test_the_seed_week_meets_the_protein_target_and_reports_its_money(seeded_db):
+    out = run(seeded_db, None, allow_llm=False)
+    assert out.status == "succeeded", out.error
+    plan = out.plan
+    assert plan.constraints.daily_protein_target_g == 100
+    assert plan.totals.week_protein_g >= 700  # weekly mode: the week's floor is 7 × 100 g
+    m = plan.costs
+    assert m.cash_cents == plan.grocery.total_cents
+    assert m.cash_cents + m.from_inventory_cents == m.eaten_cents + m.frozen_portions_cents + m.leftover_cents
+    # raw chicken bought Monday and cooked later than its 1-day fridge life is frozen on shopping day
+    assert plan.freeze and all(f.freeze_on == WEEK for f in plan.freeze)
+    assert all(f.use_on is None or f.use_on > WEEK + timedelta(days=1) for f in plan.freeze)

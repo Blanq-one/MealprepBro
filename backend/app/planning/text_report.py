@@ -1,12 +1,16 @@
-"""Plain-text week report for `cli plan-week`: each day's meals, daily and weekly kcal and protein, cost
-by store, notes, warnings, or the infeasibility explanation. Formatting only; every number comes from the
-plan."""
+"""Plain-text week report for `cli plan-week`: the planning mode, each day's meals, daily and weekly kcal and
+protein against the target, hands-on and start-to-finish cooking time, the week's money (cash this trip,
+food eaten, leftovers carried into inventory, expected waste), cost by store or the top-up buy list,
+freeze-on-shopping-day instructions, notes, warnings, or the infeasibility explanation. Formatting only;
+every number comes from the plan."""
 
 from collections.abc import Mapping, Sequence
 from decimal import ROUND_HALF_UP, Decimal
 
-from app.domain.enums import CalorieMode, MealSlot
+from app.domain.enums import CalorieMode, MealSlot, NutritionPriority, PlanningMode
+from app.domain.quantities import format_fraction
 from app.planning.orchestrator import PlanOutcome
+from app.planning.perishables import freeze_text
 from app.planning.rounded import RoundedMeal, RoundedPlan
 
 MAX_TITLE = 70
@@ -19,6 +23,45 @@ def _money(cents: int) -> str:
 def _minutes(total: int) -> str:
     hours, minutes = divmod(total, 60)
     return f"{hours} h {minutes:02d} min" if hours else f"{minutes} min"
+
+
+def _amount(quantity: Decimal, unit: str) -> str:
+    if unit == "count":
+        return format_fraction(quantity.quantize(Decimal("0.5"), ROUND_HALF_UP))
+    return f"{quantity.quantize(Decimal(1), ROUND_HALF_UP):,} {unit}"
+
+
+def mode_line(plan: RoundedPlan) -> str:
+    c = plan.constraints
+    limit = c.purchase_limit_cents
+    if c.planning_mode is PlanningMode.INVENTORY:
+        if not limit:
+            return "inventory: cook from what you have, buy nothing"
+        return f"inventory: cook from what you have, with a top-up of up to {_money(limit)} for missing items"
+    first = "shop: your inventory first, then the grocery list"
+    if limit is None:
+        return f"{first} (no budget: the cost is minimized)"
+    return f"{first} (budget: {_money(limit)} cash this trip, a hard limit)"
+
+
+def protein_line(plan: RoundedPlan) -> str:
+    c = plan.constraints
+    t = plan.totals
+    text = f"{_g(t.week_protein_g)} this week ({_g(t.week_protein_g / len(c.days))}/day)"
+    focus = [
+        p.value
+        for p in (c.nutrition_priority, c.secondary_priority)
+        if p and p is not NutritionPriority.PROTEIN
+    ]
+    if focus:
+        text += f" | focus: {', then '.join(focus)}"
+    target = c.daily_protein_target_g
+    if not target:
+        return text + " | no protein target"
+    if c.calorie_mode is CalorieMode.STRICT_DAILY:
+        return text + f" | target {target} g every day (a floor; more earns nothing)"
+    week = c.week_protein_target_g
+    return text + f" | target {target} g/day, week >= {week:,} g (a floor; more earns nothing)"
 
 
 def _g(value: Decimal) -> str:
@@ -66,16 +109,14 @@ def format_plan(
         + (f"  (plan #{outcome.plan_id}, draft)" if outcome.plan_id else ""),
         f"Run #{outcome.run_id}: {outcome.llm_calls} LLM calls, {outcome.tokens:,} tokens",
         "",
+        f"Mode:      {mode_line(plan)}",
         f"Calories:  {t.week_kcal:,} / {c.weekly_kcal_target:,} kcal planned ({limits_line(plan)})",
-        f"Protein:   {_g(t.week_protein_g)} this week ({_g(t.week_protein_g / len(c.days))}/day)"
-        f" | focus: {c.nutrition_priority.value}"
-        + (f", then {c.secondary_priority.value}" if c.secondary_priority else ""),
-        f"Cooking:   {_minutes(sum(t.hands_on_minutes.values()))} hands-on over "
+        f"Protein:   {protein_line(plan)}",
+        f"Cooking:   {_minutes(sum(t.hands_on_minutes.values()))} hands-on, about "
+        f"{_minutes(sum(t.elapsed_minutes.values()))} start to finish, over "
         f"{len(t.hands_on_minutes)} cook days"
         f" | {t.meals} meals",
     ]
-    if c.weekly_budget_cents is not None:
-        lines.append(f"Budget:    {_money(c.weekly_budget_cents)} ({'hard' if c.budget_is_hard else 'soft'})")
     for spec in c.days:
         lines.append("")
         cooked = [b for b in plan.batches if b.cook_on == spec.day]
@@ -83,9 +124,12 @@ def format_plan(
         if spec.is_cook_day:
             used = t.hands_on_minutes.get(spec.day, 0)
             cook_list = ", ".join(f"{b.title} x{b.portions}" for b in cooked) or "nothing"
-            lines.append(
-                f"{head} | cook day ({used} of {spec.cook_minutes_available} hands-on min): {cook_list}"
-            )
+            timing = f"{used} of {spec.cook_minutes_available} hands-on min"
+            if cooked:
+                timing += f", about {_minutes(t.elapsed_minutes.get(spec.day, 0))} start to finish"
+            if chill := t.chill_minutes.get(spec.day, 0):
+                timing += f", then up to {_minutes(chill)} in the fridge"
+            lines.append(f"{head} | cook day ({timing}): {cook_list}")
         else:
             lines.append(f"{head} | leftovers, no cooking")
         for meal in (m for m in plan.meals if m.eat_on == spec.day):
@@ -99,7 +143,11 @@ def format_plan(
             f"{_g(t.day_protein_g[spec.day]):>9} protein"
         )
     lines += ["", f"  {'WEEK':16} {'':{width}} {t.week_kcal:>6,} kcal {_g(t.week_protein_g):>9} protein", ""]
+    lines += money_lines(plan)
     g = plan.grocery
+    lines.append("")
+    if c.planning_mode is PlanningMode.INVENTORY:
+        lines += topup_lines(plan, store_names)
     lines.append("Grocery cost by store (estimated prices unless you entered them):")
     buy_counts: dict[int, int] = {}
     for item in g.items:
@@ -133,11 +181,58 @@ def format_plan(
     from_inventory = sorted({item.name for item in g.items if item.kind == "from_inventory"})
     if from_inventory:
         lines.append(f"  From your inventory: {', '.join(from_inventory)}")
+    if plan.freeze:
+        lines += ["", "Freeze on shopping day (raw meat, poultry and fish past their fridge life):"]
+        lines += [f"  - {freeze_text(f, _amount(f.quantity, f.unit))}" for f in plan.freeze]
     if plan.notes:
         lines += ["", "Notes:"] + [f"  - {n}" for n in plan.notes]
     if outcome.report and outcome.report.warnings:
         lines += ["", "Warnings:"] + [f"  - {w.message}" for w in outcome.report.warnings]
     return "\n".join(lines)
+
+
+def money_lines(plan: RoundedPlan) -> list[str]:
+    m = plan.costs
+    by_fate: dict[str, int] = {}
+    for item in plan.leftovers:
+        by_fate[item.fate] = by_fate.get(item.fate, 0) + item.cents
+    labels = (("freeze", "raw protein to freeze"), ("keeps", "keeps"), ("at_risk", "at risk"))
+    parts = [f"{label} {_money(by_fate[fate])}" for fate, label in labels if by_fate.get(fate)]
+    eaten = f"  Food eaten         {_money(m.eaten_cents):>9}  this week"
+    if m.from_inventory_cents:
+        eaten += f", {_money(m.from_inventory_cents)} of it from your inventory"
+    left = f"  Left over          {_money(m.leftover_cents):>9}  carries into your inventory"
+    if parts:
+        left += f" ({', '.join(parts)})"
+    lines = [
+        "Money (estimated prices unless you entered them; staples not counted):",
+        f"  Cash this trip     {_money(m.cash_cents):>9}  whole packages",
+        eaten,
+        left,
+    ]
+    if m.frozen_portions_cents:
+        frozen = _money(m.frozen_portions_cents)
+        lines.append(f"  Frozen portions    {frozen:>9}  cooked extras for later weeks")
+    lines.append(f"  Expected waste     {_money(m.expected_waste_cents):>9}  perishables likely to spoil")
+    if not m.complete:
+        lines.append(f"  Incomplete: no price yet for {', '.join(m.unpriced)}")
+    return lines
+
+
+def topup_lines(plan: RoundedPlan, store_names: Mapping[int, str]) -> list[str]:
+    bought = [item for item in plan.grocery.items if item.kind == "buy"]
+    if not bought:
+        return ["Top-up buy list: nothing to buy, everything comes from your inventory."]
+    limit = plan.constraints.purchase_limit_cents or 0
+    lines = [f"Top-up buy list ({_money(plan.grocery.total_cents)} of your {_money(limit)} top-up):"]
+    for item in bought:
+        if item.packages:
+            what = f"{item.packages} pack" + ("" if item.packages == 1 else "s")
+        else:
+            what = _amount(item.bought or item.to_buy, item.unit)
+        store = store_names.get(item.store_id or 0, "?")
+        lines.append(f"  {item.name:40} {what:>10}  {_money(item.cost_cents or 0):>8}  at {store}")
+    return lines
 
 
 def format_failure(outcome: PlanOutcome) -> str:

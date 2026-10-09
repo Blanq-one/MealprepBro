@@ -2,25 +2,30 @@
 
 Cheap pre-checks catch the obvious gaps (no drink recipes at all, no cook day with enough minutes). When the
 MILP itself is infeasible, an elastic re-solve relaxes every hard limit with penalized slack and reports
-which limits had to give, and by how much.
+which limits had to give, and by how much. When the purchase limit gives, it also lists what would have to
+be bought (inventory mode: exactly what's missing from your inventory).
 """
 
 from collections import defaultdict
 from datetime import date
+from decimal import ROUND_HALF_UP, Decimal
 
 import pulp
 
-from app.domain.enums import MealSlot
+from app.domain.enums import CalorieMode, MealSlot, PlanningMode
 from app.planning.problem import ExcludedRecipe, PlanningProblem
 from app.planning.solver.model import (
     Diagnostic,
     EmptyCandidatePoolError,
+    _Model,
     batch_plan,
     build_model,
     run_solver,
 )
 
 SLACK_TOLERANCE = 0.5
+MIN_LISTED = {"g": 5.0, "ml": 5.0, "count": 0.25}
+MAX_LISTED_ITEMS = 12
 
 
 def _day(d: date) -> str:
@@ -29,6 +34,42 @@ def _day(d: date) -> str:
 
 def _slot(slot: MealSlot) -> str:
     return slot.value.replace("_", " ")
+
+
+def _money(cents: float) -> str:
+    return f"${cents / 100:,.2f}"
+
+
+def _about(quantity: float, unit: str) -> str:
+    if unit == "count":
+        q = Decimal(str(quantity)).quantize(Decimal("0.5"), ROUND_HALF_UP)
+        return f"{q.normalize():f}"
+    step = 10 if quantity >= 100 else 1
+    return f"{round(quantity / step) * step:,} {unit}"
+
+
+def shopping_gap(problem: PlanningProblem, model: _Model) -> list[tuple[str, str, int]]:
+    """What the relaxed plan buys: (ingredient, about how much, cents), most expensive first."""
+
+    def value(expr: object) -> float:
+        v = pulp.value(expr)
+        return float(v) if v is not None else 0.0
+
+    items = []
+    for ingredient_id, (amount, cents) in model.purchases.items():
+        plan = problem.ingredients[ingredient_id]
+        bought = value(amount)
+        if bought < MIN_LISTED.get(plan.planning_unit, 1.0):
+            continue
+        items.append((plan.name, _about(bought, plan.planning_unit), round(value(cents))))
+    return sorted(items, key=lambda item: (-item[2], item[0]))
+
+
+def _gap_text(items: list[tuple[str, str, int]]) -> str:
+    shown = [f"{name} about {amount} ({_money(cents)})" for name, amount, cents in items[:MAX_LISTED_ITEMS]]
+    if len(items) > MAX_LISTED_ITEMS:
+        shown.append(f"and {len(items) - MAX_LISTED_ITEMS} more")
+    return "; ".join(shown)
 
 
 def _reasons_for_slot(excluded: tuple[ExcludedRecipe, ...], slot: MealSlot) -> list[str]:
@@ -100,8 +141,18 @@ def precheck(problem: PlanningProblem) -> tuple[Diagnostic, ...]:
 
 
 def explain(problem: PlanningProblem, *, time_limit_s: int = 20) -> tuple[Diagnostic, ...]:
-    """Relax every hard limit and report the ones that had to give."""
-    c = problem.constraints
+    """Relax hard limits and report the ones that had to give. With a purchase limit, first relax only that:
+    if every other limit can be met, the money is the only thing in the way, and the report says exactly
+    what the cheapest such plan costs and buys (instead of trading a few dollars for a few minutes)."""
+    if problem.constraints.purchase_limit_cents is not None:
+        money_only = build_model(problem, elastic=True)
+        for kind, group in money_only.slacks.items():
+            if kind != "budget":
+                for var in group.values():
+                    var.upBound = 0
+        status = run_solver(money_only, time_limit_s, 0.0, 0.0)
+        if status in (pulp.LpSolutionOptimal, pulp.LpSolutionIntegerFeasible):
+            return _report(problem, money_only)
     model = build_model(problem, elastic=True)
     status = run_solver(model, time_limit_s, 0.0, 0.0)
     if status not in (pulp.LpSolutionOptimal, pulp.LpSolutionIntegerFeasible):
@@ -112,6 +163,12 @@ def explain(problem: PlanningProblem, *, time_limit_s: int = 20) -> tuple[Diagno
                 "(check portion requests).",
             ),
         )
+    return _report(problem, model)
+
+
+def _report(problem: PlanningProblem, model: _Model) -> tuple[Diagnostic, ...]:
+    """The limits a solved elastic model had to relax, in human units."""
+    c = problem.constraints
     out: list[Diagnostic] = []
 
     def amount(var: pulp.LpVariable) -> float:
@@ -137,7 +194,7 @@ def explain(problem: PlanningProblem, *, time_limit_s: int = 20) -> tuple[Diagno
     for d in c.days:
         under = model.slacks.get("kcal_under", {}).get(d.day)
         over = model.slacks.get("kcal_over", {}).get(d.day)
-        if c.calorie_mode.value == "strict_daily":
+        if c.calorie_mode is CalorieMode.STRICT_DAILY:
             floor = round(d.kcal_target * (1 - tol.daily_under_pct / 100))
             ceiling = d.kcal_target
         else:
@@ -194,18 +251,57 @@ def explain(problem: PlanningProblem, *, time_limit_s: int = 20) -> tuple[Diagno
                     amount=n,
                 )
             )
+    target = c.daily_protein_target_g
+    for day, var in model.slacks.get("protein_day", {}).items():
+        if amount(var) > SLACK_TOLERANCE:
+            short = round(amount(var))
+            out.append(
+                Diagnostic(
+                    "PROTEIN_SHORT",
+                    f"{_day(day)} can reach only about {target - short} g protein; your target is {target} g "
+                    f"(short by {short} g).",
+                    day=day,
+                    amount=short,
+                )
+            )
+    week_short = model.slacks.get("protein_week", {}).get("week")
+    if week_short is not None and amount(week_short) > SLACK_TOLERANCE:
+        short = round(amount(week_short))
+        goal = c.week_protein_target_g
+        out.append(
+            Diagnostic(
+                "PROTEIN_SHORT",
+                f"The week can reach only about {goal - short:,} g protein; your target is {goal:,} g "
+                f"({target} g a day, short by {short} g).",
+                amount=short,
+            )
+        )
     budget = model.slacks.get("budget", {}).get("budget")
     if budget is not None and amount(budget) > SLACK_TOLERANCE:
         cents = round(amount(budget))
-        assert c.weekly_budget_cents is not None
-        out.append(
-            Diagnostic(
-                "BUDGET_SHORT",
-                f"The cheapest plan that fits costs about ${(c.weekly_budget_cents + cents) / 100:.2f}, "
-                f"${cents / 100:.2f} over your hard budget of ${c.weekly_budget_cents / 100:.2f}.",
-                amount=cents,
+        purchase_limit = c.purchase_limit_cents
+        assert purchase_limit is not None
+        needed = purchase_limit + cents
+        gap = shopping_gap(problem, model)
+        if c.planning_mode is PlanningMode.INVENTORY:
+            start = (
+                "Your inventory doesn't cover this week"
+                if purchase_limit == 0
+                else f"Your inventory plus a {_money(purchase_limit)} top-up doesn't cover this week"
             )
-        )
+            message = (
+                f"{start}. The smallest top-up that makes a plan is about {_money(needed)} "
+                f"(raise --topup to at least that, or plan in shop mode). It would buy: {_gap_text(gap)}."
+            )
+            out.append(Diagnostic("INVENTORY_SHORT", message, amount=cents))
+        else:
+            message = (
+                f"The cheapest plan that fits costs about {_money(needed)}, {_money(cents)} over your budget "
+                f"of {_money(purchase_limit)}."
+            )
+            if gap:
+                message += f" It would buy: {_gap_text(gap)}."
+            out.append(Diagnostic("BUDGET_SHORT", message, amount=cents))
     for label, var in model.slacks.get("cap", {}).items():
         if amount(var) > SLACK_TOLERANCE:
             out.append(

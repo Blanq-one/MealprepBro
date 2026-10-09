@@ -10,6 +10,7 @@ from datetime import date
 from decimal import Decimal
 
 from app.domain.enums import Equipment, MealSlot, PortionSize, RecipeMood
+from app.domain.fridge_life import FridgeLife
 from app.domain.nutrition import NutritionProfile
 from app.domain.purchase import Offer
 from app.domain.scaling import PORTION_MULTIPLIERS
@@ -60,6 +61,14 @@ class CandidateRecipe:
         return self.per_portion.get("energy_kcal", Decimal(0))
 
     @property
+    def protein_g(self) -> Decimal:
+        return self.per_portion.get("protein_g", Decimal(0))
+
+    @property
+    def passive_minutes(self) -> int:
+        return max(self.total_minutes - self.active_minutes, 0)
+
+    @property
     def ingredient_ids(self) -> frozenset[int]:
         return frozenset(line.ingredient_id for line in self.lines)
 
@@ -72,6 +81,7 @@ class InventoryLot:
     opened_on: date | None = None  # set = an open package
     expires_on: date | None = None
     acquired_on: date | None = None
+    location: str | None = None  # fridge | freezer | pantry
 
     @property
     def opened(self) -> bool:
@@ -89,6 +99,8 @@ class IngredientPlan:
     staple: bool = False  # assume_in_stock: never bought by the plan, listed as "check you have"
     perishable: bool = False
     shelf_life_days_fridge: int | None = None
+    location: str | None = None  # where it usually lives: fridge | freezer | pantry
+    fridge_life: FridgeLife | None = None  # raw meat, poultry, fish and eggs (FoodSafety.gov chart)
     offers: tuple[Offer, ...] = ()
     lots: tuple[InventoryLot, ...] = ()
 
@@ -128,23 +140,40 @@ class Tightening:
     day_floor: Mapping[date, int] = field(default_factory=dict)  # kcal to add to a day's floor
     week_ceiling: int = 0
     week_floor: int = 0
-    budget_cents: int = 0  # cents to subtract from the hard budget
-    # observed rounding bias per recipe version: kcal per portion that practical rounding added (or removed)
+    budget_cents: int = 0  # cents to subtract from the purchase limit
+    # What practical rounding does to each recipe version's portion: rounded ≈ planned × scale + bias, where
+    # planned = the exact per-portion value × size × nudge. A whole scoop doesn't shrink with a 0.9 nudge, so
+    # the scale can be well under 1. Fitted before the first solve; re-solves replace the bias with what the
+    # rounded plan showed.
     kcal_bias: Mapping[int, Decimal] = field(default_factory=dict)
+    protein_bias: Mapping[int, Decimal] = field(default_factory=dict)  # the same, in grams of protein
+    protein_day_floor: Mapping[date, Decimal] = field(default_factory=dict)  # grams to add to a day's floor
+    protein_week_floor: Decimal = Decimal(0)
+    # planning units to hold back from an ingredient's inventory, so rounding up doesn't spill into a
+    # purchase the limit doesn't allow
+    inventory_holdback: Mapping[int, Decimal] = field(default_factory=dict)
+    kcal_scale: Mapping[int, Decimal] = field(default_factory=dict)  # default 1 (see kcal_bias)
+    protein_scale: Mapping[int, Decimal] = field(default_factory=dict)
 
     def merged(self, other: "Tightening") -> "Tightening":
-        def add(a: Mapping[date, int], b: Mapping[date, int]) -> dict[date, int]:
-            return {d: a.get(d, 0) + b.get(d, 0) for d in set(a) | set(b)}
+        def add[K, V: (int, Decimal)](a: Mapping[K, V], b: Mapping[K, V], zero: V) -> dict[K, V]:
+            return {k: a.get(k, zero) + b.get(k, zero) for k in set(a) | set(b)}
 
-        bias = dict(self.kcal_bias)
-        bias.update(other.kcal_bias)  # the latest observation wins
+        kcal_bias = {**self.kcal_bias, **other.kcal_bias}  # the latest observation wins
+        protein_bias = {**self.protein_bias, **other.protein_bias}
         return Tightening(
-            add(self.day_ceiling, other.day_ceiling),
-            add(self.day_floor, other.day_floor),
+            add(self.day_ceiling, other.day_ceiling, 0),
+            add(self.day_floor, other.day_floor, 0),
             self.week_ceiling + other.week_ceiling,
             self.week_floor + other.week_floor,
             self.budget_cents + other.budget_cents,
-            bias,
+            kcal_bias,
+            protein_bias,
+            add(self.protein_day_floor, other.protein_day_floor, Decimal(0)),
+            self.protein_week_floor + other.protein_week_floor,
+            add(self.inventory_holdback, other.inventory_holdback, Decimal(0)),
+            {**self.kcal_scale, **other.kcal_scale},
+            {**self.protein_scale, **other.protein_scale},
         )
 
 

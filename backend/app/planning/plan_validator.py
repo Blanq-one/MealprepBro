@@ -2,13 +2,14 @@
 reference data (a fresh database load), never from solver variables:
 
   quantities (practical rounding re-derived from the recipe lines and the batch scale), meal kcal, day and
-  week totals per calorie mode, every planned slot filled once, batches only on cook days, the fridge
-  window, portions, equipment, hands-on minutes, mood, the variety cap, exclusions, frequency caps,
-  inventory use, ingredients covered by inventory or the list, budget (hard = error, soft = warning),
-  food-safety lines and the prose filter.
+  week totals per calorie mode, the protein target per calorie mode, every planned slot filled once,
+  batches only on cook days, the fridge window, portions, equipment, hands-on minutes, mood, the variety
+  cap, exclusions, frequency caps, inventory use, ingredients covered by inventory or the list, the
+  purchase limit (shop-mode budget or inventory-mode top-up), the cost summary, the "freeze on shopping
+  day" instructions for raw protein, food-safety lines and the prose filter.
 
-Hard errors about calories or a hard budget can be fixed by a re-solve with that bound tightened; the
-orchestrator does that (≤ 2 times).
+Hard errors about calories, protein or the purchase limit can be fixed by a re-solve with that bound
+tightened; the orchestrator does that (≤ 2 times).
 """
 
 from collections import defaultdict
@@ -19,7 +20,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
 from app.domain.cook_time import mood_allows
-from app.domain.enums import CalorieMode, MealSlot
+from app.domain.enums import CalorieMode, MealSlot, PlanningMode
 from app.domain.food_safety import IngredientSafety, doneness_requirement
 from app.domain.frequency_caps import Meal, cap_violations
 from app.domain.frequency_caps import ResolvedCap as DomainCap
@@ -28,7 +29,9 @@ from app.domain.quantities import format_fraction
 from app.domain.scaling import scale_line
 from app.domain.text_rules import check_text
 from app.domain.units import grams_of, to_base
+from app.planning.costing import cost_summary
 from app.planning.grocery_list import build_grocery
+from app.planning.perishables import freeze_instructions
 from app.planning.problem import size_multiplier
 from app.planning.recipe_math import nutrition_of
 from app.planning.reference import ReferenceData, RefRecipe
@@ -37,6 +40,7 @@ from app.planning.rounded import ABSORBED, RoundedBatch, RoundedPlan
 from app.schemas.constraints import VARIETY_CAPPED_SLOTS
 
 QTY_TOLERANCE = Decimal("0.001")
+_PROTEIN = Decimal("0.1")
 SCALE_TOLERANCE = Decimal("0.0001")
 ABSORBED_TOLERANCE = {"g": Decimal(10), "ml": Decimal(10), "count": Decimal(1)}
 
@@ -47,7 +51,9 @@ RESOLVABLE = frozenset(
         "KCAL_DAY_UNDER_FLOOR",
         "KCAL_WEEK_OVER_CEILING",
         "KCAL_WEEK_UNDER_FLOOR",
-        "BUDGET_OVER_HARD",
+        "PROTEIN_DAY_UNDER_TARGET",
+        "PROTEIN_WEEK_UNDER_TARGET",
+        "PURCHASE_LIMIT_OVER",
     }
 )
 
@@ -100,9 +106,6 @@ class ValidationReport:
         }
 
 
-MIN_REMAINDER = {"g": Decimal(5), "ml": Decimal(5), "count": Decimal("0.5")}
-
-
 def _qty(quantity: Decimal, unit: str) -> str:
     if unit == "count":
         return format_fraction(quantity.quantize(Decimal("0.5"), ROUND_HALF_UP))
@@ -111,6 +114,10 @@ def _qty(quantity: Decimal, unit: str) -> str:
 
 def _day(d: date) -> str:
     return f"{d:%a} {d:%b} {d.day}"
+
+
+def _money(cents: int) -> str:
+    return f"${cents / 100:,.2f}"
 
 
 def _expected_lines(batch: RoundedBatch, recipe: RefRecipe, ref: ReferenceData) -> list[tuple[int, Decimal]]:
@@ -289,6 +296,7 @@ def validate_plan(plan: RoundedPlan, ref: ReferenceData) -> ValidationReport:
     filled: dict[tuple[date, MealSlot], int] = defaultdict(int)
     eaten_by_batch: dict[int, int] = defaultdict(int)
     day_kcal: dict[date, int] = {d: 0 for d in days}
+    day_protein: dict[date, Decimal] = {d: Decimal(0) for d in days}
     recipe_days: dict[tuple[int, date], int] = defaultdict(int)
     meals_per_recipe: dict[int, int] = defaultdict(int)
     cap_meals: list[Meal] = []
@@ -329,8 +337,19 @@ def validate_plan(plan: RoundedPlan, ref: ReferenceData) -> ValidationReport:
                     day=meal.eat_on,
                 )
             )
+        protein = per_portion_protein[meal.batch_index].quantize(_PROTEIN, ROUND_HALF_UP)
+        if protein != meal.protein_g:
+            errors.append(
+                Issue(
+                    "PROTEIN_MISMATCH",
+                    f"{_day(meal.eat_on)} {meal.slot.value}: stored {meal.protein_g} g protein, "
+                    f"recomputed {protein} g",
+                    day=meal.eat_on,
+                )
+            )
         if meal.eat_on in day_kcal:
             day_kcal[meal.eat_on] += kcal
+            day_protein[meal.eat_on] += protein
         if recipe is not None:
             recipe_days[(recipe.version_id, meal.eat_on)] += 1
             if meal.slot in VARIETY_CAPPED_SLOTS:
@@ -431,6 +450,37 @@ def validate_plan(plan: RoundedPlan, ref: ReferenceData) -> ValidationReport:
     if dict(plan.totals.day_kcal) != day_kcal or plan.totals.week_kcal != week:
         errors.append(Issue("TOTALS_MISMATCH", "stored day/week kcal totals don't match the recomputed ones"))
 
+    # ---- protein target per mode (a floor) ----
+    target = c.daily_protein_target_g
+    if target > 0:
+        if c.calorie_mode is CalorieMode.STRICT_DAILY:
+            for spec in c.days:
+                short = Decimal(target) - day_protein[spec.day]
+                if short > 0:
+                    errors.append(
+                        Issue(
+                            "PROTEIN_DAY_UNDER_TARGET",
+                            f"{_day(spec.day)} has {day_protein[spec.day]} g protein, {short} g under your "
+                            f"target of {target} g",
+                            day=spec.day,
+                            amount=int(short.to_integral_value(ROUND_HALF_UP)) or 1,
+                        )
+                    )
+        else:
+            total = sum(day_protein.values(), Decimal(0))
+            short = Decimal(c.week_protein_target_g) - total
+            if short > 0:
+                errors.append(
+                    Issue(
+                        "PROTEIN_WEEK_UNDER_TARGET",
+                        f"the week has {total} g protein, {short} g under your target of "
+                        f"{c.week_protein_target_g:,} g ({target} g a day)",
+                        amount=int(short.to_integral_value(ROUND_HALF_UP)) or 1,
+                    )
+                )
+    if dict(plan.totals.day_protein_g) != day_protein:
+        errors.append(Issue("TOTALS_MISMATCH", "stored day protein totals don't match the recomputed ones"))
+
     # ---- diet rules on the final meals ----
     for batch in plan.batches:
         for ln in batch.lines:
@@ -492,29 +542,44 @@ def validate_plan(plan: RoundedPlan, ref: ReferenceData) -> ValidationReport:
                 details={"unpriced": list(grocery.unpriced)},
             )
         )
-        if c.budget_mode == "hard":
+        if c.has_purchase_limit:
             errors.append(
                 Issue(
-                    "UNPRICED_IN_HARD_BUDGET",
-                    f"a hard budget can't be checked without prices for {', '.join(grocery.unpriced)}",
+                    "UNPRICED_WITH_PURCHASE_LIMIT",
+                    f"a purchase limit can't be checked without prices for {', '.join(grocery.unpriced)}",
                 )
             )
-    if c.weekly_budget_cents is not None and grocery.total_cents > c.weekly_budget_cents:
-        over = grocery.total_cents - c.weekly_budget_cents
-        text = (
-            f"estimated cost ${grocery.total_cents / 100:.2f} is ${over / 100:.2f} over the "
-            f"${c.weekly_budget_cents / 100:.2f} budget"
+    purchase_limit = c.purchase_limit_cents
+    if purchase_limit is not None and grocery.total_cents > purchase_limit:
+        over = grocery.total_cents - purchase_limit
+        what = "top-up" if c.planning_mode is PlanningMode.INVENTORY else "budget"
+        errors.append(
+            Issue(
+                "PURCHASE_LIMIT_OVER",
+                f"this trip costs {_money(grocery.total_cents)}, {_money(over)} over your "
+                f"{_money(purchase_limit)} {what}",
+                amount=over,
+            )
         )
-        if c.budget_is_hard:
-            errors.append(Issue("BUDGET_OVER_HARD", text, amount=over))
-        else:
-            warnings.append(Issue("BUDGET_OVER_SOFT", text, amount=over))
-    for item in grocery.items:
-        if item.remainder and item.perishable and item.remainder >= MIN_REMAINDER.get(item.unit, Decimal(1)):
+
+    # ---- money and perishables, recomputed ----
+    costs, leftovers = cost_summary(c, plan.batches, grocery, ref.ingredients)
+    if costs != plan.costs or leftovers != plan.leftovers:
+        errors.append(Issue("TOTALS_MISMATCH", "stored costs or leftovers don't match the recomputed ones"))
+    freeze = freeze_instructions(c, plan.batches, grocery, ref.ingredients)
+    if missing_freeze := [f for f in freeze if f not in plan.freeze]:
+        names = ", ".join(sorted({f.name for f in missing_freeze}))
+        errors.append(
+            Issue("SAFETY_MISSING", f"raw protein needs a freeze-on-shopping-day instruction: {names}")
+        )
+    for left in leftovers:
+        if left.fate == "at_risk":
             warnings.append(
                 Issue(
-                    "OPEN_PACKAGE_LEFT",
-                    f"{item.name}: about {_qty(item.remainder, item.unit)} left in an open package",
+                    "EXPECTED_WASTE",
+                    f"{left.name}: about {_qty(left.quantity, left.unit)} left with no use planned; "
+                    f"likely to spoil ({_money(left.cents)})",
+                    amount=left.cents,
                 )
             )
     used_lots = {lot_id for lot_id, _ in grocery.inventory_takes}

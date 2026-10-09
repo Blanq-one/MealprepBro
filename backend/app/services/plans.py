@@ -30,16 +30,21 @@ from app.domain.enums import MealSlot
 from app.domain.units import GRAMS_PER_UNIT, ML_PER_UNIT
 from app.llm.client import LLMClient
 from app.planning.orchestrator import Orchestrator, PlanOutcome, problem_json
+from app.planning.perishables import freeze_text
 from app.planning.persistence import PlanNotFoundError, accept_plan
 from app.planning.problem import IngredientPlan
 from app.planning.recipe_math import nutrition_of
+from app.planning.rounded import FreezeInstruction
 from app.schemas.plans import (
     BatchOut,
+    CostsOut,
     DayOut,
+    FreezeOut,
     GenerationRunOut,
     GroceryGroupOut,
     GroceryItemOut,
     GroceryListOut,
+    LeftoverOut,
     MealOut,
     PlanRequest,
     PlanSummaryOut,
@@ -251,6 +256,8 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
                 kcal_target=spec["kcal_target"],
                 protein_g=Decimal(totals["day_protein_g"].get(day.isoformat(), "0")),
                 hands_on_minutes=totals["hands_on_minutes"].get(day.isoformat(), 0),
+                elapsed_minutes=totals["elapsed_minutes"].get(day.isoformat(), 0),
+                chill_minutes=totals["chill_minutes"].get(day.isoformat(), 0),
                 cook_minutes_available=spec["cook_minutes_available"],
                 meals=meals_out,
             )
@@ -266,6 +273,21 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
     n_days = len(c["days"])
     report = plan.validation_report
     unpriced = totals["unpriced"]
+    costs = totals["costs"]
+    freeze = [
+        FreezeInstruction(
+            ingredient_id=f["ingredient_id"],
+            name=f["name"],
+            unit=f["unit"],
+            quantity=Decimal(f["quantity"]),
+            freeze_on=date.fromisoformat(f["freeze_on"]),
+            fridge_days=f["fridge_days"],
+            source=f["source"],
+            use_on=date.fromisoformat(f["use_on"]) if f["use_on"] else None,
+            recipe=f["recipe"],
+        )
+        for f in totals["freeze"]
+    ]
     return PlanSummaryOut(
         id=plan.id,
         week_start=plan.week_start,
@@ -275,8 +297,9 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
         kcal_planned_week=totals["week_kcal"],
         nutrition_focus=c["nutrition_priority"],
         secondary_focus=c["secondary_priority"],
-        budget_cents=c["weekly_budget_cents"],
-        budget_is_hard=c["budget_is_hard"],
+        planning_mode=c["planning_mode"],
+        purchase_limit_cents=c["purchase_limit_cents"],
+        protein_target_g_per_day=c["daily_protein_target_g"],
         estimated_cost_cents=totals["cost_cents"],
         estimated_cost_display=money(totals["cost_cents"])
         + ("" if totals["cost_complete"] else " + unpriced items"),
@@ -287,6 +310,44 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
         meals_count=totals["meals"],
         protein_g_week=week_protein,
         protein_g_per_day=(week_protein / n_days).quantize(Decimal("0.1"), ROUND_HALF_UP),
+        costs=CostsOut(
+            cash_cents=costs["cash_cents"],
+            cash_display=money(costs["cash_cents"]),
+            eaten_cents=costs["eaten_cents"],
+            eaten_display=money(costs["eaten_cents"]),
+            from_inventory_cents=costs["from_inventory_cents"],
+            leftover_cents=costs["leftover_cents"],
+            leftover_display=money(costs["leftover_cents"]),
+            frozen_portions_cents=costs["frozen_portions_cents"],
+            expected_waste_cents=costs["expected_waste_cents"],
+            expected_waste_display=money(costs["expected_waste_cents"]),
+            complete=costs["complete"],
+            unpriced=list(costs["unpriced"]),
+        ),
+        leftovers=[
+            LeftoverOut(
+                ingredient_id=item["ingredient_id"],
+                name=item["name"],
+                amount=amount_display(Decimal(item["quantity"]), item["unit"]),
+                cents=item["cents"],
+                fate=item["fate"],
+            )
+            for item in totals["leftovers"]
+        ],
+        freeze=[
+            FreezeOut(
+                ingredient_id=f.ingredient_id,
+                name=f.name,
+                amount=amount_display(f.quantity, f.unit),
+                freeze_on=f.freeze_on,
+                use_on=f.use_on,
+                thaw_on=f.thaw_on,
+                recipe=f.recipe,
+                source=f.source,
+                message=freeze_text(f, amount_display(f.quantity, f.unit)),
+            )
+            for f in freeze
+        ],
         days=days_out,
         batches=[
             BatchOut(

@@ -13,9 +13,11 @@ from app.domain.enums import (
     GroceryMode,
     MealSlot,
     NutritionPriority,
+    PlanningMode,
     PortionSize,
     RecipeMood,
 )
+from app.domain.fridge_life import FridgeLife
 from app.domain.nutrition import NutritionProfile
 from app.domain.purchase import Offer
 from app.domain.units import IngredientUnits, UnitKind
@@ -59,8 +61,10 @@ def constraints(
     mood: RecipeMood = RecipeMood.MEDIUM,
     calorie_mode: CalorieMode = CalorieMode.WEEKLY,
     band: int = 150,
-    budget_cents: int | None = None,
-    budget_is_hard: bool = False,
+    budget_cents: int | None = None,  # shop mode's budget
+    mode: PlanningMode = PlanningMode.SHOP,
+    topup_cents: int = 0,  # inventory mode's allowance
+    protein_g: int = 0,  # daily protein target (0 = none, so most solver tests stay about one thing)
     caps: Sequence[ResolvedFrequencyCap] = (),
     store_ids: tuple[int, ...] = (PRIMARY, SECONDARY),
     threshold_cents: int = 500,
@@ -108,8 +112,9 @@ def constraints(
         nutrition_priority=priority,
         secondary_priority=secondary,
         grocery_mode=grocery_mode,
-        weekly_budget_cents=budget_cents,
-        budget_is_hard=budget_is_hard,
+        planning_mode=mode,
+        purchase_limit_cents=topup_cents if mode is PlanningMode.INVENTORY else budget_cents,
+        daily_protein_target_g=protein_g,
         default_portion_size=PortionSize.NORMAL,
         portion_nudge_pct=nudge_pct,
         portion_requests=tuple(portion_requests),
@@ -151,6 +156,8 @@ def ingredient(
     staple: bool = False,
     perishable: bool = False,
     shelf_life_days_fridge: int | None = None,
+    location: str | None = None,
+    fridge_life: FridgeLife | None = None,
     count_step: Decimal = Decimal(1),
     piece_grams: Decimal | str | None = None,
     density: Decimal | str | None = None,
@@ -175,6 +182,8 @@ def ingredient(
         staple=staple,
         perishable=perishable,
         shelf_life_days_fridge=shelf_life_days_fridge,
+        location=location,
+        fridge_life=fridge_life,
         offers=tuple(offers),
         lots=tuple(lots),
     )
@@ -203,6 +212,7 @@ def recipe(
     base: int = 4,
     mood: RecipeMood = RecipeMood.SIMPLE,
     active: int = 10,
+    total: int | None = None,
     freezer: bool = False,
     equipment: Iterable[Equipment] = (),
     never_favored: bool = False,
@@ -227,7 +237,7 @@ def recipe(
         heme_iron_mg=heme,
         need_per_portion=need,
         cost_cents_per_portion=cost_per_portion(need, ingredients),
-        total_minutes=active,
+        total_minutes=total if total is not None else active,
         never_favored=never_favored,
         is_favorite=favorite,
         has_disliked=disliked,

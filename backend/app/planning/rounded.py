@@ -6,7 +6,7 @@ output (fractional multipliers, unrounded quantities) can never be validated or 
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from typing import Any
 
@@ -46,6 +46,12 @@ class RoundedBatch:
     lines: tuple[RoundedLine, ...]
     per_portion: Mapping[str, Decimal]  # from the rounded lines
     absorbed_ingredient_id: int | None = None
+    total_minutes: int = 0  # start to finish, as the recipe states it
+    no_cook: bool = False  # no cooking equipment: its waiting time is chilling or soaking in the fridge
+
+    @property
+    def passive_minutes(self) -> int:
+        return max(self.total_minutes - self.planned_minutes, 0)
 
     @property
     def portion_multiplier(self) -> Decimal:
@@ -99,6 +105,91 @@ class GroceryPlan:
 
 
 @dataclass(frozen=True)
+class LeftoverItem:
+    """Bought this trip and not used this week. It carries into your inventory."""
+
+    ingredient_id: int
+    name: str
+    unit: str
+    quantity: Decimal
+    cents: int  # its share of what you paid
+    fate: str  # freeze (raw meat, poultry, fish) | keeps | at_risk (perishable, likely to spoil)
+
+    def to_json(self) -> dict[str, Any]:
+        return {
+            "ingredient_id": self.ingredient_id,
+            "name": self.name,
+            "unit": self.unit,
+            "quantity": str(self.quantity),
+            "cents": self.cents,
+            "fate": self.fate,
+        }
+
+
+@dataclass(frozen=True)
+class FreezeInstruction:
+    """Raw meat, poultry or fish that won't be cooked within its fridge life (FoodSafety.gov chart): freeze
+    it on shopping day. use_on None = no use planned this week (it carries into your inventory, frozen)."""
+
+    ingredient_id: int
+    name: str
+    unit: str
+    quantity: Decimal
+    freeze_on: date
+    fridge_days: int
+    source: str  # purchase | inventory
+    use_on: date | None = None
+    recipe: str | None = None
+
+    @property
+    def thaw_on(self) -> date | None:
+        """Thaw in the fridge the day before cooking."""
+        return self.use_on - timedelta(days=1) if self.use_on is not None else None
+
+    def to_json(self) -> dict[str, Any]:
+        return {
+            "ingredient_id": self.ingredient_id,
+            "name": self.name,
+            "unit": self.unit,
+            "quantity": str(self.quantity),
+            "freeze_on": self.freeze_on.isoformat(),
+            "fridge_days": self.fridge_days,
+            "source": self.source,
+            "use_on": self.use_on.isoformat() if self.use_on else None,
+            "recipe": self.recipe,
+        }
+
+
+@dataclass(frozen=True)
+class CostSummary:
+    """The week's money (§7.1: integer cents; each ingredient is rounded once, totals are sums).
+
+    cash + from_inventory = eaten + frozen_portions + leftover. Staples ("check you have") aren't counted;
+    unpriced items make it incomplete."""
+
+    cash_cents: int  # spent this trip, whole packages: the grocery list total
+    eaten_cents: int  # food eaten this week, whether bought now or taken from inventory
+    from_inventory_cents: int  # what the week takes from inventory, at current prices
+    leftover_cents: int  # bought and not used this week; carries into your inventory
+    frozen_portions_cents: int  # cooked extra portions frozen for later weeks
+    expected_waste_cents: int  # the at-risk part of the leftovers, plus inventory expiring unused
+    complete: bool
+    unpriced: tuple[str, ...] = ()
+
+    def to_json(self) -> dict[str, Any]:
+        return {
+            "cash_cents": self.cash_cents,
+            "eaten_cents": self.eaten_cents,
+            "from_inventory_cents": self.from_inventory_cents,
+            "leftover_cents": self.leftover_cents,
+            "frozen_portions_cents": self.frozen_portions_cents,
+            "expected_waste_cents": self.expected_waste_cents,
+            "complete": self.complete,
+            "unpriced": list(self.unpriced),
+        }
+
+
+@dataclass(frozen=True)
 class PlanTotals:
     day_kcal: Mapping[date, int]
     week_kcal: int
@@ -110,6 +201,9 @@ class PlanTotals:
     store_cents: Mapping[int, int]
     hands_on_minutes: Mapping[date, int]
     meals: int
+    elapsed_minutes: Mapping[date, int] = field(default_factory=dict)  # per cook day, start to finish
+    chill_minutes: Mapping[date, int] = field(default_factory=dict)  # longest fridge wait (no-cook recipes)
+    protein_target_g: int = 0  # per day
 
     def to_json(self) -> dict[str, Any]:
         return {
@@ -122,7 +216,10 @@ class PlanTotals:
             "unpriced": list(self.unpriced),
             "store_cents": {str(k): v for k, v in sorted(self.store_cents.items())},
             "hands_on_minutes": {d.isoformat(): m for d, m in sorted(self.hands_on_minutes.items())},
+            "elapsed_minutes": {d.isoformat(): m for d, m in sorted(self.elapsed_minutes.items())},
+            "chill_minutes": {d.isoformat(): m for d, m in sorted(self.chill_minutes.items())},
             "meals": self.meals,
+            "protein_target_g": self.protein_target_g,
         }
 
 
@@ -135,4 +232,7 @@ class RoundedPlan:
     totals: PlanTotals
     solver_status: str
     solver_objective: float
+    costs: CostSummary
+    leftovers: tuple[LeftoverItem, ...] = ()
+    freeze: tuple[FreezeInstruction, ...] = ()
     notes: tuple[str, ...] = field(default_factory=tuple)

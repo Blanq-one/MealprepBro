@@ -6,7 +6,8 @@ from decimal import Decimal
 
 import pytest
 
-from app.domain.enums import CalorieMode, Equipment, MealSlot
+from app.domain.enums import CalorieMode, Equipment, MealSlot, PlanningMode
+from app.planning.orchestrator import tightening_from
 from app.planning.plan_validator import validate_plan
 from app.planning.post_solve import build_rounded_plan
 from app.planning.problem import InventoryLot
@@ -74,8 +75,8 @@ def test_only_a_rounded_plan_is_accepted():
         validate_plan(raw, f.reference(p))
 
 
-# ---------------- rounding pushes the groceries over a hard budget ----------------
-def budget_week(hard: bool):
+# ---------------- rounding pushes the groceries over the purchase limit ----------------
+def budget_week(mode: PlanningMode | None):
     two_lb = Decimal("907.185")
     ing = {
         1: f.food(
@@ -97,8 +98,9 @@ def budget_week(hard: bool):
         weekly_under_pct=10,
         nudge_pct=0,
         store_ids=(f.PRIMARY,),
-        budget_cents=4000,
-        budget_is_hard=hard,
+        budget_cents=4000 if mode is PlanningMode.SHOP else None,
+        mode=mode or PlanningMode.SHOP,
+        topup_cents=4000,
     )
     bowl = f.recipe(30, "Chicken bowl", [D], [f.line(1, 362), f.line(2, 40)], ing, base=2)
     p = f.problem(c, [bowl], ing)
@@ -109,9 +111,11 @@ def budget_week(hard: bool):
     return p, raw
 
 
-@pytest.mark.parametrize("hard", [True, False])
-def test_rounding_over_budget(hard):
-    p, raw = budget_week(hard)
+@pytest.mark.parametrize(
+    ("mode", "what"), [(PlanningMode.SHOP, "budget"), (PlanningMode.INVENTORY, "top-up"), (None, None)]
+)
+def test_rounding_over_the_purchase_limit(mode, what):
+    p, raw = budget_week(mode)
     raw_need = Decimal(362) * Decimal("2.5")
     assert raw_need == Decimal(905)  # fits one 2 lb pack before rounding
     plan = build_rounded_plan(p, raw, absorb=False)
@@ -119,13 +123,28 @@ def test_rounding_over_budget(hard):
     assert chicken.base_quantity == 910  # practical rounding crosses the 907.18 g package
     assert plan.grocery.total_cents == 398 * 2 + 3522
     report = validate_plan(plan, f.reference(p))
-    if hard:
-        assert codes(report) == ["BUDGET_OVER_HARD"]
-        assert report.errors[0].amount == 318
-    else:
+    if what is None:  # shop mode without a budget: the cost is only reported
         assert report.ok
-        soft = [w for w in report.warnings if w.code == "BUDGET_OVER_SOFT"]
-        assert soft and soft[0].amount == 318 and "$3.18 over" in soft[0].message
+        return
+    assert codes(report) == ["PURCHASE_LIMIT_OVER"]
+    assert report.errors[0].amount == 318
+    assert f"$3.18 over your $40.00 {what}" in report.errors[0].message
+
+
+def test_rounding_past_your_inventory_holds_some_back_for_the_re_solve():
+    """Inventory mode, nothing to spend: rounding needs 910 g of the 905 g you have, so the re-solve holds
+    back the 5 g shortfall plus a margin instead of buying a whole pack."""
+    p, raw = budget_week(PlanningMode.INVENTORY)
+    stocked = {**p.ingredients, 1: replace(p.ingredients[1], lots=(InventoryLot(3, 1, Decimal(905)),))}
+    p = replace(
+        p, ingredients=stocked, constraints=p.constraints.model_copy(update={"purchase_limit_cents": 3600})
+    )
+    plan = build_rounded_plan(p, raw, absorb=False)
+    report = validate_plan(plan, f.reference(p))
+    assert codes(report) == ["PURCHASE_LIMIT_OVER"] and report.resolvable
+    tightening = tightening_from(report, p, raw, plan)
+    assert tightening.inventory_holdback == {1: Decimal(5) + Decimal(5)}
+    assert tightening.budget_cents == report.errors[0].amount
 
 
 # ---------------- standard checks on a small clean plan ----------------
@@ -257,15 +276,15 @@ def test_unknown_price_is_a_cost_incomplete_warning():
     assert not plan.totals.cost_complete and plan.totals.unpriced == ("rice",)
 
 
-def test_unpriced_item_in_a_hard_budget_is_an_error():
-    p, raw, _ = clean(budget_cents=5000, budget_is_hard=True)
+def test_unpriced_item_with_a_purchase_limit_is_an_error():
+    p, raw, _ = clean(budget_cents=5000)
     unpriced = {
         i: (replace(plan_, offers=()) if plan_.name == "rice" else plan_)
         for i, plan_ in p.ingredients.items()
     }
     p2 = replace(p, ingredients=unpriced)
     plan = build_rounded_plan(p2, raw, absorb=False)
-    assert "UNPRICED_IN_HARD_BUDGET" in codes(validate_plan(plan, f.reference(p2)))
+    assert "UNPRICED_WITH_PURCHASE_LIMIT" in codes(validate_plan(plan, f.reference(p2)))
 
 
 def test_expiring_inventory_left_unused_is_a_warning():

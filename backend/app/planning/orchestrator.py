@@ -2,8 +2,8 @@
 
   constraints → candidate pool (seeds + saved first; the LLM only for uncovered slots) → solve
   → infeasible: targeted generation for the slots the diagnostics name (≤ 2 rounds) or a clear `infeasible`
-  → round + absorb → validate the RoundedPlan → hard calorie / hard-budget errors: re-solve with the observed
-    rounding bias and the bound tightened (≤ 2) → still failing: a clear error
+  → round + absorb → validate the RoundedPlan → calorie / protein / purchase-limit errors: re-solve with the
+    observed rounding bias and the bound tightened (≤ 2) → still failing: a clear error
   → persist the plan and its grocery list.
 
 LLM failures end the run as `failed` with a problem+json error; nothing from the failing call and no plan is
@@ -14,6 +14,7 @@ import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -30,7 +31,7 @@ from app.planning.inputs import constraints_for
 from app.planning.loader import build_problem
 from app.planning.persistence import save_plan
 from app.planning.plan_validator import ValidationReport, validate_plan
-from app.planning.post_solve import build_rounded_plan, initial_rounding_bias, observed_rounding_bias
+from app.planning.post_solve import build_rounded_plan, observed_rounding_bias, rounding_fit
 from app.planning.problem import PlanningProblem, Tightening
 from app.planning.reference import load_reference
 from app.planning.rounded import RoundedPlan
@@ -48,6 +49,9 @@ log = logging.getLogger(__name__)
 MAX_TARGETED_ROUNDS = 2
 MAX_RESOLVES = 2
 RESOLVE_MARGIN_KCAL = 5
+RESOLVE_MARGIN_PROTEIN_G = Decimal(1)
+# held back from an ingredient's inventory after rounding spilled past it under a purchase limit
+HOLDBACK_MARGIN = {"g": Decimal(5), "ml": Decimal(5), "count": Decimal(1)}
 TARGETED_COUNT = 2
 
 
@@ -105,6 +109,9 @@ def tightening_from(
 ) -> Tightening:
     day_ceiling: dict[date, int] = {}
     day_floor: dict[date, int] = {}
+    protein_day: dict[date, Decimal] = {}
+    protein_week = Decimal(0)
+    holdback: dict[int, Decimal] = {}
     week_ceiling = week_floor = budget = 0
     for e in report.errors:
         amount = (e.amount or 0) + RESOLVE_MARGIN_KCAL
@@ -116,10 +123,29 @@ def tightening_from(
             week_ceiling = amount
         elif e.code == "KCAL_WEEK_UNDER_FLOOR":
             week_floor = amount
-        elif e.code == "BUDGET_OVER_HARD":
+        elif e.code == "PROTEIN_DAY_UNDER_TARGET" and e.day is not None:
+            protein_day[e.day] = Decimal(e.amount or 0) + RESOLVE_MARGIN_PROTEIN_G
+        elif e.code == "PROTEIN_WEEK_UNDER_TARGET":
+            protein_week = Decimal(e.amount or 0) + RESOLVE_MARGIN_PROTEIN_G
+        elif e.code == "PURCHASE_LIMIT_OVER":
             budget = e.amount or 0
-    bias = observed_rounding_bias(problem, solution.batches, plan.batches)
-    return Tightening(day_ceiling, day_floor, week_ceiling, week_floor, budget, bias)
+            # rounding up spilled past the inventory the solver planned to use: hold some back
+            for item in plan.grocery.items:
+                if item.kind == "buy" and item.inventory_used > 0:
+                    margin = HOLDBACK_MARGIN.get(item.unit, Decimal(1))
+                    holdback[item.ingredient_id] = item.to_buy + margin
+    return Tightening(
+        day_ceiling,
+        day_floor,
+        week_ceiling,
+        week_floor,
+        budget,
+        observed_rounding_bias(problem, solution.batches, plan.batches),
+        observed_rounding_bias(problem, solution.batches, plan.batches, "protein_g"),
+        protein_day,
+        protein_week,
+        holdback,
+    )
 
 
 class Orchestrator:
@@ -208,7 +234,15 @@ class Orchestrator:
         rounds = 0
         while True:
             self._progress(run, "solving", targeted_rounds=rounds)
-            problem = problem.with_tightening(Tightening(kcal_bias=initial_rounding_bias(problem)))
+            kcal, protein = rounding_fit(problem), rounding_fit(problem, "protein_g")
+            problem = problem.with_tightening(
+                Tightening(
+                    kcal_bias=kcal.bias,
+                    protein_bias=protein.bias,
+                    kcal_scale=kcal.scale,
+                    protein_scale=protein.scale,
+                )
+            )
             try:
                 result = solve(
                     problem,

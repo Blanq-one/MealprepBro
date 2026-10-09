@@ -2,13 +2,15 @@
 
 Pure: the caller loads the settings, diet status, store ids and preferences. Tue/Fri (any non-cook day in
 your schedule) get is_cook_day = false with 0 minutes; exclusions and frequency caps are resolved to
-ingredient ids (§7.4).
+ingredient ids (§7.4). The planning mode and its money limit come from the request only: inventory mode
+buys nothing unless you allow a top-up; shop mode's budget is optional.
 """
 
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import timedelta
 
+from app.domain.enums import PlanningMode
 from app.domain.exclusions import ExclusionStatus
 from app.domain.frequency_caps import ResolvedCap
 from app.schemas.constraints import (
@@ -97,12 +99,13 @@ def build_constraints(
         for cap in diet.caps
         if cap.max_meals_per_week > 0  # a cap of 0 is an exclusion, already in `excluded`
     )
-    budget = (
-        request.weekly_budget_cents
-        if request.weekly_budget_cents is not None
-        else settings.weekly_budget_cents
+    if request.mode is PlanningMode.INVENTORY:
+        limit: int | None = request.topup_cents or 0
+    else:
+        limit = request.budget_cents
+    protein = (
+        request.protein_target_g if request.protein_target_g is not None else settings.daily_protein_target_g
     )
-    hard = request.budget_is_hard if request.budget_is_hard is not None else settings.budget_is_hard
     primary = request.nutrition_priority or settings.nutrition_priority
     secondary = (
         request.secondary_priority if request.secondary_priority is not None else settings.secondary_priority
@@ -125,8 +128,9 @@ def build_constraints(
             nutrition_priority=primary,
             secondary_priority=secondary,
             grocery_mode=settings.grocery_mode,
-            weekly_budget_cents=budget,
-            budget_is_hard=hard,
+            daily_protein_target_g=protein,
+            planning_mode=request.mode,
+            purchase_limit_cents=limit,
             default_portion_size=settings.default_portion_size,
             portion_requests=tuple(request.portion_requests),
             equipment=frozenset(settings.equipment),

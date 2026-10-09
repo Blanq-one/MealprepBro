@@ -42,6 +42,13 @@ class PortionSize(StrEnum):
     EXTRA_LARGE = "extra_large"  # 1.50
 
 
+class PlanningMode(StrEnum):
+    """Per-request: cook from what you have (purchases off unless you allow a top-up), or plan a shop."""
+
+    INVENTORY = "inventory"
+    SHOP = "shop"
+
+
 class GroceryMode(StrEnum):
     BALANCED = "balanced"
     CHEAPEST = "cheapest"

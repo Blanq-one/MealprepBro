@@ -11,7 +11,7 @@ from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
 from app.config import get_settings
-from app.domain.enums import CalorieMode, Equipment, MealSlot, NutritionPriority, RecipeMood
+from app.domain.enums import CalorieMode, Equipment, MealSlot, NutritionPriority, PlanningMode, RecipeMood
 from app.planning.plan_validator import validate_plan
 from app.planning.post_solve import build_rounded_plan
 from app.planning.problem import ExcludedRecipe, InventoryLot
@@ -35,6 +35,8 @@ def no_margins(monkeypatch, request):
     if "with_margins" not in request.keywords:
         monkeypatch.setattr(model, "ROUNDING_MARGIN_DAY_KCAL", 0)
         monkeypatch.setattr(model, "ROUNDING_MARGIN_WEEK_KCAL", 0)
+        monkeypatch.setattr(model, "ROUNDING_MARGIN_DAY_PROTEIN_G", 0)
+        monkeypatch.setattr(model, "ROUNDING_MARGIN_WEEK_PROTEIN_G", 0)
 
 
 def ok(result) -> SolverSolution:
@@ -164,23 +166,74 @@ def test_the_week_never_exceeds_its_target():
         assert sum(s.day_kcal.values()) <= c.weekly_kcal_target
 
 
-# ---------------- priorities ----------------
-def test_protein_vs_carb_priority_flips_the_choice():
+# ---------------- priorities and the protein target ----------------
+def bowls(lean_cents: str = "0.5", starch_cents: str = "0.5"):
+    """One portion = 400 g = 600 kcal: the lean bowl has 120 g protein, the starch bowl 12 g."""
     ing = {
-        1: f.food(1, "lean", 150, protein=30, carbs=0, offers=[f.offer(1, cents_per_unit="0.5")]),
-        2: f.food(2, "starch", 150, protein=3, carbs=30, offers=[f.offer(2, cents_per_unit="0.5")]),
+        1: f.food(1, "lean", 150, protein=30, carbs=0, offers=[f.offer(1, cents_per_unit=lean_cents)]),
+        2: f.food(2, "starch", 150, protein=3, carbs=30, offers=[f.offer(2, cents_per_unit=starch_cents)]),
     }
     recipes = [
         f.recipe(1, "Lean bowl", [D], [f.line(1, 1600)], ing),
         f.recipe(2, "Starch bowl", [D], [f.line(2, 1600)], ing),
     ]
-    for priority, expected in (
-        (NutritionPriority.PROTEIN, "Lean bowl"),
-        (NutritionPriority.CARB, "Starch bowl"),
-    ):
-        c = f.constraints(days=2, slots={D: 600}, cook_weekdays=(0,), priority=priority, nudge_pct=0)
+    return ing, recipes
+
+
+def test_carb_priority_still_scores_carbs():
+    ing, recipes = bowls()
+    c = f.constraints(
+        days=2, slots={D: 600}, cook_weekdays=(0,), priority=NutritionPriority.CARB, nudge_pct=0
+    )
+    s = ok(solve(f.problem(c, recipes, ing)))
+    assert set(titles(f.problem(c, recipes, ing), s)) == {"Starch bowl"}
+
+
+def test_protein_above_the_target_earns_nothing():
+    """Protein focus with no binding target: the cheaper, low-protein bowl wins (no reward for protein)."""
+    ing, recipes = bowls(lean_cents="1.0", starch_cents="0.25")
+    for target in (0, 12):
+        c = f.constraints(days=2, slots={D: 600}, cook_weekdays=(0,), nudge_pct=0, protein_g=target)
         s = ok(solve(f.problem(c, recipes, ing)))
-        assert set(titles(f.problem(c, recipes, ing), s)) == {expected}
+        assert set(titles(f.problem(c, recipes, ing), s)) == {"Starch bowl"}
+
+
+@pytest.mark.parametrize(
+    ("mode", "lean_meals"),
+    [(CalorieMode.STRICT_DAILY, 2), (CalorieMode.WEEKLY, 1)],  # weekly: one 120 g day covers 2 × 60 g
+)
+def test_the_protein_target_is_a_floor_per_calorie_mode(mode, lean_meals):
+    ing, recipes = bowls(lean_cents="1.0", starch_cents="0.25")
+    c = f.constraints(
+        days=2, slots={D: 600}, cook_weekdays=(0,), nudge_pct=0, protein_g=60, calorie_mode=mode
+    )
+    p = f.problem(c, recipes, ing)
+    s = ok(solve(p))
+    assert titles(p, s).count("Lean bowl") == lean_meals  # never more lean than the floor needs
+    plan = build_rounded_plan(p, s, absorb=False)
+    report = validate_plan(plan, f.reference(p))
+    assert report.ok, report.errors
+    if mode is CalorieMode.STRICT_DAILY:
+        assert all(g >= 60 for g in plan.totals.day_protein_g.values())
+    else:
+        assert plan.totals.week_protein_g >= 120
+
+
+@pytest.mark.parametrize("mode", [CalorieMode.STRICT_DAILY, CalorieMode.WEEKLY])
+def test_a_protein_target_no_recipe_can_reach_is_explained(mode):
+    ing, recipes = bowls()
+    c = f.constraints(
+        days=2, slots={D: 600}, cook_weekdays=(0,), nudge_pct=0, protein_g=60, calorie_mode=mode
+    )
+    result = solve(f.problem(c, [recipes[1]], ing))  # the starch bowl only: 12 g a day
+    assert isinstance(result, SolverInfeasible)
+    short = [d for d in result.diagnostics if d.code == "PROTEIN_SHORT"]
+    if mode is CalorieMode.STRICT_DAILY:
+        assert len(short) == 2 and short[0].amount == 48
+        assert "can reach only about 12 g protein; your target is 60 g (short by 48 g)" in short[0].message
+    else:
+        assert len(short) == 1 and short[0].amount == 96
+        assert "The week can reach only about 24 g protein; your target is 120 g" in short[0].message
 
 
 # ---------------- portions ----------------
@@ -426,19 +479,152 @@ def test_ingredient_target_cap_is_honored():
     assert titles(p, s).count("Salmon rice") <= 2
 
 
-# ---------------- budget ----------------
-def test_soft_budget_overrun_is_reported_and_hard_budget_is_infeasible():
+# ---------------- planning modes: shop (optional budget) and inventory (optional top-up) ----------------
+def three_dinners(**kwargs):
     ing = base_ingredients()
-    soft = f.constraints(days=3, slots={D: 520}, cook_weekdays=(0,), budget_cents=500, store_ids=(f.PRIMARY,))
-    p = f.problem(soft, mains(ing, n=1), ing)
+    c = f.constraints(days=3, slots={D: 520}, cook_weekdays=(0,), store_ids=(f.PRIMARY,), **kwargs)
+    return ing, c
+
+
+def stock(ing, chicken=None, rice=None):
+    """Inventory lots (planning units): 3 dinners need about 540 g chicken and 250 g rice."""
+    out = dict(ing)
+    if chicken is not None:
+        out[1] = replace(ing[1], lots=(InventoryLot(901, 1, Decimal(chicken)),))
+    if rice is not None:
+        out[2] = replace(ing[2], lots=(InventoryLot(902, 2, Decimal(rice)),))
+    return out
+
+
+def test_shop_without_a_budget_minimizes_and_reports_the_cash():
+    ing, c = three_dinners()
+    p = f.problem(c, mains(ing, n=2), ing)
     plan = build_rounded_plan(p, ok(solve(p)), absorb=False)
     report = validate_plan(plan, f.reference(p))
-    assert report.ok and any(w.code == "BUDGET_OVER_SOFT" for w in report.warnings)
-    hard = replace(p, constraints=soft.model_copy(update={"budget_is_hard": True}))
-    result = solve(hard)
+    assert report.ok, report.errors
+    assert plan.costs.cash_cents == plan.grocery.total_cents == 1347 + 499  # one chicken pack, one rice bag
+    assert plan.costs.eaten_cents < plan.costs.cash_cents  # the rest of the packs carries into inventory
+
+
+def test_shop_budget_too_low_is_infeasible_and_says_what_the_plan_would_cost():
+    ing, c = three_dinners(budget_cents=500)
+    result = solve(f.problem(c, mains(ing, n=1), ing))
     assert isinstance(result, SolverInfeasible)
-    short = [d for d in result.diagnostics if d.code == "BUDGET_SHORT"]
-    assert short and short[0].amount > 0 and "over your hard budget of $5.00" in short[0].message
+    (short,) = [d for d in result.diagnostics if d.code == "BUDGET_SHORT"]
+    assert short.amount == 1347 + 499 - 500  # whole packages: the cheapest plan is $18.46
+    assert "costs about $18.46, $13.46 over your budget of $5.00" in short.message
+    assert "chicken about" in short.message and "rice about" in short.message
+
+
+def test_when_only_the_money_is_short_the_diagnosis_is_only_about_money():
+    """Lunch and dinner from Monday's 45 minutes. Two cheap 30-minute recipes are the cheapest way out if
+    every limit may give (15 minutes over), but chicken + beans fits every limit except the $5 budget, so
+    the report is about money only: what that plan costs, not a time shortfall."""
+    ing = {
+        1: f.food(1, "chicken", 120, offers=[f.offer(11, cents_per_unit="5")]),
+        2: f.food(2, "beans", 120, offers=[f.offer(21, cents_per_unit="0.05")]),
+        3: f.food(3, "lentils", 120, offers=[f.offer(31, cents_per_unit="0.05")]),
+    }
+    recipes = [
+        f.recipe(1, "Quick chicken", [L, D], [f.line(1, 1700)], ing, active=15),
+        f.recipe(2, "Slow beans", [L, D], [f.line(2, 1700)], ing, active=30),
+        f.recipe(3, "Slow lentils", [L, D], [f.line(3, 1700)], ing, active=30),
+    ]
+    c = f.constraints(
+        days=2,
+        slots={L: 510, D: 510},
+        cook_weekdays=(0,),
+        store_ids=(f.PRIMARY,),
+        budget_cents=500,
+        nudge_pct=0,
+    )
+    result = solve(f.problem(c, recipes, ing))
+    assert isinstance(result, SolverInfeasible)
+    assert [d.code for d in result.diagnostics] == ["BUDGET_SHORT"]
+    assert "chicken about 850 g ($42.50)" in result.diagnostics[0].message
+
+
+def test_shop_mode_uses_inventory_first():
+    ing, c = three_dinners(budget_cents=1400)  # enough for chicken, not for chicken and rice
+    ing = stock(ing, rice=1000)
+    p = f.problem(c, mains(ing, n=1), ing)
+    plan = build_rounded_plan(p, ok(solve(p)), absorb=False)
+    assert validate_plan(plan, f.reference(p)).ok
+    bought = {item.name for item in plan.grocery.items if item.kind == "buy"}
+    assert bought == {"chicken"} and plan.costs.cash_cents == 1347
+    assert plan.costs.from_inventory_cents > 0
+
+
+def test_inventory_mode_cooks_only_from_what_you_have():
+    ing, c = three_dinners(mode=PlanningMode.INVENTORY)
+    ing = stock(ing, chicken=1000, rice=1000)
+    p = f.problem(c, mains(ing, n=2), ing)
+    s = ok(solve(p))
+    assert s.estimated_purchase_cents == 0
+    plan = build_rounded_plan(p, s, absorb=False)
+    assert validate_plan(plan, f.reference(p)).ok
+    assert [item.kind for item in plan.grocery.items] == ["from_inventory", "from_inventory"]
+    assert plan.costs.cash_cents == 0 and plan.costs.eaten_cents == plan.costs.from_inventory_cents > 0
+
+
+def test_inventory_mode_explains_exactly_what_is_missing():
+    ing, c = three_dinners(mode=PlanningMode.INVENTORY)
+    ing = stock(ing, rice=1000)  # no chicken
+    result = solve(f.problem(c, mains(ing, n=1), ing))
+    assert isinstance(result, SolverInfeasible)
+    (short,) = [d for d in result.diagnostics if d.code == "INVENTORY_SHORT"]
+    assert short.message.startswith("Your inventory doesn't cover this week.")
+    assert "smallest top-up that makes a plan is about $13.47" in short.message
+    assert "chicken about" in short.message and "rice" not in short.message  # rice is in the cupboard
+
+
+def test_a_top_up_buys_only_the_missing_items():
+    ing, c = three_dinners(mode=PlanningMode.INVENTORY, topup_cents=2000)
+    ing = stock(ing, rice=1000)
+    p = f.problem(c, mains(ing, n=1), ing)
+    plan = build_rounded_plan(p, ok(solve(p)), absorb=False)
+    assert validate_plan(plan, f.reference(p)).ok
+    assert [(i.name, i.kind) for i in plan.grocery.items] == [("chicken", "buy"), ("rice", "from_inventory")]
+    assert plan.grocery.total_cents == 1347  # within the $20.00 top-up
+
+
+def test_a_top_up_too_small_names_what_more_it_needs():
+    ing, c = three_dinners(mode=PlanningMode.INVENTORY, topup_cents=1000)
+    ing = stock(ing, rice=1000)
+    result = solve(f.problem(c, mains(ing, n=1), ing))
+    assert isinstance(result, SolverInfeasible)
+    (short,) = [d for d in result.diagnostics if d.code == "INVENTORY_SHORT"]
+    assert "inventory plus a $10.00 top-up doesn't cover this week" in short.message
+    assert "about $13.47" in short.message
+
+
+# ---------------- waste: opening a perishable pack for a sliver of it ----------------
+def sliver_week(cream_grams: int):
+    """Two otherwise-equal dinners: 'Creamy' needs some of a 1 kg cream pack ($3.00, perishable, sold only
+    in packs); 'Brothy' needs a whole $3.50 carton of shelf-stable broth."""
+    ing = {
+        1: f.food(1, "filler", 150, offers=[f.offer(11, cents_per_unit="0.1")]),
+        2: f.food(2, "cream", 0, perishable=True, offers=[f.offer(21, package=1000, package_cents=300)]),
+        3: f.food(3, "broth", 0, unit="ml", offers=[f.offer(31, package=500, package_cents=350)]),
+    }
+    recipes = [
+        f.recipe(1, "Creamy", [D], [f.line(1, 800), f.line(2, cream_grams)], ing, base=2),
+        f.recipe(2, "Brothy", [D], [f.line(1, 800), f.line(3, 500, "ml")], ing, base=2),
+    ]
+    c = f.constraints(days=2, slots={D: 600}, cook_weekdays=(0,), store_ids=(f.PRIMARY,), nudge_pct=0)
+    return f.problem(c, recipes, ing)
+
+
+def test_opening_a_perishable_pack_for_a_sliver_loses_to_a_dearer_recipe():
+    p = sliver_week(cream_grams=100)  # uses 10% of the pack: $2.70 of cream would be left to spoil
+    s = ok(solve(p))
+    assert set(titles(p, s)) == {"Brothy"}  # costs 50¢ more cash, wastes nothing
+
+
+def test_a_mostly_used_perishable_pack_is_fine():
+    p = sliver_week(cream_grams=900)  # uses 90% of the pack
+    s = ok(solve(p))
+    assert set(titles(p, s)) == {"Creamy"}
 
 
 # ---------------- no feasible plan ----------------

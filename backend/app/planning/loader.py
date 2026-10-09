@@ -12,7 +12,8 @@ from sqlalchemy.orm import Session
 
 from app.db.models import InventoryItem, Product, Recipe, RecipeIngredient, RecipeVersion
 from app.domain.cook_time import mood_allows
-from app.domain.enums import Equipment, MealSlot, RecipeMood
+from app.domain.enums import Equipment, MealSlot, PlanningMode, RecipeMood
+from app.domain.fridge_life import fridge_life
 from app.domain.nutrition import CORE_CODES
 from app.domain.purchase import Offer
 from app.domain.units import BASE_UNIT_FOR_KIND, ConversionError, UnitKind, convert
@@ -159,7 +160,9 @@ def load_ingredient_plans(
             except ConversionError:
                 continue
             inventory.append(
-                InventoryLot(item.id, i, quantity, item.opened_on, item.expires_on, item.acquired_on)
+                InventoryLot(
+                    item.id, i, quantity, item.opened_on, item.expires_on, item.acquired_on, item.location
+                )
             )
         plans[i] = IngredientPlan(
             id=i,
@@ -171,6 +174,8 @@ def load_ingredient_plans(
             staple=d.assume_in_stock,
             perishable=d.is_perishable,
             shelf_life_days_fridge=d.shelf_life_days_fridge,
+            location=d.typical_location,
+            fridge_life=fridge_life(d.slug, d.safety_category.value if d.safety_category else None),
             offers=_offers(d, unit, prices[i], products),
             lots=tuple(inventory),
         )
@@ -232,14 +237,21 @@ def build_problem(session: Session, user_id: int, constraints: PlanConstraints) 
             plan = plans[line.ingredient_id]
             if plan.staple or plan.offers:
                 continue
-            if c.budget_mode == "hard" and plan.available <= 0:
+            if c.has_purchase_limit and plan.available <= 0:
                 unpriced.append(plan.name)
         if unpriced:
-            reasons.append(
-                f"unpriced: {', '.join(sorted(set(unpriced)))} has no price at your stores, so your hard "
-                "budget "
-                "can't be checked (enter a price, or use a soft budget)"
-            )
+            names = ", ".join(sorted(set(unpriced)))
+            if c.planning_mode is PlanningMode.INVENTORY:
+                why = (
+                    f"unpriced: {names} isn't in your inventory and has no price at your stores, so a "
+                    "top-up can't include it (add it to your inventory or enter a price)"
+                )
+            else:
+                why = (
+                    f"unpriced: {names} has no price at your stores, so your budget can't be checked "
+                    "(enter a price, or plan without a budget)"
+                )
+            reasons.append(why)
         need: dict[int, Decimal] = {}
         if not reasons:
             try:

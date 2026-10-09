@@ -1,6 +1,6 @@
 # Mealbro Build Plan
 
-**Status:** v3, **approved** 2026-10-08 with the changes recorded in §12.1. Phase 0 approved. Phase 1 built 2026-10-09 and waiting for your approval (outcome note at the end of Phase 1 in §9; your Phase 1 decisions are C1–C3 in §12.1).
+**Status:** v3, **approved** 2026-10-08 with the changes recorded in §12.1. Phase 0 approved. Phase 1 built 2026-10-09; D1–D13 and C1–C3 approved; the fix-up round (C4–C8, D14–D22) is done and waiting for your approval (outcome notes at the end of Phase 1 in §9; decisions in §12.1).
 **Source documents:** `CLAUDE.md` (build rules, wins on conflict), `docs/PRD.md` (product vision).
 
 This plan covers Phases 0–6. One phase per session. A phase is done only when its acceptance criteria are met, its tests pass, and the test output has been shown.
@@ -17,7 +17,7 @@ This plan covers Phases 0–6. One phase per session. A phase is done only when 
 | — | Build plan | Approved (v3) | 2026-10-08 | 2026-10-08 | v1 reviewed → v2 (seed library, per-phase migrations, narrow prose filter, rounded-plan validator, strict/best-effort). v3 = approval changes: table audit (§4.2a), exposure logging → Phase 2, beef-only exclusion + pork frequency cap, R1–R7 answers, A2 label values. |
 | 0 | Data foundation | Approved | 2026-10-08 | 2026-10-08 | 321 tests pass (local + Docker), domain coverage 99.6% (domain tests alone), ruff/mypy clean. 185 ingredients, 649 aliases, 9 draft seeds. Open: FoodSafety.gov chart (A1), powder carbs/fat (A2), R8. Deviations in the Phase 0 outcome note (§9). |
 | — | Pre-Phase 1 tasks | Done | 2026-10-08 | 2026-10-08 | Package-label data (tortillas, protein powder), USDA mapping review sheet (`docs/review/usda_mappings.md`), raw/dry/as-sold rule + check (§7.8), CLAUDE.md machine-boundaries rule. Round 2: FoodSafety.gov chart transcribed (53 rows, §7.2), top-25 mappings approved, tortilla renamed, Docker rule clarified, fresh-clone check made a per-phase step. |
-| 1 | Planning brain | Done, awaiting approval | 2026-10-08 | 2026-10-09 | 645 tests pass (the opt-in live test skips), domain coverage 99%, ruff/mypy clean, fresh-clone check passed. Seed week plans with 0 LLM calls; live Groq run shown. Decisions C1–C3 (hands-on minutes, dessert cap + second dessert seed, HiGHS); deviations D1–D13 in the Phase 1 outcome note. |
+| 1 | Planning brain | Fix-up round done, awaiting approval | 2026-10-08 | 2026-10-09 | First pass: 645 tests, fresh-clone check passed; D1–D13 and C1–C3 approved 2026-10-09. Fix-up round (C4–C8: budget per request with inventory/shop modes, cash vs food eaten, freeze-on-shopping-day and waste, 100 g protein floor, elapsed time): 705 tests pass (the opt-in live test skips), domain coverage 99%, ruff/mypy clean, fresh-clone check passed; deviations D14–D22 in the fix-up note. |
 | 2 | Mobile PWA + cloud deploy | Not started | | | |
 | 3 | Feedback loop | Not started | | | |
 | 4 | Daily overrides | Not started | | | |
@@ -984,6 +984,8 @@ class PlanConstraints(_Frozen):
 
 **Phase 1 notes.** As built: `DaySpec.cook_minutes_available` counts **hands-on** minutes (C1); the weekly `max_portions_per_recipe` cap applies only to `VARIETY_CAPPED_SLOTS` = breakfast, lunch, dinner (C2); `held_ingredient_ids` (the held subset of `excluded_ingredient_ids`) was added so diagnostics can list items to review; `DaySpec.kcal_target` is the day's slot allocations added up (unallocated calories stay unplanned).
 
+**Phase 1 fix-up (2026-10-09, C4 and C7).** `schema_version` is 2. `weekly_budget_cents` and `budget_is_hard` are gone: `planning_mode` (`inventory` | `shop`) and `purchase_limit_cents` (a hard limit on cash this trip: shop mode's optional budget, or inventory mode's top-up, default 0) come from each plan request, never from settings. `daily_protein_target_g` (settings default 100, request override) is a floor per calorie mode: strict daily = every day, weekly = the week total. `UserSettings` is version 2 too (migration 0002 moves your stored settings: data only).
+
 Mapping from PRD §32's example: `daily_calorie_limit` → `daily_kcal_target`; `weekly_calorie_limit` → `weekly_kcal_target`; `meals_per_day` → `DaySpec.slots`; `portion_size` → `default_portion_size`; `cooking_time`/`recipe_mood` → per-day `cook_minutes_available`/`mood`; `budget_priority` → dropped in favor of `grocery_mode` (Q12); `equipment` → `equipment`.
 
 ### 6.3 LLM-generated recipe (`app/schemas/llm_recipe.py`, Phase 1)
@@ -1496,7 +1498,7 @@ How the filter decides:
 - *Cross-week leftovers* (Saturday's cooking feeding next Monday) aren't modeled until prepared portions exist (Phase 3). Each Phase 1 plan is self-contained.
 - *Scope.* If the phase runs long, I'll stop and propose splitting it into 1a (adapter + candidates) and 1b (solver + validator).
 
-**Outcome (2026-10-09).** All 13 acceptance criteria are met; test output, the fresh-clone check and a seed-only `plan-week` run are in the phase summary. Your decisions this phase are C1–C3 (§12.1). What changed from the plan, and why:
+**Outcome (2026-10-09).** All 13 acceptance criteria are met; test output, the fresh-clone check and a seed-only `plan-week` run are in the phase summary. Your decisions this phase are C1–C3 (§12.1); you approved C1–C3 and D1–D13 on 2026-10-09. What changed from the plan, and why:
 
 - **D1. Portion variants.** One continuous multiplier per batch in [0.9, 1.1], linearized exactly (McCormick on binary × continuous), instead of three discrete copies of every batch. The copies tripled near-identical batches and kept weeks from solving in 30 s. `plan_cook_batch.portion_multiplier` stores size × multiplier × absorption scale.
 - **D2. Slot deviation.** The slot-kcal deviation is penalized only beyond ±15% of the slot target. Whole portions can't hit a slot target exactly, so the old term left a gap the LP bound could never close. Day and week limits stay hard.
@@ -1518,6 +1520,28 @@ Also as requested:
 - **Live smoke test** (`RUN_LIVE_LLM_TESTS=1`): one batch through the full validation path; a normal `pytest` run skips it.
 
 Open: the protein powder price (costs stay incomplete until you enter it); `LLM_MODEL` isn't in your `.env` yet (the live runs passed `openai/gpt-oss-120b` on the command line); A3 (cloud provider comparison) is due before Phase 2; R8 is still open. The USDA mapping review sheet was regenerated because 3b changes the calorie shares slightly.
+
+**Fix-up round (2026-10-09).** You approved D1–D13 and C1–C3, and asked for five changes (C4–C8 in §12.1). The $89.58 sample had no budget at all (`weekly_budget_cents` null, `budget_is_hard` false, so budget mode "none"): the solver minimized cost at 0.5 points a dollar alongside the protein reward.
+
+- **C4. Budget per request; two modes.** `plan-week --mode inventory|shop --budget X --topup X` and the same fields on `POST /api/v1/plans` (`mode`, `budget_cents`, `topup_cents`). Inventory mode buys nothing unless you allow a top-up, and then lists a short buy list; when nothing fits, the relaxed solve names exactly what's missing and the smallest top-up that works ("chicken thigh, boneless skinless about 2,720 g ($20.94); …"). Shop mode uses inventory first, then builds the list; a budget is a hard limit on cash this trip, and without one the cost is still minimized and reported. A budget that is too low says what the cheapest plan would cost and buy.
+- **C5. Cost reporting.** Every plan shows cash this trip (whole packages, the grocery total), food eaten this week (including what comes from inventory, at current prices), leftovers carried into inventory (raw protein to freeze / keeps / at risk) and frozen extra portions. cash + from inventory = eaten + frozen portions + leftover, to the cent.
+- **C6. Perishable leftovers.** Raw meat, poultry and fish not cooked within its fridge life of shopping day gets "freeze on shopping day" (with "thaw it in the fridge the night before" for a later cook day), from the FoodSafety.gov chart rows in `app/domain/fridge_life.py`. Open fridge lots of raw protein get the same check against their own dates. The validator recomputes these and fails a plan that lacks one (`SAFETY_MISSING`). The solver penalizes perishable food left over, and more steeply once less than a quarter of a package is used. Expected waste = at-risk leftovers (perishable, in the fridge, no chart life that outlasts next week) plus inventory expiring unused; each at-risk item is a warning.
+- **C7. Protein target.** 100 g a day (settings, `--protein`), a floor in the MILP and in the validator; protein earns no reward at all, so above the floor the plan is chosen on cost, waste and fit.
+- **C8. Elapsed time.** Each cook day shows hands-on minutes and about how long start to finish, plus any fridge time for no-cook recipes.
+
+What changed from the plan, and why:
+
+- **D14. First-package cash.** An ingredient sold only in packages costs at least its cheapest whole package once any batch that needs it is cooked: one continuous "used" variable per ingredient, tied to the batch decisions and to each meal slot, with no new integer variables. A yes/no per offer for the first package made the seed week take 10–50 s; this solves it in ~4–7 s. Further packages are still costed per unit, so the validator's exact grocery total can be a little higher; a re-solve tightens the limit when that crosses it.
+- **D15. No soft budget.** A budget is always a hard limit now (your C4 wording); "no budget" replaces the soft budget, so the unpriced rule reads: any purchase limit excludes recipes with unpriced items not in inventory; no limit keeps them with the cost marked incomplete.
+- **D16. Shopping day and fridge life.** The plan assumes you shop on its first day. Fridge life is the short end of the chart's range ("1 to 2 days" → 1, like the 3-day leftover default). Inventory covers the earliest uses (it is allocated first, open packages first).
+- **D17. Protein in weekly mode, and "balanced".** Weekly mode checks the week total only (no per-day protein floor), matching how the week's calories work. With protein no longer a reward, the "balanced" priority scores fiber only.
+- **D18. Re-solve tightening.** Protein shortfalls after rounding tighten the protein floor (per day or week) and add the observed protein rounding bias; going over the purchase limit also holds back a little inventory where rounding spilled past it, so inventory mode doesn't end up buying a whole pack for 5 g.
+- **D19. Elapsed time estimate.** Hands-on work back to back plus the longest cooking wait (simmering, baking) of the day: an upper estimate. A no-cook recipe's wait (overnight oats) is fridge time and is shown separately.
+- **D20. Settings v2.** `UserSettings.schema_version` 2, migration 0002 (data only: drops the two budget keys, adds `daily_protein_target_g: 100`, and reverses cleanly).
+- **D21. Rounding, solved jointly.** With protein no longer rewarded, the solver leans on the 0.9 portion multiplier to save money, and whole scoops and tortillas don't shrink with it: the seed week rounded 233 kcal over and every plan needed a re-solve. Two changes, both inside D5's approach: (1) each recipe's rounding is fitted as a straight line over the lowest, middle and highest multiplier (rounded ≈ planned × scale + bias), not a constant; (2) after the solve, a small MILP picks every batch's multiplier on the 0.005 grid from the actual rounded values, so the rounded plan meets the day, week and protein limits as the validator counts them, staying closest to the solver's plan (`app/planning/snap.py`; the old per-batch snap is the fallback). The seed week validates on the first solve again (~7 s per plan, the test suite back to ~3 minutes).
+- **D22. Money-first diagnostics.** With a budget or top-up, the infeasibility explanation first relaxes only that limit; if everything else fits, it reports what the cheapest plan costs and buys, instead of trading a few dollars against a few minutes of cook time.
+
+Open: the protein powder price (any budget or top-up leaves out every powder recipe until it has a price or is in your inventory; that includes both protein desserts, so `--budget` weeks are infeasible today, by your Phase 1 rule); lemon and lime juice are marked perishable in the seed data, so their leftovers count as at risk; A3 is due before Phase 2; R8 is still open.
 
 ---
 
@@ -1880,6 +1904,11 @@ No other dependencies are planned. Auth uses the stdlib, and the solver uses HiG
 | C1 | Cook time | A cook day's minutes are **hands-on** minutes: the batches' `active_minutes` added up. Simmering, chilling and soaking overlap with other work. Mood limits use active minutes too (simple ≤ 30, medium ≤ 60, fancy ≤ 240). Replaces Q7's start-to-finish reading, which fit only one seed recipe per 45-minute cook day. |
 | C2 | Variety cap | The weekly 5-portion cap applies to breakfast, lunch and dinner; desserts, snacks and drinks are limited only by "never twice in a day". A second protein-dessert seed was added for variety: 3b Chocolate protein chia pudding (it also uses the protein powder). |
 | C3 | Solver | HiGHS (`highspy`) runs the MILP through PuLP. The CBC 2.10.3 bundled with PuLP for Windows hangs on these models and ignores its time limit (the Linux build is fine); CBC stays only as a fallback when HiGHS is missing. |
+| C4 | Budget and modes (fix-up) | The budget is a per-request parameter, not a setting. Inventory mode ("cook from what I have"): purchases off by default, an optional top-up for missing items listed as a short buy list, and an exact list of what's missing when nothing fits. Shop mode ("what should I buy"): inventory first, then the grocery list; an optional budget is a hard limit on cash this trip; with none, the cost is minimized and reported. |
+| C5 | Cost reporting (fix-up) | Show cash spent this trip (whole packages) and the cost of food eaten this week; leftover value carries into inventory. |
+| C6 | Perishable leftovers (fix-up) | Raw meat, poultry or fish with no planned use inside its fridge life (FoodSafety.gov chart) gets "freeze on shopping day"; the solver penalizes opening a perishable package for a small fraction of it; expected waste is shown. |
+| C7 | Protein target (fix-up) | A daily protein floor of 100 g (configurable), within the daily/weekly mode rules; protein above it earns no reward. |
+| C8 | Elapsed time (fix-up) | Each cook day shows total elapsed cooking time next to hands-on time. |
 
 ### 12.2 Remaining questions (from applying your answers)
 

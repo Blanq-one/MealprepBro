@@ -4,7 +4,7 @@ from datetime import date
 
 import pytest
 
-from app.domain.enums import CalorieMode, MealSlot, RecipeMood
+from app.domain.enums import CalorieMode, MealSlot, PlanningMode, RecipeMood
 from app.domain.exclusions import ExclusionStatus
 from app.domain.frequency_caps import ResolvedCap
 from app.planning.constraint_builder import ConstraintError, DietInputs, build_constraints
@@ -75,12 +75,42 @@ def test_slot_allocations_over_the_daily_target_are_rejected():
         build(slot_kcal={MealSlot.DRINK: 200})
 
 
-def test_budget_and_priority_overrides():
-    c = build(weekly_budget_cents=6000, budget_is_hard=True, calorie_mode=CalorieMode.STRICT_DAILY)
-    assert (c.weekly_budget_cents, c.budget_is_hard, c.budget_mode) == (6000, True, "hard")
+def test_shop_mode_budget_is_a_per_request_hard_limit():
+    c = build(budget_cents=6000, calorie_mode=CalorieMode.STRICT_DAILY)
+    assert (c.planning_mode, c.purchase_limit_cents, c.has_purchase_limit) == (PlanningMode.SHOP, 6000, True)
     assert c.calorie_mode is CalorieMode.STRICT_DAILY
+    no_budget = build()
+    assert (no_budget.planning_mode, no_budget.purchase_limit_cents) == (PlanningMode.SHOP, None)
+
+
+def test_inventory_mode_buys_nothing_unless_a_top_up_is_allowed():
+    assert build(mode=PlanningMode.INVENTORY).purchase_limit_cents == 0
+    assert build(mode=PlanningMode.INVENTORY, topup_cents=1200).purchase_limit_cents == 1200
+
+
+@pytest.mark.parametrize(
+    ("request_kwargs", "message"),
+    [
+        ({"mode": PlanningMode.INVENTORY, "budget_cents": 500}, "inventory mode takes a top-up"),
+        ({"mode": PlanningMode.SHOP, "topup_cents": 500}, "a top-up is for inventory mode"),
+    ],
+)
+def test_a_limit_for_the_other_mode_is_rejected(request_kwargs, message):
+    with pytest.raises(ValueError, match=message):
+        PlanRequest(week_start=WEEK, **request_kwargs)
+
+
+def test_protein_target_comes_from_settings_or_the_request():
+    assert build().daily_protein_target_g == 100  # your default
+    assert build(protein_target_g=120).daily_protein_target_g == 120
+    assert build(protein_target_g=0).daily_protein_target_g == 0
+
+
+def test_the_budget_is_no_longer_a_setting():
+    assert "weekly_budget_cents" not in load_seed_files().settings.model_dump()
 
 
 def test_constraint_hash_is_stable():
     assert build().content_hash() == build().content_hash()
-    assert build().content_hash() != build(weekly_budget_cents=1).content_hash()
+    assert build().content_hash() != build(budget_cents=1).content_hash()
+    assert build().content_hash() != build(protein_target_g=101).content_hash()

@@ -6,13 +6,19 @@ Decisions:
     solver can fine-tune a tight day without three near-identical copies of every batch);
   * assignments: each batch portion to one (day, slot) within the fridge window, or later from the
     freezer for freezer-friendly recipes;
-  * purchases: integer packages per (product, store) offer, or a loose amount;
+  * purchases: packages per (product, store) offer, or a loose amount. An ingredient sold only in packages
+    costs at least one whole package once any batch that needs it is cooked, so the cost is close to the
+    cash you hand over (whole packages are exact on the grocery list);
   * inventory used (open packages and expiring lots are rewarded).
 
 Hard constraints: every slot filled once, no recipe twice a day, the weekly variety cap on meals, cook
-minutes, calorie limits per mode, budget when hard, frequency caps, portion requests, supply ≥ need.
+minutes, calorie limits per mode, the protein floor per mode, the purchase limit (shop-mode budget or
+inventory-mode top-up), frequency caps, portion requests, supply ≥ need.
 The secondary store carries a fixed charge equal to the split threshold, so it is used only when it
 saves at least that much (R4); the grocery list re-checks the rule exactly on the rounded plan.
+
+Waste: perishable food bought and not used is penalized, and more steeply once less than a quarter of a
+package is used (opening a pack for a sliver of it).
 
 Never-favored capped recipes (pork components) get no nutrient bonus, their cost is counted at no less
 than the slot's median candidate cost, inventory they use is charged at purchase price, and a small
@@ -44,10 +50,15 @@ MULTIPLIER_STEP = Decimal("0.001")
 # limit so the rounded plan rarely needs a re-solve. The plan validator checks your exact limits.
 ROUNDING_MARGIN_DAY_KCAL = 5
 ROUNDING_MARGIN_WEEK_KCAL = 20
-# Whole packages are modeled only for perishable packs of at least this price (chicken trays, big yogurt
-# tubs), where buying one more pack is a real decision. Everything else is costed per unit here; the
-# grocery list computes exact packages, stores and costs for every item on the rounded plan. Modeling every
-# offer as an integer made a real week take ~56 s instead of ~8 s.
+ROUNDING_MARGIN_DAY_PROTEIN_G = 1
+ROUNDING_MARGIN_WEEK_PROTEIN_G = 3
+# A perishable package with more than this share left over counts as "opened for a sliver of it".
+SMALL_FRACTION_LEFT = 0.75
+# Package counts are integers only for perishable packs of at least this price (chicken trays, big yogurt
+# tubs), where buying one more pack is a real decision. Every other package offer is costed per unit, with
+# a floor of one whole package per ingredient tied to the batch decisions (no extra integer variables);
+# the grocery list computes exact packages, stores and costs on the rounded plan. Modeling every offer as an
+# integer made a real week take ~56 s; a yes/no per offer for its first package took ~10-50 s.
 WHOLE_PACKAGE_MIN_CENTS = 500
 
 
@@ -139,6 +150,9 @@ class _Model:
     purchase_cost: Any
     store_used: dict[int, pulp.LpVariable]
     slacks: dict[str, dict[Any, pulp.LpVariable]] = field(default_factory=dict)
+    day_protein: dict[date, Any] = field(default_factory=dict)
+    # per ingredient: (amount bought in its planning unit, cents spent on it)
+    purchases: dict[int, tuple[Any, Any]] = field(default_factory=dict)
 
 
 def _f(value: Decimal | int | float) -> float:
@@ -347,11 +361,15 @@ def build_model(
     tol = c.tolerance
     day_kcal: dict[date, Any] = {}
     bias = {vid: _f(v) for vid, v in t.kcal_bias.items()}
+    kcal_scale = {vid: _f(v) for vid, v in t.kcal_scale.items()}
 
     def meal_kcal(b: _Batch, xv: Any, sv: Any) -> Any:
-        """kcal of one assigned portion: planned kcal × nudge, plus any rounding bias seen for the recipe."""
-        extra = bias.get(b.recipe.version_id, 0.0)
-        return b.kcal * sv + extra * xv if extra else b.kcal * sv
+        """kcal of one assigned portion as practical rounding will make it: planned kcal × nudge × the
+        recipe's rounding scale, plus its rounding bias."""
+        vid = b.recipe.version_id
+        coef = b.kcal * kcal_scale.get(vid, 1.0)
+        extra = bias.get(vid, 0.0)
+        return coef * sv + extra * xv if extra else coef * sv
 
     for d in c.days:
         expr = pulp.lpSum(meal_kcal(b, xv, sv) for s in d.slots for b, xv, sv in by_slot[(d.day, s)])
@@ -371,6 +389,32 @@ def build_model(
         )
         prob += week <= week_max + over, "kcal_week_max"
         prob += week >= week_min - under, "kcal_week_min"
+
+    # ---- protein: a floor per calorie mode; protein above it earns nothing ----
+    protein_bias = {vid: _f(v) for vid, v in t.protein_bias.items()}
+    protein_scale = {vid: _f(v) for vid, v in t.protein_scale.items()}
+
+    def meal_protein(b: _Batch, xv: Any, sv: Any) -> Any:
+        vid = b.recipe.version_id
+        coef = _f(b.recipe.protein_g * b.size_multiplier) * protein_scale.get(vid, 1.0)
+        extra = protein_bias.get(vid, 0.0)
+        return coef * sv + extra * xv if extra else coef * sv
+
+    day_protein: dict[date, Any] = {
+        d.day: pulp.lpSum(meal_protein(b, xv, sv) for s in d.slots for b, xv, sv in by_slot[(d.day, s)])
+        for d in c.days
+    }
+    target = c.daily_protein_target_g
+    if target > 0:
+        if c.calorie_mode is CalorieMode.STRICT_DAILY:
+            for d in c.days:
+                floor = target + ROUNDING_MARGIN_DAY_PROTEIN_G + _f(t.protein_day_floor.get(d.day, 0))
+                short = slack("protein_day", d.day) if elastic else 0
+                prob += day_protein[d.day] >= floor - short, f"protein_min_{d.day:%m%d}"
+        else:
+            floor = c.week_protein_target_g + ROUNDING_MARGIN_WEEK_PROTEIN_G + _f(t.protein_week_floor)
+            short = slack("protein_week", "week") if elastic else 0
+            prob += pulp.lpSum(day_protein.values()) >= floor - short, "protein_week_min"
 
     # ---- portion requests ----
     for ri, req in enumerate(c.portion_requests):
@@ -403,6 +447,8 @@ def build_model(
     )
     cost_terms: list[Any] = []
     waste_terms: list[Any] = []
+    sliver_terms: list[Any] = []
+    purchases_by_ingredient: dict[int, tuple[Any, Any]] = {}
     inventory_bonus: list[Any] = []
     inventory_charge: list[Any] = []
     store_used: dict[int, pulp.LpVariable] = {}
@@ -431,6 +477,7 @@ def build_model(
             )
         )
         other_avail = _f(plan.available) - open_avail - exp_avail
+        holdback = _f(t.inventory_holdback.get(ingredient_id, 0))
         inv_parts = []
         for label, avail in (("open", open_avail), ("exp", exp_avail), ("oth", other_avail)):
             if avail > 0:
@@ -439,6 +486,8 @@ def build_model(
         inventory = pulp.lpSum(var for _, _, var in inv_parts)
         if inv_parts:
             prob += inventory <= need, f"inv_le_need_{ingredient_id}"
+            if holdback > 0:
+                prob += inventory <= max(_f(plan.available) - holdback, 0), f"inv_holdback_{ingredient_id}"
             if ingredient_id in never_favored_ids:
                 unit_cents = min((o.cents_per_unit for o in offers), default=Decimal(0))
                 inventory_charge.append(_f(unit_cents) / 100 * inventory)
@@ -447,30 +496,64 @@ def build_model(
                     if label in ("open", "exp"):
                         inventory_bonus.append(var * (1 / avail))
         if not offers:
-            if c.budget_mode == "hard":
+            if c.has_purchase_limit:
                 prob += inventory >= need, f"unpriced_from_inventory_{ingredient_id}"
             continue
         bought = []
+        spent = []
+        all_whole = True
         for o in sorted(offers, key=lambda o: o.ref):
             if o.package_amount is not None:
                 assert o.package_cents is not None
                 upper = int(max_need / _f(o.package_amount)) + 2
                 whole = plan.perishable and o.package_cents >= WHOLE_PACKAGE_MIN_CENTS
+                all_whole = all_whole and whole
                 category = pulp.LpInteger if whole else pulp.LpContinuous
                 q = pulp.LpVariable(f"pk_{ingredient_id}_{o.ref}", lowBound=0, upBound=upper, cat=category)
                 bought.append(_f(o.package_amount) * q)
-                cost_terms.append(o.package_cents * q)
+                spent.append(o.package_cents * q)
             else:
+                all_whole = False
                 q = pulp.LpVariable(f"ls_{ingredient_id}_{o.ref}", lowBound=0, upBound=max_need + 1)
                 bought.append(q)
-                cost_terms.append(_f(o.cents_per_unit) * q)
+                spent.append(_f(o.cents_per_unit) * q)
             if o.store_id != primary:
                 secondary_offer_vars[o.store_id].append(q)
         purchases = pulp.lpSum(bought)
+        per_unit = pulp.lpSum(spent)
+        cost: Any = per_unit
+        packs = [o for o in offers if o.package_cents is not None]
+        # The first package is whole: nobody sells a third of a bottle. Only for ingredients sold in packages
+        # alone, with no inventory that might cover them (then the floor could overcharge).
+        if packs and len(packs) == len(offers) and not all_whole and not inv_parts:
+            first_pack = min(o.package_cents for o in packs if o.package_cents is not None)
+            used = pulp.LpVariable(f"used_{ingredient_id}", lowBound=0, upBound=1)
+            users = {b.index for _, b in need_terms[ingredient_id]}
+            for _, b in need_terms[ingredient_id]:
+                prob += used >= y[b.index], f"uses_{ingredient_id}_{b.index}"
+            # each meal slot is filled once, so the share of a slot served by batches that need the
+            # ingredient is a lower bound on "used" too (much tighter in the LP relaxation)
+            for (day, slot), options in sorted(by_slot.items(), key=lambda kv: (kv[0][0], kv[0][1].value)):
+                terms = [xv for b, xv, _ in options if b.index in users]
+                if terms:
+                    prob += used >= pulp.lpSum(terms), f"uses_{ingredient_id}_{day:%m%d}_{slot.value}"
+            cost = pulp.LpVariable(f"cash_{ingredient_id}", lowBound=0)
+            prob += cost >= per_unit, f"cash_units_{ingredient_id}"
+            prob += cost >= first_pack * used, f"cash_first_pack_{ingredient_id}"
+        cost_terms.append(cost)
+        purchases_by_ingredient[ingredient_id] = (purchases, cost)
         prob += inventory + purchases >= need, f"supply_{ingredient_id}"
         if plan.perishable:
-            unit_cents = min(o.cents_per_unit for o in offers)
-            waste_terms.append(_f(unit_cents) * (purchases + inventory - need))
+            # cents of perishable food bought and not used: whole packs left over, plus the unused part of a
+            # first package
+            waste_rate = _f(min(o.cents_per_unit for o in offers))
+            waste = waste_rate * (purchases + inventory - need) + (cost - per_unit)
+            waste_terms.append(waste)
+            if packs:
+                smallest = min(o.package_cents for o in packs if o.package_cents is not None)
+                sliver = pulp.LpVariable(f"sliver_{ingredient_id}", lowBound=0)
+                prob += sliver >= waste - SMALL_FRACTION_LEFT * smallest, f"sliver_{ingredient_id}"
+                sliver_terms.append(sliver)
     for store_id in sorted(secondary_offer_vars):
         used = pulp.LpVariable(f"store_{store_id}", cat=pulp.LpBinary)
         store_used[store_id] = used
@@ -479,15 +562,10 @@ def build_model(
             prob += q <= big * used, f"store_gate_{store_id}_{q.name}"
     purchase_cost = pulp.lpSum(cost_terms)
 
-    over_budget: Any = 0
-    if c.weekly_budget_cents is not None:
-        budget = c.weekly_budget_cents - t.budget_cents
-        if c.budget_is_hard:
-            extra = slack("budget", "budget") if elastic else 0
-            prob += purchase_cost <= budget + extra, "budget_hard"
-        else:
-            over_budget = pulp.LpVariable("over_budget", lowBound=0)
-            prob += purchase_cost - over_budget <= budget, "budget_soft"
+    if c.purchase_limit_cents is not None:
+        limit = max(c.purchase_limit_cents - t.budget_cents, 0)
+        extra = slack("budget", "budget") if elastic else 0
+        prob += purchase_cost <= limit + extra, "purchase_limit"
 
     # ---- objective ----
     if elastic:
@@ -499,11 +577,29 @@ def build_model(
             "week_under": 1,
             "time": 5,
             "budget": 0.1,
+            "protein_day": 2,
+            "protein_week": 2,
             "cap": 200,
             "variety": 200,
         }
-        prob += -pulp.lpSum(weights[kind] * var for kind, group in slacks.items() for var in group.values())
-        return _Model(prob, batches, x, y, nudge, frozen, day_kcal, purchase_cost, store_used, dict(slacks))
+        # a tiny cost term, so the purchases inside the limit are the cheapest ones too (the diagnostics list
+        # what would have to be bought)
+        penalty = pulp.lpSum(weights[kind] * var for kind, group in slacks.items() for var in group.values())
+        prob += -penalty - 0.0001 * purchase_cost
+        return _Model(
+            prob,
+            batches,
+            x,
+            y,
+            nudge,
+            frozen,
+            day_kcal,
+            purchase_cost,
+            store_used,
+            dict(slacks),
+            day_protein,
+            purchases_by_ingredient,
+        )
 
     primary_scores = {r.version_id: nutrient_score(r, c.nutrition_priority) for r in problem.candidates}
     best = max(primary_scores.values(), default=Decimal(0)) or Decimal(1)
@@ -560,14 +656,26 @@ def build_model(
     objective.append(-w.cost_per_dollar / 100 * purchase_cost)
     for used in store_used.values():
         objective.append(-w.cost_per_dollar / 100 * c.store_split_min_savings_cents * used)
-    objective.extend(-w.waste_per_dollar / 100 * term for term in waste_terms)
+    objective.extend(-w.waste_per_dollar / 100 * term for term in waste_terms)  # all in cents
+    objective.extend(-w.small_fraction_per_dollar / 100 * term for term in sliver_terms)
     objective.extend(w.inventory_use * term for term in inventory_bonus)
     objective.extend(-w.cost_per_dollar * term for term in inventory_charge)
     objective.extend(-w.batch * y[b.index] for b in batches)
-    if not isinstance(over_budget, int):
-        objective.append(-w.overrun_per_dollar / 100 * over_budget)
     prob += pulp.lpSum(objective)
-    return _Model(prob, batches, x, y, nudge, frozen, day_kcal, purchase_cost, store_used, dict(slacks))
+    return _Model(
+        prob,
+        batches,
+        x,
+        y,
+        nudge,
+        frozen,
+        day_kcal,
+        purchase_cost,
+        store_used,
+        dict(slacks),
+        day_protein,
+        purchases_by_ingredient,
+    )
 
 
 def run_solver(model: _Model, time_limit_s: int, gap_rel: float, gap_abs: float = 1.0) -> int:

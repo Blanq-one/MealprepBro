@@ -14,6 +14,7 @@ from app.domain.enums import (
     GroceryMode,
     MealSlot,
     NutritionPriority,
+    PlanningMode,
     PortionSize,
     RecipeMood,
 )
@@ -82,7 +83,8 @@ class PortionRequest(_Frozen):
 
 
 class PlanConstraints(_Frozen):
-    schema_version: Literal[1] = 1
+    # 2: the planning mode and purchase limit replace the weekly budget; the protein target is added
+    schema_version: Literal[2] = 2
     week_start: date
     days: tuple[DaySpec, ...] = Field(min_length=1, max_length=14)
     calorie_mode: CalorieMode
@@ -90,11 +92,16 @@ class PlanConstraints(_Frozen):
     weekly_kcal_target: int = Field(gt=0)
     tolerance: CalorieTolerance = CalorieTolerance()
     slot_targets: tuple[SlotTarget, ...] = Field(min_length=1)
+    # Protein is a floor, never a reward: strict daily mode = every day ≥ target; weekly mode = the week
+    # ≥ target × days. 0 = no protein target.
+    daily_protein_target_g: int = Field(default=0, ge=0, le=400)
     nutrition_priority: NutritionPriority
     secondary_priority: NutritionPriority | None = None
     grocery_mode: GroceryMode = GroceryMode.BALANCED
-    weekly_budget_cents: int | None = Field(default=None, ge=0)
-    budget_is_hard: bool = False  # PRD §33: "within budget when possible"
+    planning_mode: PlanningMode = PlanningMode.SHOP
+    # Hard limit on the cash spent this trip (whole packages). Shop mode: your optional budget (None = no
+    # limit; the cost is still minimized). Inventory mode: the top-up allowance (0 = buy nothing).
+    purchase_limit_cents: int | None = Field(default=None, ge=0)
     default_portion_size: PortionSize = PortionSize.NORMAL
     portion_nudge_pct: float = Field(default=10.0, ge=0, le=25)  # solver may use ±10% portion variants
     portion_requests: tuple[PortionRequest, ...] = ()
@@ -134,6 +141,8 @@ class PlanConstraints(_Frozen):
                 raise ValueError(f"nutrition priority '{p}' is not supported yet")
         if not any(d.is_cook_day for d in self.days):
             raise ValueError("at least one cook day is required")
+        if self.planning_mode is PlanningMode.INVENTORY and self.purchase_limit_cents is None:
+            raise ValueError("inventory mode needs a purchase limit (the top-up allowance, 0 = buy nothing)")
         if not self.held_ingredient_ids <= self.excluded_ingredient_ids:
             raise ValueError("held ingredients must also be in excluded_ingredient_ids")
         days_by_date = {d.day: d for d in self.days}
@@ -166,10 +175,17 @@ class PlanConstraints(_Frozen):
         return self.store_ids[0]
 
     @property
-    def budget_mode(self) -> Literal["none", "soft", "hard"]:
-        if self.weekly_budget_cents is None:
-            return "none"
-        return "hard" if self.budget_is_hard else "soft"
+    def shopping_day(self) -> date:
+        """The plan assumes you shop on its first day, before cooking."""
+        return self.week_start
+
+    @property
+    def has_purchase_limit(self) -> bool:
+        return self.purchase_limit_cents is not None
+
+    @property
+    def week_protein_target_g(self) -> int:
+        return self.daily_protein_target_g * len(self.days)
 
     def canonical(self) -> dict[str, Any]:
         """JSON-ready dump with sets sorted, so equal constraints always serialize (and hash) the same."""

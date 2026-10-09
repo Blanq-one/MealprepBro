@@ -52,14 +52,29 @@ def test_plan_week_prints_the_week_from_seeds_with_zero_llm_calls(use_test_db, c
     assert out.count("  Day ") == 7 and "  WEEK " in out
     assert "Grocery cost by store" in out and "Stop & Shop" in out and "Price Rite" in out
     assert "protein powder, double chocolate (no price yet, so the cost is incomplete)" in out
+    assert "Mode:      shop: your inventory first, then the grocery list (no budget" in out
+    assert "| target 100 g/day, week >= 700 g (a floor; more earns nothing)" in out
+    assert "Cash this trip" in out and "Food eaten" in out and "Expected waste" in out
+    assert "start to finish" in out
+    assert "Freeze on shopping day" in out
     assert "(dry run: nothing was saved)" in out
 
 
 def test_plan_week_explains_an_infeasible_week(use_test_db, capsys):
-    code = cli.main(
-        ["plan-week", "--week", "2026-10-12", "--no-llm", "--dry-run", "--budget", "80", "--hard-budget"]
-    )
+    code = cli.main(["plan-week", "--week", "2026-10-12", "--no-llm", "--dry-run", "--budget", "80"])
     assert code == 1
     out = capsys.readouterr().out
     assert "INFEASIBLE" in out and "No plan fits this week" in out
     assert "protein powder, double chocolate has no price" in out
+
+
+@pytest.mark.parametrize(
+    ("args", "message"),
+    [
+        (["--mode", "inventory", "--budget", "50"], "--budget is for shop mode"),
+        (["--topup", "10"], "--topup is for inventory mode"),
+    ],
+)
+def test_plan_week_rejects_a_limit_for_the_other_mode(use_test_db, capsys, args, message):
+    assert cli.main(["plan-week", "--week", "2026-10-12", "--no-llm", "--dry-run", *args]) == 2
+    assert message in capsys.readouterr().err

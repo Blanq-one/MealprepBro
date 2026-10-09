@@ -6,7 +6,7 @@ from typing import Any, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from app.domain.enums import CalorieMode, MealSlot, NutritionPriority, RecipeMood
+from app.domain.enums import CalorieMode, MealSlot, NutritionPriority, PlanningMode, RecipeMood
 from app.schemas.constraints import PortionRequest
 
 
@@ -24,7 +24,12 @@ class DayOverride(_Strict):
 
 
 class PlanRequest(_Strict):
-    """POST /api/v1/plans. Everything except week_start defaults to your saved settings."""
+    """POST /api/v1/plans. Everything except week_start defaults to your saved settings, except the mode and
+    its money limit, which belong to this request only.
+
+    mode=inventory: cook from what you have; nothing is bought unless you allow topup_cents for missing
+    items. mode=shop: inventory first, then a grocery list; budget_cents is an optional hard limit on the
+    cash spent this trip (without it the cost is still minimized and reported)."""
 
     week_start: date
     days: int = Field(default=7, ge=1, le=14)
@@ -36,14 +41,20 @@ class PlanRequest(_Strict):
     nutrition_priority: NutritionPriority | None = None
     secondary_priority: NutritionPriority | None = None
     calorie_mode: CalorieMode | None = None
-    weekly_budget_cents: int | None = Field(default=None, ge=0)
-    budget_is_hard: bool | None = None
+    mode: PlanningMode = PlanningMode.SHOP
+    budget_cents: int | None = Field(default=None, ge=0, description="shop mode: max cash this trip")
+    topup_cents: int | None = Field(default=None, ge=0, description="inventory mode: allowance to buy")
+    protein_target_g: int | None = Field(default=None, ge=0, le=400, description="daily floor; 0 = none")
     allow_llm: bool = True
 
     @model_validator(mode="after")
     def _check(self) -> Self:
         if any(v < 0 or v > 3000 for v in self.slot_kcal.values()):
             raise ValueError("slot kcal must be between 0 and 3000")
+        if self.mode is PlanningMode.INVENTORY and self.budget_cents is not None:
+            raise ValueError("inventory mode takes a top-up (topup_cents), not a budget")
+        if self.mode is PlanningMode.SHOP and self.topup_cents is not None:
+            raise ValueError("a top-up is for inventory mode; shop mode takes a budget (budget_cents)")
         days = [o.day for o in self.day_overrides]
         if len(set(days)) != len(days):
             raise ValueError("duplicate day override")
@@ -101,6 +112,8 @@ class DayOut(BaseModel):
     kcal_target: int
     protein_g: Decimal
     hands_on_minutes: int
+    elapsed_minutes: int  # start to finish (an upper estimate: hands-on work back to back + longest wait)
+    chill_minutes: int  # the longest fridge wait of a no-cook recipe cooked that day (0 = none)
     cook_minutes_available: int
     meals: list[MealOut]
 
@@ -125,6 +138,43 @@ class StoreTotalOut(BaseModel):
     display: str
 
 
+class CostsOut(BaseModel):
+    """cash + from_inventory = eaten + frozen_portions + leftover (staples aren't counted)."""
+
+    cash_cents: int  # this trip, whole packages
+    cash_display: str
+    eaten_cents: int  # food eaten this week
+    eaten_display: str
+    from_inventory_cents: int
+    leftover_cents: int  # bought, not used this week: carries into your inventory
+    leftover_display: str
+    frozen_portions_cents: int
+    expected_waste_cents: int
+    expected_waste_display: str
+    complete: bool
+    unpriced: list[str]
+
+
+class LeftoverOut(BaseModel):
+    ingredient_id: int
+    name: str
+    amount: str
+    cents: int
+    fate: Literal["freeze", "keeps", "at_risk"]
+
+
+class FreezeOut(BaseModel):
+    ingredient_id: int
+    name: str
+    amount: str
+    freeze_on: date
+    use_on: date | None
+    thaw_on: date | None
+    recipe: str | None
+    source: str
+    message: str
+
+
 class PlanSummaryOut(BaseModel):
     """PRD §25: the weekly planning screen's data."""
 
@@ -136,8 +186,9 @@ class PlanSummaryOut(BaseModel):
     kcal_planned_week: int
     nutrition_focus: str
     secondary_focus: str | None
-    budget_cents: int | None
-    budget_is_hard: bool
+    planning_mode: PlanningMode
+    purchase_limit_cents: int | None  # shop: your budget; inventory: your top-up (0 = buy nothing)
+    protein_target_g_per_day: int
     estimated_cost_cents: int
     estimated_cost_display: str
     cost_complete: bool
@@ -147,6 +198,9 @@ class PlanSummaryOut(BaseModel):
     meals_count: int
     protein_g_week: Decimal
     protein_g_per_day: Decimal
+    costs: CostsOut
+    leftovers: list[LeftoverOut]
+    freeze: list[FreezeOut]
     days: list[DayOut]
     batches: list[BatchOut]
     warnings: list[dict[str, Any]]

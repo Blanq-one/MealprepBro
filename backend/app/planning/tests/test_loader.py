@@ -7,7 +7,7 @@ from decimal import Decimal
 from sqlalchemy import select
 
 from app.db.models import Ingredient
-from app.domain.enums import Equipment, StorageLocation
+from app.domain.enums import Equipment, PlanningMode, StorageLocation
 from app.domain.exclusions import Preference
 from app.planning.inputs import constraints_for
 from app.planning.loader import build_problem
@@ -44,25 +44,44 @@ def test_missing_equipment_keeps_its_reason(seeded_db):
     assert "needs equipment you don't have: oven" in reasons["Sheet-pan chicken and peppers over rice"]
 
 
-def test_hard_budget_excludes_unpriced_recipes_and_says_why(seeded_db):
-    p = problem(seeded_db, weekly_budget_cents=10000, budget_is_hard=True)
+POWDER_RECIPES = (
+    "Double chocolate protein pudding",
+    "Chocolate protein overnight oats",
+    "Chocolate protein chia pudding",
+)
+
+
+def test_a_budget_excludes_unpriced_recipes_and_says_why(seeded_db):
+    p = problem(seeded_db, budget_cents=10000)
     left_out = {e.title: e for e in p.excluded}
-    for title in (
-        "Double chocolate protein pudding",
-        "Chocolate protein overnight oats",
-        "Chocolate protein chia pudding",
-    ):
+    for title in POWDER_RECIPES:
         assert left_out[title].unpriced_ingredients == ("protein powder, double chocolate",)
-        assert "hard budget can't be checked" in " ".join(left_out[title].reasons)
+        assert "your budget can't be checked" in " ".join(left_out[title].reasons)
     assert len(p.candidates) == 7
 
 
-def test_soft_budget_keeps_unpriced_recipes(seeded_db):
-    p = problem(seeded_db, weekly_budget_cents=10000, budget_is_hard=False)
+def test_inventory_mode_excludes_unpriced_items_you_dont_have(seeded_db):
+    p = problem(seeded_db, mode=PlanningMode.INVENTORY, topup_cents=2000)
+    left_out = {e.title: e for e in p.excluded}
+    for title in POWDER_RECIPES:
+        assert "isn't in your inventory and has no price" in " ".join(left_out[title].reasons)
+
+
+def test_no_budget_keeps_unpriced_recipes(seeded_db):
+    p = problem(seeded_db)
     assert len(p.candidates) == 10 and p.excluded == ()
 
 
-def test_inventory_lets_a_hard_budget_use_an_unpriced_item(seeded_db):
+def test_raw_protein_carries_its_chart_fridge_life(seeded_db):
+    p = problem(seeded_db)
+    thigh = p.ingredients[slug_id(seeded_db, "chicken-thigh-boneless-skinless")]
+    assert thigh.fridge_life is not None and thigh.fridge_life.days == 1 and thigh.fridge_life.freeze_raw
+    assert thigh.location == "fridge"
+    rice = p.ingredients[slug_id(seeded_db, "rice-long-grain-white")]
+    assert rice.fridge_life is None
+
+
+def test_inventory_lets_a_budget_use_an_unpriced_item(seeded_db):
     user = current_user(seeded_db)
     add_lot(
         seeded_db,
@@ -74,8 +93,12 @@ def test_inventory_lets_a_hard_budget_use_an_unpriced_item(seeded_db):
             StorageLocation.PANTRY,
         ),
     )
-    p = problem(seeded_db, weekly_budget_cents=10000, budget_is_hard=True)
+    p = problem(seeded_db, budget_cents=10000)
     assert len(p.candidates) == 10  # the powder comes from what you have, so no price is needed
+    p = problem(seeded_db, mode=PlanningMode.INVENTORY)
+    assert len(p.candidates) == 10
+    lot = p.ingredients[slug_id(seeded_db, "protein-powder-double-chocolate")].lots[0]
+    assert lot.location == "pantry"
 
 
 def test_allowing_a_held_item_is_reflected_in_reasons(seeded_db):

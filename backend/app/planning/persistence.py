@@ -48,6 +48,9 @@ def save_plan(
                 "primary_only_cents": plan.grocery.primary_only_cents,
                 "forced_elsewhere": list(plan.grocery.forced_elsewhere),
             },
+            "costs": plan.costs.to_json(),
+            "leftovers": [item.to_json() for item in plan.leftovers],
+            "freeze": [item.to_json() for item in plan.freeze],
         },
         validation_report=validation,
     )

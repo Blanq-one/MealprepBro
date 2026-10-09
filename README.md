@@ -60,11 +60,21 @@ uv run uvicorn app.main:app --reload
 cd backend
 uv run python -m app.cli plan-week --week 2026-10-12 --no-llm --dry-run   # seed recipes only, 0 LLM calls
 uv run python -m app.cli plan-week --week 2026-10-12                     # LLM fills uncovered slots (needs GROQ_API_KEY + LLM_MODEL)
-uv run python -m app.cli plan-week --slot dinner=550 --slot drink=100 --minutes mon=60 --budget 90 --hard-budget
+uv run python -m app.cli plan-week --budget 60                           # shop mode with a hard $60 cash limit
+uv run python -m app.cli plan-week --mode inventory                      # cook from what you have, buy nothing
+uv run python -m app.cli plan-week --mode inventory --topup 15           # ...or allow $15 for missing items
+uv run python -m app.cli plan-week --slot dinner=550 --slot drink=100 --minutes mon=60 --protein 120
 ```
 
-It prints each day's meals, daily and weekly kcal and protein, cost by store (with the Price Rite split rule), notes
-and warnings, or the reasons no plan fits. Without `--dry-run` the plan is saved as a draft; `--accept` makes it the
+Modes: `shop` (default) uses your inventory first, then builds the grocery list; `--budget` is a hard limit on cash
+this trip, and without it the cost is minimized and reported. `inventory` buys nothing unless you allow `--topup`;
+when nothing fits it says exactly what's missing. The daily protein target (default 100 g, `--protein`) is a floor,
+never a reward.
+
+It prints each day's meals, daily and weekly kcal and protein, hands-on and start-to-finish time per cook day, the
+week's money (cash this trip, food eaten, leftovers carried into inventory, expected waste), cost by store (with the
+Price Rite split rule) or the top-up buy list, freeze-on-shopping-day instructions for raw protein, notes and
+warnings, or the reasons no plan fits. Without `--dry-run` the plan is saved as a draft; `--accept` makes it the
 week's active plan.
 
 LLM tests use scripted responses. One opt-in smoke test calls Groq for real:

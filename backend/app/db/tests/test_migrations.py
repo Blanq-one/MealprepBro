@@ -1,5 +1,5 @@
-"""AC 0.1: `alembic upgrade head` creates exactly the 31 tables of 0001; `downgrade base` removes them;
-`alembic check` reports no drift. Runs in its own throwaway database."""
+"""AC 0.1: `alembic upgrade head` creates exactly the 31 tables of 0001 (0002 is data only); `downgrade base`
+removes them; `alembic check` reports no drift. Runs in its own throwaway database."""
 
 from collections.abc import Iterator
 
@@ -92,3 +92,36 @@ def test_upgrade_check_downgrade(scratch_db_url):
     assert _tables(scratch_db_url) == set()
     command.upgrade(cfg, "head")  # and back up again cleanly
     assert _tables(scratch_db_url) == TABLES_0001
+
+
+def test_0002_moves_the_budget_out_of_settings_and_adds_the_protein_target(scratch_db_url):
+    cfg = alembic_config(scratch_db_url)
+    command.upgrade(cfg, "0001")
+    engine = create_engine(scratch_db_url)
+    v1 = (
+        '{"schema_version": 1, "daily_kcal_target": 1800, "weekly_budget_cents": 9000, '
+        '"budget_is_hard": true}'
+    )
+    try:
+        with engine.begin() as conn:
+            user_id = conn.execute(
+                text("INSERT INTO app_user (display_name) VALUES ('me') RETURNING id")
+            ).scalar_one()
+            conn.execute(
+                text("INSERT INTO user_settings (user_id, settings, schema_version) VALUES (:u, :s, 1)"),
+                {"u": user_id, "s": v1},
+            )
+        command.upgrade(cfg, "head")
+        with engine.connect() as conn:
+            settings, version = conn.execute(text("SELECT settings, schema_version FROM user_settings")).one()
+        assert version == 2 and settings["schema_version"] == 2
+        assert "weekly_budget_cents" not in settings and "budget_is_hard" not in settings
+        assert settings["daily_protein_target_g"] == 100 and settings["daily_kcal_target"] == 1800
+        command.downgrade(cfg, "0001")
+        with engine.connect() as conn:
+            settings, version = conn.execute(text("SELECT settings, schema_version FROM user_settings")).one()
+        assert (
+            version == 1 and settings["budget_is_hard"] is False and "daily_protein_target_g" not in settings
+        )
+    finally:
+        engine.dispose()

@@ -102,4 +102,6 @@ def round_batch(
         lines=tuple(lines),
         per_portion=per_portion,
         absorbed_ingredient_id=absorbed[0] if absorbed is not None else None,
+        total_minutes=recipe.total_minutes,
+        no_cook=not recipe.equipment,
     )

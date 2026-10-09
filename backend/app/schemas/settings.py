@@ -65,18 +65,18 @@ class FrequencyCapSetting(_Strict):
 
 
 class UserSettings(_Strict):
-    schema_version: Literal[1] = 1
+    schema_version: Literal[2] = 2  # 2: the budget moved to each plan request; protein target added
     daily_kcal_target: int = Field(default=1800, ge=800, le=6000)
     calorie_mode: CalorieMode = CalorieMode.WEEKLY
     daily_band_kcal: int = Field(default=150, ge=0, le=1000)
     weekly_under_pct: float = Field(default=3.0, ge=0, le=25)
     daily_under_pct: float = Field(default=5.0, ge=0, le=50)
     slot_allocations: list[SlotAllocationSetting] = Field(min_length=1)
+    # A floor, not a reward: protein above it earns nothing extra. 0 = no protein target.
+    daily_protein_target_g: int = Field(default=100, ge=0, le=400)
     nutrition_priority: NutritionPriority = NutritionPriority.PROTEIN
     secondary_priority: NutritionPriority | None = None
     grocery_mode: GroceryMode = GroceryMode.BALANCED
-    weekly_budget_cents: int | None = Field(default=None, ge=0)
-    budget_is_hard: bool = False
     equipment: list[Equipment] = Field(min_length=1)
     cook_schedule: list[CookDaySetting] = Field(min_length=7, max_length=7)
     leftover_fridge_days: int = 3

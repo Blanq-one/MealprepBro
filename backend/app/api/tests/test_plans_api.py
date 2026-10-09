@@ -1,5 +1,6 @@
 """Phase 1 API: planning runs (202 + polling), plan summary, grocery list, and the supporting endpoints."""
 
+from decimal import Decimal
 from typing import Any
 
 import pytest
@@ -55,6 +56,21 @@ def test_plan_run_202_then_poll_then_summary(api):
     assert tuesday["is_cook_day"] is False and tuesday["hands_on_minutes"] == 0
     assert sum(d["kcal"] for d in summary["days"]) == summary["kcal_planned_week"]
     assert any(m["is_draft"] for d in summary["days"] for m in d["meals"])
+    # the fix-up round: mode, protein target, money, freezing, elapsed time
+    assert summary["planning_mode"] == "shop" and summary["purchase_limit_cents"] is None
+    assert summary["protein_target_g_per_day"] == 100 and Decimal(summary["protein_g_week"]) >= 700
+    costs = summary["costs"]
+    assert costs["cash_cents"] == summary["estimated_cost_cents"] and not costs["complete"]
+    assert costs["cash_cents"] + costs["from_inventory_cents"] == (
+        costs["eaten_cents"] + costs["frozen_portions_cents"] + costs["leftover_cents"]
+    )
+    assert costs["expected_waste_cents"] == sum(
+        i["cents"] for i in summary["leftovers"] if i["fate"] == "at_risk"
+    )
+    assert summary["freeze"] and all(x["freeze_on"] == WEEK for x in summary["freeze"])
+    assert all(x["message"].startswith("Freeze ") for x in summary["freeze"])
+    monday = summary["days"][0]
+    assert monday["elapsed_minutes"] >= monday["hands_on_minutes"] > 0
     accepted = api.post(f"/api/v1/plans/{run['plan_id']}/accept").json()
     assert accepted["status"] == "active"
 
@@ -84,6 +100,16 @@ def test_problem_json_errors(api):
     assert api.get("/api/v1/generation-runs/999999").status_code == 404
     bad = api.post("/api/v1/plans", json={"week_start": WEEK, "slot_kcal": {"drink": -5}})
     assert bad.status_code == 422 and bad.headers["content-type"].startswith(PROBLEM)
+    wrong_mode = api.post("/api/v1/plans", json={"week_start": WEEK, "mode": "shop", "topup_cents": 500})
+    assert wrong_mode.status_code == 422 and "a top-up is for inventory mode" in wrong_mode.text
+    old_field = api.post("/api/v1/plans", json={"week_start": WEEK, "weekly_budget_cents": 5000})
+    assert old_field.status_code == 422  # the budget is a per-request budget_cents now
+
+
+def test_inventory_mode_run_explains_what_is_missing(api):
+    run = plan_week(api, mode="inventory", topup_cents=0)
+    assert run["status"] == "infeasible" and run["plan_id"] is None
+    assert run["error"]["code"] == "infeasible"
 
 
 def test_a_failed_run_carries_a_problem_json_error(api, client):

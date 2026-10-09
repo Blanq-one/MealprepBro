@@ -1,5 +1,5 @@
 {
- "schema_version": 1,
+ "schema_version": 2,
  "daily_kcal_target": 1800,
  "calorie_mode": "weekly",
  "daily_band_kcal": 150,
@@ -11,11 +11,10 @@
   {"slot": "dinner", "kcal": 650},
   {"slot": "protein_dessert", "kcal": 200}
  ],
+ "daily_protein_target_g": 100,
  "nutrition_priority": "protein",
  "secondary_priority": null,
  "grocery_mode": "balanced",
- "weekly_budget_cents": null,
- "budget_is_hard": false,
  "equipment": ["stovetop", "oven", "air_fryer", "microwave"],
  "cook_schedule": [
   {"weekday": "mon", "is_cook_day": true, "cook_minutes": 45, "mood": "medium"},
