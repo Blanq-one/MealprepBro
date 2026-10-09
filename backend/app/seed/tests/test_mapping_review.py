@@ -59,7 +59,10 @@ def test_review_sheet_rows(seeded_db):
     kcal = [r.seed_kcal for r in rows]
     assert kcal == sorted(kcal, reverse=True)
     assert sum(r.share_pct for r in rows) == Decimal("100.0")
-    assert [r.review for r in rows] == [True] * REVIEW_TOP_N + [False] * (len(rows) - REVIEW_TOP_N)
+    # you approved the whole top 25 on 2026-10-08, so nothing is left marked for review
+    assert all(r.approved_on == date(2026, 10, 8) for r in rows[:REVIEW_TOP_N])
+    assert not any(r.review for r in rows)
+    assert not any(r.approved_on for r in rows[REVIEW_TOP_N:])
     assert rows[0].ingredient.slug == "chicken-thigh-boneless-skinless"
     by_slug = {r.ingredient.slug: r for r in rows}
     tortilla = by_slug["flour-tortilla-small"]
@@ -77,7 +80,9 @@ def test_review_sheet_markdown(seeded_db):
     rows = build_rows(seeded_db)
     text = render_markdown(rows, date(2026, 10, 8))
     assert "| # | Ingredient | Nutrition source | USDA description | FDC id | State | kcal per 100 g " in text
-    assert text.count(f"**{REVIEW_MARK}**") == REVIEW_TOP_N + 1  # 25 rows + the legend
+    assert text.count(f"**{REVIEW_MARK}**") == 1  # only the legend: the top 25 are approved
+    assert text.count("approved 2026-10-08") == REVIEW_TOP_N
     assert "| 1 | chicken thigh, boneless skinless | USDA |" in text
+    assert "| 2 | flour tortilla (Price Rite, 37 g) | package label" in text
     summary = flag_summary(rows)
     assert any(line.startswith("description says 'canned': 3") for line in summary)

@@ -38,7 +38,9 @@ ONION = IngredientUnits(
     count_unit_weight_g=D("110"),
     named_units={"cup_chopped": D("160")},
 )
-TORTILLA = IngredientUnits("flour tortilla, small", UnitKind.COUNT, count_unit_weight_g=D(740) / D(20))
+TORTILLA = IngredientUnits(
+    "flour tortilla (Price Rite, 37 g)", UnitKind.COUNT, count_unit_weight_g=D(740) / D(20)
+)
 NO_DATA = IngredientUnits("mystery", UnitKind.MASS)
 
 

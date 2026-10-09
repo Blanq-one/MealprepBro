@@ -1,6 +1,7 @@
 """Pydantic models for the seed data files in app/seed/data/. They validate the JSON before anything is
 written to the database."""
 
+from datetime import date
 from decimal import Decimal
 from typing import Literal, Self
 
@@ -90,6 +91,7 @@ class SeedIngredient(_Strict):
     count_unit_weight: PortionRef | LabelRef | None = None
     units: list[SeedUnit] = Field(default_factory=list)
     notes: str | None = None
+    nutrition_reviewed_on: date | None = None  # you approved this mapping (review sheet)
 
     @field_validator("diet_tags")
     @classmethod

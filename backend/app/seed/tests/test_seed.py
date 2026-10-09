@@ -172,6 +172,25 @@ def test_tortilla_piece_weight_from_the_label(seeded_db):
     assert {label.source for label in files.labels.labels.values()} == {"package label"}
 
 
+def test_tortilla_renamed_and_the_old_name_still_resolves(seeded_db):
+    tortilla = _slug(seeded_db, "flour-tortilla-small")
+    assert tortilla.name == "flour tortilla (Price Rite, 37 g)"
+    for alias in ("flour tortilla small", "flour tortilla price rite 37 g", "small flour tortillas"):
+        hit = seeded_db.scalars(
+            select(IngredientAlias).where(IngredientAlias.alias_normalized == alias)
+        ).one()
+        assert hit.ingredient_id == tortilla.id
+
+
+def test_approved_mappings_are_recorded(seeded_db):
+    reviewed = seeded_db.scalars(
+        select(Ingredient).where(Ingredient.nutrition_reviewed_at.is_not(None))
+    ).all()
+    assert len(reviewed) == 25
+    assert {i.nutrition_reviewed_at.date().isoformat() for i in reviewed} == {"2026-10-08"}
+    assert {"greek-yogurt-nonfat", "milk-2"} <= {i.slug for i in reviewed}  # nonfat and 2% kept
+
+
 def test_usda_units_link_to_portions(seeded_db):
     units = seeded_db.scalars(select(IngredientUnit).where(IngredientUnit.source == "usda_portion")).all()
     assert len(units) > 50
@@ -445,7 +464,7 @@ def test_ingredient_report_has_zero_errors(seeded_db):
     text = format_report(report)
     assert "not filled yet" not in text
     assert "ESTIMATE" not in text
-    assert report.placeholders == ["food-safety storage chart: 12 rows pending transcription (A1)"]
+    assert report.placeholders == []
     held = " ".join(report.held)
     assert "gelatin, unflavored" in held and "pepperoni" in held
     assert any("ground beef" in e for e in report.excluded)

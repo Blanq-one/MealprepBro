@@ -43,6 +43,7 @@ docker compose up -d db db-test
 uv run pytest                            # all tests
 uv run pytest --cov=app/domain           # domain coverage
 uv run ruff check . && uv run ruff format --check . && uv run mypy app conftest.py
+../scripts/fresh_clone_check.sh          # end of every phase: clone HEAD, build, test in Docker
 uv run alembic upgrade head
 uv run python -m app.cli usda-import     # reads USDA_RAW_DIR (default ../data/raw/usda)
 uv run python -m app.cli seed

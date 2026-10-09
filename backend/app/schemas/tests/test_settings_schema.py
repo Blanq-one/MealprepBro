@@ -27,7 +27,7 @@ def test_defaults_validate():
     [
         ({"excluded_diet_tags": []}, "must stay excluded"),
         ({"excluded_diet_tags": ["beef", "unicorn"]}, "unknown diet tags"),
-        ({"leftover_fridge_days": 4}, "above the allowed maximum"),
+        ({"leftover_fridge_days": 5}, "chart maximum of 4"),
         ({"cook_schedule": DEFAULTS["cook_schedule"][:6]}, "at least 7"),
         (
             {"cook_schedule": [*DEFAULTS["cook_schedule"][:6], DEFAULTS["cook_schedule"][0]]},

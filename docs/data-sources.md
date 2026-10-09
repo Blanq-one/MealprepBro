@@ -33,7 +33,7 @@ price-related is ever taken from the LLM.
 
 Package-label values override the USDA mapping. Per-serving values are converted to per 100 g by code.
 
-- **Price Rite flour tortillas** ($1.99/bag): 20 per bag, 1 tortilla = 37 g, net weight 740 g. Per tortilla:
+- **Price Rite flour tortillas** (ingredient "flour tortilla (Price Rite, 37 g)", $1.99/bag): 20 per bag, 1 tortilla = 37 g, net weight 740 g. Per tortilla:
   110 kcal, fat 2 g (sat 1 g, trans 0 g), cholesterol 0 mg, sodium 340 mg, carbs 19 g, fiber 2 g, total sugars
   1 g (0 g added), protein 3 g. The values given don't include iron, calcium, potassium or vitamins; those
   come from the USDA mapping (FDC 167535), and each nutrient row records its own source.
@@ -47,12 +47,14 @@ Package-label values override the USDA mapping. Per-serving values are converted
 
 - Safe internal temperatures: the USDA baseline in `CLAUDE.md`, hardcoded in
   `backend/app/domain/food_safety.py`.
-- Storage durations: to be transcribed from the FoodSafety.gov Cold Food Storage Chart,
-  <https://www.foodsafety.gov/food-safety-charts/cold-food-storage-charts>. The page returned HTTP 403 to
-  automated fetches on 2026-10-08 (twice). You saved the PDF to `docs/sources/` on 2026-10-08; it isn't
-  transcribed yet, so every chart value is still **pending** and unused. Values are never taken from
-  secondary sources.
-- Your fixed values (live now): cooked leftovers 3 days in the fridge; reheat to 165 °F.
+- Storage durations: the FoodSafety.gov Cold Food Storage Chart,
+  <https://www.foodsafety.gov/food-safety-charts/cold-food-storage-charts> ("Date Last Reviewed: September 19,
+  2023"). The page blocks automated fetches, so you saved it as a PDF:
+  [`docs/sources/Cold Food Storage Chart _ FoodSafety.gov.pdf`](sources/) (printed 2026-10-08). All 53 rows are
+  transcribed in `backend/app/domain/storage_chart.py`, worded as printed; day ranges are parsed by code.
+  Values are never taken from secondary sources.
+- Your fixed values: cooked leftovers 3 days in the fridge (the chart allows 3 to 4); reheat to 165 °F
+  (CLAUDE.md; the chart has no reheating guidance).
 
 ## Prices (`backend/app/seed/data/products_prices.json`)
 

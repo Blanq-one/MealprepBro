@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 from app.config import BACKEND_DIR, get_settings
 from app.db.session import get_engine
 from app.domain import food_safety as fs
+from app.domain import storage_chart
 from app.seed.files import load_seed_files
 from app.seed.loader import seed_all
 from app.seed.mapping_review import build_rows, flag_summary, render_markdown
@@ -96,22 +97,29 @@ def _mapping_review(out: Path) -> int:
 
 def _safety_table() -> int:
     reheat = fs.LEFTOVERS_REHEAT
-
     print("Safe internal temperatures (CLAUDE.md USDA baseline):")
     for temp in fs.SAFE_INTERNAL_TEMPS.values():
         rest = f" + {temp.rest_minutes}-minute rest" if temp.rest_minutes else ""
         print(f"  {temp.key:16} {temp.temp_f} F{rest:18} {temp.applies_to}")
     print(f"  {reheat.key:16} {reheat.temp_f} F{'':18} {reheat.applies_to}")
-    print(f"\nCooked leftovers in the fridge: {fs.LEFTOVER_FRIDGE_DAYS_DEFAULT} days (your fixed default)")
-    print(f"\nStorage chart: {fs.FOODSAFETY_GOV_CHART_URL}")
-    print(f"  status: {fs.CHART_ACCESS_NOTE}")
-    for entry in fs.STORAGE_CHART:
-        fridge = (
-            f"{entry.fridge_days_min}-{entry.fridge_days_max} days"
-            if entry.fridge_days_max is not None
-            else "pending"
-        )
-        print(f"  {entry.key:22} {entry.status:9} fridge: {fridge:12} {entry.food}")
+    leftovers = fs.storage_for("cooked_leftovers")
+    print(
+        f"\nCooked leftovers: {fs.LEFTOVER_FRIDGE_DAYS_DEFAULT} days in the fridge (your default; chart: "
+        f"{leftovers.refrigerator}, so the setting can go up to {fs.leftover_fridge_days_upper_bound()})"
+    )
+    print(
+        "\nStorage: FoodSafety.gov Cold Food Storage Chart, "
+        f"last reviewed {storage_chart.CHART_LAST_REVIEWED}"
+    )
+    print(f"  {storage_chart.CHART_URL}")
+    print(f"  saved copy: {storage_chart.CHART_PDF} ({storage_chart.CHART_SAVED_ON})")
+    print(f"  {storage_chart.FREEZER_NOTE}")
+    food = None
+    for row in storage_chart.STORAGE_CHART:
+        if row.food != food:
+            food = row.food
+            print(f"\n  {food}")
+        print(f"    {row.type[:58]:58}  fridge: {row.refrigerator:30}  freezer: {row.freezer}")
     return 0
 
 

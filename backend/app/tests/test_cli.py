@@ -17,8 +17,11 @@ def test_safety_table_prints_values_and_citation(capsys):
     assert "whole_cut_meat   145 F + 3-minute rest" in out
     assert "leftovers_reheat 165 F" in out
     assert "https://www.foodsafety.gov/food-safety-charts/cold-food-storage-charts" in out
-    assert "pending" in out
-    assert "Cooked leftovers in the fridge: 3 days" in out
+    assert "pending" not in out
+    assert "Cooked leftovers: 3 days in the fridge" in out
+    assert "last reviewed September 19, 2023" in out
+    assert "docs/sources/Cold Food Storage Chart _ FoodSafety.gov.pdf" in out
+    assert "Chicken or turkey, pieces" in out and "9 months" in out
 
 
 def test_ingredient_report_exits_zero_with_no_errors(use_test_db, capsys):

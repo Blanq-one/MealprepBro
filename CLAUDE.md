@@ -70,14 +70,16 @@ Safe internal temperatures and storage/reheating guidance come from a hardcoded 
 1. The full build plan lives in `docs/BUILD_PLAN.md`. Do not start building until I have approved it.
 2. Build exactly ONE phase per session. Never start the next phase on your own.
 3. A phase is done only when: all its acceptance criteria are met, its tests pass, and you have shown me the test output.
-4. At the end of each phase, give me a short summary: what was built, key decisions made and why, anything deferred, and any deviation from the plan. Then stop and wait for my approval.
-5. Mark progress in `docs/BUILD_PLAN.md` (phase status, date, notes).
-6. If something in the plan turns out to be wrong mid-phase, stop and tell me before changing direction.
-7. Commit at the end of each phase with a clear message.
+4. At the end of every phase, run the fresh-clone Docker test check (`scripts/fresh_clone_check.sh`, after committing), even when dependencies didn't change, and show me its output.
+5. At the end of each phase, give me a short summary: what was built, key decisions made and why, anything deferred, and any deviation from the plan. Then stop and wait for my approval.
+6. Mark progress in `docs/BUILD_PLAN.md` (phase status, date, notes).
+7. If something in the plan turns out to be wrong mid-phase, stop and tell me before changing direction.
+8. Commit at the end of each phase with a clear message.
 
 ## Machine boundaries
 
 - Never install system-level software, change machine settings, or start/stop applications outside the repo without asking me first.
+- Starting and stopping this repo's own containers from `docker-compose.yml` is allowed. Launching Docker Desktop or any other application still requires asking me first.
 
 ## Code conventions
 

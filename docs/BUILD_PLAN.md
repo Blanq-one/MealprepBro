@@ -16,7 +16,7 @@ This plan covers Phases 0–6. One phase per session. A phase is done only when 
 | — | Repo setup (git init, .gitignore, initial commit) | Done | 2026-10-08 | 2026-10-08 | Commit `3c7a499`. Done before Phase 0 per instruction. |
 | — | Build plan | Approved (v3) | 2026-10-08 | 2026-10-08 | v1 reviewed → v2 (seed library, per-phase migrations, narrow prose filter, rounded-plan validator, strict/best-effort). v3 = approval changes: table audit (§4.2a), exposure logging → Phase 2, beef-only exclusion + pork frequency cap, R1–R7 answers, A2 label values. |
 | 0 | Data foundation | Approved | 2026-10-08 | 2026-10-08 | 321 tests pass (local + Docker), domain coverage 99.6% (domain tests alone), ruff/mypy clean. 185 ingredients, 649 aliases, 9 draft seeds. Open: FoodSafety.gov chart (A1), powder carbs/fat (A2), R8. Deviations in the Phase 0 outcome note (§9). |
-| — | Pre-Phase 1 tasks | Done | 2026-10-08 | 2026-10-08 | Package-label data (tortillas, protein powder), USDA mapping review sheet (`docs/review/usda_mappings.md`), raw/dry/as-sold rule + check (§7.8), CLAUDE.md machine-boundaries rule. |
+| — | Pre-Phase 1 tasks | Done | 2026-10-08 | 2026-10-08 | Package-label data (tortillas, protein powder), USDA mapping review sheet (`docs/review/usda_mappings.md`), raw/dry/as-sold rule + check (§7.8), CLAUDE.md machine-boundaries rule. Round 2: FoodSafety.gov chart transcribed (53 rows, §7.2), top-25 mappings approved, tortilla renamed, Docker rule clarified, fresh-clone check made a per-phase step. |
 | 1 | Planning brain | Not started | | | |
 | 2 | Mobile PWA + cloud deploy | Not started | | | |
 | 3 | Feedback loop | Not started | | | |
@@ -1127,12 +1127,14 @@ Both modes share one parse/validate/retry path, the same caps and the same `llm_
 Beef rows stay in the table (they are part of the CLAUDE.md baseline); the beef exclusion keeps those foods out of plans. Pork is allowed (capped), so its rows are live.
 
 **Storage and reheating.**
-- Values are transcribed from the **FoodSafety.gov Cold Food Storage Chart** (`https://www.foodsafety.gov/food-safety-charts/cold-food-storage-charts`), with a code comment citing that URL and the access date.
-- Coverage: cooked leftovers, plus the raw categories used for inventory expiry estimates (fresh poultry pieces and ground poultry, fish, eggs, soups/stews, and any dairy rows the chart lists).
-- Your fixed defaults: cooked leftovers **3 days** in the fridge (`leftover_fridge_days`, editable, capped at the chart's upper bound), and reheat to **165 F**.
+- **Source:** the **FoodSafety.gov Cold Food Storage Chart** (`https://www.foodsafety.gov/food-safety-charts/cold-food-storage-charts`, "Date Last Reviewed: September 19, 2023").
+  - Saved copy: `docs/sources/Cold Food Storage Chart _ FoodSafety.gov.pdf` (printed 2026-10-08).
+  - All 53 rows are transcribed in `domain/storage_chart.py`, worded as printed, with day ranges parsed by code.
+  - `APP_STORAGE` maps the rows the app uses, e.g. cooked leftovers, raw poultry pieces, ground meat or poultry, eggs, fish, shrimp, soups and stews, egg casseroles.
+- **Your fixed defaults:** cooked leftovers **3 days** in the fridge, and reheat to **165 F** (CLAUDE.md; the chart has no reheating guidance).
+  - `leftover_fridge_days` is editable up to the chart's upper bound for cooked meat or poultry: 3 to 4 days, so at most 4.
 - The fridge window means a batch cooked on day *d* can be eaten on *d* through *d + 3*.
-- Freezer times are shown with the chart's own wording.
-- The chart page returned HTTP 403 to automated fetches on 2026-10-08 (planning) and again at the Phase 0 retry. Until you save the chart PDF into `docs/sources/` (A1), every chart-derived value is stored as **pending** (no number). Only your fixed values (leftovers 3 days, reheat 165 F) are live, and `leftover_fridge_days` cannot be raised above 3 until the chart's upper bound is transcribed.
+- **Freezer times** are shown in the chart's own wording, with its note that they're for quality only: frozen foods stored continuously at 0 °F or below can be kept indefinitely.
 
 **Injection rules.**
 - Every step with `doneness_check_for` gets the matching temperature line.
@@ -1192,7 +1194,7 @@ How the filter decides:
 - **Layers:** `domain/` tests are pure and fast. `services/`, `usda/`, `seed/` and `planning/` tests use the `db-test` Postgres (tmpfs; migrations run once per session; each test in a rolled-back transaction). `api/` tests use TestClient.
 - **LLM:** automated tests use `FakeLLMClient` fixtures, in both `strict` and `best_effort` modes. Real Groq runs only in `pytest -m live_llm` and the CLI.
 - **Architecture tests:** `domain/` imports nothing from `db`/`api`/`llm`/`sqlalchemy`/`fastapi`. `groq` is imported only in `app/llm/client.py`. No model-name literals in `app/`. Every `*_cents` column is `Integer`. No `stream`/`tools` with structured outputs. `PlanValidator` accepts only `RoundedPlan`.
-- **End of phase:** full `pytest` (and `vitest` from Phase 2) output pasted in the summary.
+- **End of phase:** full `pytest` (and `vitest` from Phase 2) output pasted in the summary, plus the fresh-clone Docker test check (`scripts/fresh_clone_check.sh`), run after committing even when dependencies didn't change.
 
 ### 7.6 LLM budget facts (checked 2026-10-08)
 
@@ -1292,11 +1294,11 @@ How the filter decides:
 4. **USDA importer:** Foundation + SR Legacy CSV zips → `usda_*` tables; idempotent. A `usda-subset` command writes the committed test fixture (only the foods the seed references) so tests run offline without the full download.
 5. **Seed data** (`app/seed/data/`):
    - **Stores:** Stop & Shop (priority 1), Price Rite (priority 2).
-   - **Ingredients:** ~150–200 canonical ingredients covering the PRD examples and the seed recipes (§13), with FDC mappings, aliases, named units, densities, safety categories, heme fractions, `diet_tags`, shelf life and `assume_in_stock`. Includes `chapati (roti)` and `flour tortilla, small`, and the beef and pork items needed so the resolver can recognize them.
+   - **Ingredients:** ~150–200 canonical ingredients covering the PRD examples and the seed recipes (§13), with FDC mappings, aliases, named units, densities, safety categories, heme fractions, `diet_tags`, shelf life and `assume_in_stock`. Includes `chapati (roti)` and `flour tortilla (Price Rite, 37 g)`, and the beef and pork items needed so the resolver can recognize them.
    - **Products and prices:** estimated prices for both stores, flagged `source=estimate` (Price Rite chicken estimated below Stop & Shop chicken). One known price: **Price Rite small flour tortillas, 30 count, $1.99** (`source=manual`).
    - **Protein powder (double chocolate), from your label (A2):** scoop 31 g, 120 kcal, 25 g protein. Carbs and fat per scoop were not in the values sent, so they stay flagged placeholders; until filled, the ingredient is incomplete and recipes using it are not plannable.
    - **Tortillas (A2):** 30-count bag net weight ≈ 23 oz (652 g) → 21.733 g each (computed by code), flagged **estimated** (from a 20–26 oz range) for you to replace with the exact net weight and serving size.
-   - **Substitutions:** `chapati → flour tortilla, small` (`accepted`, `count_for_count`).
+   - **Substitutions:** `chapati → flour tortilla (Price Rite, 37 g)` (`accepted`, `count_for_count`).
    - **Diet tags (§7.4):** beef and beef-derived → `beef` (excluded); possibly-beef items → `possible_beef` (held); pork components → `pork` (capped); trace pork → `pork_trace` (unlimited).
    - **Default settings:** cook days Mon/Wed/Thu/Sat/Sun (Tue/Fri off), 45 minutes and medium mood per cook day (editable), `leftover_fridge_days = 3`, 1,800 kcal/day, weekly mode with a ±150 kcal band, Stop & Shop then Price Rite, `store_split_min_savings_cents = 500`, `excluded_diet_tags = ["beef"]`, frequency cap `tag pork ≤ 1 meal/week, never_favor`.
    - **Seed recipe library (§13):** 9 draft versions in 5 families (incl. the 2 breakfast seeds from R3), loaded as `origin=seed`, `created_by=system`, `is_draft=true`. No seed uses beef or a pork component.
@@ -1338,7 +1340,7 @@ How the filter decides:
 - `domain/tests/test_packages.py` (package rounding): need 1.7 lb, package 2 lb → **1 package**, remainder 136.078 g, absorb-up flag; exactly 2 lb → 1; 907.19 g → 1 (1 g tolerance); 2.1 lb → 2 packages + absorb-down flag (−4.8%); 0.5 lb on hand + need 1.7 → 1 package; on hand ≥ need → 0; 1.3 heads → 2; loose per-lb → exact; bone-in edible fraction 0.75; need 10 tortillas from 30-count bag with 25 on hand → 0 packages.
 - `domain/tests/test_inventory_math.py`: FIFO by expiry; open package consumed before an unopened lot of the same ingredient; partial lots; cross-unit; shortfall; never negative.
 - `domain/tests/test_calories.py`: 1800 × 7 = 12,600; 5-day plan; 12,000 / 7 → five 1714 + two 1715; allocations valid/invalid; unallocated remainder.
-- `domain/tests/test_food_safety.py`: poultry 165; ground pork 160; pork chop 145 + 3 min rest; salmon 145; frittata 160; pancakes no egg note; mixed ground → strictest; reheat 165; leftovers default 3 days; `leftover_fridge_days` above the verified upper bound rejected (above 3 while the chart is pending); chart-derived values report "pending" until transcribed; citation constant present.
+- `domain/tests/test_food_safety.py`: poultry 165; ground pork 160; pork chop 145 + 3 min rest; salmon 145; frittata 160; pancakes no egg note; mixed ground → strictest; reheat 165; leftovers default 3 days; `leftover_fridge_days` above the chart's upper bound (4) rejected; all 53 chart rows transcribed, with day ranges parsed by code; citation constants (URL, saved PDF, last-reviewed date) present.
 - `domain/tests/test_exclusions.py`: ground beef, beef broth, beef tallow, bovine gelatin, beef bouillon → excluded via the `beef` tag; `allow` on a beef item → still excluded; unspecified gelatin, marshmallows, collagen → held; `allow` releases a held item; `exclude` excludes any item; bacon, ham, pork sausage, pork chop → allowed; lard, pork gelatin → allowed; flour tortilla and plain Greek yogurt → allowed; chicken → allowed; empty excluded tags → only held/explicit exclusions apply; pork cap 0 → bacon/ham/sausage excluded with reason "frequency cap 0", lard and pork gelatin still allowed.
 - `domain/tests/test_frequency_caps.py`: membership by tag and by single ingredient; a meal with bacon counts once even with two pork lines; trace pork (lard tortilla) never counts; week with 1 pork meal under cap 1 → ok; 2 pork meals → violation naming the cap and the meals; cap 0 → members become exclusions; ingredient-target cap (e.g. salmon ≤ 2) works the same way; `never_favor` flag carried through.
 - `usda/tests/test_importer.py`: fixture CSVs; idempotent; Foundation food without 208 resolves via 958; malformed rows reported.
@@ -1357,7 +1359,7 @@ How the filter decides:
 - *Estimated prices mislead.* `source=estimate` is shown as "est." and never used for deal or cheap labels; real entries supersede it.
 - *Windows line endings.* `.gitattributes`.
 
-**Outcome (2026-10-08).** All acceptance criteria are met except AC 7: the safety table prints its citation, but the chart values are *pending* because FoodSafety.gov returned 403 again (A1), so there's nothing for you to confirm yet. Deviations from the plan, all small:
+**Outcome (2026-10-08).** All acceptance criteria were met except AC 7, which waited on the chart (A1). That's now unblocked: the chart was transcribed from your saved PDF during the pre-Phase 1 tasks (L6), and `cli safety-table` prints it for your confirmation. Deviations from the plan, all small:
 - `units.json` is folded into `ingredients.json`. Each ingredient lists its aliases, named units, density and piece weight, referencing USDA portion ids; the loader checks each portion belongs to the same FDC food and is the stated measure.
 - The `UserSettings` model and the seed-file schemas were built now (the plan had them in Phase 1), because the seed has to validate the settings JSONB. `InstructionSection` and `IngredientRole` live in `domain/enums.py` so the seed files and the Phase 1 LLM schema share them.
 - New CLI command `usda-subset` writes the committed test fixture (`app/testing/fixtures/usda_subset/`, ~180 foods), so tests and a fresh clone don't need the 10 MB download.
@@ -1391,7 +1393,7 @@ How the filter decides:
 5. **Structured retry loop:** one path for both modes; parse → Pydantic → domain hook → retry with concise errors → batch halved on truncation → `LLMOutputError` after the cap.
 6. **Prompts** (`candidate_generation`, `recipe_revision`), each with `PROMPT_VERSION`. They include the slot/mood/kcal-per-portion target, the ingredient vocabulary minus excluded, held and never-favored capped items (pork components), the **never-use list** (beef and everything derived from it, unspecified gelatin and other held items), inventory and open packages to use up, the "use flour tortillas where a recipe calls for chapati/roti" rule, and raw/dry quantity rules.
 7. **Ingredient resolver:** exact alias → normalized alias → trigram with margin → unresolved (suggestions in the retry message; logged for the "suggested new ingredients" queue derived from `llm_call.error_detail`, approved via `POST /api/v1/ingredients/suggested/{name}/approve`).
-8. **Accepted substitutions applied:** a resolved `chapati` becomes `flour tortilla, small` via `ingredient_substitution` (count for count), recorded as `adjustment=substituted`.
+8. **Accepted substitutions applied:** a resolved `chapati` becomes `flour tortilla (Price Rite, 37 g)` via `ingredient_substitution` (count for count), recorded as `adjustment=substituted`.
 9. **Recipe validator:** exclusions (ingredient level + step text naming an excluded food); raw/dry/as-sold state of every line vs its mapping (§7.8); units valid for the ingredient; plausible per-serving amounts; equipment ⊆ available; time and complexity vs mood; **prose filter §7.3**.
 10. **Candidate pool:** seed drafts + saved versions first (0 calls) → gap analysis → batch generation only for uncovered (slot, mood) → targeted revision → dedupe → persist.
 11. **Rendering:** sections, injected safety lines, code storage/reheating text, "≈ X g per container", nutrient labels, a "draft" badge for seed versions.
@@ -1836,6 +1838,11 @@ No other dependencies are planned. Auth uses the stdlib, and the solver uses PuL
 | L3 | Raw / dry rule | Recipe quantities are raw / dry / as-sold unless a line says otherwise; the check is in §7.8. |
 | L4 | Pepperoni, salami | Stay held. No further action. |
 | L5 | Machine boundaries | CLAUDE.md: never install system-level software, change machine settings, or start/stop applications outside the repo without asking first. |
+| L6 | Storage chart | The FoodSafety.gov PDF in `docs/sources/` is transcribed into the food-safety table (all 53 rows), replacing every pending storage duration; the PDF is committed and cited in code. |
+| L7 | Mapping review | Greek yogurt stays nonfat (FDC 170894); milk stays 2% (FDC 171267). Everything else in the top 25 is approved as-is (recorded as `nutrition_reviewed_on` 2026-10-08). |
+| L8 | Tortilla name | "flour tortilla (Price Rite, 37 g)" is renamed "flour tortilla (Price Rite, 37 g)"; the old name stays as an alias, and the slug `flour-tortilla-small` is unchanged. |
+| L9 | Docker rule | Starting/stopping this repo's own containers from `docker-compose.yml` is allowed; launching Docker Desktop or any other application still requires asking. |
+| L10 | Fresh-clone check | Run `scripts/fresh_clone_check.sh` at the end of every phase, even when dependencies didn't change. |
 
 ### 12.2 Remaining questions (from applying your answers)
 
@@ -1851,7 +1858,7 @@ No other dependencies are planned. Auth uses the stdlib, and the solver uses PuL
 
 ### 12.3 Action items for you
 
-- **A1. FoodSafety.gov chart.** The page returned HTTP 403 to automated fetches (twice). **You saved the PDF to `docs/sources/` (2026-10-08).** It isn't transcribed yet, so every chart-derived storage value is still *pending*; your fixed values (leftovers 3 days, reheat 165 F) are live. Transcription needs your go-ahead.
+- **A1. FoodSafety.gov chart: done** (L6). Transcribed from your saved PDF on 2026-10-08.
 - **A2. Label values: done** (L1). Only the protein powder price is still pending.
 - **A3. Cloud provider (before Phase 2).** At the end of Phase 1 I'll bring a short comparison (cost, managed Postgres, HTTPS, cold starts) for you to choose from.
 
@@ -1873,16 +1880,16 @@ All seeds are loaded as `origin=seed`, `created_by=system`, `is_draft=true`. The
   - *Ingredients:* chicken thigh, boneless skinless 680 g · bell pepper 2 · red onion 1 · olive oil 2 tbsp · paprika 2 tsp · ground cumin 1 tsp · garlic powder 1 tsp · dried oregano 1 tsp · salt 1 tsp · black pepper ½ tsp · long-grain white rice (dry) 300 g · water 540 ml · Greek yogurt, plain nonfat 150 g · lemon juice 1 tbsp.
   - *Outline:* roast chicken, peppers and onion at 425°F about 25 minutes; cook rice; yogurt-lemon sauce; portion.
 
-**Family 2: Chicken gravy with flour tortillas used as chapati** (lunch, dinner; `chapati → flour tortilla, small` is an accepted substitution)
+**Family 2: Chicken gravy with flour tortillas used as chapati** (lunch, dinner; `chapati → flour tortilla (Price Rite, 37 g)` is an accepted substitution)
 
 - **2a. Everyday chicken curry gravy.** Medium · stovetop · base 4 · gravy freezer-friendly (tortillas separate) · ≈ 50 min.
-  - *Ingredients:* chicken thigh, boneless skinless 680 g · vegetable oil 3 tbsp · yellow onion 2 medium · tomato 3 medium · garlic 5 cloves · ginger root 15 g · ground turmeric ½ tsp · chili powder 1 tsp · ground coriander 2 tsp · ground cumin 1 tsp · garam masala 1½ tsp · salt 1¼ tsp · water 250 ml · cilantro 10 g (optional) · flour tortilla, small 8 (2 per serving).
+  - *Ingredients:* chicken thigh, boneless skinless 680 g · vegetable oil 3 tbsp · yellow onion 2 medium · tomato 3 medium · garlic 5 cloves · ginger root 15 g · ground turmeric ½ tsp · chili powder 1 tsp · ground coriander 2 tsp · ground cumin 1 tsp · garam masala 1½ tsp · salt 1¼ tsp · water 250 ml · cilantro 10 g (optional) · flour tortilla (Price Rite, 37 g) 8 (2 per serving).
   - *Outline:* brown onions; add ginger-garlic, then tomatoes and spices until the oil separates; add chicken and water and simmer until cooked through; finish with garam masala and cilantro; warm tortillas on a dry pan like chapati.
 - **2b. Yogurt chicken gravy.** Medium · stovetop · base 4 · gravy freezer-friendly · ≈ 50 min + marinate 30 min to overnight.
-  - *Ingredients:* chicken thigh, boneless skinless 680 g · Greek yogurt, plain nonfat 200 g · yellow onion 2 medium · garlic 4 cloves · ginger root 15 g · tomato paste 2 tbsp · garam masala 2 tsp · ground turmeric ½ tsp · chili powder 1 tsp · ground cumin 1 tsp · salt 1 tsp · vegetable oil 2 tbsp · water 200 ml · flour tortilla, small 8.
+  - *Ingredients:* chicken thigh, boneless skinless 680 g · Greek yogurt, plain nonfat 200 g · yellow onion 2 medium · garlic 4 cloves · ginger root 15 g · tomato paste 2 tbsp · garam masala 2 tsp · ground turmeric ½ tsp · chili powder 1 tsp · ground cumin 1 tsp · salt 1 tsp · vegetable oil 2 tbsp · water 200 ml · flour tortilla (Price Rite, 37 g) 8.
   - *Outline:* marinate chicken in half the yogurt and spices; brown onions, ginger-garlic and tomato paste; add chicken and simmer; stir in the remaining yogurt off high heat; warm tortillas.
 - **2c. Chicken and spinach gravy.** Medium · stovetop · base 4 · gravy freezer-friendly · ≈ 45 min.
-  - *Ingredients:* chicken thigh, boneless skinless 680 g · fresh spinach 300 g · yellow onion 1 medium · tomato 2 medium · garlic 4 cloves · ginger root 15 g · ground cumin 1 tsp · ground coriander 1 tsp · garam masala 1 tsp · ground turmeric ½ tsp · chili powder 1 tsp · salt 1 tsp · vegetable oil 2 tbsp · water 150 ml · flour tortilla, small 8.
+  - *Ingredients:* chicken thigh, boneless skinless 680 g · fresh spinach 300 g · yellow onion 1 medium · tomato 2 medium · garlic 4 cloves · ginger root 15 g · ground cumin 1 tsp · ground coriander 1 tsp · garam masala 1 tsp · ground turmeric ½ tsp · chili powder 1 tsp · salt 1 tsp · vegetable oil 2 tbsp · water 150 ml · flour tortilla (Price Rite, 37 g) 8.
   - *Outline:* wilt and chop spinach; build the onion-tomato-spice base; simmer chicken; stir in spinach; warm tortillas.
 
 **Family 3: Protein pudding** (protein dessert, snack)
@@ -1895,7 +1902,7 @@ All seeds are loaded as `origin=seed`, `created_by=system`, `is_draft=true`. The
 **Family 4: Egg breakfast** (breakfast; R3)
 
 - **4a. Egg, spinach and pepper breakfast wraps.** Simple · stovetop · base 4 · freezer-friendly (wrap individually) · ≈ 25 min.
-  - *Ingredients:* egg, large 8 · fresh spinach 100 g · bell pepper 1 · yellow onion ½ · milk (2%) 2 tbsp · olive oil 1 tbsp · salt ½ tsp · black pepper ¼ tsp · flour tortilla, small 8 (2 per serving).
+  - *Ingredients:* egg, large 8 · fresh spinach 100 g · bell pepper 1 · yellow onion ½ · milk (2%) 2 tbsp · olive oil 1 tbsp · salt ½ tsp · black pepper ¼ tsp · flour tortilla (Price Rite, 37 g) 8 (2 per serving).
   - *Outline:* dice pepper and onion; whisk eggs with milk, salt and pepper; soften pepper and onion in oil over medium heat; wilt spinach; add eggs and stir gently until fully set (egg doneness line injected by code); warm tortillas; fill and roll 2 per serving; portion.
 
 **Family 5: Protein oats** (breakfast; R3)

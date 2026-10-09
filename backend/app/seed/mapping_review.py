@@ -84,7 +84,8 @@ class MappingRow:
     seed_kcal: Decimal
     share_pct: Decimal = Decimal(0)
     flags: list[str] = field(default_factory=list)
-    review: bool = False
+    review: bool = False  # top N and not approved yet
+    approved_on: date | None = None
 
 
 def seed_calories(session: Session, data: dict[int, IngredientData]) -> dict[int, Decimal]:
@@ -128,6 +129,7 @@ def build_rows(session: Session) -> list[MappingRow]:
     total = sum(kcal.values(), Decimal(0))
     implied = _implied_text(session)
     notes = dict(session.execute(select(Ingredient.id, Ingredient.notes)).tuples().all())
+    reviewed = dict(session.execute(select(Ingredient.id, Ingredient.nutrition_reviewed_at)).tuples().all())
     rows = []
     for d in data.values():
         usage: list[FoodState | None] = [None]  # recipe quantities default to raw / dry / as-sold
@@ -140,6 +142,8 @@ def build_rows(session: Session) -> list[MappingRow]:
             kcal_per_100g=d.profile.per_100g.get("energy_kcal"),
             seed_kcal=kcal.get(d.id, Decimal(0)),
         )
+        if (reviewed_at := reviewed.get(d.id)) is not None:
+            row.approved_on = reviewed_at.date()
         row.share_pct = (
             (row.seed_kcal / total * 100).quantize(Decimal("0.1"), ROUND_HALF_UP) if total else Decimal(0)
         )
@@ -153,7 +157,7 @@ def build_rows(session: Session) -> list[MappingRow]:
         rows.append(row)
     rows.sort(key=lambda r: (-r.seed_kcal, r.ingredient.name))
     for row in rows[:REVIEW_TOP_N]:
-        row.review = True
+        row.review = row.approved_on is None
     return rows
 
 
@@ -189,7 +193,8 @@ def render_markdown(rows: Sequence[MappingRow], generated_on: date) -> str:
         "`description says '…'` = the USDA description contains fried / breaded / with skin / cooked / "
         "canned / sweetened while the ingredient's name, aliases and products imply otherwise. Package-label "
         "ingredients aren't checked for description issues. `note:` = other things worth a look.",
-        f"- The top {REVIEW_TOP_N} rows are marked **{REVIEW_MARK}**.",
+        f"- The top {REVIEW_TOP_N} rows are marked **{REVIEW_MARK}** until you approve them; approved rows "
+        "show the approval date.",
         "",
         "## Flag summary",
         "",
@@ -205,7 +210,9 @@ def render_markdown(rows: Sequence[MappingRow], generated_on: date) -> str:
         "|---|---|---|---|---|---|---|---|---|",
     ]
     for rank, r in enumerate(rows, start=1):
-        flags = ([f"**{REVIEW_MARK}**"] if r.review else []) + r.flags
+        marks = [f"approved {r.approved_on.isoformat()}"] if r.approved_on else []
+        marks += [f"**{REVIEW_MARK}**"] if r.review else []
+        flags = marks + r.flags
         kcal = f"{r.kcal_per_100g:.0f}" if r.kcal_per_100g is not None else "—"
         out.append(
             f"| {rank} | {_cell(r.ingredient.name)} | {r.source} | {_cell(r.description)} | "

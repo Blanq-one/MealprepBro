@@ -1,17 +1,15 @@
 import pytest
 
 from app.domain import food_safety as fs
+from app.domain import storage_chart
 from app.domain.food_safety import (
-    ChartStatus,
     FoodSafetyError,
     IngredientSafety,
     SafetyCategory,
     doneness_requirement,
     doneness_text,
     fridge_storage_text,
-    leftover_fridge_days_upper_bound,
     reheat_text,
-    storage_entry,
     validate_leftover_fridge_days,
 )
 
@@ -72,35 +70,87 @@ def test_leftovers_default_three_days():
     assert fridge_storage_text(1).endswith("1 day of cooking.")
 
 
-def test_fridge_days_above_the_bound_are_rejected_while_the_chart_is_pending():
-    assert storage_entry("leftovers_cooked").status is ChartStatus.PENDING
-    assert leftover_fridge_days_upper_bound() == 3
-    with pytest.raises(FoodSafetyError, match="pending transcription"):
-        validate_leftover_fridge_days(4)
+def test_fridge_days_capped_at_the_chart_upper_bound():
+    assert fs.leftover_fridge_days_upper_bound() == 4  # cooked meat or poultry: 3 to 4 days
+    assert validate_leftover_fridge_days(4) == 4
+    with pytest.raises(FoodSafetyError, match="chart maximum of 4"):
+        validate_leftover_fridge_days(5)
     with pytest.raises(FoodSafetyError):
         validate_leftover_fridge_days(-1)
 
 
-def test_verified_chart_value_becomes_the_bound(monkeypatch):
-    verified = fs.StorageEntry("leftovers_cooked", "Leftovers", 3, 4, None, ChartStatus.VERIFIED)
-    monkeypatch.setattr(fs, "STORAGE_CHART", (verified,))
-    assert leftover_fridge_days_upper_bound() == 4
-    assert validate_leftover_fridge_days(4) == 4
-    with pytest.raises(FoodSafetyError, match="chart maximum of 4"):
-        validate_leftover_fridge_days(5)
-
-
-def test_chart_values_are_pending_with_no_numbers():
-    for entry in fs.STORAGE_CHART:
-        assert entry.status is ChartStatus.PENDING
-        assert entry.fridge_days_min is None and entry.fridge_days_max is None
+def test_every_chart_row_is_transcribed():
+    rows = storage_chart.STORAGE_CHART
+    assert len(rows) == 53
+    assert len({r.key for r in rows}) == 53
+    assert {r.page for r in rows} == {1, 2, 3, 4, 5}
+    assert all(r.refrigerator and r.freezer for r in rows)
+    assert not any("pending" in (r.refrigerator + r.freezer).lower() for r in rows)
     with pytest.raises(KeyError):
-        storage_entry("nope")
+        storage_chart.chart_row("nope")
 
 
-def test_citation_constant_present():
+@pytest.mark.parametrize(
+    ("use", "refrigerator", "freezer", "days"),
+    [
+        ("cooked_leftovers", "3 to 4 days", "2 to 6 months", (3, 4)),
+        ("soups_stews", "3 to 4 days", "2 to 3 months", (3, 4)),
+        ("cooked_egg_dishes", "After baking, 3 to 4 days", "After baking, 2 to 3 months", (3, 4)),
+        ("raw_poultry_pieces", "1 to 2 days", "9 months", (1, 2)),
+        ("raw_poultry_whole", "1 to 2 days", "1 year", (1, 2)),
+        ("raw_ground_meat_or_poultry", "1 to 2 days", "3 to 4 months", (1, 2)),
+        ("raw_pork_chops_roasts", "3 to 5 days", "4 to 12 months", (3, 5)),
+        ("raw_fatty_fish", "1 - 3 days", "2 - 3 months", (1, 3)),
+        ("raw_lean_fish", "1 - 3 days", "6 - 8 months", (1, 3)),
+        ("raw_shrimp", "3 - 5 days", "6 - 18 months", (3, 5)),
+        (
+            "raw_eggs_in_shell",
+            "3 to 5 weeks",
+            "Do not freeze in shell. Beat yolks and whites together, then freeze.",
+            (21, 35),
+        ),
+        ("hard_cooked_eggs", "1 week", "Do not freeze", (7, 7)),
+        ("bacon", "1 week", "1 month", (7, 7)),
+        ("raw_sausage", "1 to 2 days", "1 to 2 months", (1, 2)),
+    ],
+)
+def test_app_storage_rows_match_the_chart(use, refrigerator, freezer, days):
+    row = fs.storage_for(use)
+    assert (row.refrigerator, row.freezer, row.fridge_days) == (refrigerator, freezer, days)
+
+
+@pytest.mark.parametrize(
+    ("text", "days"),
+    [
+        ("3 to 4 days", (3, 4)),
+        ("1 - 3 Days", (1, 3)),
+        ("After cooking, 3-4 days", (3, 4)),
+        ('5 to 7 days or "use by" date', (5, 7)),
+        ('2 weeks or "use by" date', (14, 14)),
+        ("1 day", (1, 1)),
+        ("3 to 5 weeks", (21, 35)),
+        ("6 to 9 months", None),
+        ("Use immediately after thawing", None),
+    ],
+)
+def test_parse_days(text, days):
+    assert storage_chart.parse_days(text) == days
+
+
+def test_freezer_text_uses_the_chart_wording():
+    assert fs.freezer_storage_text() == (
+        "Freezer: 2 to 6 months for best quality (FoodSafety.gov). Freezer times are for quality only; "
+        "frozen foods stored continuously at 0 °F (-18 °C) or below can be kept indefinitely."
+    )
+
+
+def test_citation_constants_present():
     assert (
         fs.FOODSAFETY_GOV_CHART_URL
         == "https://www.foodsafety.gov/food-safety-charts/cold-food-storage-charts"
     )
-    assert fs.FOODSAFETY_GOV_CHART_URL in (fs.__doc__ or "")
+    assert storage_chart.CHART_PDF == "docs/sources/Cold Food Storage Chart _ FoodSafety.gov.pdf"
+    assert storage_chart.CHART_LAST_REVIEWED == "September 19, 2023"
+    for text in (fs.__doc__ or "", storage_chart.__doc__ or ""):
+        assert storage_chart.CHART_URL in text
+        assert storage_chart.CHART_PDF in text

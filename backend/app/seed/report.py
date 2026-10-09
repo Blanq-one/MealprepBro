@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 
 from app.db.models import Ingredient
 from app.domain.exclusions import PORK_COMPONENT_TAG, PORK_TRACE_TAG, ExclusionStatus
-from app.domain.food_safety import STORAGE_CHART, ChartStatus
 from app.domain.nutrition import CORE_CODES, atwater_kcal, atwater_mismatch
 from app.seed.files import DATA_DIR, load_seed_files
 from app.services.exclusions import diet_status
@@ -53,11 +52,6 @@ def build_report(session: Session) -> IngredientReport:
                 f"{slug}: net weight {package.net_weight_g} g / {package.count} is an "
                 f"ESTIMATE ({package.source})"
             )
-    pending = [e.key for e in STORAGE_CHART if e.status is ChartStatus.PENDING]
-    if pending:
-        report.placeholders.append(
-            f"food-safety storage chart: {len(pending)} rows pending transcription (A1)"
-        )
 
     for ingredient_id, d in sorted(data.items(), key=lambda kv: kv[1].slug):
         result = status.results[ingredient_id]

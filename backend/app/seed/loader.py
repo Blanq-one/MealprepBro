@@ -5,7 +5,7 @@ draft seed recipe library. Run after `usda-import`. The caller commits."""
 import hashlib
 import json
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import UTC, date, datetime, time
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
@@ -289,6 +289,8 @@ def _apply_ingredient(row: Ingredient, seed: SeedIngredient, files: SeedFiles, c
     row.is_perishable, row.typical_location = seed.is_perishable, seed.typical_location.value
     row.assume_in_stock, row.nutrition_source = seed.assume_in_stock, seed.nutrition_source.value
     row.fdc_id, row.notes = seed.fdc_id, seed.notes
+    if seed.nutrition_reviewed_on is not None:  # never clears a review recorded elsewhere
+        row.nutrition_reviewed_at = datetime.combine(seed.nutrition_reviewed_on, time(), tzinfo=UTC)
 
 
 def _wanted_units(

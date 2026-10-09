@@ -8,7 +8,7 @@ from app.domain.units import IngredientUnits, UnitKind
 
 D = Decimal
 CHICKEN = IngredientUnits("chicken thigh", UnitKind.MASS)
-TORTILLA = IngredientUnits("flour tortilla, small", UnitKind.COUNT, count_unit_weight_g=D("37"))
+TORTILLA = IngredientUnits("flour tortilla (Price Rite, 37 g)", UnitKind.COUNT, count_unit_weight_g=D("37"))
 
 
 def test_fifo_by_expiry():

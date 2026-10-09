@@ -28,7 +28,8 @@
      "name": "thigh",
      "usda_portion_id": 92977
     }
-   ]
+   ],
+   "nutrition_reviewed_on": "2026-10-08"
   },
   {
    "name": "chicken breast, boneless skinless",
@@ -56,7 +57,8 @@
      "name": "breast",
      "usda_portion_id": 87920
     }
-   ]
+   ],
+   "nutrition_reviewed_on": "2026-10-08"
   },
   {
    "name": "ground chicken",
@@ -310,7 +312,8 @@
      "name": "extra_large",
      "usda_portion_id": 88375
     }
-   ]
+   ],
+   "nutrition_reviewed_on": "2026-10-08"
   },
   {
    "name": "egg white",
@@ -1021,7 +1024,8 @@
    "density": {
     "usda_portion_id": 88320,
     "measure": "cup"
-   }
+   },
+   "nutrition_reviewed_on": "2026-10-08"
   },
   {
    "name": "milk, whole",
@@ -1100,7 +1104,8 @@
      "usda_portion_id": 87513
     }
    ],
-   "notes": "Allowed: plain, no gelatin (R2). A brand listing gelatin is excluded unless the gelatin is pork-derived."
+   "notes": "Allowed: plain, no gelatin (R2). A brand listing gelatin is excluded unless the gelatin is pork-derived.",
+   "nutrition_reviewed_on": "2026-10-08"
   },
   {
    "name": "Greek yogurt, plain whole milk",
@@ -1287,7 +1292,8 @@
     "usda_portion_id": 83927,
     "measure": "cup"
    },
-   "notes": "Basmati and jasmine map here (both long-grain white)."
+   "notes": "Basmati and jasmine map here (both long-grain white).",
+   "nutrition_reviewed_on": "2026-10-08"
   },
   {
    "name": "brown rice (dry)",
@@ -1334,7 +1340,8 @@
    "density": {
     "usda_portion_id": 93454,
     "measure": "cup"
-   }
+   },
+   "nutrition_reviewed_on": "2026-10-08"
   },
   {
    "name": "all-purpose flour",
@@ -1411,13 +1418,14 @@
    "notes": "Accepted substitution: chapati → flour tortilla, small (count for count)."
   },
   {
-   "name": "flour tortilla, small",
+   "name": "flour tortilla (Price Rite, 37 g)",
    "slug": "flour-tortilla-small",
    "category": "grain",
    "default_unit_kind": "count",
    "nutrition_source": "package_label",
    "fdc_id": 167535,
    "aliases": [
+    "flour tortilla, small",
     "flour tortilla",
     "flour tortillas",
     "small flour tortillas",
@@ -1441,7 +1449,8 @@
      "label": "flour-tortilla-small"
     }
    ],
-   "notes": "Nutrition from the Price Rite package label (20 per bag, 37 g each, 740 g). Nutrients the label doesn't list come from USDA FDC 167535. Some brands use lard (pork_trace, allowed)."
+   "notes": "Nutrition from the Price Rite package label (20 per bag, 37 g each, 740 g). Nutrients the label doesn't list come from USDA FDC 167535. Some brands use lard (pork_trace, allowed).",
+   "nutrition_reviewed_on": "2026-10-08"
   },
   {
    "name": "corn tortilla",
@@ -1823,7 +1832,8 @@
      "name": "small",
      "usda_portion_id": 85862
     }
-   ]
+   ],
+   "nutrition_reviewed_on": "2026-10-08"
   },
   {
    "name": "red onion",
@@ -1845,7 +1855,8 @@
    "count_rounding_step": "0.5",
    "count_unit_weight": {
     "usda_portion_id": 234609
-   }
+   },
+   "nutrition_reviewed_on": "2026-10-08"
   },
   {
    "name": "green onion",
@@ -1904,7 +1915,8 @@
      "name": "clove",
      "usda_portion_id": 84480
     }
-   ]
+   ],
+   "nutrition_reviewed_on": "2026-10-08"
   },
   {
    "name": "ginger root",
@@ -1927,7 +1939,8 @@
    "density": {
     "usda_portion_id": 84482,
     "measure": "tsp"
-   }
+   },
+   "nutrition_reviewed_on": "2026-10-08"
   },
   {
    "name": "tomato",
@@ -1961,7 +1974,8 @@
      "name": "cherry",
      "usda_portion_id": 86684
     }
-   ]
+   ],
+   "nutrition_reviewed_on": "2026-10-08"
   },
   {
    "name": "diced tomatoes, canned",
@@ -2011,7 +2025,8 @@
      "name": "can",
      "usda_portion_id": 86699
     }
-   ]
+   ],
+   "nutrition_reviewed_on": "2026-10-08"
   },
   {
    "name": "tomato sauce",
@@ -2063,7 +2078,8 @@
      "name": "bunch",
      "usda_portion_id": 83133
     }
-   ]
+   ],
+   "nutrition_reviewed_on": "2026-10-08"
   },
   {
    "name": "spinach, frozen",
@@ -2111,7 +2127,8 @@
      "name": "cup",
      "usda_portion_id": 84659
     }
-   ]
+   ],
+   "nutrition_reviewed_on": "2026-10-08"
   },
   {
    "name": "cauliflower",
@@ -2170,7 +2187,8 @@
      "name": "cup_chopped",
      "usda_portion_id": 86062
     }
-   ]
+   ],
+   "nutrition_reviewed_on": "2026-10-08"
   },
   {
    "name": "green bell pepper",
@@ -2404,7 +2422,8 @@
      "name": "cup_shredded",
      "usda_portion_id": 84506
     }
-   ]
+   ],
+   "nutrition_reviewed_on": "2026-10-08"
   },
   {
    "name": "iceberg lettuce",
@@ -3053,7 +3072,8 @@
    "density": {
     "usda_portion_id": 88667,
     "measure": "tbsp"
-   }
+   },
+   "nutrition_reviewed_on": "2026-10-08"
   },
   {
    "name": "vegetable oil",
@@ -3079,7 +3099,8 @@
     "usda_portion_id": 90374,
     "measure": "tbsp"
    },
-   "notes": "Mapped to canola oil."
+   "notes": "Mapped to canola oil.",
+   "nutrition_reviewed_on": "2026-10-08"
   },
   {
    "name": "coconut oil",
@@ -3229,7 +3250,8 @@
    "safety_category": null,
    "is_perishable": false,
    "typical_location": "pantry",
-   "assume_in_stock": false
+   "assume_in_stock": false,
+   "nutrition_reviewed_on": "2026-10-08"
   },
   {
    "name": "flaxseed",
@@ -3386,7 +3408,8 @@
    "density": {
     "usda_portion_id": 87544,
     "measure": "tsp"
-   }
+   },
+   "nutrition_reviewed_on": "2026-10-08"
   },
   {
    "name": "cumin seeds",
@@ -3871,7 +3894,8 @@
     "usda_portion_id": 87546,
     "measure": "tsp"
    },
-   "notes": "APPROXIMATE: USDA has no garam masala; nutrition from curry powder (FDC 170924). Review."
+   "notes": "APPROXIMATE: USDA has no garam masala; nutrition from curry powder (FDC 170924). Review.",
+   "nutrition_reviewed_on": "2026-10-08"
   },
   {
    "name": "fennel seeds",
@@ -3986,7 +4010,8 @@
    "density": {
     "usda_portion_id": 89069,
     "measure": "cup"
-   }
+   },
+   "nutrition_reviewed_on": "2026-10-08"
   },
   {
    "name": "chicken broth, regular",
@@ -4462,7 +4487,8 @@
      "label": "protein-powder-double-chocolate"
     }
    ],
-   "notes": "Double chocolate whey. Nutrition from your package label: 1 scoop = 31 g, 120 kcal, 24 g protein; 22 scoops per 682 g container. Allergens: milk, soy. Price pending."
+   "notes": "Double chocolate whey. Nutrition from your package label: 1 scoop = 31 g, 120 kcal, 24 g protein; 22 scoops per 682 g container. Allergens: milk, soy. Price pending.",
+   "nutrition_reviewed_on": "2026-10-08"
   }
  ]
 }

@@ -1,22 +1,23 @@
 """Hardcoded food-safety table (CLAUDE.md food safety rules). The LLM never sets these values.
 
-Safe internal temperatures: the USDA baseline listed in CLAUDE.md.
+Safe internal temperatures and the reheat temperature: the USDA baseline listed in CLAUDE.md.
 
-Storage durations: to be transcribed from the FoodSafety.gov Cold Food Storage Chart,
+Storage durations: the FoodSafety.gov Cold Food Storage Chart, transcribed in app/domain/storage_chart.py
     https://www.foodsafety.gov/food-safety-charts/cold-food-storage-charts
-The page returned HTTP 403 to automated fetches on 2026-10-08 (planning and the Phase 0 retry), so
-every chart-derived value below is PENDING (no number) until the chart is saved into docs/sources/
-(BUILD_PLAN action item A1). Values are never taken from secondary sources.
+    Date Last Reviewed: September 19, 2023
+    saved copy: docs/sources/Cold Food Storage Chart _ FoodSafety.gov.pdf (printed 2026-10-08)
 
-Fixed by the user (BUILD_PLAN Q4), live now: cooked leftovers 3 days in the fridge; reheat to 165 F.
+Your fixed defaults (BUILD_PLAN Q4): cooked leftovers 3 days in the fridge, never above the chart's upper
+bound (3 to 4 days); reheat to 165 F.
 """
 
 from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import StrEnum
 
-FOODSAFETY_GOV_CHART_URL = "https://www.foodsafety.gov/food-safety-charts/cold-food-storage-charts"
-CHART_ACCESS_NOTE = "HTTP 403 on 2026-10-08 (planning and Phase 0 retry); awaiting a saved copy (A1)"
+from app.domain import storage_chart
+
+FOODSAFETY_GOV_CHART_URL = storage_chart.CHART_URL
 
 REHEAT_TEMP_F = 165
 LEFTOVER_FRIDGE_DAYS_DEFAULT = 3
@@ -50,64 +51,20 @@ SAFE_INTERNAL_TEMPS: dict[SafetyCategory, SafeTemperature] = {
 LEFTOVERS_REHEAT = SafeTemperature("leftovers_reheat", "any reheated leftovers", REHEAT_TEMP_F)
 
 
-class ChartStatus(StrEnum):
-    PENDING = "pending"  # not yet transcribed from the chart
-    VERIFIED = "verified"
-
-
-@dataclass(frozen=True)
-class StorageEntry:
-    key: str
-    food: str
-    fridge_days_min: int | None
-    fridge_days_max: int | None
-    freezer_text: str | None  # the chart's own wording
-    status: ChartStatus
-
-
-# Rows to transcribe from the chart (A1). Until then: no numbers.
-STORAGE_CHART: tuple[StorageEntry, ...] = (
-    StorageEntry(
-        "leftovers_cooked",
-        "Leftovers: cooked meat, poultry, and dishes",
-        None,
-        None,
-        None,
-        ChartStatus.PENDING,
-    ),
-    StorageEntry("leftovers_soups_stews", "Soups and stews", None, None, None, ChartStatus.PENDING),
-    StorageEntry("poultry_raw_pieces", "Fresh poultry pieces", None, None, None, ChartStatus.PENDING),
-    StorageEntry("poultry_raw_ground", "Ground poultry", None, None, None, ChartStatus.PENDING),
-    StorageEntry("fish_raw", "Fresh fish", None, None, None, ChartStatus.PENDING),
-    StorageEntry("shellfish_raw", "Fresh shellfish", None, None, None, ChartStatus.PENDING),
-    StorageEntry("eggs_raw_shell", "Raw eggs in shell", None, None, None, ChartStatus.PENDING),
-    StorageEntry(
-        "egg_dishes_cooked", "Egg casseroles and cooked egg dishes", None, None, None, ChartStatus.PENDING
-    ),
-    StorageEntry("pork_raw_cuts", "Fresh pork chops, roasts", None, None, None, ChartStatus.PENDING),
-    StorageEntry("pork_bacon_sausage", "Bacon and raw sausage", None, None, None, ChartStatus.PENDING),
-    StorageEntry("ham", "Ham", None, None, None, ChartStatus.PENDING),
-    StorageEntry("lunch_meats", "Lunch meats and hot dogs", None, None, None, ChartStatus.PENDING),
-)
-
-
 class FoodSafetyError(ValueError):
     pass
 
 
-def storage_entry(key: str) -> StorageEntry:
-    for entry in STORAGE_CHART:
-        if entry.key == key:
-            return entry
-    raise KeyError(key)
+def storage_for(use: str) -> storage_chart.ChartRow:
+    """The chart row for an app use, e.g. 'cooked_leftovers' or 'raw_poultry_pieces'."""
+    return storage_chart.chart_row(storage_chart.APP_STORAGE[use])
 
 
 def leftover_fridge_days_upper_bound() -> int:
-    """The chart's upper bound for cooked leftovers once verified; until then, your fixed 3 days."""
-    entry = storage_entry("leftovers_cooked")
-    if entry.status is ChartStatus.VERIFIED and entry.fridge_days_max is not None:
-        return entry.fridge_days_max
-    return LEFTOVER_FRIDGE_DAYS_DEFAULT
+    """The chart's upper bound for cooked leftovers (cooked meat or poultry: 3 to 4 days)."""
+    days = storage_for("cooked_leftovers").fridge_days
+    assert days is not None  # the leftovers row is a day range
+    return days[1]
 
 
 def validate_leftover_fridge_days(days: int) -> int:
@@ -116,10 +73,8 @@ def validate_leftover_fridge_days(days: int) -> int:
     upper = leftover_fridge_days_upper_bound()
     if days > upper:
         raise FoodSafetyError(
-            f"leftover fridge days {days} is above the allowed maximum of {upper} "
-            f"(FoodSafety.gov chart value; pending transcription)"
-            if storage_entry("leftovers_cooked").status is ChartStatus.PENDING
-            else f"leftover fridge days {days} is above the FoodSafety.gov chart maximum of {upper}"
+            f"leftover fridge days {days} is above the FoodSafety.gov chart maximum of {upper} "
+            f"(cooked meat or poultry: {storage_for('cooked_leftovers').refrigerator})"
         )
     return days
 
@@ -162,3 +117,8 @@ def reheat_text() -> str:
 def fridge_storage_text(days: int) -> str:
     unit = "day" if days == 1 else "days"
     return f"Refrigerate in airtight containers and eat within {days} {unit} of cooking."
+
+
+def freezer_storage_text(use: str = "cooked_leftovers") -> str:
+    row = storage_for(use)
+    return f"Freezer: {row.freezer} for best quality (FoodSafety.gov). {storage_chart.FREEZER_NOTE}"
