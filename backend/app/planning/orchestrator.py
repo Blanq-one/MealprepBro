@@ -8,6 +8,12 @@
 
 LLM failures end the run as `failed` with a problem+json error; nothing from the failing call and no plan is
 persisted (validated recipes from earlier, completed calls stay saved for reuse, per CLAUDE.md rule 7).
+
+A run finishes inside one request (Phase 2: serverless hosting stops a function at 300 s). Every LLM call,
+rate-limit wait and solve is checked against the request's time budget (PLAN_TIME_BUDGET_SECONDS). When the
+budget runs out during recipe generation, the run keeps the recipes made so far and plans with them; when it
+runs out before a solve, the run fails with a clear "out of time" error. A succeeded run also writes the
+candidate-exposure log (plan_candidate), one row per recipe offered to the solver or filtered out.
 """
 
 import logging
@@ -22,11 +28,12 @@ from sqlalchemy.orm import Session
 from app.config import Settings, get_settings
 from app.db.models import GenerationRun
 from app.llm.client import LLMClient
-from app.llm.errors import LLMError
-from app.llm.pacing import Clock, SystemClock
+from app.llm.errors import LLMDeadlineError, LLMError
+from app.llm.pacing import Clock, Deadline, SystemClock
 from app.llm.structured import LLMRunContext
 from app.planning.candidates import CandidateGenerator, Gap, gap_analysis
 from app.planning.constraint_builder import ConstraintError
+from app.planning.exposure import log_exposures
 from app.planning.inputs import constraints_for
 from app.planning.loader import build_problem
 from app.planning.persistence import save_plan
@@ -53,6 +60,18 @@ RESOLVE_MARGIN_PROTEIN_G = Decimal(1)
 # held back from an ingredient's inventory after rounding spilled past it under a purchase limit
 HOLDBACK_MARGIN = {"g": Decimal(5), "ml": Decimal(5), "count": Decimal(1)}
 TARGETED_COUNT = 2
+MIN_SOLVE_SECONDS = 5.0  # a solve starts only with at least this much of the time budget left
+SOLVE_MARGIN_SECONDS = 2.0
+OUT_OF_TIME_NOTE = (
+    "Recipe generation stopped early: this request ran out of time ({reason}). The recipes made so far are "
+    "saved, so planning again carries on from there."
+)
+
+ProgressListener = Callable[[dict[str, Any]], None]
+
+
+class PlanDeadlineError(RuntimeError):
+    """Too little of the request's time budget is left to solve."""
 
 
 @dataclass
@@ -158,6 +177,8 @@ class Orchestrator:
         settings: Settings | None = None,
         clock: Clock | None = None,
         validator_spy: ValidatorSpy | None = None,
+        deadline: Deadline | None = None,
+        on_progress: ProgressListener | None = None,
     ) -> None:
         self.session = session
         self.user_id = user_id
@@ -165,10 +186,15 @@ class Orchestrator:
         self.settings = settings or get_settings()
         self.clock = clock or SystemClock()
         self.validator_spy = validator_spy
+        self.deadline = deadline
+        self.on_progress = on_progress
+        self.notes: list[str] = []
 
     def _progress(self, run: GenerationRun, stage: str, **extra: Any) -> None:
         run.progress = {"stage": stage, **extra}
         self.session.flush()
+        if self.on_progress is not None:
+            self.on_progress(dict(run.progress))
 
     def _finish(self, run: GenerationRun, outcome: PlanOutcome) -> PlanOutcome:
         run.status = outcome.status
@@ -177,6 +203,9 @@ class Orchestrator:
             run.error = outcome.error
         outcome.llm_calls = run.llm_call_count
         outcome.tokens = run.total_tokens
+        outcome.notes = [*self.notes, *outcome.notes]
+        if outcome.notes:
+            run.progress = {**(run.progress or {}), "notes": outcome.notes}
         self.session.flush()
         return outcome
 
@@ -185,11 +214,22 @@ class Orchestrator:
             run = GenerationRun(user_id=self.user_id, purpose="weekly_plan", status="pending")
             self.session.add(run)
             self.session.flush()
+        if self.deadline is None:
+            self.deadline = Deadline.after(self.clock, self.settings.plan_time_budget_seconds)
         run.status = "running"
         run.started_at = datetime.now(UTC)
         self._progress(run, "constraints")
         try:
             return self._run(request, run)
+        except PlanDeadlineError as exc:
+            return self._finish(
+                run,
+                PlanOutcome(
+                    "failed",
+                    run.id,
+                    error=problem_json("Planning ran out of time", str(exc), status=503, code="deadline"),
+                ),
+            )
         except ConstraintError as exc:
             return self._finish(
                 run,
@@ -217,7 +257,45 @@ class Orchestrator:
     def _llm(self, run: GenerationRun) -> LLMRunContext | None:
         if self.llm_client is None:
             return None
-        return LLMRunContext(self.llm_client, self.session, self.settings, run.id, self.clock)
+        return LLMRunContext(
+            self.llm_client,
+            self.session,
+            self.settings,
+            run.id,
+            self.clock,
+            deadline=self.deadline,
+            on_wait=lambda seconds: self._progress(run, "waiting", seconds=round(seconds)),
+        )
+
+    def _remaining(self) -> float:
+        return self.deadline.remaining() if self.deadline is not None else float("inf")
+
+    def _time_limit(self) -> int:
+        """The solver's time limit: the configured one, cut to what's left of the request's budget."""
+        left = self._remaining()
+        if left < MIN_SOLVE_SECONDS:
+            raise PlanDeadlineError(
+                f"only {left:.0f} s of this request's {self.settings.plan_time_budget_seconds} s time "
+                "budget is left, too little to fit the week; try again (recipes made so far are saved)"
+            )
+        return max(1, min(self.settings.solver_time_limit_seconds, int(left - SOLVE_MARGIN_SECONDS)))
+
+    def _solve(self, problem: PlanningProblem) -> SolverSolution | SolverInfeasible:
+        return solve(
+            problem,
+            time_limit_s=self._time_limit(),
+            gap_rel=self.settings.solver_gap_rel,
+            gap_abs=self.settings.solver_gap_abs,
+        )
+
+    def _generate(self, generator: CandidateGenerator, problem: PlanningProblem, gaps: list[Gap]) -> bool:
+        """False when the time budget ran out; what was generated before that is saved and used."""
+        try:
+            generator.generate(problem, gaps)
+        except LLMDeadlineError as exc:
+            self.notes.append(OUT_OF_TIME_NOTE.format(reason=exc))
+            return False
+        return True
 
     def _run(self, request: PlanRequest, run: GenerationRun) -> PlanOutcome:
         constraints = constraints_for(self.session, self.user_id, request)
@@ -226,10 +304,11 @@ class Orchestrator:
         problem = build_problem(self.session, self.user_id, constraints)
         llm = self._llm(run) if request.allow_llm else None
         generator = CandidateGenerator(self.session, self.user_id, llm) if llm is not None else None
+        out_of_time = False
         gaps = gap_analysis(problem)
         if gaps and generator is not None:
             self._progress(run, "generating", slots=[g.slot.value for g in gaps])
-            generator.generate(problem, gaps)
+            out_of_time = not self._generate(generator, problem, gaps)
             problem = build_problem(self.session, self.user_id, constraints)
         rounds = 0
         while True:
@@ -244,20 +323,20 @@ class Orchestrator:
                 )
             )
             try:
-                result = solve(
-                    problem,
-                    time_limit_s=self.settings.solver_time_limit_seconds,
-                    gap_rel=self.settings.solver_gap_rel,
-                    gap_abs=self.settings.solver_gap_abs,
-                )
+                result = self._solve(problem)
             except EmptyCandidatePoolError as exc:
                 result = SolverInfeasible((Diagnostic("EMPTY_CANDIDATE_POOL", str(exc)),))
             if isinstance(result, SolverSolution):
                 break
             slots = sorted({d.slot for d in result.diagnostics if d.slot is not None}, key=lambda s: s.value)
-            if generator is None or not slots or rounds >= MAX_TARGETED_ROUNDS:
+            if generator is None or out_of_time or not slots or rounds >= MAX_TARGETED_ROUNDS:
                 detail = "; ".join(d.message for d in result.diagnostics)
-                if generator is None and slots:
+                if out_of_time and slots:
+                    detail += (
+                        " (this request ran out of time for new recipes; the ones made so far are saved, so "
+                        "planning again carries on from there)"
+                    )
+                elif generator is None and slots:
                     detail += " (recipe generation was off for this run)"
                 return self._finish(
                     run,
@@ -275,12 +354,18 @@ class Orchestrator:
                 )
             rounds += 1
             self._progress(run, "generating", slots=[s.value for s in slots], targeted_round=rounds)
-            generator.generate(problem, [Gap(s, TARGETED_COUNT, "targeted") for s in slots])
+            out_of_time = not self._generate(
+                generator, problem, [Gap(s, TARGETED_COUNT, "targeted") for s in slots]
+            )
             problem = build_problem(self.session, self.user_id, constraints)
-        return self._round_validate_persist(run, problem, result)
+        return self._round_validate_persist(run, problem, result, generator)
 
     def _round_validate_persist(
-        self, run: GenerationRun, problem: PlanningProblem, result: SolverSolution
+        self,
+        run: GenerationRun,
+        problem: PlanningProblem,
+        result: SolverSolution,
+        generator: CandidateGenerator | None = None,
     ) -> PlanOutcome:
         resolves = 0
         while True:
@@ -294,6 +379,14 @@ class Orchestrator:
             report = validate_plan(plan, reference)
             if report.ok:
                 saved = save_plan(self.session, self.user_id, plan, report, run.id)
+                log_exposures(
+                    self.session,
+                    run.id,
+                    saved.id,
+                    problem,
+                    plan,
+                    new_version_ids=frozenset(generator.created) if generator is not None else frozenset(),
+                )
                 return self._finish(
                     run,
                     PlanOutcome(
@@ -328,12 +421,7 @@ class Orchestrator:
             resolves += 1
             problem = problem.with_tightening(tightening_from(report, problem, result, plan))
             self._progress(run, "re-solving", resolves=resolves)
-            resolved = solve(
-                problem,
-                time_limit_s=self.settings.solver_time_limit_seconds,
-                gap_rel=self.settings.solver_gap_rel,
-                gap_abs=self.settings.solver_gap_abs,
-            )
+            resolved = self._solve(problem)
             if isinstance(resolved, SolverInfeasible):
                 detail = "; ".join(e.message for e in report.errors)
                 return self._finish(

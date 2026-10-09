@@ -26,6 +26,8 @@ WEEK = date(2026, 10, 12)
 WITH_DRINK = {MealSlot.DINNER: 550, MealSlot.DRINK: 100}
 # With a drink slot, Monday also makes Tuesday's drink: 50 hands-on minutes, more than the default 45.
 MONDAY_60 = [DayOverride(day=WEEK, cook_minutes=60)]
+# Orchestration tests that re-solve several times plan Mon-Wed: each solve then reaches its gap in seconds.
+SHORT_WEEK = 3
 
 
 def run(session, client=None, settings=None, spy=None, **request):
@@ -162,7 +164,8 @@ def test_rounding_over_a_limit_is_re_solved_and_the_validator_sees_whole_eggs(se
 
     monkeypatch.setattr(orch, "validate_plan", first_over)
     seen = []
-    out = run(seeded_db, FakeLLMClient.failing(), spy=seen.append)
+    # three days keep every solve small enough to reach its gap quickly (no test depends on the wall clock)
+    out = run(seeded_db, FakeLLMClient.failing(), spy=seen.append, days=SHORT_WEEK)
     assert out.status == "succeeded", out.error
     assert len(seen) >= 2  # the first rounded plan failed validation and was re-solved
     for plan in seen:
@@ -179,7 +182,7 @@ def test_two_failed_re_solves_end_with_a_clear_error(seeded_db, monkeypatch):
 
     monkeypatch.setattr(orch, "validate_plan", always_over)
     before = plans(seeded_db)
-    out = run(seeded_db, FakeLLMClient.failing())
+    out = run(seeded_db, FakeLLMClient.failing(), days=SHORT_WEEK)
     assert out.status == "failed"
     assert out.error["code"] == "validation" and "100 over 12,600" in out.error["detail"]
     assert plans(seeded_db) == before
@@ -190,7 +193,7 @@ def test_infeasible_then_a_targeted_round_succeeds(seeded_db):
     script = [response(bad)] + [response(bad["recipes"][0])] * 3 + [response(bad["recipes"][1])] * 3
     script += [fixture_response("drinks_batch.json")]
     client = FakeLLMClient(script)
-    out = run(seeded_db, client, slot_kcal=WITH_DRINK, day_overrides=MONDAY_60)
+    out = run(seeded_db, client, slot_kcal=WITH_DRINK, day_overrides=MONDAY_60, days=SHORT_WEEK)
     assert out.status == "succeeded", out.error
     assert client.calls == 8
     run_row = seeded_db.get(GenerationRun, out.run_id)

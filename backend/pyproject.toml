@@ -44,6 +44,8 @@ markers = [
     "slow: slow tests",
     "live_llm: makes a real LLM call (opt-in: set RUN_LIVE_LLM_TESTS=1)",
     "with_margins: solver tests that keep the rounding margin inside the calorie limits",
+    "solve_cache_off: always run the MILP (tests normally reuse the answer for an identical model)",
+    "perf: wall-clock performance test under the production solver limits (opt-in: RUN_PERF_TESTS=1)",
 ]
 
 [tool.coverage.run]

@@ -10,7 +10,9 @@ from sqlalchemy.orm import Session
 
 from app.db.models import Ingredient, InventoryEvent, InventoryItem, Product
 from app.domain.enums import StorageLocation
+from app.domain.exclusions import ExclusionStatus
 from app.domain.units import UnitError, normalize_unit, to_base
+from app.services.exclusions import diet_status
 from app.services.ingredient_data import load_ingredients
 
 DISCARD_REASONS = frozenset({"waste", "expired"})
@@ -33,10 +35,18 @@ class LotInput:
     expiry_is_estimate: bool = True
     notes: str | None = None
     reason: str = "purchase"  # purchase | manual_adjust | parse_add
+    grocery_list_item_id: int | None = None  # set by "Done shopping"
 
 
 def _event(
-    session: Session, item: InventoryItem, delta: Decimal, reason: str, note: str | None = None
+    session: Session,
+    item: InventoryItem,
+    delta: Decimal,
+    reason: str,
+    note: str | None = None,
+    *,
+    cook_batch_id: int | None = None,
+    grocery_list_item_id: int | None = None,
 ) -> InventoryEvent:
     event = InventoryEvent(
         user_id=item.user_id,
@@ -47,6 +57,8 @@ def _event(
         unit=item.unit,
         reason=reason,
         note=note,
+        cook_batch_id=cook_batch_id,
+        grocery_list_item_id=grocery_list_item_id,
     )
     session.add(event)
     return event
@@ -81,9 +93,29 @@ def add_lot(session: Session, user_id: int, data: LotInput) -> InventoryItem:
     )
     session.add(item)
     session.flush()
-    _event(session, item, item.quantity, data.reason)
+    _event(session, item, item.quantity, data.reason, grocery_list_item_id=data.grocery_list_item_id)
     session.flush()
     return item
+
+
+def consume(
+    session: Session,
+    item: InventoryItem,
+    quantity: Decimal,
+    *,
+    cook_batch_id: int | None = None,
+    note: str | None = None,
+) -> InventoryEvent:
+    """Take `quantity` (the lot's base unit) from a lot for cooking: one cook_consume event; an emptied lot
+    becomes depleted."""
+    if quantity <= 0 or quantity > item.quantity:
+        raise InventoryError(f"can't take {quantity} {item.unit} from a lot holding {item.quantity}")
+    item.quantity = (item.quantity - quantity).quantize(Decimal("0.001"))
+    event = _event(session, item, -quantity, "cook_consume", note, cook_batch_id=cook_batch_id)
+    if item.quantity == 0:
+        item.status = "depleted"
+    session.flush()
+    return event
 
 
 def _lot(session: Session, user_id: int, item_id: int) -> InventoryItem:
@@ -166,3 +198,18 @@ def ledger_total(session: Session, item_id: int) -> Decimal:
         )
     )
     return Decimal(total or 0)
+
+
+def add_lots(session: Session, user_id: int, items: list[LotInput]) -> list[InventoryItem]:
+    """Several lots in one go, all or nothing (the caller commits). Excluded foods (beef) are refused; held
+    and pork items are fine in inventory (plans apply holds and caps)."""
+    data = load_ingredients(session, {i.ingredient_id for i in items})
+    statuses = diet_status(session, user_id, data).results
+    refused = sorted(
+        data[i.ingredient_id].name
+        for i in items
+        if i.ingredient_id in statuses and statuses[i.ingredient_id].status is ExclusionStatus.EXCLUDED
+    )
+    if refused:
+        raise InventoryError(f"excluded, so not added: {', '.join(refused)}")
+    return [add_lot(session, user_id, item) for item in items]

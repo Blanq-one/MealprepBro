@@ -22,7 +22,7 @@ CurrentUser = Annotated[AppUser, Depends(get_current_user)]
 
 
 def get_session_factory() -> Callable[[], Session]:
-    """Background planning runs open their own session (tests override this)."""
+    """A streamed planning request runs in a worker thread with its own session (tests override this)."""
     return get_sessionmaker()
 
 
@@ -31,7 +31,7 @@ def _configured_client() -> LLMClient | None:
 
 
 def get_llm_client_factory() -> Callable[[], LLMClient | None]:
-    """The LLM client used by background runs (tests override this with a FakeLLMClient)."""
+    """The LLM client for planning runs (tests override this with a FakeLLMClient)."""
     return _configured_client
 
 

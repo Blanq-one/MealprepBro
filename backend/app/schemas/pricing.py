@@ -1,5 +1,6 @@
 """API models for products and manual price entry (Phase 1)."""
 
+import uuid
 from datetime import date
 from decimal import Decimal
 
@@ -55,6 +56,9 @@ class PriceIn(_Strict):
     is_sale: bool = False
     source: PriceSource = PriceSource.MANUAL
     note: str | None = Field(default=None, max_length=300)
+    client_ref: uuid.UUID | None = Field(
+        default=None, description="set by the app; an entry replayed from the offline queue is stored once"
+    )
 
 
 class PriceOut(BaseModel):
@@ -67,3 +71,4 @@ class PriceOut(BaseModel):
     priced_unit: str
     is_sale: bool
     source: str
+    client_ref: uuid.UUID | None = None

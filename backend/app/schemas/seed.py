@@ -69,6 +69,15 @@ class SeedUnit(_Strict):
         return self
 
 
+class SeedShelfLife(_Strict):
+    """How long a long-keeping item keeps where it usually lives (Phase 2): an estimate, with its basis."""
+
+    pantry_days: int | None = Field(default=None, ge=1, le=3650)
+    fridge_days: int | None = Field(default=None, ge=1, le=3650)
+    freezer_days: int | None = Field(default=None, ge=1, le=3650)
+    basis: str = Field(min_length=10)
+
+
 class SeedIngredient(_Strict):
     name: str
     slug: str = Field(pattern=r"^[a-z0-9]+(-[a-z0-9]+)*$")
@@ -85,6 +94,7 @@ class SeedIngredient(_Strict):
     safety_category: SafetyCategory | None = None
     is_perishable: bool
     typical_location: StorageLocation
+    shelf_life: SeedShelfLife | None = None  # unset = unknown (raw protein uses the FoodSafety.gov chart)
     assume_in_stock: bool = False
     stock_up: bool = False  # long-life, bought occasionally; listed apart from regular groceries
     count_rounding_step: Decimal = Field(default=Decimal(1), gt=0)

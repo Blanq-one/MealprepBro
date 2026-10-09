@@ -684,6 +684,7 @@ def test_held_ingredients_are_listed_for_review():
 
 
 # ---------------- general ----------------
+@pytest.mark.solve_cache_off
 def test_identical_input_gives_an_identical_plan():
     ing = base_ingredients()
     c = f.constraints(slots={L: 560, D: 600})
@@ -693,7 +694,10 @@ def test_identical_input_gives_an_identical_plan():
 
 
 @pytest.mark.slow
+@pytest.mark.perf
 def test_thirty_candidates_seven_days_four_slots_solve_quickly():
+    """AC 1.12 under the production limits (opt-in: it measures the wall clock, so it can't be part of the
+    deterministic suite). The time limit makes it return its best plan in time on any machine."""
     rnd = random.Random(7)
     ing = base_ingredients()
     ing[5] = f.food(

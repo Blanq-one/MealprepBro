@@ -62,9 +62,9 @@ def leftover_fate(plan: IngredientPlan, c: PlanConstraints) -> str:
         return "freeze"
     if not plan.perishable or (plan.location or "fridge") in KEEPS_LOCATIONS:
         return "keeps"
-    days = plan.fridge_life.days if plan.fridge_life is not None else plan.shelf_life_days_fridge
+    days = plan.fridge_life.days if plan.fridge_life is not None else plan.shelf_life_days()
     # it keeps if it would still be good at the end of next week's plan
-    if days is not None and days >= 2 * len(c.days):
+    if days is not None and days >= c.keep_horizon_days():
         return "keeps"
     return "at_risk"
 

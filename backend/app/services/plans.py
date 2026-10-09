@@ -1,17 +1,18 @@
-"""Planning runs and plan read models: start a run (202 + run id), execute it in the background, and show the
-plan summary (PRD §25) and the store-grouped grocery list. Display strings only; every number comes from
-code."""
+"""Planning runs and plan read models: start a run, run it to completion inside the request (Phase 2: nothing
+continues after the response, as on a serverless host), and show the plan summary (PRD §25) and the
+store-grouped grocery list. Display strings only; every number comes from code."""
 
 import logging
 from collections import defaultdict
 from collections.abc import Callable
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.config import get_settings
 from app.db.models import (
     GenerationRun,
     GroceryList,
@@ -29,7 +30,8 @@ from app.db.models import (
 from app.domain.enums import MealSlot
 from app.domain.units import GRAMS_PER_UNIT, ML_PER_UNIT
 from app.llm.client import LLMClient
-from app.planning.orchestrator import Orchestrator, PlanOutcome, problem_json
+from app.llm.errors import LLMConfigError
+from app.planning.orchestrator import Orchestrator, PlanOutcome, ProgressListener, problem_json
 from app.planning.perishables import freeze_text
 from app.planning.persistence import PlanNotFoundError, accept_plan
 from app.planning.problem import IngredientPlan
@@ -46,15 +48,15 @@ from app.schemas.plans import (
     GroceryListOut,
     LeftoverOut,
     MealOut,
+    PlanListItemOut,
     PlanRequest,
     PlanSummaryOut,
     StoreTotalOut,
 )
-from app.services.ingredient_data import load_ingredients
+from app.services.ingredient_data import IngredientData, load_ingredients
 
 log = logging.getLogger(__name__)
 
-SessionFactory = Callable[[], Session]
 ClientFactory = Callable[[], LLMClient | None]
 
 
@@ -87,7 +89,38 @@ def amount_display(quantity: Decimal, unit: str) -> str:
 
 
 # ---------------- runs ----------------
+UNFINISHED = ("pending", "running")
+NO_LLM_NOTE = "Recipe generation isn't set up ({reason}), so this plan uses saved and seed recipes only."
+
+
+def expire_stale_runs(session: Session, user_id: int, older_than_s: int) -> int:
+    """A run still pending or running long after any request could have ended was cut off (the function was
+    stopped, or the app was closed mid-plan): mark it failed so it never looks like it's still working."""
+    cutoff = datetime.now(UTC) - timedelta(seconds=older_than_s)
+    stale = list(
+        session.scalars(
+            select(GenerationRun).where(
+                GenerationRun.user_id == user_id,
+                GenerationRun.status.in_(UNFINISHED),
+                GenerationRun.created_at < cutoff,
+            )
+        )
+    )
+    for run in stale:
+        run.status = "failed"
+        run.finished_at = datetime.now(UTC)
+        run.error = problem_json(
+            "Planning was interrupted",
+            "This run stopped before it finished (the request ended early); nothing from it was saved.",
+            status=500,
+            code="interrupted",
+        )
+    session.flush()
+    return len(stale)
+
+
 def start_run(session: Session, user_id: int, request: PlanRequest) -> GenerationRun:
+    expire_stale_runs(session, user_id, get_settings().plan_stale_after_seconds)
     run = GenerationRun(
         user_id=user_id,
         purpose="weekly_plan",
@@ -100,28 +133,40 @@ def start_run(session: Session, user_id: int, request: PlanRequest) -> Generatio
 
 
 def execute_run(
-    session_factory: SessionFactory, run_id: int, request: PlanRequest, client_factory: ClientFactory
-) -> None:
-    """Background task: run the orchestrator in its own session and commit whatever happened."""
-    session = session_factory()
+    session: Session,
+    run: GenerationRun,
+    request: PlanRequest,
+    client_factory: ClientFactory,
+    *,
+    on_progress: ProgressListener | None = None,
+) -> PlanOutcome:
+    """Run the orchestrator to the end, in this request and this session. Commits what happened (the run
+    record, its LLM calls, saved recipes and the plan); an unexpected crash rolls back and marks the run
+    failed, so a run never stays "running"."""
+    notes: list[str] = []
+    client: LLMClient | None = None
+    if request.allow_llm:
+        try:
+            client = client_factory()
+        except LLMConfigError as exc:
+            notes.append(NO_LLM_NOTE.format(reason=exc))
+    run_id, user_id = run.id, run.user_id
     try:
-        run = session.get(GenerationRun, run_id)
-        if run is None:
-            return
-        client = client_factory() if request.allow_llm else None
-        Orchestrator(session, run.user_id, llm_client=client).run(request, run)
+        outcome = Orchestrator(session, user_id, llm_client=client, on_progress=on_progress).run(request, run)
+        outcome.notes = [*notes, *outcome.notes]
         session.commit()
-    except Exception as exc:  # pragma: no cover - last-resort guard so a run never stays "running"
+        return outcome
+    except Exception as exc:
         log.exception("planning run %s crashed", run_id)
         session.rollback()
-        run = session.get(GenerationRun, run_id)
-        if run is not None:
-            run.status = "failed"
-            run.finished_at = datetime.now(UTC)
-            run.error = problem_json("Planning crashed", str(exc), status=500, code="internal")
+        error = problem_json("Planning crashed", str(exc), status=500, code="internal")
+        failed = session.get(GenerationRun, run_id)
+        if failed is not None:
+            failed.status = "failed"
+            failed.finished_at = datetime.now(UTC)
+            failed.error = error
             session.commit()
-    finally:
-        session.close()
+        return PlanOutcome("failed", run_id, error=error, notes=notes)
 
 
 def run_plan_now(
@@ -363,6 +408,7 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
                 portion_multiplier=b.portion_multiplier,
                 scale_factor=b.scale_factor,
                 planned_minutes=b.planned_minutes,
+                status=b.status,
             )
             for b in batches
         ],
@@ -377,8 +423,188 @@ def accept(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut:
     return plan_summary(session, user_id, plan_id)
 
 
+def current_plan_id(plans: list[MealPlan], today: date) -> int | None:
+    """The plan the app opens on: the active plan for this week, else the latest active plan, else the
+    latest draft (plans newest first)."""
+
+    def covers(p: MealPlan) -> bool:
+        days = len(p.constraints.get("days", [])) or 7
+        return p.week_start <= today < p.week_start + timedelta(days=days)
+
+    active = [p for p in plans if p.status == "active"]
+    for group in ([p for p in active if covers(p)], active, [p for p in plans if p.status == "draft"]):
+        if group:
+            return group[0].id
+    return None
+
+
+def list_plans(
+    session: Session, user_id: int, limit: int, today: date | None = None
+) -> list[PlanListItemOut]:
+    plans = list(
+        session.scalars(
+            select(MealPlan)
+            .where(MealPlan.user_id == user_id, MealPlan.status.in_(("active", "draft", "completed")))
+            .order_by(MealPlan.created_at.desc(), MealPlan.id.desc())
+            .limit(limit)
+        )
+    )
+    current = current_plan_id(plans, today or datetime.now(UTC).date())
+    return [
+        PlanListItemOut(
+            id=p.id,
+            week_start=p.week_start,
+            status=p.status,
+            created_at=p.created_at,
+            planning_mode=p.constraints["planning_mode"],
+            kcal_planned_week=p.totals["week_kcal"],
+            kcal_target_week=p.constraints["weekly_kcal_target"],
+            meals_count=p.totals["meals"],
+            cash_display=money(p.totals["costs"]["cash_cents"]),
+            is_current=p.id == current,
+        )
+        for p in plans
+    ]
+
+
 # ---------------- grocery list ----------------
-def grocery_view(session: Session, user_id: int, plan_id: int, group_by_store: bool = True) -> GroceryListOut:
+def grocery_item_out(
+    it: GroceryListItem,
+    data: dict[int, IngredientData],
+    stores: dict[int, str],
+    products: dict[int, str],
+) -> GroceryItemOut:
+    reason = it.reason or {}
+    kind = reason.get("kind", "buy")
+    to_buy_total = Decimal(reason.get("to_buy_total", it.to_buy_quantity))
+    ingredient = data.get(it.ingredient_id)
+    return GroceryItemOut(
+        id=it.id,
+        ingredient_id=it.ingredient_id,
+        name=ingredient.name if ingredient else "?",
+        category=ingredient.category if ingredient else "other",
+        store_id=it.store_id,
+        store_name=stores.get(it.store_id) if it.store_id else None,
+        product_id=it.product_id,
+        product_name=products.get(it.product_id) if it.product_id else None,
+        needed=amount_display(it.needed_quantity, it.unit),
+        from_inventory=amount_display(it.inventory_used_quantity, it.unit)
+        if it.inventory_used_quantity
+        else None,
+        to_buy=(
+            f"{it.packages} × {products.get(it.product_id or 0, 'package')}"
+            if it.packages
+            else amount_display(to_buy_total if kind != "buy" else it.to_buy_quantity, it.unit)
+        ),
+        packages=it.packages,
+        estimated_cost_cents=it.estimated_cost_cents,
+        estimated_cost_display=(
+            money(it.estimated_cost_cents) + (" est." if reason.get("is_estimate") else "")
+        )
+        if it.estimated_cost_cents is not None
+        else None,
+        is_estimate=bool(reason.get("is_estimate")),
+        expected_remainder=amount_display(it.expected_remainder_quantity, it.unit) + " left (open package)"
+        if it.expected_remainder_quantity
+        else None,
+        kind=kind,
+        note=reason.get("note"),
+        stock_up=bool(reason.get("stock_up")),
+        checked=it.checked_at is not None,
+        checked_at=it.checked_at,
+        purchased=amount_display(it.purchased_quantity, it.unit)
+        if it.purchased_quantity is not None
+        else None,
+        actual_price_cents=it.actual_price_cents,
+        actual_price_display=money(it.actual_price_cents) if it.actual_price_cents is not None else None,
+    )
+
+
+CATEGORY_ORDER = (
+    "protein",
+    "dairy",
+    "vegetable",
+    "fruit",
+    "grain",
+    "legume",
+    "nut_seed",
+    "fat_oil",
+    "condiment",
+    "sweetener",
+    "spice",
+    "supplement",
+    "beverage",
+    "other",
+)
+SECTION_TITLES = {
+    "stock_up": "Also buy this week (stock-up)",
+    "inventory": "From your inventory",
+    "staple": "Check you have",
+    "unpriced": "No price yet",
+}
+
+
+def _section(item: GroceryItemOut) -> str | None:
+    """Items outside the per-store (or per-category) groups get their own section."""
+    if item.kind == "buy" and item.stock_up:
+        return "stock_up"
+    if item.kind == "from_inventory":
+        return "inventory"
+    if item.kind == "staple":
+        return "staple"
+    if item.kind == "unpriced" or (item.kind == "buy" and item.store_id is None):
+        return "unpriced"
+    return None
+
+
+def _groups(
+    items: list[GroceryItemOut], group_by: str, store_order: list[int], stores: dict[int, str]
+) -> list[GroceryGroupOut]:
+    def group(
+        kind: str, title: str, members: list[GroceryItemOut], store_id: int | None = None
+    ) -> GroceryGroupOut:
+        cents = sum(i.estimated_cost_cents or 0 for i in members)
+        return GroceryGroupOut(
+            kind=kind,
+            key=f"{kind}:{store_id if store_id is not None else title}",
+            store_id=store_id,
+            store_name=title,
+            subtotal_cents=cents,
+            subtotal_display=money(cents),
+            items=members,
+        )
+
+    if group_by == "none":
+        return [group("all", "All items", items)]
+    sections: dict[str, list[GroceryItemOut]] = defaultdict(list)
+    regular: list[GroceryItemOut] = []
+    for item in items:
+        if (section := _section(item)) is not None:
+            sections[section].append(item)
+        else:
+            regular.append(item)
+    out: list[GroceryGroupOut] = []
+    if group_by == "category":
+        by_category: dict[str, list[GroceryItemOut]] = defaultdict(list)
+        for item in regular:
+            by_category[item.category].append(item)
+        rank = {c: i for i, c in enumerate(CATEGORY_ORDER)}
+        for category in sorted(by_category, key=lambda c: (rank.get(c, len(rank)), c)):
+            out.append(group("category", category.replace("_", " ").capitalize(), by_category[category]))
+    else:
+        by_store: dict[int, list[GroceryItemOut]] = defaultdict(list)
+        for item in regular:
+            by_store[item.store_id or 0].append(item)
+        store_rank = {sid: i for i, sid in enumerate(store_order)}
+        for sid in sorted(by_store, key=lambda s: (store_rank.get(s, len(store_rank)), s)):
+            out.append(group("store", stores.get(sid, "?"), by_store[sid], sid))
+    for section in ("stock_up", "inventory", "staple", "unpriced"):
+        if sections[section]:
+            out.append(group(section, SECTION_TITLES[section], sections[section]))
+    return out
+
+
+def grocery_view(session: Session, user_id: int, plan_id: int, group_by: str = "store") -> GroceryListOut:
     plan = _plan(session, user_id, plan_id)
     glist = session.scalars(select(GroceryList).where(GroceryList.meal_plan_id == plan.id)).first()
     if glist is None:
@@ -390,7 +616,7 @@ def grocery_view(session: Session, user_id: int, plan_id: int, group_by_store: b
             .order_by(GroceryListItem.position)
         )
     )
-    names = {i: d.name for i, d in load_ingredients(session, {it.ingredient_id for it in items}).items()}
+    data = load_ingredients(session, {it.ingredient_id for it in items})
     stores = {s.id: s.name for s in session.scalars(select(Store))}
     products = {
         p.id: p.name
@@ -398,61 +624,9 @@ def grocery_view(session: Session, user_id: int, plan_id: int, group_by_store: b
             select(Product).where(Product.id.in_({it.product_id for it in items if it.product_id}))
         )
     }
-    out_items = []
-    for it in items:
-        reason = it.reason or {}
-        kind = reason.get("kind", "buy")
-        to_buy_total = Decimal(reason.get("to_buy_total", it.to_buy_quantity))
-        out_items.append(
-            GroceryItemOut(
-                id=it.id,
-                ingredient_id=it.ingredient_id,
-                name=names.get(it.ingredient_id, "?"),
-                store_id=it.store_id,
-                store_name=stores.get(it.store_id) if it.store_id else None,
-                product_name=products.get(it.product_id) if it.product_id else None,
-                needed=amount_display(it.needed_quantity, it.unit),
-                from_inventory=amount_display(it.inventory_used_quantity, it.unit)
-                if it.inventory_used_quantity
-                else None,
-                to_buy=(
-                    f"{it.packages} × {products.get(it.product_id or 0, 'package')}"
-                    if it.packages
-                    else amount_display(to_buy_total if kind != "buy" else it.to_buy_quantity, it.unit)
-                ),
-                packages=it.packages,
-                estimated_cost_cents=it.estimated_cost_cents,
-                estimated_cost_display=(
-                    money(it.estimated_cost_cents) + (" est." if reason.get("is_estimate") else "")
-                )
-                if it.estimated_cost_cents is not None
-                else None,
-                is_estimate=bool(reason.get("is_estimate")),
-                expected_remainder=amount_display(it.expected_remainder_quantity, it.unit)
-                + " left (open package)"
-                if it.expected_remainder_quantity
-                else None,
-                kind=kind,
-                note=reason.get("note"),
-                stock_up=bool(reason.get("stock_up")),
-            )
-        )
-    groups: dict[int | None, list[GroceryItemOut]] = defaultdict(list)
-    for item in out_items:
-        groups[item.store_id if group_by_store else None].append(item)
+    out_items = [grocery_item_out(it, data, stores, products) for it in items]
     primary_id = plan.constraints["store_ids"][0]
-    order = sorted(groups, key=lambda sid: (sid is None, sid != primary_id, sid or 0))
-    group_out = [
-        GroceryGroupOut(
-            store_id=sid,
-            store_name=stores.get(sid, "Check you have / no price yet")
-            if sid is not None
-            else ("All items" if not group_by_store else "Check you have / no price yet"),
-            subtotal_cents=sum(i.estimated_cost_cents or 0 for i in groups[sid]),
-            items=groups[sid],
-        )
-        for sid in order
-    ]
+    group_out = _groups(out_items, group_by, list(plan.constraints["store_ids"]), stores)
     totals = plan.totals
     threshold = plan.constraints["store_split_min_savings_cents"]
     split_info = totals.get("grocery", {})
@@ -483,6 +657,10 @@ def grocery_view(session: Session, user_id: int, plan_id: int, group_by_store: b
     return GroceryListOut(
         id=glist.id,
         plan_id=plan.id,
+        status=glist.status,
+        group_by=group_by,
+        checked_count=sum(1 for i in out_items if i.checked),
+        to_check_count=sum(1 for i in out_items if i.kind == "buy"),
         total_cents=totals["cost_cents"],
         total_display=money(totals["cost_cents"]),
         regular_cents=totals["cost_cents"] - stock_up_cents,

@@ -1,5 +1,9 @@
-"""Phase 1 API: planning runs (202 + polling), plan summary, grocery list, and the supporting endpoints."""
+"""Plans API: a plan request runs inside the request and streams NDJSON lines (Phase 2), the plan summary,
+the grocery list, and the supporting endpoints."""
 
+import json
+import time
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
@@ -7,15 +11,20 @@ import pytest
 from sqlalchemy import select
 
 from app.api.deps import get_llm_client_factory, get_session_factory
-from app.db.models import Ingredient, LlmCall, Recipe, Store, UsdaFood
+from app.db.models import GenerationRun, Ingredient, LlmCall, Recipe, Store, UsdaFood
 from app.llm.fake import FakeLLMClient, response
+from app.planning.orchestrator import PlanOutcome
+from app.schemas.plans import PlanRequest
+from app.services import plan_stream
+from app.services.settings import current_user
 
 PROBLEM = "application/problem+json"
+NDJSON = "application/x-ndjson"
 WEEK = "2026-10-12"
 
 
 class Borrowed:
-    """The test's session, lent to the background task (which commits and closes its own session)."""
+    """The test's session, lent to the planning worker (which commits and closes its own session)."""
 
     def __init__(self, session: Any) -> None:
         self._session = session
@@ -34,15 +43,63 @@ def api(client, seeded_db):
     return client
 
 
+def stream(api, **body) -> list[dict[str, Any]]:
+    reply = api.post("/api/v1/plans", json={"week_start": WEEK, "allow_llm": False, **body})
+    assert reply.status_code == 200, reply.text
+    assert reply.headers["content-type"].startswith(NDJSON)
+    return [json.loads(line) for line in reply.text.splitlines() if line.strip()]
+
+
 def plan_week(api, **body):
-    accepted = api.post("/api/v1/plans", json={"week_start": WEEK, "allow_llm": False, **body})
-    assert accepted.status_code == 202, accepted.text
-    payload = accepted.json()
-    assert payload["status_url"] == f"/api/v1/generation-runs/{payload['run_id']}"
-    return api.get(payload["status_url"]).json()
+    events = stream(api, **body)
+    return api.get(f"/api/v1/generation-runs/{events[0]['run_id']}").json()
 
 
-def test_plan_run_202_then_poll_then_summary(api):
+def test_a_plan_request_streams_progress_and_ends_with_the_finished_plan(api, seeded_db):
+    events = stream(api)
+    first, last = events[0], events[-1]
+    assert first["event"] == "started" and len(first["pad"]) >= 2048  # bytes reach the phone at once
+    assert [e["event"] for e in events].count("result") == 1 and last["event"] == "result"
+    stages = [e["stage"] for e in events if e["event"] == "progress"]
+    assert stages[:2] == ["constraints", "candidates"] and "solving" in stages and "validating" in stages
+    assert all(e["message"] for e in events if e["event"] == "progress")
+    assert last["status"] == "succeeded" and last["plan_id"] and last["llm_call_count"] == 0
+    assert last["plan"] == api.get(f"/api/v1/plans/{last['plan_id']}").json()
+    run = seeded_db.get(GenerationRun, first["run_id"])
+    assert run.status == "succeeded" and run.finished_at is not None  # the run record is kept
+
+
+def test_a_heartbeat_keeps_a_quiet_stream_alive(seeded_db, monkeypatch):
+    def slow_run(session, run, request, client_factory, *, on_progress=None):
+        time.sleep(0.3)
+        run.status = "infeasible"
+        error = {"title": "No plan fits this week", "status": 422, "detail": "nothing fits"}
+        return PlanOutcome("infeasible", run.id, error=error)
+
+    monkeypatch.setattr(plan_stream.service, "execute_run", slow_run)
+    user_id = current_user(seeded_db).id
+    request = PlanRequest(week_start=WEEK, allow_llm=False)
+    lines = plan_stream.plan_events(
+        lambda: Borrowed(seeded_db), user_id, request, lambda: None, heartbeat_s=0.05
+    )
+    events = [json.loads(line) for line in lines]
+    assert "heartbeat" in [e["event"] for e in events]
+    assert events[-1]["status"] == "infeasible"
+    assert events[-1]["problem"]["title"] == "No plan fits this week"
+
+
+def test_stale_unfinished_runs_are_marked_interrupted(api, seeded_db):
+    old = GenerationRun(user_id=current_user(seeded_db).id, purpose="weekly_plan", status="running")
+    seeded_db.add(old)
+    seeded_db.flush()
+    old.created_at = datetime.now(UTC) - timedelta(minutes=30)
+    seeded_db.flush()
+    stream(api, mode="inventory", topup_cents=0)
+    seeded_db.refresh(old)
+    assert old.status == "failed" and old.error["code"] == "interrupted"
+
+
+def test_plan_run_streams_then_summary(api):
     run = plan_week(api)
     assert run["status"] == "succeeded", run["error"]
     assert run["plan_id"] and run["llm_call_count"] == 0
@@ -72,6 +129,8 @@ def test_plan_run_202_then_poll_then_summary(api):
     assert all(x["message"].startswith("Freeze ") for x in summary["freeze"])
     monday = summary["days"][0]
     assert monday["elapsed_minutes"] >= monday["hands_on_minutes"] > 0
+    listed = api.get("/api/v1/plans").json()
+    assert listed[0]["id"] == run["plan_id"] and listed[0]["is_current"]  # the latest draft
     accepted = api.post(f"/api/v1/plans/{run['plan_id']}/accept").json()
     assert accepted["status"] == "active"
 
@@ -94,8 +153,19 @@ def test_grocery_list_groups_by_store(api, seeded_db):
         assert glist["savings_cents"] >= glist["split_threshold_cents"] and "saves" in glist["note"]
     kinds = {item["kind"] for g in glist["groups"] for item in g["items"]}
     assert {"buy", "staple"} <= kinds
+    # stock-up items get their own section, and so do the "check you have" staples
+    sections = {g["kind"]: g for g in glist["groups"] if g["kind"] != "store"}
+    assert all(i["stock_up"] for i in sections["stock_up"]["items"])
+    assert all(i["kind"] == "staple" for i in sections["staple"]["items"])
+    assert not any(
+        i["stock_up"] and i["kind"] == "buy" for g in priced if g["kind"] == "store" for i in g["items"]
+    )
+    assert glist["status"] == "open" and glist["checked_count"] == 0 and glist["to_check_count"] > 0
     flat = api.get(f"/api/v1/plans/{run['plan_id']}/grocery-list?group_by=none").json()
     assert len(flat["groups"]) == 1
+    by_category = api.get(f"/api/v1/plans/{run['plan_id']}/grocery-list?group_by=category").json()
+    assert {g["kind"] for g in by_category["groups"]} >= {"category", "stock_up"}
+    assert sum(g["subtotal_cents"] for g in by_category["groups"]) == glist["total_cents"]
 
 
 def test_problem_json_errors(api):

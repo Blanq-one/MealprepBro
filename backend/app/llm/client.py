@@ -34,6 +34,7 @@ class LLMRequest:
     strict: bool  # True in LLM_STRUCTURED_MODE=strict (constrained decoding), False in best_effort
     max_completion_tokens: int
     reasoning_effort: str | None = None
+    timeout_s: float | None = None  # this call only (what's left of the request's budget); None = the default
 
 
 @dataclass(frozen=True)
@@ -148,9 +149,10 @@ class GroqLLMClient:
         }
         if request.reasoning_effort:
             kwargs["reasoning_effort"] = request.reasoning_effort
+        client = self._client.with_options(timeout=request.timeout_s) if request.timeout_s else self._client
         started = time.monotonic()
         try:
-            raw = self._client.chat.completions.with_raw_response.create(**kwargs)
+            raw = client.chat.completions.with_raw_response.create(**kwargs)
         except groq.RateLimitError as exc:
             info = parse_rate_limit(exc.response.headers)
             raise LLMRateLimitedError(

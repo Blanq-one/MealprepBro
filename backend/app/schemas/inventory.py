@@ -57,3 +57,55 @@ class InventoryLotOut(BaseModel):
     status: str
     notes: str | None
     created_at: datetime
+
+
+# ---------------- Phase 2: quick add ----------------
+class SuggestionOut(BaseModel):
+    ingredient_id: int
+    name: str
+
+
+class ParseIn(_Strict):
+    text: str = Field(min_length=2, max_length=600, description="e.g. 2 lb chicken thighs and half a cabbage")
+
+
+class ParsedLotOut(BaseModel):
+    """One previewed item. Only `ok` and `needs_confirmation` items (with an amount) can be saved, after you
+    confirm them; `excluded` ones never can."""
+
+    text: str
+    name_as_written: str
+    status: Literal["ok", "needs_confirmation", "unresolved", "excluded"]
+    message: str | None = None
+    ingredient_id: int | None = None
+    ingredient_name: str | None = None
+    quantity: Decimal | None = None  # base unit (g, ml or count), converted by code
+    unit: str | None = None
+    display: str | None = None
+    location: StorageLocation | None = None
+    product_id: int | None = None
+    suggestions: list[SuggestionOut] = Field(default_factory=list)
+
+
+class ParseOut(BaseModel):
+    run_id: int
+    llm_call_count: int
+    items: list[ParsedLotOut]
+
+
+class BulkIn(_Strict):
+    items: list[InventoryLotIn] = Field(min_length=1, max_length=50)
+    source: Literal["quick_add", "parse"] = "quick_add"
+
+
+class QuickPickOut(BaseModel):
+    """A one-tap add: the ingredient with its usual package (or a typical amount) and where it lives."""
+
+    ingredient_id: int
+    name: str
+    category: str
+    location: StorageLocation
+    quantity: Decimal
+    unit: str
+    display: str
+    product_id: int | None

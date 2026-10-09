@@ -139,6 +139,16 @@ class PreferenceOut(BaseModel):
     reason: str | None
 
 
+class DietReviewOut(BaseModel):
+    """A possibly-beef item: held (left out of plans) until you allow it, with why it's held."""
+
+    ingredient_id: int
+    name: str
+    note: str | None
+    decision: Literal["held", "allowed"]
+
+
 class SettingsOut(BaseModel):
     settings: UserSettings
     preferences: list[PreferenceOut]
+    diet_review: list[DietReviewOut] = Field(default_factory=list)

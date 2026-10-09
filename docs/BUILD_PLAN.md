@@ -1,6 +1,6 @@
 # Mealbro Build Plan
 
-**Status:** v3, **approved** 2026-10-08 with the changes recorded in §12.1. Phase 0 approved. Phase 1 approved 2026-10-09 (with C1–C8 and D1–D22); a post-approval round (C9–C14, D23–D28) is done. A3 is answered in `docs/hosting.md`. Phase 2 not started.
+**Status:** v3, **approved** 2026-10-08 with the changes recorded in §12.1. Phase 0 approved. Phase 1 approved 2026-10-09 (with C1–C8 and D1–D22); a post-approval round (C9–C14, D23–D28) is done. A3 is answered in `docs/hosting.md`; the hosting decision changed at the Phase 2 kickoff to Vercel Hobby + Neon Free, $0/month (K1, §12.1). Phase 2 (PWA, deploy prep only) is done and awaiting approval.
 **Source documents:** `CLAUDE.md` (build rules, wins on conflict), `docs/PRD.md` (product vision).
 
 This plan covers Phases 0–6. One phase per session. A phase is done only when its acceptance criteria are met, its tests pass, and the test output has been shown.
@@ -18,7 +18,7 @@ This plan covers Phases 0–6. One phase per session. A phase is done only when 
 | 0 | Data foundation | Approved | 2026-10-08 | 2026-10-08 | 321 tests pass (local + Docker), domain coverage 99.6% (domain tests alone), ruff/mypy clean. 185 ingredients, 649 aliases, 9 draft seeds. Open: FoodSafety.gov chart (A1), powder carbs/fat (A2), R8. Deviations in the Phase 0 outcome note (§9). |
 | — | Pre-Phase 1 tasks | Done | 2026-10-08 | 2026-10-08 | Package-label data (tortillas, protein powder), USDA mapping review sheet (`docs/review/usda_mappings.md`), raw/dry/as-sold rule + check (§7.8), CLAUDE.md machine-boundaries rule. Round 2: FoodSafety.gov chart transcribed (53 rows, §7.2), top-25 mappings approved, tortilla renamed, Docker rule clarified, fresh-clone check made a per-phase step. |
 | 1 | Planning brain | Approved 2026-10-09; post-approval round done | 2026-10-08 | 2026-10-09 | First pass: 645 tests, fresh-clone check passed; D1–D13 and C1–C3 approved 2026-10-09. Fix-up round (C4–C8: budget per request with inventory/shop modes, cash vs food eaten, freeze-on-shopping-day and waste, 100 g protein floor, elapsed time): 705 tests pass (the opt-in live test skips), domain coverage 99%, ruff/mypy clean, fresh-clone check passed; deviations D14–D22 in the fix-up note. Approved 2026-10-09. Post-approval round (C9–C14: powder prices, stock-up items, shelf-life fix, regular chicken packs, two-week steady-state check, A3 hosting): 721 tests pass (the opt-in live test skips), domain coverage 99%; deviations D23–D28. |
-| 2 | Mobile PWA + cloud deploy | Not started | | | |
+| 2 | Mobile PWA + cloud deploy (deploy prep only, K7) | Done, awaiting approval | 2026-10-09 | 2026-10-09 | Pre-work K2–K6 done; PWA, auth, shopping, Mark cooked, quick add, exposure log. 800 backend tests pass (2 opt-in skipped), 78 frontend tests; not deployed (your step, `docs/deploy.md`). Deviations D29–D43 in the Phase 2 outcome note (§9). |
 | 3 | Feedback loop | Not started | | | |
 | 4 | Daily overrides | Not started | | | |
 | 5 | Grocery intelligence | Not started | | | |
@@ -44,7 +44,7 @@ This plan covers Phases 0–6. One phase per session. A phase is done only when 
     - **Pork is allowed but rare.** Pork as a *meal component* (sausage, pepperoni, bacon, ham, pork cuts) is limited by a **general frequency cap** setting (default 1 meal/week) and is never favored by nutrition, price or inventory-use scoring. *Trace* pork-derived ingredients (lard in tortillas, pork gelatin) are unlimited.
 12. **Prices are per store.** Every price observation has a store. Deal detection compares within one store, and grocery lists can be grouped by store (Stop & Shop primary, Price Rite secondary).
 13. **Cold start needs zero LLM calls** for slots covered by the seed recipe library (§13).
-14. **Generation is asynchronous and the structured-output mode is configurable.** `POST /plans` returns a run id. `LLM_STRUCTURED_MODE` is `strict` (constrained decoding) or `best_effort` (Pydantic validation + retry). Never combined with streaming or tool use.
+14. **Generation finishes inside its request, and the structured-output mode is configurable.** `POST /plans` runs the plan in the request (serverless hosting stops a function at 300 s, so nothing may continue after the response; K2) and streams NDJSON progress lines, then the finished plan. Run records are kept. (Phase 1 returned `202` + a run id and solved in a background task.) `LLM_STRUCTURED_MODE` is `strict` (constrained decoding) or `best_effort` (Pydantic validation + retry). Never combined with streaming or tool use.
 15. **The frontend does no nutrition, unit or cost math.** The API returns computed numbers and display strings.
 
 ---
@@ -67,12 +67,13 @@ Mealbro/
 │   ├── data-sources.md                # P0: USDA releases, FoodSafety.gov chart, (P5) seasonality source
 │   └── sources/                       # P0: saved copies of cited reference pages, if needed
 ├── data/raw/                          # gitignored: USDA zip downloads
-├── deploy/                            # P2: provider config for the cloud deploy
+├── vercel.json                        # P2: Vercel Services config (web + api); docs/deploy.md
 ├── backend/
 │   ├── Dockerfile · pyproject.toml · alembic.ini · conftest.py
 │   ├── migrations/versions/
 │   │   ├── 0001_initial.py            # P0: the 31 tables Phases 0–1 use
-│   │   ├── 0002_pwa_and_exposure_log.py  # P2
+│   │   ├── 0002_settings_v2_budget_per_request.py · 0003_stock_up_and_other_store.py  # P1 (data, column)
+│   │   ├── 0004_pwa_and_exposure_log.py  # P2 (planned as 0002)
 │   │   ├── 0003_feedback_loop.py      # P3
 │   │   ├── 0004_daily_overrides.py    # P4
 │   │   ├── 0005_grocery_intelligence.py  # P5
@@ -154,7 +155,9 @@ Mealbro/
 | Migration | Phase | Tables created | Columns/constraints added to existing tables |
 |---|---|---|---|
 | `0001_initial` | 0 | **31:** app_user, user_settings, ingredient_preference, nutrient, usda_food, usda_nutrient, usda_food_nutrient, usda_food_portion, ingredient, ingredient_alias, ingredient_nutrient, ingredient_unit, ingredient_substitution, store, product, price_observation, inventory_item, inventory_event, recipe_family, recipe, recipe_version, recipe_ingredient, recipe_step, generation_run, llm_call, meal_plan, plan_cook_batch, plan_batch_ingredient, plan_meal, grocery_list, grocery_list_item | — |
-| `0002_pwa_and_exposure_log` | 2 | plan_candidate (exposure log; starts with real use, can't be backfilled) | `price_observation.client_ref` (offline idempotency) |
+| `0002_settings_v2_budget_per_request` | 1 (fix-up) | — | data only: settings v2 (D20) |
+| `0003_stock_up_and_other_store` | 1 (post-approval) | — | `ingredient.stock_up`, `store.kind` (C10, D23) |
+| `0004_pwa_and_exposure_log` (planned as 0002) | 2 | plan_candidate (exposure log; starts with real use, can't be backfilled), login_attempt (rate limiting across serverless instances) | `price_observation.client_ref` (offline idempotency) |
 | `0003_feedback_loop` | 3 | prepared_portion, feedback_event, recipe_favorite, preference_profile | `plan_meal.prepared_portion_id`, `inventory_event.prepared_portion_id` + CHECK |
 | `0004_daily_overrides` | 4 | day_override, consumption_entry | — |
 | `0005_grocery_intelligence` | 5 | region, ingredient_seasonality, cart_session | `price_observation.cart_session_id` |
@@ -667,7 +670,9 @@ grocery_list_item
 ### 4.5 Later migrations (designed now, applied in their phase)
 
 ```
--- 0002_pwa_and_exposure_log (Phase 2) ------------------------------------------------
+-- 0004_pwa_and_exposure_log (Phase 2; planned as 0002) ------------------------------
+login_attempt (id, client_key text NN (HMAC of the client address), succeeded bool NN, occurred_at)
+  IX (occurred_at) · IX (client_key, occurred_at)          -- added in Phase 2 (D31)
 ALTER price_observation ADD client_ref uuid NULL UNIQUE      -- offline price entries replay exactly once
 
 plan_candidate                                  -- exposure log for the ranker; written for every plan from P2
@@ -1198,6 +1203,7 @@ How the filter decides:
 - **Layers:** `domain/` tests are pure and fast. `services/`, `usda/`, `seed/` and `planning/` tests use the `db-test` Postgres (tmpfs; migrations run once per session; each test in a rolled-back transaction). `api/` tests use TestClient.
 - **LLM:** automated tests use `FakeLLMClient` fixtures, in both `strict` and `best_effort` modes. Real Groq runs only in `pytest -m live_llm` and the CLI.
 - **Architecture tests:** `domain/` imports nothing from `db`/`api`/`llm`/`sqlalchemy`/`fastapi`. `groq` is imported only in `app/llm/client.py`. No model-name literals in `app/`. Every `*_cents` column is `Integer`. No `stream`/`tools` with structured outputs. `PlanValidator` accepts only `RoundedPlan`.
+- **No wall-clock dependence (Phase 2, K6):** in tests every MILP runs with no wall-clock cut (`conftest.py` replaces its time limit with 300 s and fails a test whose solve still stops on the clock). Single-threaded HiGHS with gap stops is deterministic, so an identical model reuses the answer within a session (tests marked `solve_cache_off` always solve). Orchestration tests that re-solve use 3-day weeks; the timed 30-candidate test is opt-in (`perf` marker, `RUN_PERF_TESTS=1`).
 - **End of phase:** full `pytest` (and `vitest` from Phase 2) output pasted in the summary, plus the fresh-clone Docker test check (`scripts/fresh_clone_check.sh`), run after committing even when dependencies didn't change.
 
 ### 7.6 LLM budget facts (checked 2026-10-08)
@@ -1209,7 +1215,7 @@ How the filter decides:
 
 ### 7.7 API and config conventions
 
-- REST under `/api/v1`. Errors are `application/problem+json`. Long operations return `202` + a run id.
+- REST under `/api/v1`. Errors are `application/problem+json`. Long operations finish inside the request and stream `application/x-ndjson` progress (heartbeat every 5 s) ending in one result line (Phase 2, K2); every LLM call, rate-limit wait and solve fits `PLAN_TIME_BUDGET_SECONDS` (180 s).
 - Environment-only config; `.env.example` updated in every phase.
 
 ### 7.8 Raw / dry / as-sold rule (added before Phase 1)
@@ -1638,6 +1644,89 @@ Also flagged, not changed:
 - *Auth mistakes.* Stdlib primitives, tests for tampering and rate limits, no custom crypto beyond HMAC signing.
 - *Data loss once real use begins.* Managed backups + `pg_dump` script, with a restore test.
 
+**Outcome (2026-10-09).** Built as specified with deploy prep only (K7): nothing is deployed and no accounts
+exist. Backend: 800 tests pass, 2 opt-in tests skipped (live LLM, wall-clock perf); ruff and mypy clean.
+Frontend: typecheck clean, 78 Vitest tests, static export of 11 routes. Acceptance criteria:
+
+- **Met:** AC 1 except the deployed URL (401 without a session except `/health`, login/logout, tests),
+  AC 5 (store-grouped list; "Done shopping" writes per-store prices once, double submit safe), AC 6 (Mark
+  cooked; the leftover equals the grocery list's bought-minus-needed), AC 7 (no nutrition, unit or cost
+  arithmetic in the frontend: money is formatted and parsed by string operations), AC 8, AC 9, AC 10 (the
+  automated part).
+- **Built, not yet verified on the device:** AC 2 (manifest, icons, iOS tags, service worker; installing from
+  the https URL and Lighthouse need the deploy), AC 3 (375 px layout, 44 px targets: written in CSS, not checked
+  in a real browser), AC 4 (offline cache + replayed queue: unit-tested; airplane mode needs the https deploy).
+  The manual iPhone checklist is yours.
+
+Pre-work (K2–K6):
+
+- **K2:** `POST /api/v1/plans` runs the plan inside the request and streams NDJSON (D29). Run records stay;
+  a run left unfinished is marked "interrupted" by the next request (`PLAN_STALE_AFTER_SECONDS`).
+- **K3:** the dev database is **65 MB** (USDA tables 52 MB). No trim: a subset-only database measured 11 MB,
+  but the full cache is what lets you approve new ingredients, and it fits Neon Free (D39).
+- **K4:** NullPool on Vercel, pooled `-pooler` URL for the app, direct URL for migrations, psycopg prepared
+  statements off, `connect_timeout` 15 s and three retries with back-off for a waking compute; `postgres://`
+  URLs accepted.
+- **K5:** shelf lives for onions, garlic, potatoes and butter (D38); hard cheeses untouched (held, R8).
+- **K6:** the audit found every seed-week solve hitting the 12 s wall-clock limit on this PC (about 20 tests),
+  so their plans depended on machine speed; the timed 30-candidate test did by design. Fix in D34.
+
+What changed from the plan, and why:
+
+- **D29. Streamed, not plain JSON.** iOS Safari drops a request that receives nothing for about a minute, and
+  generation with Groq's rate limits can take longer. The plan request streams `started`, `progress` (stage
+  messages) and a `heartbeat` every 5 s, then one `result` (plan summary or problem). The work still ends before
+  the response does. A worker thread runs the orchestrator with its own session.
+- **D30. Time budget.** `PLAN_TIME_BUDGET_SECONDS` = 180: an LLM call starts only with 25 s left, its timeout
+  is cut to what remains, a rate-limit wait that leaves no room for the call ends generation, and the solver's
+  limit is cut to what remains (a solve needs 5 s). When generation runs out of time the recipes made so far
+  are saved and the week is planned with them (with a note), so planning again carries on. One `solve()` can
+  also run the cheapest-plan fallback and diagnostics, so the worst case passes 180 s; the 120 s left under
+  Vercel's 300 s covers it.
+- **D31. Schema additions.** `login_attempt` (rate limiting can't live in memory on serverless; it stores an
+  HMAC of the address) in migration 0004; `PlanConstraints.capped_out_ingredient_ids` and
+  `ExcludedRecipe.codes`, so the exposure log can tell a frequency cap from a diet exclusion.
+- **D32. Migration number.** Phase 1 used 0002 and 0003, so this phase's migration is `0004_pwa_and_exposure_log`.
+- **D33. Deploy layout.** `vercel.json` sits at the repo root (Vercel reads it there; no `deploy/` folder) and
+  uses Vercel Services (beta, on Hobby) for one project and one domain; `docs/deploy.md` has a two-project
+  fallback. Migrations run in the backend's build step (`python -m app.deploy`) on production deployments
+  only, and only with `RUN_MIGRATIONS_ON_DEPLOY=1`; they're additive, so the old code keeps working meanwhile.
+- **D34. Deterministic tests.** `conftest.py` gives every MILP a 300 s limit and fails a test whose solve still
+  stops on the clock; identical models reuse the answer (HiGHS single-thread with gap stops is deterministic;
+  `solve_cache_off` opts out). Seed-week tests assert properties and now solve to their gap. Three
+  orchestration tests that re-solve plan 3-day weeks (83 s → 2 s; on the full week they also ran HiGHS out of
+  memory). The perf test is opt-in (`RUN_PERF_TESTS=1`). The suite takes about 5 minutes.
+- **D35. Grocery sections.** Stock-up, "from your inventory", "check you have" and unpriced items are their own
+  groups; `group_by=category` added; items carry category, check-off state, actual weight and price, product id.
+- **D36. Frontend.** Query-parameter routes (`/recipe/?batch=12`) instead of dynamic segments, so the static
+  export has one page per screen for the offline shell; dependency versions as in §10; Vitest compiles JSX with
+  oxc (Vite 8); `next dev` would write AGENTS.md/CLAUDE.md into `frontend/`, turned off (`agentRules: false`).
+- **D37. Auth details.** `AUTH_PASSWORD_HASH` (scrypt, no `$` so compose reads it) and `SESSION_SECRET`;
+  `hash-password` CLI; 180-day cookie renewed daily (HttpOnly, SameSite=Strict, Secure on https); the Origin
+  check accepts the forwarded host (Next dev proxy, Vercel); 5 failures per client and 20 overall per 15
+  minutes; public `/docs` off on Vercel.
+- **D38. Shelf lives are estimates.** Seed ingredients gained a `shelf_life` field with its basis: onions
+  28 days and garlic 56 days in the pantry, russet potatoes 28 days, butter 30 days in the fridge (180 frozen).
+  Sources disagree (an onion is about 2 weeks on the Virginia Dept. of Health chart, about 6 weeks in a
+  Canadian guide; butter 1–3 months refrigerated per the University of Kentucky Cooperative Extension). An item counts as waste only if
+  it won't keep through the next plan (2 × plan days). Sweet potatoes are still flagged, unchanged.
+- **D39. Database size.** 65 MB, below Neon Free's storage (its pricing page now says 1 GB per project; you
+  quoted 0.5 GB). Full import recommended for the cloud; the subset is the fallback.
+- **D40. Extra endpoints.** `GET /plans` (recent plans and the current one), `GET /cook-batches/{id}` (the
+  recipe at the batch's practical quantities, with package and freeze notes), `GET /inventory/quick-picks`,
+  and `diet_review` in the settings response for held items.
+- **D41. Quick-add statuses.** ok, needs_confirmation (no amount, an amount the note doesn't contain, or no
+  usual package size), unresolved (with suggestions), excluded (beef; also refused by `/inventory/bulk`).
+  Held items can be saved with a note.
+- **D42. Exposure rows only for succeeded runs.** Failed and infeasible runs write none.
+- **D43. Not changed, flagged:** on this PC the seed week now needs about 20–28 s to reach its gap, so with
+  `SOLVER_TIME_LIMIT_SECONDS=12` production plans usually come back "feasible" (best found) rather than proven
+  optimal. With the 180 s budget you could raise it to 30.
+
+Also: the C: drive filled up mid-phase (npm's cache there), which wedged Docker Desktop; npm's cache and temp
+for `frontend/` now live in `frontend/.npm-cache` and `.tmp` (gitignored), and Docker Desktop was restarted
+with your OK.
+
 ---
 
 ### Phase 3: Feedback loop
@@ -1848,6 +1937,9 @@ Listed in CLAUDE.md: Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2.0, Alembic,
 | `pulp` (pinned 3.3.x) | 1 | Listed in CLAUDE.md | PuLP 4 moved CBC into a separate `cbcbox` package; 3.x keeps the bundled CBC as a fallback |
 | `groq` | 1 | Listed in CLAUDE.md | The Groq SDK, imported only in `app/llm/client.py` |
 | `highspy` (pulls in `numpy`) | 1 | **Approved 2026-10-09 (C3)** | HiGHS MILP solver behind PuLP: the CBC bundled for Windows hangs and ignores its time limit |
+| `next` 16.3.6, `react` / `react-dom` 19.3.0, `typescript` 5.9.3, `vitest` 4.1.11 | 2 | Listed in CLAUDE.md | Pinned exactly; `@types/react`, `@types/react-dom` 19.3.0 and `@types/node` 22.20.2 come with TypeScript |
+| `@testing-library/react` 16.3.3, `user-event` 14.6.7, `jest-dom` 6.9.1, `jsdom` 29.1.1, `openapi-typescript` 7.13.0 | 2 | Approved (Q17) | jsdom 30 needs Node ≥ 22.22 and jest-dom 6.10.0 is deprecated, so the previous releases |
+| `@testing-library/dom` 10.4.2 | 2 | Required peer of `@testing-library/react` 16 | Part of the approved testing-library set; nothing else was added |
 
 No other dependencies are planned. Auth uses the stdlib, and the solver uses HiGHS through PuLP (C3). If one becomes necessary, I'll ask first with a one-line justification.
 
@@ -1901,7 +1993,7 @@ No other dependencies are planned. Auth uses the stdlib, and the solver uses HiG
 | # | Topic | Decision |
 |---|---|---|
 | P1 | Table audit | Every `0001` table must be touched by a named Phase 0/1 test or move to the phase that first uses it. Result: 31 → 31, 0 moved; 3 missing tests named (§4.2a). |
-| P2 | Exposure logging | `plan_candidate` moves to Phase 2 (migration `0002_pwa_and_exposure_log`), since real use starts there and exposures can't be backfilled. Ratings stay in Phase 3. |
+| P2 | Exposure logging | `plan_candidate` moves to Phase 2 (migration `0002_pwa_and_exposure_log`, built as `0004`), since real use starts there and exposures can't be backfilled. Ratings stay in Phase 3. |
 | P3 | Approved as proposed | "Mark cooked" in Phase 2; `ingredient_substitution` table now; exclusion check separate from the prose filter. |
 | P4 | Session reading | CLAUDE.md: each session reads only the current phase's §9 section plus the shared sections (see the note at the top of this file). |
 | R1 | Heme iron | Dairy and eggs 0%. Shellfish 40% (like fish). Lamb and pork 40% (like other meat). All labeled "estimated". |
@@ -1948,6 +2040,18 @@ No other dependencies are planned. Auth uses the stdlib, and the solver uses HiG
 | C12 | Regular chicken packs (post-approval) | A regular pack (about 1-1.5 lb) for thigh and breast at both stores, at an estimated per-lb premium; the solver chooses between pack sizes. |
 | C13 | Steady-state check (post-approval) | A two-week dry-run simulation where week 2 plans from week 1's leftovers, reported with and without --budget 50. |
 | C14 | Hosting (A3, post-approval) | docs/hosting.md: options, costs, setup, cold starts, Postgres, HTTPS, single-user auth; one recommendation. No code, no accounts. |
+
+**Phase 2 kickoff (2026-10-09).** You approved Phase 1 including D23–D28, then:
+
+| # | Topic | Decision |
+|---|---|---|
+| K1 | Hosting (replaces C14) | The deployment must cost $0/month: **Vercel Hobby** (Next.js PWA + FastAPI as Python functions) and **Neon Free** Postgres. Railway is out. `docs/hosting.md` and this plan updated. |
+| K2 | Serverless planning | Plan generation finishes inside the request: no 202 + background run + polling. The PWA shows progress while it waits; run records stay in the database; nothing relies on work after the response; the whole request well under Vercel Hobby's 300 s. |
+| K3 | Database size | Measure the dev database; if near or over Neon's limit (you quoted 0.5 GB), trim the USDA import, keeping the full import available locally. |
+| K4 | Connections | Serverless + Neon settings: the pooled connection string, no long-lived connection assumptions, tolerate Neon waking from scale-to-zero. |
+| K5 | Shelf life | Onions, garlic, potatoes and butter keep well beyond a week: realistic multi-week shelf lives, so they stop counting as waste. Hard cheeses stay held (R8 undecided). |
+| K6 | Test determinism | No test may depend on wall-clock solver time limits: tests that check plan contents use small instances that solve to proven optimality, or assert properties; audit and fix the existing solver tests. |
+| K7 | Phase 2 scope | iPhone Safari first; screens: week, recipe, inventory with fast quick add, grocery checklist grouped by store (stock-up items in their own section), generate with progress, Mark cooked; both planning modes with optional budget and top-up; exposure logging; single password, long-lived secure HttpOnly cookie, rate-limited login; **deploy prep only** (Vercel config, Neon connection setup, migrations-on-deploy, env var list, `docs/deploy.md`): no accounts, nothing deployed. |
 
 ### 12.2 Remaining questions (from applying your answers)
 

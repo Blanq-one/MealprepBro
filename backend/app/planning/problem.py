@@ -101,12 +101,30 @@ class IngredientPlan:
     perishable: bool = False
     shelf_life_days_fridge: int | None = None
     location: str | None = None  # where it usually lives: fridge | freezer | pantry
+    shelf_life_days_pantry: int | None = None
+    shelf_life_days_freezer: int | None = None
     fridge_life: FridgeLife | None = None  # raw meat, poultry, fish and eggs (FoodSafety.gov chart)
     offers: tuple[Offer, ...] = ()
     lots: tuple[InventoryLot, ...] = ()
 
     def to_planning(self, quantity: Decimal, unit: str) -> Decimal:
         return convert(quantity, unit, self.planning_unit, self.units)
+
+    def shelf_life_days(self) -> int | None:
+        """How long it keeps where it usually lives (pantry, fridge or freezer); None = unknown."""
+        if self.location == "pantry":
+            return self.shelf_life_days_pantry
+        if self.location == "freezer":
+            return self.shelf_life_days_freezer
+        return self.shelf_life_days_fridge
+
+    def spoils_within(self, days: int) -> bool:
+        """Perishable and not known to keep `days` days where it usually lives. Onions, garlic, potatoes
+        and butter keep for weeks, so what's left of them isn't waste (no waste penalty, no absorption)."""
+        if not self.perishable:
+            return False
+        life = self.shelf_life_days()
+        return life is None or life < days
 
     @property
     def available(self) -> Decimal:
@@ -131,6 +149,9 @@ class ExcludedRecipe:
     reasons: tuple[str, ...]
     held_ingredients: tuple[str, ...] = ()
     unpriced_ingredients: tuple[str, ...] = ()
+    # one per reason kind, for the exposure log: excluded | held | frequency_cap | equipment | time |
+    # nutrition_incomplete | unpriced | conversion
+    codes: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

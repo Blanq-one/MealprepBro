@@ -4,9 +4,11 @@ A personal meal-prep and grocery optimizer. Build rules: [`CLAUDE.md`](CLAUDE.md
 [`docs/PRD.md`](docs/PRD.md). Build plan and progress: [`docs/BUILD_PLAN.md`](docs/BUILD_PLAN.md).
 Data provenance: [`docs/data-sources.md`](docs/data-sources.md).
 
-Status: Phase 1 (planning brain, backend only): weekly plans from your settings, seed and saved recipes first,
-Groq only for uncovered slots, a PuLP/HiGHS solver, practical rounding, independent validation and a store-grouped
-grocery list. No frontend yet (Phase 2).
+Status: Phase 2 (mobile PWA): the planning brain from Phase 1 (seed and saved recipes first, Groq only for
+uncovered slots, a PuLP/HiGHS solver, practical rounding, independent validation) behind an installable,
+mobile-first PWA: the week, recipes with full instructions, inventory with quick add, a store-grouped grocery
+checklist, plan generation with live progress, and Mark cooked. One password signs you in. Deployment target:
+Vercel Hobby + Neon Free, $0/month (`docs/hosting.md`, `docs/deploy.md`; not deployed yet).
 
 ## Quickstart (Docker only)
 
@@ -32,11 +34,47 @@ docker compose run --rm backend uv run --frozen python -m app.cli mapping-review
 
 docker compose run --rm backend uv run --frozen python -m app.cli plan-week --no-llm --dry-run
 
-docker compose up backend                # API on http://localhost:8000 (docs at /docs)
+docker compose up backend frontend       # PWA on http://localhost:3000, API on :8000 (docs at /docs)
 ```
+
+Sign-in needs two lines in `.env` (once): `cd backend && uv run python -m app.cli hash-password` prints
+`AUTH_PASSWORD_HASH=...` and `SESSION_SECRET=...`; paste both into `.env` and restart the backend.
+
+## Run it on your phone over home Wi-Fi
+
+1. Put `AUTH_PASSWORD_HASH` and `SESSION_SECRET` in `.env` (above). Keep `SESSION_COOKIE_SECURE=false` there:
+   home Wi-Fi is plain http, and a Secure cookie would never come back.
+2. `docker compose up -d db db-test`, then `docker compose run --rm backend uv run --frozen alembic upgrade head`
+   (and `seed`, if this database is new), then `docker compose up backend frontend`.
+3. Find this PC's Wi-Fi address: `ipconfig` → "Wireless LAN adapter Wi-Fi" → IPv4 (for example `10.0.0.186`).
+4. On the iPhone, on the same Wi-Fi, open **Safari** at `http://<that address>:3000` and sign in.
+   If it can't connect, Windows Firewall is blocking port 3000: allow Docker Desktop (or Node, without Docker)
+   on **private** networks.
+5. **Share → Add to Home Screen** works here too, but over plain http iOS won't run the service worker, so
+   offline use needs the https deploy (`docs/deploy.md`). The installable/offline build can be tried on this PC
+   with `cd frontend && npm run build && npm run preview` (http://localhost:4173, proxying /api to :8000).
+
+Without Docker for the PWA: `cd frontend && npm ci && npm run dev` (it proxies `/api` to `BACKEND_ORIGIN`,
+default `http://localhost:8000`) and `cd backend && uv run uvicorn app.main:app --host 0.0.0.0 --port 8000`.
+
 
 For the full USDA cache instead of the subset, download the two zips listed in
 [`docs/data-sources.md`](docs/data-sources.md) into `data/raw/usda/` and run `usda-import` with no arguments.
+
+## Frontend (Next.js + TypeScript, `frontend/`)
+
+```bash
+cd frontend
+npm ci
+npm run dev          # http://localhost:3000, proxies /api and /health to BACKEND_ORIGIN
+npm test             # Vitest
+npm run typecheck    # tsc --noEmit
+npm run build        # static export to out/ (what Vercel serves)
+npm run gen:api      # regenerate src/lib/api/schema.d.ts from src/lib/api/openapi.json
+```
+
+The API types come from the backend's OpenAPI schema: `cd backend && uv run python -m app.cli openapi`, then
+`npm run gen:api`. The PWA does no nutrition, unit or cost arithmetic; every number arrives from the API.
 
 ## Local development (uv)
 
@@ -47,7 +85,8 @@ docker compose up -d db db-test
 uv run pytest                            # all tests
 uv run pytest --cov=app/domain           # domain coverage
 uv run ruff check . && uv run ruff format --check . && uv run mypy app conftest.py
-../scripts/fresh_clone_check.sh          # end of every phase: clone HEAD, build, test in Docker
+../scripts/fresh_clone_check.sh          # end of every phase: clone HEAD, build, test backend + frontend in Docker
+RUN_PERF_TESTS=1 uv run pytest -m perf   # opt-in: the timed 30-candidate solve (wall clock, production limits)
 uv run alembic upgrade head
 uv run python -m app.cli usda-import     # reads USDA_RAW_DIR (default ../data/raw/usda)
 uv run python -m app.cli seed
@@ -89,9 +128,30 @@ LLM tests use scripted responses. One opt-in smoke test calls Groq for real:
 
 ## API
 
+Every `/api/v1` route needs a signed-in session cookie, except sign-in; changes must come from the app's own
+origin. `GET /health` is open.
+
+Phase 2:
+
+- `POST /api/v1/auth/login` (`{"password"}` → 204 + HttpOnly cookie; 429 after too many tries),
+  `POST /api/v1/auth/logout`, `GET /api/v1/auth/session`
+- `POST /api/v1/plans` plans the week **inside the request** and streams `application/x-ndjson`: `started` (run
+  id), `progress` and `heartbeat` lines, then one `result` with the plan summary or the problem.
+  `GET /api/v1/plans` lists recent plans and marks the current one; `GET /api/v1/generation-runs/{id}` is the
+  kept run record
+- `GET /api/v1/plans/{id}/grocery-list?group_by=store|category|none` (stock-up, "from your inventory",
+  "check you have" and unpriced items in their own sections), `PATCH /api/v1/grocery-items/{id}` (check off,
+  actual weight and price; repeatable), `POST /api/v1/grocery-lists/{id}/complete` ("Done shopping": inventory
+  lots + per-store prices, exactly once)
+- `GET /api/v1/cook-batches/{id}` (the recipe at the batch's practical quantities),
+  `POST /api/v1/cook-batches/{id}/cooked` (deducts inventory, open packages first; 409 the second time)
+- `POST /api/v1/inventory/parse` (natural-language note → preview, nothing saved), `POST /api/v1/inventory/bulk`,
+  `GET /api/v1/inventory/quick-picks`
+- `POST /api/v1/prices` takes an optional `client_ref` (an offline entry is stored once)
+
 Phase 1:
 
-- `POST /api/v1/plans` → `202` with a run id; poll `GET /api/v1/generation-runs/{id}`
+- `POST /api/v1/plans` (Phase 1 returned `202` and solved in the background; replaced in Phase 2, see above)
 - `GET /api/v1/plans/{id}` (the weekly summary), `POST /api/v1/plans/{id}/accept`,
   `GET /api/v1/plans/{id}/grocery-list?group_by=store`
 - `GET /api/v1/recipes/{id}`, `GET /api/v1/recipe-versions/{id}?portions=&portion_size=` (rendered, with safety lines)

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "web": {
+      "root": "frontend/",
+      "framework": "nextjs",
+      "headers": [
+        {
+          "source": "/sw.js",
+          "headers": [
+            { "key": "Cache-Control", "value": "no-cache" },
+            { "key": "Service-Worker-Allowed", "value": "/" }
+          ]
+        },
+        {
+          "source": "/(.*)",
+          "headers": [
+            { "key": "X-Content-Type-Options", "value": "nosniff" },
+            { "key": "Referrer-Policy", "value": "same-origin" }
+          ]
+        }
+      ]
+    },
+    "api": {
+      "root": "backend/",
+      "framework": "fastapi",
+      "entrypoint": "app.main:app",
+      "buildCommand": "python -m app.deploy",
+      "functions": {
+        "app/main.py": {
+          "maxDuration": 300,
+          "excludeFiles": "{app/**/tests/**,app/testing/**,migrations/**/__pycache__/**,.venv/**,.pytest_cache/**,.mypy_cache/**,.ruff_cache/**,htmlcov/**}"
+        }
+      }
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": { "service": "api" } },
+    { "source": "/health", "destination": { "service": "api" } },
+    { "source": "/(.*)", "destination": { "service": "web" } }
+  ]
+}

@@ -1,8 +1,13 @@
 """CLI commands against the seeded test database (read-only commands only; seeding is covered elsewhere)."""
 
+import io
+import json
+
 import pytest
 
 from app import cli
+from app.auth.passwords import verify_password
+from app.deploy import should_migrate
 
 
 @pytest.fixture
@@ -80,3 +85,32 @@ def test_plan_week_explains_an_infeasible_week(use_test_db, capsys):
 def test_plan_week_rejects_a_limit_for_the_other_mode(use_test_db, capsys, args, message):
     assert cli.main(["plan-week", "--week", "2026-10-12", "--no-llm", "--dry-run", *args]) == 2
     assert message in capsys.readouterr().err
+
+
+def test_hash_password_prints_a_hash_and_a_fresh_session_secret(monkeypatch, capsys):
+    monkeypatch.setattr("sys.stdin", io.StringIO("my kitchen password\n"))
+    assert cli.main(["hash-password", "--stdin"]) == 0
+    lines = dict(line.split("=", 1) for line in capsys.readouterr().out.strip().splitlines())
+    assert verify_password("my kitchen password", lines["AUTH_PASSWORD_HASH"])
+    assert len(lines["SESSION_SECRET"]) >= 48 and "$" not in lines["AUTH_PASSWORD_HASH"]
+    monkeypatch.setattr("sys.stdin", io.StringIO("short\n"))
+    assert cli.main(["hash-password", "--stdin"]) == 2
+
+
+def test_openapi_writes_the_schema_the_pwa_uses(tmp_path):
+    out = tmp_path / "openapi.json"
+    assert cli.main(["openapi", "--out", str(out)]) == 0
+    spec = json.loads(out.read_text(encoding="utf-8"))
+    assert "/api/v1/plans" in spec["paths"] and "/api/v1/auth/login" in spec["paths"]
+
+
+def test_the_vercel_build_migrates_production_only_when_asked():
+    prod = {
+        "VERCEL_ENV": "production",
+        "DATABASE_URL_UNPOOLED": "postgres://x",
+        "RUN_MIGRATIONS_ON_DEPLOY": "1",
+    }
+    assert should_migrate(prod)[0]
+    assert not should_migrate({**prod, "VERCEL_ENV": "preview"})[0]
+    assert not should_migrate({**prod, "RUN_MIGRATIONS_ON_DEPLOY": "0"})[0]
+    assert not should_migrate({"VERCEL_ENV": "production", "RUN_MIGRATIONS_ON_DEPLOY": "1"})[0]

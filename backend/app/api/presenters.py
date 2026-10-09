@@ -6,7 +6,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db.models import Nutrient
+from app.db.models import InventoryItem, Nutrient
 from app.domain.nutrition import NutritionTotals, dv_label, kcal_display
 from app.domain.quantities import format_quantity
 from app.schemas.api import (
@@ -17,7 +17,10 @@ from app.schemas.api import (
     PriceOut,
     StoreCostOut,
 )
+from app.schemas.inventory import InventoryLotOut
 from app.services.calculations import LineResult, StoreCost
+from app.services.ingredient_data import load_ingredients
+from app.services.plans import amount_display
 from app.services.pricing import StorePrice
 
 _DISPLAY = Decimal("0.1")
@@ -102,3 +105,27 @@ def price_out(price: StorePrice) -> PriceOut:
         observed_on=price.observed_on.isoformat(),
         is_estimate=price.is_estimate,
     )
+
+
+def inventory_lots_out(session: Session, items: Sequence[InventoryItem]) -> list[InventoryLotOut]:
+    names = {i: d.name for i, d in load_ingredients(session, {it.ingredient_id for it in items}).items()}
+    return [
+        InventoryLotOut(
+            id=it.id,
+            ingredient_id=it.ingredient_id,
+            name=names.get(it.ingredient_id, "?"),
+            product_id=it.product_id,
+            quantity=it.quantity,
+            unit=it.unit,
+            display=amount_display(it.quantity, it.unit),
+            location=it.location,
+            acquired_on=it.acquired_on,
+            opened_on=it.opened_on,
+            expires_on=it.expires_on,
+            expiry_is_estimate=it.expiry_is_estimate,
+            status=it.status,
+            notes=it.notes,
+            created_at=it.created_at,
+        )
+        for it in items
+    ]

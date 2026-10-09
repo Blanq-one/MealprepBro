@@ -45,6 +45,12 @@ services:
       GROQ_API_KEY: ${GROQ_API_KEY:-}
       LLM_MODEL: ${LLM_MODEL:-}
       LLM_STRUCTURED_MODE: ${LLM_STRUCTURED_MODE:-strict}
+      # Sign-in (Phase 2): make both with `python -m app.cli hash-password` and put them in .env.
+      AUTH_PASSWORD_HASH: ${AUTH_PASSWORD_HASH:-}
+      SESSION_SECRET: ${SESSION_SECRET:-}
+      # Plain http on your home Wi-Fi: a Secure cookie would never be sent back. The cloud deploy uses https.
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}
     ports:
       - "8000:8000"
     volumes:
@@ -58,6 +64,26 @@ services:
         condition: service_healthy
     command: ["uv", "run", "--frozen", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
+  # The PWA (Phase 2): Next.js dev server; /api and /health are proxied to the backend, so the browser sees one
+  # origin. Open http://<this PC's LAN address>:3000 on your phone (docs/deploy.md, "On your phone at home").
+  frontend:
+    build:
+      context: ./frontend
+    environment:
+      BACKEND_ORIGIN: http://backend:8000
+      WATCHPACK_POLLING: "true"  # file changes from a Windows bind mount
+      DEV_ALLOWED_ORIGINS: ${DEV_ALLOWED_ORIGINS:-}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - frontend-node-modules:/app/node_modules
+      - frontend-next:/app/.next
+    depends_on:
+      - backend
+
 volumes:
   pgdata:
   backend-venv:
+  frontend-node-modules:
+  frontend-next:

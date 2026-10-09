@@ -1,5 +1,6 @@
 """Products (purchasable forms of an ingredient) and manual price entry. Every price has a store."""
 
+import uuid
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from decimal import Decimal
@@ -141,8 +142,16 @@ def add_price(
     is_sale: bool = False,
     source: PriceSource = PriceSource.MANUAL,
     note: str | None = None,
+    client_ref: uuid.UUID | None = None,
 ) -> PriceObservation:
-    """Append a price observation at one store ($1.99 per 1 lb, $1.99 per 20 count)."""
+    """Append a price observation at one store ($1.99 per 1 lb, $1.99 per 20 count). With a client_ref, a
+    replay of the same entry (the offline queue) returns the stored observation instead of adding another."""
+    if client_ref is not None:
+        existing = session.scalars(
+            select(PriceObservation).where(PriceObservation.client_ref == client_ref)
+        ).first()
+        if existing is not None:
+            return existing
     product = get_product(session, product_id)
     store = _store(session, store_id)
     if product.store_id is not None and product.store_id != store.id:
@@ -162,6 +171,7 @@ def add_price(
         is_sale=is_sale,
         source=source.value,
         note=note,
+        client_ref=client_ref,
     )
     session.add(obs)
     session.flush()

@@ -8,6 +8,8 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.domain.enums import CalorieMode, MealSlot, NutritionPriority, PlanningMode, RecipeMood
 from app.schemas.constraints import PortionRequest
+from app.schemas.inventory import InventoryLotOut
+from app.schemas.recipes import RecipeVersionOut
 
 
 class _Strict(BaseModel):
@@ -61,10 +63,25 @@ class PlanRequest(_Strict):
         return self
 
 
-class RunAccepted(BaseModel):
+class PlanStreamEvent(BaseModel):
+    """One line of POST /api/v1/plans (application/x-ndjson). The request plans the week before it ends:
+    `started` (the run id), then `progress` lines and a `heartbeat` every few seconds while it works (they
+    keep the connection alive: iOS Safari drops a request that stays silent for about a minute), then one
+    `result` with the finished plan or the problem."""
+
+    event: Literal["started", "progress", "heartbeat", "result"]
     run_id: int
-    status: str
-    status_url: str
+    elapsed_s: float
+    stage: str | None = None
+    message: str | None = None  # human text for the progress screen
+    status: Literal["succeeded", "infeasible", "failed"] | None = None  # result only
+    plan_id: int | None = None
+    plan: "PlanSummaryOut | None" = None
+    problem: "ProblemOut | None" = None
+    notes: list[str] = Field(default_factory=list)
+    llm_call_count: int | None = None
+    total_tokens: int | None = None
+    pad: str | None = None  # `started` only: a little padding so the first bytes reach the phone at once
 
 
 class ProblemOut(BaseModel):
@@ -129,6 +146,7 @@ class BatchOut(BaseModel):
     portion_multiplier: Decimal
     scale_factor: Decimal
     planned_minutes: int
+    status: str = "planned"  # planned | cooked | skipped | cancelled
 
 
 class StoreTotalOut(BaseModel):
@@ -210,12 +228,27 @@ class PlanSummaryOut(BaseModel):
     generation_run_id: int | None
 
 
+class PlanListItemOut(BaseModel):
+    id: int
+    week_start: date
+    status: str
+    created_at: datetime
+    planning_mode: PlanningMode
+    kcal_planned_week: int
+    kcal_target_week: int
+    meals_count: int
+    cash_display: str
+    is_current: bool
+
+
 class GroceryItemOut(BaseModel):
     id: int
     ingredient_id: int
     name: str
+    category: str
     store_id: int | None
     store_name: str | None
+    product_id: int | None = None
     product_name: str | None
     needed: str
     from_inventory: str | None
@@ -228,18 +261,33 @@ class GroceryItemOut(BaseModel):
     kind: str
     note: str | None
     stock_up: bool
+    checked: bool = False
+    checked_at: datetime | None = None
+    purchased: str | None = None  # what you entered at check-off ("1,020 g (2.25 lb)")
+    actual_price_cents: int | None = None
+    actual_price_display: str | None = None
 
 
 class GroceryGroupOut(BaseModel):
+    """kind: store | category | all, or a section: stock_up (long-life items, outside a shop budget),
+    inventory (covered by what you have), staple ("check you have"), unpriced."""
+
+    kind: str
+    key: str
     store_id: int | None
-    store_name: str
+    store_name: str  # the group's title
     subtotal_cents: int
+    subtotal_display: str
     items: list[GroceryItemOut]
 
 
 class GroceryListOut(BaseModel):
     id: int
     plan_id: int
+    status: str  # open | shopping | done
+    group_by: str
+    checked_count: int
+    to_check_count: int
     total_cents: int
     total_display: str
     regular_cents: int
@@ -251,3 +299,80 @@ class GroceryListOut(BaseModel):
     split_threshold_cents: int
     note: str | None
     groups: list[GroceryGroupOut]
+
+
+# ---------------- Phase 2: shopping and cooking ----------------
+class GroceryItemPatch(_Strict):
+    """Send only what changed; a field sent as null clears it. Replaying the same patch changes nothing."""
+
+    checked: bool | None = None
+    purchased_amount: Decimal | None = Field(default=None, gt=0, description="what you actually bought")
+    purchased_unit: str | None = Field(
+        default=None, min_length=1, max_length=20, description="lb, oz, g, count"
+    )
+    actual_price_cents: int | None = Field(default=None, ge=0, description="what the line cost")
+
+
+class GroceryCompleteIn(_Strict):
+    purchased_on: date | None = None  # default: today
+
+
+class GroceryCompleteOut(BaseModel):
+    grocery_list_id: int
+    status: str
+    already_done: bool  # a repeated "Done shopping" returns what the first one did
+    lots_created: int
+    prices_recorded: int
+    lots: list[InventoryLotOut]
+    not_bought: list[str]  # items to buy that weren't checked off
+
+
+class CookedIn(_Strict):
+    cooked_on: date | None = None  # default: today
+
+
+class DeductionOut(BaseModel):
+    ingredient_id: int
+    name: str
+    needed: str
+    taken: str
+    shortfall: str | None  # what inventory couldn't cover (you may not have recorded buying it)
+
+
+class CookedOut(BaseModel):
+    batch_id: int
+    status: str
+    title: str
+    deductions: list[DeductionOut]
+    open_packages: list[InventoryLotOut]  # packages this opened: what's left, with a new use-by date
+
+
+class BatchDetailOut(BaseModel):
+    """One cook batch: the recipe at the batch's practical quantities (what you measure)."""
+
+    id: int
+    plan_id: int
+    status: str
+    cook_on: date
+    portions: int
+    portions_to_freeze: int
+    portion_size: str
+    planned_minutes: int
+    meals: list[MealOut]
+    lines: list["BatchLineOut"]
+    package_notes: list[str]  # "Uses the whole 2 lb pack" / "0.3 lb left: an open package"
+    freeze_notes: list[str]
+    recipe: RecipeVersionOut
+
+
+class BatchLineOut(BaseModel):
+    ingredient_id: int
+    name: str
+    display: str
+    preparation: str | None
+    optional: bool
+    adjustment: str | None  # absorbed_full_package | substituted
+
+
+PlanStreamEvent.model_rebuild()
+BatchDetailOut.model_rebuild()

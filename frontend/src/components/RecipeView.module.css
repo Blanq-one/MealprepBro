@@ -1,0 +1,43 @@
+/* Big, readable type: this screen is used with flour on your hands. */
+.recipe {
+  font-size: 1.1rem;
+}
+
+.recipe h1 {
+  margin: 0;
+}
+
+.lines li {
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+}
+
+.lines li:first-child {
+  border-top: 0;
+}
+
+.amount {
+  font-weight: 700;
+}
+
+.steps {
+  margin: 0;
+  padding-left: 22px;
+}
+
+.steps li {
+  margin: 0 0 12px;
+}
+
+.steps p {
+  margin: 0 0 4px;
+}
+
+.nutrients li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0;
+  border-top: 1px solid var(--border);
+  font-size: 1rem;
+}

@@ -114,6 +114,7 @@ class PlanConstraints(_Frozen):
     excluded_ingredient_ids: frozenset[int] = frozenset()  # resolved by code: tags + held items + your list
     # + members of any cap set to 0
     held_ingredient_ids: frozenset[int] = frozenset()  # the held (possible-beef) subset, for diagnostics
+    capped_out_ingredient_ids: frozenset[int] = frozenset()  # the subset excluded by a cap set to 0
     frequency_caps: tuple[ResolvedFrequencyCap, ...] = ()  # e.g. pork components ≤ 1 meal/week
     disliked_ingredient_ids: frozenset[int] = frozenset()
     favorite_recipe_ids: frozenset[int] = frozenset()
@@ -146,6 +147,8 @@ class PlanConstraints(_Frozen):
             raise ValueError("inventory mode needs a purchase limit (the top-up allowance, 0 = buy nothing)")
         if not self.held_ingredient_ids <= self.excluded_ingredient_ids:
             raise ValueError("held ingredients must also be in excluded_ingredient_ids")
+        if not self.capped_out_ingredient_ids <= self.excluded_ingredient_ids:
+            raise ValueError("ingredients capped at 0 must also be in excluded_ingredient_ids")
         days_by_date = {d.day: d for d in self.days}
         for req in self.portion_requests:
             for day in req.days:
@@ -191,6 +194,10 @@ class PlanConstraints(_Frozen):
             return False
         return self.planning_mode is PlanningMode.INVENTORY or not stock_up
 
+    def keep_horizon_days(self) -> int:
+        """Food left at the end of the plan keeps if it is still good at the end of the next one."""
+        return 2 * len(self.days)
+
     @property
     def week_protein_target_g(self) -> int:
         return self.daily_protein_target_g * len(self.days)
@@ -203,6 +210,7 @@ class PlanConstraints(_Frozen):
             "excluded_diet_tags",
             "excluded_ingredient_ids",
             "held_ingredient_ids",
+            "capped_out_ingredient_ids",
             "disliked_ingredient_ids",
             "favorite_recipe_ids",
         ):

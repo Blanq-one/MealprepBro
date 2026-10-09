@@ -93,6 +93,9 @@ def build_constraints(
     store_ids += tuple(i for i in other_store_ids if i not in store_ids)
     excluded = frozenset(i for i, s in diet.statuses.items() if s is not ExclusionStatus.ALLOWED)
     held = frozenset(i for i, s in diet.statuses.items() if s is ExclusionStatus.HELD)
+    capped_out = (
+        frozenset(i for cap in diet.caps if cap.max_meals_per_week == 0 for i in cap.member_ids) & excluded
+    )
     caps = tuple(
         ResolvedFrequencyCap(
             label=cap.label,
@@ -144,6 +147,7 @@ def build_constraints(
             excluded_diet_tags=frozenset(settings.excluded_diet_tags),
             excluded_ingredient_ids=excluded,
             held_ingredient_ids=held,
+            capped_out_ingredient_ids=capped_out,
             frequency_caps=caps,
             disliked_ingredient_ids=diet.disliked_ids - excluded,
             favorite_recipe_ids=diet.favorite_recipe_ids,

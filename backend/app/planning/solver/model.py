@@ -241,6 +241,7 @@ def build_model(
     the best plan)."""
     c = problem.constraints
     w = weights_for(c.grocery_mode)
+    keep_days = c.keep_horizon_days()
     batches = batch_plan(problem)
     prob = pulp.LpProblem("weekly_plan_elastic" if elastic else "weekly_plan", pulp.LpMaximize)
     stores = list(allowed_store_ids) if allowed_store_ids is not None else list(c.store_ids)
@@ -571,7 +572,7 @@ def build_model(
             limited_terms.append(cost)
         purchases_by_ingredient[ingredient_id] = (purchases, cost)
         prob += inventory + purchases >= need, f"supply_{ingredient_id}"
-        if plan.perishable:
+        if plan.spoils_within(keep_days):
             # cents of perishable food bought and not used: whole packs left over, plus the unused part of a
             # first package
             waste_rate = _f(min(o.cents_per_unit for o in offers))

@@ -34,6 +34,7 @@ def _price(o: PriceObservation) -> PriceOut:
         priced_unit=o.priced_unit,
         is_sale=o.is_sale,
         source=o.source,
+        client_ref=o.client_ref,
     )
 
 

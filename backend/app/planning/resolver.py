@@ -93,6 +93,11 @@ class IngredientResolver:
                 return hits[0].id, "trigram", ()
         return None, None, suggestions
 
+    def lookup(self, name: str) -> tuple[int | None, tuple[str, ...]]:
+        """The ingredient a name means (no diet check, no substitution), or None with suggestions."""
+        ingredient_id, _via, suggestions = self._find(name)
+        return ingredient_id, suggestions
+
     def resolve(self, name: str) -> Resolution:
         ingredient_id, via, suggestions = self._find(name)
         if ingredient_id is None:

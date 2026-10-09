@@ -7,18 +7,27 @@ ingredient-report        data-quality report: errors, placeholders, held items, 
 safety-table             print the hardcoded food-safety table and its citation
 plan-week [--mode M]     plan a week from your current settings and print it (Phase 1 demo)
 simulate-weeks           dry run: plan consecutive weeks, each from the last one's leftovers
+hash-password            make AUTH_PASSWORD_HASH (and a fresh SESSION_SECRET) for sign-in
+migrate                  alembic upgrade head on the direct connection (DATABASE_URL_UNPOOLED if set)
+openapi [--out PATH]     write the API schema the PWA's types are generated from
 """
 
 import argparse
+import getpass
+import json
+import secrets
 import sys
 from collections.abc import Sequence
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 
+from alembic import command as alembic_command
+from alembic.config import Config as AlembicConfig
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.auth.passwords import PasswordHashError, hash_password
 from app.config import BACKEND_DIR, get_settings
 from app.db.models import RecipeVersion
 from app.db.session import get_engine
@@ -46,6 +55,7 @@ PRIORITIES = ["protein", "carb", "iron", "balanced"]
 WEEKDAY_NAMES = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 
 REVIEW_SHEET = BACKEND_DIR.parent / "docs" / "review" / "usda_mappings.md"
+OPENAPI_OUT = BACKEND_DIR.parent / "frontend" / "src" / "lib" / "api" / "openapi.json"
 SUBSET_DIR = BACKEND_DIR / "app" / "testing" / "fixtures" / "usda_subset"
 
 
@@ -254,6 +264,45 @@ def _plan_week(args: argparse.Namespace) -> int:
     return 0 if outcome.status == "succeeded" else 1
 
 
+def _hash_password(from_stdin: bool) -> int:
+    if from_stdin:
+        password = sys.stdin.readline().rstrip("\n")
+    else:
+        password = getpass.getpass("App password: ")
+        if getpass.getpass("Again: ") != password:
+            print("The two passwords don't match.", file=sys.stderr)
+            return 2
+    try:
+        encoded = hash_password(password)
+    except PasswordHashError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+    print(f"AUTH_PASSWORD_HASH={encoded}")
+    print(f"SESSION_SECRET={secrets.token_urlsafe(48)}")
+    return 0
+
+
+def alembic_config() -> AlembicConfig:
+    cfg = AlembicConfig(str(BACKEND_DIR / "alembic.ini"))
+    cfg.set_main_option("script_location", str(BACKEND_DIR / "migrations"))
+    return cfg  # migrations/env.py picks the direct (unpooled) URL
+
+
+def _migrate() -> int:
+    alembic_command.upgrade(alembic_config(), "head")
+    return 0
+
+
+def _openapi(out: Path) -> int:
+    from app.main import create_app  # noqa: PLC0415 (the web app only when asked)
+
+    out.parent.mkdir(parents=True, exist_ok=True)
+    text = json.dumps(create_app().openapi(), indent=1, sort_keys=True) + "\n"
+    out.write_bytes(text.encode("utf-8"))
+    print(f"wrote {out}")
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     if hasattr(sys.stdout, "reconfigure"):  # Windows consoles default to a legacy code page
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -304,7 +353,18 @@ def main(argv: Sequence[str] | None = None) -> int:
         type=float,
         help="also plan the last week again from the same inventory with this budget",
     )
+    hashing = sub.add_parser("hash-password", help="make AUTH_PASSWORD_HASH and a SESSION_SECRET")
+    hashing.add_argument("--stdin", action="store_true", help="read the password from stdin (no prompt)")
+    sub.add_parser("migrate", help="alembic upgrade head (direct connection)")
+    spec = sub.add_parser("openapi", help="write the API schema for the PWA's generated types")
+    spec.add_argument("--out", type=Path, default=OPENAPI_OUT)
     args = parser.parse_args(argv)
+    if args.command == "hash-password":
+        return _hash_password(args.stdin)
+    if args.command == "migrate":
+        return _migrate()
+    if args.command == "openapi":
+        return _openapi(args.out)
     if args.command == "usda-import":
         return _usda_import(args.paths)
     if args.command == "usda-subset":

@@ -17,7 +17,7 @@ from app.db.models import LlmCall, Recipe, RecipeIngredient, RecipeStep, RecipeV
 from app.domain.cook_time import MOOD_MAX_ACTIVE_MINUTES, MOOD_ORDER
 from app.domain.enums import MealSlot, RecipeMood, RecipeOrigin
 from app.domain.exclusions import ExclusionStatus
-from app.llm.errors import LLMOutputError, LLMTruncatedError
+from app.llm.errors import LLMDeadlineError, LLMOutputError, LLMTruncatedError
 from app.llm.prompts import candidate_generation, recipe_revision
 from app.llm.prompts.common import GenerationContext
 from app.llm.structured import LLMRunContext, StructuredSpec
@@ -138,6 +138,8 @@ class CandidateGenerator:
 
     # ---- generation ----
     def generate(self, problem: PlanningProblem, gaps: Sequence[Gap]) -> list[int]:
+        """Raises LLMDeadlineError when the request's time budget runs out; every recipe validated before
+        that is already saved (and reused by the next request)."""
         self.equipment = problem.constraints.equipment
         new_ids: list[int] = []
         for gap in gaps:
@@ -164,12 +166,17 @@ class CandidateGenerator:
                 count = max(1, count // 2)  # halve the batch and try again
         ids: list[int] = []
         issues: dict[str, list[str]] = {}
+        out_of_time: LLMDeadlineError | None = None
         for recipe in result.value.recipes:
             validated, errors = self.check(recipe, gap, ctx)
             call_id = result.final_call_id
             if validated is None:
                 issues[recipe.title] = errors
-                validated, call_id = self._revise(recipe, errors, gap, ctx, result.final_call_id)
+                if out_of_time is None:
+                    try:
+                        validated, call_id = self._revise(recipe, errors, gap, ctx, result.final_call_id)
+                    except LLMDeadlineError as exc:  # keep the batch's valid recipes, then stop
+                        out_of_time = exc
             if validated is not None:
                 ids.append(
                     self._persist(
@@ -181,6 +188,8 @@ class CandidateGenerator:
                     )
                 )
         self._note_issues(result.final_call_id, issues)
+        if out_of_time is not None:
+            raise out_of_time
         return ids
 
     def _revise(

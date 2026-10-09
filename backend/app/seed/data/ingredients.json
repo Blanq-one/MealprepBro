@@ -1176,6 +1176,11 @@
    "safety_category": null,
    "is_perishable": true,
    "typical_location": "fridge",
+   "shelf_life": {
+    "fridge_days": 30,
+    "freezer_days": 180,
+    "basis": "short end of 1-3 months refrigerated (University of Kentucky Cooperative Extension food storage table); 6-9 months frozen"
+   },
    "assume_in_stock": false,
    "density": {
     "usda_portion_id": 92457,
@@ -1210,6 +1215,11 @@
    "safety_category": null,
    "is_perishable": true,
    "typical_location": "fridge",
+   "shelf_life": {
+    "fridge_days": 30,
+    "freezer_days": 180,
+    "basis": "short end of 1-3 months refrigerated (University of Kentucky Cooperative Extension food storage table); 6-9 months frozen"
+   },
    "assume_in_stock": false,
    "density": {
     "usda_portion_id": 92512,
@@ -1831,6 +1841,10 @@
    "safety_category": null,
    "is_perishable": true,
    "typical_location": "pantry",
+   "shelf_life": {
+    "pantry_days": 28,
+    "basis": "estimate for whole dry onions in a cool, dry, dark pantry; sources range from about 2 weeks (Virginia Dept. of Health storage chart) to about 6 weeks (Canadian public-health storage guide)"
+   },
    "assume_in_stock": false,
    "count_rounding_step": "0.5",
    "count_unit_weight": {
@@ -1868,6 +1882,10 @@
    "safety_category": null,
    "is_perishable": true,
    "typical_location": "pantry",
+   "shelf_life": {
+    "pantry_days": 28,
+    "basis": "estimate for whole dry onions in a cool, dry, dark pantry; sources range from about 2 weeks (Virginia Dept. of Health storage chart) to about 6 weeks (Canadian public-health storage guide)"
+   },
    "assume_in_stock": false,
    "count_rounding_step": "0.5",
    "count_unit_weight": {
@@ -1922,6 +1940,10 @@
    "safety_category": null,
    "is_perishable": true,
    "typical_location": "pantry",
+   "shelf_life": {
+    "pantry_days": 56,
+    "basis": "estimate for whole, unbroken bulbs in a dry, airy, dark spot (no official day count found); separated cloves keep much less"
+   },
    "assume_in_stock": false,
    "density": {
     "usda_portion_id": 84479,
@@ -2485,6 +2507,10 @@
    "safety_category": null,
    "is_perishable": true,
    "typical_location": "pantry",
+   "shelf_life": {
+    "pantry_days": 28,
+    "basis": "estimate for russet potatoes in a cool, dark, dry place; sources range from 2-4 weeks (Virginia Dept. of Health storage chart) to months in a cold cellar"
+   },
    "assume_in_stock": false,
    "count_rounding_step": "0.5",
    "count_unit_weight": {

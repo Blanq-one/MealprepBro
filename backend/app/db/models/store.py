@@ -1,5 +1,6 @@
 """D. Stores, products and per-store price history."""
 
+import uuid
 from datetime import date, datetime
 from decimal import Decimal
 
@@ -14,6 +15,7 @@ from sqlalchemy import (
     Integer,
     SmallInteger,
     Text,
+    Uuid,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -80,4 +82,6 @@ class PriceObservation(Base):
     is_sale: Mapped[bool] = mapped_column(Boolean, server_default="false")
     source: Mapped[str] = mapped_column(Text)
     note: Mapped[str | None] = mapped_column(Text)
+    # Phase 2 (0004): an entry queued offline is replayed with the same ref, and is stored exactly once
+    client_ref: Mapped[uuid.UUID | None] = mapped_column(Uuid, unique=True)
     created_at: Mapped[datetime] = created_at_column()

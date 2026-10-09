@@ -1,37 +1,14 @@
 from fastapi import APIRouter, Query
 
 from app.api.deps import CurrentUser, DbSession
-from app.db.models import InventoryItem
+from app.api.presenters import inventory_lots_out
 from app.schemas.inventory import DiscardIn, InventoryLotIn, InventoryLotOut, InventoryLotPatch
 from app.services import inventory as service
-from app.services.ingredient_data import load_ingredients
-from app.services.plans import amount_display
 
 router = APIRouter(prefix="/api/v1/inventory", tags=["inventory"])
 
 
-def _out(session: DbSession, items: list[InventoryItem]) -> list[InventoryLotOut]:
-    names = {i: d.name for i, d in load_ingredients(session, {it.ingredient_id for it in items}).items()}
-    return [
-        InventoryLotOut(
-            id=it.id,
-            ingredient_id=it.ingredient_id,
-            name=names.get(it.ingredient_id, "?"),
-            product_id=it.product_id,
-            quantity=it.quantity,
-            unit=it.unit,
-            display=amount_display(it.quantity, it.unit),
-            location=it.location,
-            acquired_on=it.acquired_on,
-            opened_on=it.opened_on,
-            expires_on=it.expires_on,
-            expiry_is_estimate=it.expiry_is_estimate,
-            status=it.status,
-            notes=it.notes,
-            created_at=it.created_at,
-        )
-        for it in items
-    ]
+_out = inventory_lots_out
 
 
 @router.get("", response_model=list[InventoryLotOut])

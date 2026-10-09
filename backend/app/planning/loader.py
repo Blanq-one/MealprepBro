@@ -176,6 +176,8 @@ def load_ingredient_plans(
             perishable=d.is_perishable,
             shelf_life_days_fridge=d.shelf_life_days_fridge,
             location=d.typical_location,
+            shelf_life_days_pantry=d.shelf_life_days_pantry,
+            shelf_life_days_freezer=d.shelf_life_days_freezer,
             fridge_life=fridge_life(d.slug, d.safety_category.value if d.safety_category else None),
             offers=_offers(d, unit, prices[i], products),
             lots=tuple(inventory),
@@ -210,6 +212,7 @@ def build_problem(session: Session, user_id: int, constraints: PlanConstraints) 
             continue  # nothing to fill this week; not an exclusion
         recipe_lines = lines.get(version.id, [])
         reasons: list[str] = []
+        codes: list[str] = []
         held: list[str] = []
         unpriced: list[str] = []
         for line in recipe_lines:
@@ -218,22 +221,30 @@ def build_problem(session: Session, user_id: int, constraints: PlanConstraints) 
                 if line.ingredient_id in c.held_ingredient_ids:
                     held.append(name)
                     reasons.append(f"held: {name} (possibly beef-derived; allow it in settings if it's fine)")
+                    codes.append("held")
+                elif line.ingredient_id in c.capped_out_ingredient_ids:
+                    reasons.append(f"excluded: {name} (its frequency cap is set to 0 meals a week)")
+                    codes.append("frequency_cap")
                 else:
                     reasons.append(f"excluded: {name}")
+                    codes.append("excluded")
         equipment = frozenset(Equipment(e) for e in version.equipment)
         if missing := sorted(equipment - c.equipment):
             reasons.append(f"needs equipment you don't have: {', '.join(missing)}")
+            codes.append("equipment")
         counted = [line for line in recipe_lines if not line.optional]
         for line in counted:
             profile = data[line.ingredient_id].profile
             if missing_core := [code for code in CORE_CODES if code not in profile.per_100g]:
                 reasons.append(f"incomplete nutrition: {profile.name} has no {', '.join(missing_core)}")
+                codes.append("nutrition_incomplete")
         mood = RecipeMood(version.mood)
         if not _cook_day_fits(c, mood, version.active_minutes):
             reasons.append(
                 f"needs {version.active_minutes} hands-on minutes on a {mood.value}-or-busier cook day; "
                 "none of this week's cook days allows that"
             )
+            codes.append("time")
         for line in counted:
             plan = plans[line.ingredient_id]
             if plan.staple or plan.offers:
@@ -253,12 +264,14 @@ def build_problem(session: Session, user_id: int, constraints: PlanConstraints) 
                     "(enter a price, or plan without a budget)"
                 )
             reasons.append(why)
+            codes.append("unpriced")
         need: dict[int, Decimal] = {}
         if not reasons:
             try:
                 need = need_per_portion(recipe_lines, plans, version.base_servings)
             except ConversionError as exc:
                 reasons.append(f"can't convert a line to its purchase unit: {exc}")
+                codes.append("conversion")
         if reasons:
             excluded.append(
                 ExcludedRecipe(
@@ -268,6 +281,7 @@ def build_problem(session: Session, user_id: int, constraints: PlanConstraints) 
                     tuple(dict.fromkeys(reasons)),
                     tuple(held),
                     tuple(unpriced),
+                    tuple(dict.fromkeys(codes)),
                 )
             )
             continue

@@ -1,29 +1,55 @@
 from typing import Literal
 
-from fastapi import APIRouter, BackgroundTasks, Query
+from fastapi import APIRouter, Query
+from fastapi.responses import StreamingResponse
 
 from app.api.deps import CurrentUser, DbSession, LLMClientFactory, SessionFactory
-from app.schemas.plans import GenerationRunOut, GroceryListOut, PlanRequest, PlanSummaryOut, RunAccepted
+from app.schemas.plans import (
+    GenerationRunOut,
+    GroceryListOut,
+    PlanListItemOut,
+    PlanRequest,
+    PlanStreamEvent,
+    PlanSummaryOut,
+)
 from app.services import plans as service
+from app.services.plan_stream import plan_events
 
 router = APIRouter(prefix="/api/v1", tags=["plans"])
 
+NDJSON = "application/x-ndjson"
 
-@router.post("/plans", response_model=RunAccepted, status_code=202)
+
+@router.post(
+    "/plans",
+    response_class=StreamingResponse,
+    responses={200: {"model": PlanStreamEvent, "content": {NDJSON: {}}, "description": "NDJSON event lines"}},
+)
 def create_plan(
     *,
     body: PlanRequest,
-    background: BackgroundTasks,
-    session: DbSession,
     user: CurrentUser,
     session_factory: SessionFactory,
     client_factory: LLMClientFactory,
-) -> RunAccepted:
-    """Start planning a week. Poll the returned run until it is succeeded, infeasible or failed."""
-    run = service.start_run(session, user.id, body)
-    session.commit()
-    background.add_task(service.execute_run, session_factory, run.id, body, client_factory)
-    return RunAccepted(run_id=run.id, status=run.status, status_url=f"/api/v1/generation-runs/{run.id}")
+) -> StreamingResponse:
+    """Plan a week inside this request. The response is a stream of JSON lines (`PlanStreamEvent`):
+    `started` with the run id, `progress` and `heartbeat` lines while it works, and one final `result` with
+    the plan summary or the problem. The run record is kept (`GET /generation-runs/{id}`)."""
+    events = plan_events(session_factory, user.id, body, client_factory)
+    return StreamingResponse(
+        events,
+        media_type=NDJSON,
+        headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
+    )
+
+
+@router.get("/plans", response_model=list[PlanListItemOut])
+def list_plans(
+    session: DbSession, user: CurrentUser, limit: int = Query(default=10, ge=1, le=50)
+) -> list[PlanListItemOut]:
+    """Your recent plans, newest first. `is_current` marks the one the app opens on: the active plan for
+    this week, else the latest active plan, else the latest draft."""
+    return service.list_plans(session, user.id, limit)
 
 
 @router.get("/generation-runs/{run_id}", response_model=GenerationRunOut)
@@ -48,6 +74,6 @@ def grocery_list(
     plan_id: int,
     session: DbSession,
     user: CurrentUser,
-    group_by: Literal["store", "none"] = Query(default="store"),
+    group_by: Literal["store", "category", "none"] = Query(default="store"),
 ) -> GroceryListOut:
-    return service.grocery_view(session, user.id, plan_id, group_by_store=group_by == "store")
+    return service.grocery_view(session, user.id, plan_id, group_by=group_by)

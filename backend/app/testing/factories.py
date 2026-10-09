@@ -159,6 +159,7 @@ def ingredient(
     shelf_life_days_fridge: int | None = None,
     location: str | None = None,
     fridge_life: FridgeLife | None = None,
+    shelf_life_days_pantry: int | None = None,
     count_step: Decimal = Decimal(1),
     piece_grams: Decimal | str | None = None,
     density: Decimal | str | None = None,
@@ -186,6 +187,7 @@ def ingredient(
         shelf_life_days_fridge=shelf_life_days_fridge,
         location=location,
         fridge_life=fridge_life,
+        shelf_life_days_pantry=shelf_life_days_pantry,
         offers=tuple(offers),
         lots=tuple(lots),
     )

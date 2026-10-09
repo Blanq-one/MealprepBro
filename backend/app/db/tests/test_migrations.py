@@ -44,8 +44,8 @@ TABLES_0001 = {
     "grocery_list",
     "grocery_list_item",
 }
+TABLES_0004 = {"plan_candidate", "login_attempt"}
 LATER_PHASE_TABLES = {
-    "plan_candidate",
     "prepared_portion",
     "feedback_event",
     "recipe_favorite",
@@ -86,13 +86,33 @@ def test_upgrade_check_downgrade(scratch_db_url):
     command.upgrade(cfg, "head")
     tables = _tables(scratch_db_url)
     assert len(TABLES_0001) == 31
-    assert tables == TABLES_0001
+    assert tables == TABLES_0001 | TABLES_0004
     assert not tables & LATER_PHASE_TABLES
     command.check(cfg)  # raises if the models and the migration disagree
     command.downgrade(cfg, "base")
     assert _tables(scratch_db_url) == set()
     command.upgrade(cfg, "head")  # and back up again cleanly
-    assert _tables(scratch_db_url) == TABLES_0001
+    assert _tables(scratch_db_url) == TABLES_0001 | TABLES_0004
+
+
+def test_0004_adds_the_exposure_log_price_client_ref_and_login_attempts(scratch_db_url):
+    cfg = alembic_config(scratch_db_url)
+    command.upgrade(cfg, "0003")
+    assert not _tables(scratch_db_url) & TABLES_0004
+    command.upgrade(cfg, "head")
+    engine = create_engine(scratch_db_url)
+    try:
+        with engine.connect() as conn:
+            columns = {c["name"] for c in inspect(conn).get_columns("price_observation")}
+            uniques = {u["name"] for u in inspect(conn).get_unique_constraints("price_observation")}
+        assert "client_ref" in columns and "uq_price_observation_client_ref" in uniques
+        assert _tables(scratch_db_url) >= TABLES_0004
+        command.downgrade(cfg, "0003")
+        with engine.connect() as conn:
+            columns = {c["name"] for c in inspect(conn).get_columns("price_observation")}
+        assert "client_ref" not in columns and not _tables(scratch_db_url) & TABLES_0004
+    finally:
+        engine.dispose()
 
 
 def test_0002_moves_the_budget_out_of_settings_and_adds_the_protein_target(scratch_db_url):

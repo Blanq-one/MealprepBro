@@ -92,7 +92,7 @@ def build_grocery(
             inventory_used=inventory_used[ingredient_id],
             to_buy=to_buy[ingredient_id],
             kind="buy",
-            perishable=plan.perishable,
+            perishable=plan.spoils_within(constraints.keep_horizon_days()),
             recipes=tuple(used_by[ingredient_id]),
             stock_up=plan.stock_up,
         )

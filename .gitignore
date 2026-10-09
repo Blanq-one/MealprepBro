@@ -43,9 +43,7 @@ pnpm-debug.log*
 .pnpm-store/
 coverage/
 
-# PWA build output (generated service worker / workbox files)
-frontend/public/sw.js
-frontend/public/sw.js.map
+# PWA build output from a service-worker generator (workbox). Our frontend/public/sw.js is hand-written and committed.
 frontend/public/workbox-*.js
 frontend/public/workbox-*.js.map
 
@@ -62,3 +60,6 @@ data/raw/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Database dumps from scripts/backup.sh
+backups/

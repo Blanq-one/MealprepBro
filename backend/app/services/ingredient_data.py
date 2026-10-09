@@ -33,6 +33,8 @@ class IngredientData:
     usda_description: str | None = None
     is_perishable: bool = False
     shelf_life_days_fridge: int | None = None
+    shelf_life_days_pantry: int | None = None
+    shelf_life_days_freezer: int | None = None
     typical_location: str | None = None
     stock_up: bool = False
 
@@ -85,6 +87,8 @@ def _build(
         usda_description=usda_description,
         is_perishable=ingredient.is_perishable,
         shelf_life_days_fridge=ingredient.shelf_life_days_fridge,
+        shelf_life_days_pantry=ingredient.shelf_life_days_pantry,
+        shelf_life_days_freezer=ingredient.shelf_life_days_freezer,
         typical_location=ingredient.typical_location,
         stock_up=ingredient.stock_up,
     )

@@ -10,7 +10,7 @@ retry-after) and are not validation attempts. Every attempt that reaches the pro
 
 import json
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 from pydantic import BaseModel, ValidationError
@@ -29,7 +29,7 @@ from app.llm.errors import (
     LLMTransportError,
     LLMTruncatedError,
 )
-from app.llm.pacing import CallBudget, Clock, Pacer, SystemClock, TokenGuard
+from app.llm.pacing import CallBudget, Clock, Deadline, Pacer, SystemClock, TokenGuard
 from app.llm.schema import schema_summary, transport_schema
 
 MAX_FEEDBACK_ERRORS = 12
@@ -67,6 +67,8 @@ class LLMRunContext:
     settings: Settings
     run_id: int | None = None
     clock: Clock = field(default_factory=SystemClock)
+    deadline: Deadline | None = None  # the request's time budget: planning runs inside one request
+    on_wait: Callable[[float], None] | None = None
     calls: CallBudget = field(init=False)
     tokens: TokenGuard = field(init=False)
     pacer: Pacer = field(init=False)
@@ -74,7 +76,9 @@ class LLMRunContext:
     def __post_init__(self) -> None:
         self.calls = CallBudget(self.settings.llm_max_calls_per_run)
         self.tokens = TokenGuard(self.session, self.settings.llm_daily_token_budget)
-        self.pacer = Pacer(self.clock, self.settings.llm_max_rate_wait_seconds)
+        self.pacer = Pacer(
+            self.clock, self.settings.llm_max_rate_wait_seconds, deadline=self.deadline, on_wait=self.on_wait
+        )
 
     @property
     def strict(self) -> bool:
@@ -165,6 +169,8 @@ def _call_with_transport_retries(
         ctx.calls.take()
         ctx.tokens.check(estimate)
         ctx.pacer.before_call(estimate)
+        if ctx.deadline is not None:
+            request = replace(request, timeout_s=ctx.deadline.call_timeout(ctx.settings.llm_timeout_seconds))
         try:
             response = ctx.client.complete(request)
         except LLMRateLimitedError as exc:

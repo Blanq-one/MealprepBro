@@ -12,7 +12,9 @@ if config.config_file_name is not None and config.attributes.get("configure_logg
     fileConfig(config.config_file_name)
 
 if not config.get_main_option("sqlalchemy.url"):
-    config.set_main_option("sqlalchemy.url", get_settings().database_url)
+    # A direct (unpooled) connection: Neon's pooler runs PgBouncer in transaction mode, which isn't meant for
+    # schema changes. Falls back to DATABASE_URL locally.
+    config.set_main_option("sqlalchemy.url", get_settings().migration_database_url.replace("%", "%%"))
 
 target_metadata = Base.metadata
 

@@ -289,6 +289,10 @@ def _apply_ingredient(row: Ingredient, seed: SeedIngredient, files: SeedFiles, c
     row.is_perishable, row.typical_location = seed.is_perishable, seed.typical_location.value
     row.assume_in_stock, row.nutrition_source = seed.assume_in_stock, seed.nutrition_source.value
     row.stock_up = seed.stock_up
+    life = seed.shelf_life
+    row.shelf_life_days_pantry = life.pantry_days if life else None
+    row.shelf_life_days_fridge = life.fridge_days if life else None
+    row.shelf_life_days_freezer = life.freezer_days if life else None
     row.fdc_id, row.notes = seed.fdc_id, seed.notes
     if seed.nutrition_reviewed_on is not None:  # never clears a review recorded elsewhere
         row.nutrition_reviewed_at = datetime.combine(seed.nutrition_reviewed_on, time(), tzinfo=UTC)

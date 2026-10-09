@@ -8,12 +8,17 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.api.problems import ProblemError
+from app.auth.passwords import PasswordHashError
 from app.domain.quantities import QuantityParseError
 from app.domain.scaling import ScalingError
 from app.domain.units import InvalidQuantityError, UnitError
 from app.planning.constraint_builder import ConstraintError
 from app.planning.persistence import PlanNotFoundError
 from app.services.calculations import CalculationError
+from app.services.cooking import CookingError
+from app.services.errors import ConflictError
+from app.services.grocery import GroceryError
 from app.services.ingredients import IngredientNotFoundError
 from app.services.inventory import InventoryError
 from app.services.plans import RunNotFoundError
@@ -30,7 +35,7 @@ def problem(status: int, title: str, detail: str, **extra: Any) -> JSONResponse:
     return JSONResponse(jsonable_encoder(body), status_code=status, media_type=PROBLEM_JSON)
 
 
-NOT_FOUND = (IngredientNotFoundError, PlanNotFoundError, RunNotFoundError, RecipeNotFoundError)
+NOT_FOUND = (IngredientNotFoundError, PlanNotFoundError, RunNotFoundError, RecipeNotFoundError, CookingError)
 
 
 def install_error_handlers(app: FastAPI) -> None:
@@ -44,7 +49,7 @@ def install_error_handlers(app: FastAPI) -> None:
         return problem(exc.status_code, "HTTP error", str(exc.detail))
 
     calc_errors = (UnitError, InvalidQuantityError, QuantityParseError, ScalingError, CalculationError)
-    rejected = (SettingsError, InventoryError, ProductError, SuggestionError, ConstraintError)
+    rejected = (SettingsError, InventoryError, ProductError, SuggestionError, ConstraintError, GroceryError)
 
     @app.exception_handler(ValueError)
     async def _domain(request: Request, exc: ValueError) -> JSONResponse:
@@ -65,3 +70,17 @@ def install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(NotSeededError)
     async def _not_seeded(_: Request, exc: NotSeededError) -> JSONResponse:
         return problem(503, "Database not seeded", str(exc))
+
+    @app.exception_handler(ProblemError)
+    async def _problem(_: Request, exc: ProblemError) -> JSONResponse:
+        response = problem(exc.status, exc.title, exc.detail)
+        response.headers.update(exc.headers)
+        return response
+
+    @app.exception_handler(ConflictError)
+    async def _conflict(_: Request, exc: ConflictError) -> JSONResponse:
+        return problem(409, "Conflict", str(exc))
+
+    @app.exception_handler(PasswordHashError)
+    async def _bad_hash(_: Request, exc: PasswordHashError) -> JSONResponse:
+        return problem(503, "Sign-in isn't set up", str(exc))

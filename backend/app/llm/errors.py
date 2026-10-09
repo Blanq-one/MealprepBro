@@ -86,3 +86,10 @@ class LLMCallCapError(LLMError):
     """A run would make more than LLM_MAX_CALLS_PER_RUN calls."""
 
     code = "llm_call_cap"
+
+
+class LLMDeadlineError(LLMError):
+    """The request's time budget (PLAN_TIME_BUDGET_SECONDS) has too little left for another LLM call or
+    rate-limit wait. Planning keeps what was generated so far and carries on without the LLM."""
+
+    code = "llm_deadline"
