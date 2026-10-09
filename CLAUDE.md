@@ -2,6 +2,8 @@
 
 Read this file and `docs/PRD.md` at the start of every session. The PRD is the product vision. This file is the set of rules for how it gets built. If they ever conflict, this file wins and you flag the conflict to me.
 
+Each session, read only the current phase's section of `docs/BUILD_PLAN.md` plus its shared sections (architecture, schema, conventions: §1–§7, §10, §12, as listed at the top of that file), not the whole file.
+
 ## What this app is
 
 A personal meal-prep and grocery optimizer, not a recipe app. Given calorie goals, nutrition priority, budget, inventory, prices, equipment, time, and preferences, it produces a weekly plan, recipes with real cooking instructions, and a grocery list, then learns from my ratings.
@@ -49,11 +51,19 @@ Safe internal temperatures and storage/reheating guidance come from a hardcoded 
 - Egg dishes: 160 F
 - Reheated leftovers: 165 F
 
+## Dietary rules (enforced in code: solver, LLM prompts, exclusion check)
+
+- **Beef is excluded**, including every beef-derived ingredient (beef broth/stock, tallow, bovine gelatin, beef bouillon, etc.).
+- **Possibly-beef items are excluded by default**: gelatin with an unspecified source, and anything else whose beef content isn't ruled out. Pork-labeled gelatin is allowed. The user can allow an item explicitly; never guess.
+- **Pork is allowed but rare.** Pork as a meal component (sausage, pepperoni, bacon, ham, pork cuts) is limited by a general per-ingredient/per-tag frequency-cap setting (default 1 meal per week). Trace pork-derived ingredients (lard in tortillas, pork gelatin) have no limit.
+- The solver never favors a capped (pork-component) meal for nutrition, price or inventory use; it's included only when it fits within the cap. Seed recipes use no pork component.
+
 ## Nutrition claims
 
 - Never make medical or health claims. Describe nutrient content only ("high in iron"), not effects ("treats anemia").
 - Iron mode distinguishes heme and non-heme iron.
 - "Seasonal" and "cheapest" are different labels. Only say an item is cheap or a good deal when stored price data supports it.
+- "Cheap" and "deal" are cost claims: only code produces them, from stored price data. The LLM never says them in prose.
 
 ## Build workflow (non-negotiable)
 
