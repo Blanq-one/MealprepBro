@@ -1,0 +1,39 @@
+{
+ "schema_version": 1,
+ "daily_kcal_target": 1800,
+ "calorie_mode": "weekly",
+ "daily_band_kcal": 150,
+ "weekly_under_pct": 3.0,
+ "daily_under_pct": 5.0,
+ "slot_allocations": [
+  {"slot": "breakfast", "kcal": 400},
+  {"slot": "lunch", "kcal": 550},
+  {"slot": "dinner", "kcal": 650},
+  {"slot": "protein_dessert", "kcal": 200}
+ ],
+ "nutrition_priority": "protein",
+ "secondary_priority": null,
+ "grocery_mode": "balanced",
+ "weekly_budget_cents": null,
+ "budget_is_hard": false,
+ "equipment": ["stovetop", "oven", "air_fryer", "microwave"],
+ "cook_schedule": [
+  {"weekday": "mon", "is_cook_day": true, "cook_minutes": 45, "mood": "medium"},
+  {"weekday": "tue", "is_cook_day": false, "cook_minutes": 0, "mood": "simple"},
+  {"weekday": "wed", "is_cook_day": true, "cook_minutes": 45, "mood": "medium"},
+  {"weekday": "thu", "is_cook_day": true, "cook_minutes": 45, "mood": "medium"},
+  {"weekday": "fri", "is_cook_day": false, "cook_minutes": 0, "mood": "simple"},
+  {"weekday": "sat", "is_cook_day": true, "cook_minutes": 45, "mood": "medium"},
+  {"weekday": "sun", "is_cook_day": true, "cook_minutes": 45, "mood": "medium"}
+ ],
+ "leftover_fridge_days": 3,
+ "excluded_diet_tags": ["beef"],
+ "frequency_caps": [
+  {"label": "Pork as a meal component", "target_type": "tag", "target": "pork", "max_meals_per_week": 1, "never_favor": true}
+ ],
+ "store_order": ["Stop & Shop", "Price Rite"],
+ "store_split_min_savings_cents": 500,
+ "default_portion_size": "normal",
+ "region_code": "MA",
+ "units": "us"
+}

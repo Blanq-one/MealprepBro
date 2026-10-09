@@ -1,0 +1,78 @@
+[project]
+name = "mealbro-backend"
+version = "0.0.0"
+description = "Mealbro: personal meal-prep and grocery optimizer (backend)"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi>=0.115",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "sqlalchemy>=2.0.36,<2.1",  # CLAUDE.md stack: SQLAlchemy 2.0
+    "alembic>=1.14",
+    "psycopg[binary]>=3.2",
+    "uvicorn>=0.32",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+    "hypothesis>=6.115",
+    "httpx>=0.28",
+    "ruff>=0.8",
+    "mypy>=1.13",
+]
+
+[tool.uv]
+# Not an installable package: run from backend/ (`uv run python -m app.cli ...`), no build backend needed.
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["app"]
+addopts = "-ra --strict-markers"
+filterwarnings = [
+    # Starlette suggests a different HTTP client package for TestClient; httpx is the approved one.
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated",
+]
+markers = [
+    "db: needs the db-test Postgres",
+    "slow: slow tests",
+    "live_llm: makes a real LLM call (opt-in, Phase 1+)",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["app"]
+omit = ["*/tests/*", "app/testing/*"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+extend-exclude = ["migrations/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "N", "DTZ", "PL"]
+ignore = [
+    "PLR0913",  # many arguments: explicit keyword args are clearer than bags of options here
+    "PLR2004",  # magic values: tests and unit tables are full of literal numbers on purpose
+    "PLR0911",
+    "PLR0912",
+    "PLR0915",
+    "RUF001",   # unicode fractions (½ ⅓ ¼) are intentional in display strings
+    "RUF002",
+    "RUF003",
+]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+exclude = ["migrations/"]
+
+[[tool.mypy.overrides]]
+# Test functions are deliberately unannotated (pytest fixtures); the code they test is strict.
+module = ["*.tests.*"]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_calls = false
+check_untyped_defs = false

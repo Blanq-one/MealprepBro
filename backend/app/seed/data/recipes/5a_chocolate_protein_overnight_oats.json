@@ -1,0 +1,31 @@
+{
+ "family": "Protein oats",
+ "title": "Chocolate protein overnight oats",
+ "description": "No-cook rolled oats soaked overnight in chocolate protein milk with Greek yogurt and chia, topped with banana.",
+ "meal_slots": ["breakfast"],
+ "mood": "simple",
+ "cuisine": null,
+ "flavor_tags": ["chocolate", "creamy"],
+ "base_servings": 2,
+ "active_minutes": 5,
+ "total_minutes": 485,
+ "equipment": [],
+ "freezer_friendly": false,
+ "draft_note": "Draft quantities: adjust them in the app. Not plannable until the powder's carbs and fat per scoop are filled in (A2).",
+ "ingredients": [
+  {"ingredient": "rolled-oats", "quantity": "80", "unit": "g", "role": "carb"},
+  {"ingredient": "protein-powder-double-chocolate", "quantity": "2", "unit": "scoop", "role": "protein"},
+  {"ingredient": "milk-2", "quantity": "300", "unit": "ml", "role": "dairy"},
+  {"ingredient": "greek-yogurt-nonfat", "quantity": "100", "unit": "g", "role": "dairy"},
+  {"ingredient": "chia-seeds", "quantity": "12", "unit": "g", "role": "other"},
+  {"ingredient": "banana", "quantity": "1", "unit": "count", "preparation": "sliced, for topping", "role": "fruit", "optional": true}
+ ],
+ "steps": [
+  {"section": "prep", "text": "Set out 2 jars with lids. Slice the banana only when serving."},
+  {"section": "no_cook", "text": "Whisk the protein powder into the milk until smooth."},
+  {"section": "no_cook", "text": "Stir in the Greek yogurt, oats and chia seeds until evenly combined."},
+  {"section": "portioning", "text": "Divide between the 2 jars, seal and refrigerate overnight so the oats soften."},
+  {"section": "assembly", "text": "Stir, then top with sliced banana when serving."},
+  {"section": "storage", "text": "Keep the jars sealed in the fridge."}
+ ]
+}

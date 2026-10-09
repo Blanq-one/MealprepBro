@@ -1,0 +1,4459 @@
+{
+ "schema_version": 1,
+ "ingredients": [
+  {
+   "name": "chicken thigh, boneless skinless",
+   "slug": "chicken-thigh-boneless-skinless",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 173627,
+   "aliases": [
+    "chicken thigh",
+    "chicken thighs",
+    "boneless thighs",
+    "boneless skinless chicken thighs",
+    "thigh meat"
+   ],
+   "diet_tags": [
+    "poultry"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": "poultry",
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "thigh",
+     "usda_portion_id": 92977
+    }
+   ]
+  },
+  {
+   "name": "chicken breast, boneless skinless",
+   "slug": "chicken-breast-boneless-skinless",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 171077,
+   "aliases": [
+    "chicken breast",
+    "chicken breasts",
+    "boneless chicken breast",
+    "boneless skinless chicken breasts"
+   ],
+   "diet_tags": [
+    "poultry"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": "poultry",
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "breast",
+     "usda_portion_id": 87920
+    }
+   ]
+  },
+  {
+   "name": "ground chicken",
+   "slug": "ground-chicken",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 171116,
+   "aliases": [
+    "chicken mince",
+    "minced chicken"
+   ],
+   "diet_tags": [
+    "poultry"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": "poultry",
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false
+  },
+  {
+   "name": "ground turkey, 93% lean",
+   "slug": "ground-turkey-93",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 172850,
+   "aliases": [
+    "ground turkey",
+    "turkey mince",
+    "93% lean ground turkey"
+   ],
+   "diet_tags": [
+    "poultry"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": "poultry",
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false
+  },
+  {
+   "name": "turkey breast, boneless",
+   "slug": "turkey-breast",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 174515,
+   "aliases": [
+    "turkey breast",
+    "turkey breast meat"
+   ],
+   "diet_tags": [
+    "poultry"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": "poultry",
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false
+  },
+  {
+   "name": "chicken sausage",
+   "slug": "chicken-sausage",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 173880,
+   "aliases": [
+    "chicken sausages",
+    "turkey sausage",
+    "chicken italian sausage"
+   ],
+   "diet_tags": [
+    "poultry",
+    "pork_trace"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": "poultry",
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "notes": "Often in pork casing: tagged pork_trace (allowed, no limit)."
+  },
+  {
+   "name": "salmon, Atlantic, fillet",
+   "slug": "salmon",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 175167,
+   "aliases": [
+    "salmon",
+    "salmon fillet",
+    "atlantic salmon"
+   ],
+   "diet_tags": [
+    "fish"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": "fish_shellfish",
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "fillet",
+     "usda_portion_id": 95787
+    }
+   ]
+  },
+  {
+   "name": "tilapia fillet",
+   "slug": "tilapia",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 175176,
+   "aliases": [
+    "tilapia",
+    "tilapia fillets"
+   ],
+   "diet_tags": [
+    "fish"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": "fish_shellfish",
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "fillet",
+     "usda_portion_id": 95803
+    }
+   ]
+  },
+  {
+   "name": "cod fillet",
+   "slug": "cod",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 171955,
+   "aliases": [
+    "cod",
+    "atlantic cod",
+    "cod fillets"
+   ],
+   "diet_tags": [
+    "fish"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": "fish_shellfish",
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "fillet",
+     "usda_portion_id": 89621
+    }
+   ]
+  },
+  {
+   "name": "tuna, light, canned in water",
+   "slug": "tuna-canned",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 173709,
+   "aliases": [
+    "canned tuna",
+    "tuna",
+    "light tuna",
+    "tuna in water"
+   ],
+   "diet_tags": [
+    "fish"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "can",
+     "usda_portion_id": 93156
+    }
+   ]
+  },
+  {
+   "name": "shrimp, raw",
+   "slug": "shrimp",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 175179,
+   "aliases": [
+    "shrimp",
+    "prawns",
+    "raw shrimp"
+   ],
+   "diet_tags": [
+    "shellfish"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": "fish_shellfish",
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false
+  },
+  {
+   "name": "egg, large",
+   "slug": "egg-large",
+   "category": "protein",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 171287,
+   "aliases": [
+    "egg",
+    "eggs",
+    "large egg",
+    "large eggs",
+    "whole egg"
+   ],
+   "diet_tags": [
+    "egg"
+   ],
+   "heme_iron_fraction": "0",
+   "safety_category": "egg",
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "count_rounding_step": "1",
+   "count_unit_weight": {
+    "usda_portion_id": 88374
+   },
+   "units": [
+    {
+     "name": "large",
+     "usda_portion_id": 88374
+    },
+    {
+     "name": "medium",
+     "usda_portion_id": 88378
+    },
+    {
+     "name": "extra_large",
+     "usda_portion_id": 88375
+    }
+   ]
+  },
+  {
+   "name": "egg white",
+   "slug": "egg-white",
+   "category": "protein",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 172183,
+   "aliases": [
+    "egg whites",
+    "liquid egg whites"
+   ],
+   "diet_tags": [
+    "egg"
+   ],
+   "heme_iron_fraction": "0",
+   "safety_category": "egg",
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "count_rounding_step": "1",
+   "density": {
+    "usda_portion_id": 90044,
+    "measure": "cup"
+   },
+   "count_unit_weight": {
+    "usda_portion_id": 90043
+   }
+  },
+  {
+   "name": "bacon",
+   "slug": "bacon",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 168277,
+   "aliases": [
+    "bacon strips",
+    "streaky bacon",
+    "pork bacon"
+   ],
+   "diet_tags": [
+    "pork"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "slice",
+     "usda_portion_id": 82801
+    }
+   ]
+  },
+  {
+   "name": "ham, sliced deli",
+   "slug": "ham-deli",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 173863,
+   "aliases": [
+    "ham",
+    "deli ham",
+    "sliced ham"
+   ],
+   "diet_tags": [
+    "pork"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "slice",
+     "usda_portion_id": 93394
+    }
+   ]
+  },
+  {
+   "name": "pork sausage, Italian",
+   "slug": "pork-sausage-italian",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 171631,
+   "aliases": [
+    "pork sausage",
+    "italian sausage",
+    "sausage"
+   ],
+   "diet_tags": [
+    "pork"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": "ground_meat",
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "link",
+     "usda_portion_id": 89105
+    }
+   ]
+  },
+  {
+   "name": "pepperoni",
+   "slug": "pepperoni",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 2759006,
+   "aliases": [
+    "sliced pepperoni"
+   ],
+   "diet_tags": [
+    "pork",
+    "possible_beef"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "diet_review_note": "many brands are pork + beef; allow a pork-only product (it then counts toward the pork cap)",
+   "notes": "USDA FDC 2759006 (beef and pork, Foundation 2026) has no energy/protein/fat values yet."
+  },
+  {
+   "name": "salami",
+   "slug": "salami",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 172938,
+   "aliases": [
+    "hard salami",
+    "genoa salami"
+   ],
+   "diet_tags": [
+    "pork",
+    "possible_beef"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "slice",
+     "usda_portion_id": 91725
+    }
+   ],
+   "diet_review_note": "often pork + beef; allow a pork-only product (it then counts toward the pork cap)"
+  },
+  {
+   "name": "pork chop, boneless",
+   "slug": "pork-chop-boneless",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 167839,
+   "aliases": [
+    "pork chop",
+    "pork chops",
+    "boneless pork chops",
+    "pork loin chop"
+   ],
+   "diet_tags": [
+    "pork"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": "whole_cut_meat",
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "chop",
+     "usda_portion_id": 82069
+    }
+   ]
+  },
+  {
+   "name": "pork tenderloin",
+   "slug": "pork-tenderloin",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 168312,
+   "aliases": [
+    "pork loin tenderloin"
+   ],
+   "diet_tags": [
+    "pork"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": "whole_cut_meat",
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false
+  },
+  {
+   "name": "ground pork",
+   "slug": "ground-pork",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 167902,
+   "aliases": [
+    "pork mince",
+    "minced pork"
+   ],
+   "diet_tags": [
+    "pork"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": "ground_meat",
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false
+  },
+  {
+   "name": "lard",
+   "slug": "lard",
+   "category": "fat_oil",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 171401,
+   "aliases": [
+    "pork lard",
+    "manteca"
+   ],
+   "diet_tags": [
+    "pork_trace"
+   ],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 88638,
+    "measure": "tbsp"
+   }
+  },
+  {
+   "name": "gelatin, pork-derived",
+   "slug": "gelatin-pork",
+   "category": "other",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 169599,
+   "aliases": [
+    "pork gelatin",
+    "porcine gelatin",
+    "pork gelatine"
+   ],
+   "diet_tags": [
+    "pork_trace"
+   ],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "envelope",
+     "usda_portion_id": 85198
+    }
+   ]
+  },
+  {
+   "name": "refried beans, traditional",
+   "slug": "refried-beans-traditional",
+   "category": "legume",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 172438,
+   "aliases": [
+    "refried beans",
+    "traditional refried beans"
+   ],
+   "diet_tags": [
+    "pork_trace"
+   ],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 90622,
+    "measure": "cup"
+   },
+   "notes": "Traditional style is often made with lard: tagged pork_trace."
+  },
+  {
+   "name": "ground beef, 85% lean",
+   "slug": "ground-beef-85",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 171796,
+   "aliases": [
+    "ground beef",
+    "minced beef",
+    "hamburger meat",
+    "beef mince"
+   ],
+   "diet_tags": [
+    "beef"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": "ground_meat",
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false
+  },
+  {
+   "name": "beef steak, top sirloin",
+   "slug": "beef-sirloin-steak",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 168726,
+   "aliases": [
+    "beef steak",
+    "sirloin steak",
+    "steak",
+    "beef"
+   ],
+   "diet_tags": [
+    "beef"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": "whole_cut_meat",
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false
+  },
+  {
+   "name": "beef broth",
+   "slug": "beef-broth",
+   "category": "condiment",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 171538,
+   "aliases": [
+    "beef stock",
+    "beef bouillon broth"
+   ],
+   "diet_tags": [
+    "beef"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 88950,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "beef bouillon cube",
+   "slug": "beef-bouillon-cube",
+   "category": "condiment",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 171561,
+   "aliases": [
+    "beef bouillon",
+    "beef stock cube",
+    "beef cube"
+   ],
+   "diet_tags": [
+    "beef"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "count_unit_weight": {
+    "usda_portion_id": 88991
+   }
+  },
+  {
+   "name": "beef tallow",
+   "slug": "beef-tallow",
+   "category": "fat_oil",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 171400,
+   "aliases": [
+    "tallow",
+    "beef fat",
+    "beef dripping"
+   ],
+   "diet_tags": [
+    "beef"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 88636,
+    "measure": "tbsp"
+   }
+  },
+  {
+   "name": "gelatin, bovine",
+   "slug": "gelatin-bovine",
+   "category": "other",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 169599,
+   "aliases": [
+    "beef gelatin",
+    "bovine gelatin",
+    "beef gelatine"
+   ],
+   "diet_tags": [
+    "beef"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false
+  },
+  {
+   "name": "beef hot dog",
+   "slug": "beef-hot-dog",
+   "category": "protein",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 173862,
+   "aliases": [
+    "hot dog",
+    "hot dogs",
+    "beef frank",
+    "frankfurter"
+   ],
+   "diet_tags": [
+    "beef"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "count_rounding_step": "1",
+   "count_unit_weight": {
+    "usda_portion_id": 93392
+   }
+  },
+  {
+   "name": "gelatin, unflavored",
+   "slug": "gelatin-unflavored",
+   "category": "other",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 169599,
+   "aliases": [
+    "gelatin",
+    "gelatine",
+    "unflavored gelatin"
+   ],
+   "diet_tags": [
+    "possible_beef"
+   ],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "envelope",
+     "usda_portion_id": 85198
+    }
+   ],
+   "diet_review_note": "gelatin source not stated; may be bovine (R2)"
+  },
+  {
+   "name": "marshmallows",
+   "slug": "marshmallows",
+   "category": "sweetener",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 167995,
+   "aliases": [
+    "marshmallow",
+    "mini marshmallows"
+   ],
+   "diet_tags": [
+    "possible_beef"
+   ],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "marshmallow",
+     "usda_portion_id": 82365
+    }
+   ],
+   "diet_review_note": "contains gelatin of unstated source; may be bovine"
+  },
+  {
+   "name": "chicken bouillon cube",
+   "slug": "chicken-bouillon-cube",
+   "category": "condiment",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 171562,
+   "aliases": [
+    "chicken bouillon",
+    "chicken stock cube",
+    "bouillon cube",
+    "stock cube"
+   ],
+   "diet_tags": [
+    "poultry",
+    "possible_beef"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "count_unit_weight": {
+    "usda_portion_id": 88992
+   },
+   "diet_review_note": "some bouillon cubes contain beef fat or extract"
+  },
+  {
+   "name": "cheddar cheese",
+   "slug": "cheddar",
+   "category": "dairy",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 328637,
+   "aliases": [
+    "cheddar",
+    "sharp cheddar",
+    "shredded cheddar"
+   ],
+   "diet_tags": [
+    "dairy",
+    "possible_beef"
+   ],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "slice",
+     "usda_portion_id": 119619
+    },
+    {
+     "name": "cup_shredded",
+     "usda_portion_id": 119620
+    }
+   ],
+   "diet_review_note": "rennet may come from calves; allow if your cheese uses microbial or vegetable rennet"
+  },
+  {
+   "name": "mozzarella, part-skim",
+   "slug": "mozzarella-part-skim",
+   "category": "dairy",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 170847,
+   "aliases": [
+    "mozzarella",
+    "part skim mozzarella",
+    "shredded mozzarella"
+   ],
+   "diet_tags": [
+    "dairy",
+    "possible_beef"
+   ],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "diet_review_note": "rennet may come from calves; allow if your cheese uses microbial or vegetable rennet"
+  },
+  {
+   "name": "parmesan, grated",
+   "slug": "parmesan",
+   "category": "dairy",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 171247,
+   "aliases": [
+    "parmesan",
+    "parmesan cheese",
+    "parmigiano"
+   ],
+   "diet_tags": [
+    "dairy",
+    "possible_beef"
+   ],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 88261,
+    "measure": "cup"
+   },
+   "diet_review_note": "rennet may come from calves; allow if your cheese uses microbial or vegetable rennet (traditional Parmigiano always uses calf rennet)"
+  },
+  {
+   "name": "feta cheese",
+   "slug": "feta",
+   "category": "dairy",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 173420,
+   "aliases": [
+    "feta",
+    "crumbled feta"
+   ],
+   "diet_tags": [
+    "dairy",
+    "possible_beef"
+   ],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "cup_crumbled",
+     "usda_portion_id": 92489
+    }
+   ],
+   "diet_review_note": "rennet may come from calves; allow if your cheese uses microbial or vegetable rennet"
+  },
+  {
+   "name": "cottage cheese, 2%",
+   "slug": "cottage-cheese-2",
+   "category": "dairy",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 172182,
+   "aliases": [
+    "cottage cheese",
+    "lowfat cottage cheese"
+   ],
+   "diet_tags": [
+    "dairy",
+    "possible_beef"
+   ],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 90042,
+    "measure": "cup"
+   },
+   "diet_review_note": "rennet may come from calves; allow if your cheese uses microbial or vegetable rennet"
+  },
+  {
+   "name": "milk, 2%",
+   "slug": "milk-2",
+   "category": "dairy",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 171267,
+   "aliases": [
+    "milk",
+    "2% milk",
+    "reduced fat milk",
+    "low-fat milk"
+   ],
+   "diet_tags": [
+    "dairy"
+   ],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 88320,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "milk, whole",
+   "slug": "milk-whole",
+   "category": "dairy",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 171265,
+   "aliases": [
+    "whole milk",
+    "full fat milk"
+   ],
+   "diet_tags": [
+    "dairy"
+   ],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 88314,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "milk, skim",
+   "slug": "milk-skim",
+   "category": "dairy",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 171269,
+   "aliases": [
+    "skim milk",
+    "nonfat milk",
+    "fat free milk"
+   ],
+   "diet_tags": [
+    "dairy"
+   ],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 88325,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "Greek yogurt, plain nonfat",
+   "slug": "greek-yogurt-nonfat",
+   "category": "dairy",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 170894,
+   "aliases": [
+    "greek yogurt",
+    "nonfat greek yogurt",
+    "plain greek yogurt",
+    "0% greek yogurt",
+    "greek yoghurt"
+   ],
+   "diet_tags": [
+    "dairy"
+   ],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "container",
+     "usda_portion_id": 87513
+    }
+   ],
+   "notes": "Allowed: plain, no gelatin (R2). A brand listing gelatin is excluded unless the gelatin is pork-derived."
+  },
+  {
+   "name": "Greek yogurt, plain whole milk",
+   "slug": "greek-yogurt-whole",
+   "category": "dairy",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 171304,
+   "aliases": [
+    "whole milk greek yogurt",
+    "full fat greek yogurt"
+   ],
+   "diet_tags": [
+    "dairy"
+   ],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false
+  },
+  {
+   "name": "yogurt, plain whole milk",
+   "slug": "yogurt-plain-whole",
+   "category": "dairy",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 171284,
+   "aliases": [
+    "yogurt",
+    "plain yogurt",
+    "dahi",
+    "curd",
+    "yoghurt"
+   ],
+   "diet_tags": [
+    "dairy"
+   ],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 88365,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "butter, salted",
+   "slug": "butter-salted",
+   "category": "dairy",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 173410,
+   "aliases": [
+    "butter",
+    "salted butter"
+   ],
+   "diet_tags": [
+    "dairy"
+   ],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 92457,
+    "measure": "tbsp"
+   },
+   "units": [
+    {
+     "name": "stick",
+     "usda_portion_id": 92459
+    },
+    {
+     "name": "pat",
+     "usda_portion_id": 92456
+    }
+   ]
+  },
+  {
+   "name": "butter, unsalted",
+   "slug": "butter-unsalted",
+   "category": "dairy",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 173430,
+   "aliases": [
+    "unsalted butter",
+    "sweet butter"
+   ],
+   "diet_tags": [
+    "dairy"
+   ],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 92512,
+    "measure": "tbsp"
+   },
+   "units": [
+    {
+     "name": "stick",
+     "usda_portion_id": 92514
+    }
+   ]
+  },
+  {
+   "name": "ghee",
+   "slug": "ghee",
+   "category": "fat_oil",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 173412,
+   "aliases": [
+    "clarified butter",
+    "desi ghee"
+   ],
+   "diet_tags": [
+    "dairy"
+   ],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 92464,
+    "measure": "tbsp"
+   }
+  },
+  {
+   "name": "heavy cream",
+   "slug": "heavy-cream",
+   "category": "dairy",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 170859,
+   "aliases": [
+    "heavy whipping cream",
+    "whipping cream",
+    "cream"
+   ],
+   "diet_tags": [
+    "dairy"
+   ],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 87434,
+    "measure": "tbsp"
+   }
+  },
+  {
+   "name": "long-grain white rice (dry)",
+   "slug": "rice-long-grain-white",
+   "category": "grain",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 168877,
+   "aliases": [
+    "white rice",
+    "long grain rice",
+    "rice",
+    "basmati rice",
+    "jasmine rice",
+    "long-grain white rice"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 83927,
+    "measure": "cup"
+   },
+   "notes": "Basmati and jasmine map here (both long-grain white)."
+  },
+  {
+   "name": "brown rice (dry)",
+   "slug": "rice-brown",
+   "category": "grain",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 169703,
+   "aliases": [
+    "brown rice",
+    "long grain brown rice"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 85377,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "rolled oats",
+   "slug": "rolled-oats",
+   "category": "grain",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 173904,
+   "aliases": [
+    "oats",
+    "old-fashioned oats",
+    "old fashioned rolled oats",
+    "oatmeal",
+    "quick oats"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 93454,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "all-purpose flour",
+   "slug": "flour-all-purpose",
+   "category": "grain",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 168894,
+   "aliases": [
+    "flour",
+    "plain flour",
+    "ap flour",
+    "maida"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 83944,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "whole wheat flour",
+   "slug": "flour-whole-wheat",
+   "category": "grain",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 168893,
+   "aliases": [
+    "atta",
+    "chapati flour",
+    "whole-wheat flour",
+    "wholemeal flour"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 83943,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "chapati (roti)",
+   "slug": "chapati",
+   "category": "grain",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 171844,
+   "aliases": [
+    "chapati",
+    "chapatis",
+    "roti",
+    "rotis",
+    "phulka"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "count_rounding_step": "1",
+   "count_unit_weight": {
+    "usda_portion_id": 89459
+   },
+   "notes": "Accepted substitution: chapati → flour tortilla, small (count for count)."
+  },
+  {
+   "name": "flour tortilla, small",
+   "slug": "flour-tortilla-small",
+   "category": "grain",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 167535,
+   "aliases": [
+    "flour tortilla",
+    "flour tortillas",
+    "small flour tortillas",
+    "soft taco tortillas",
+    "tortilla",
+    "tortillas"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "count_rounding_step": "1",
+   "count_unit_weight": {
+    "label": "flour-tortilla-small"
+   },
+   "units": [
+    {
+     "name": "tortilla",
+     "label": "flour-tortilla-small"
+    }
+   ],
+   "notes": "Piece weight is an ESTIMATE from the Price Rite 30-count bag (≈652 g); replace with label values. Some brands use lard (pork_trace, allowed)."
+  },
+  {
+   "name": "corn tortilla",
+   "slug": "corn-tortilla",
+   "category": "grain",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 175036,
+   "aliases": [
+    "corn tortillas"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "count_rounding_step": "1",
+   "count_unit_weight": {
+    "usda_portion_id": 95472
+   }
+  },
+  {
+   "name": "whole wheat bread",
+   "slug": "bread-whole-wheat",
+   "category": "grain",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 172688,
+   "aliases": [
+    "whole wheat bread",
+    "wheat bread",
+    "bread",
+    "bread slice"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "count_rounding_step": "1",
+   "count_unit_weight": {
+    "usda_portion_id": 91108
+   },
+   "units": [
+    {
+     "name": "slice",
+     "usda_portion_id": 91108
+    }
+   ]
+  },
+  {
+   "name": "pita bread",
+   "slug": "pita",
+   "category": "grain",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 174915,
+   "aliases": [
+    "pita",
+    "pita pocket"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "count_rounding_step": "1",
+   "count_unit_weight": {
+    "usda_portion_id": 95146
+   }
+  },
+  {
+   "name": "pasta (dry)",
+   "slug": "pasta-dry",
+   "category": "grain",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 169736,
+   "aliases": [
+    "pasta",
+    "spaghetti",
+    "penne",
+    "macaroni"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false
+  },
+  {
+   "name": "quinoa (dry)",
+   "slug": "quinoa",
+   "category": "grain",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 168874,
+   "aliases": [
+    "quinoa",
+    "white quinoa"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 83924,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "couscous (dry)",
+   "slug": "couscous",
+   "category": "grain",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 169699,
+   "aliases": [
+    "couscous"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 85371,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "cornstarch",
+   "slug": "cornstarch",
+   "category": "grain",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 169698,
+   "aliases": [
+    "corn starch",
+    "cornflour (uk)"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 85370,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "chickpeas, canned, drained",
+   "slug": "chickpeas-canned",
+   "category": "legume",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 173800,
+   "aliases": [
+    "chickpeas",
+    "garbanzo beans",
+    "chana",
+    "canned chickpeas"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "can",
+     "usda_portion_id": 93273
+    }
+   ]
+  },
+  {
+   "name": "black beans, canned",
+   "slug": "black-beans-canned",
+   "category": "legume",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 175188,
+   "aliases": [
+    "black beans",
+    "canned black beans"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 95816,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "kidney beans, canned, drained",
+   "slug": "kidney-beans-canned",
+   "category": "legume",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 174285,
+   "aliases": [
+    "kidney beans",
+    "rajma",
+    "red kidney beans"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "can",
+     "usda_portion_id": 94082
+    }
+   ]
+  },
+  {
+   "name": "brown lentils (dry)",
+   "slug": "lentils-brown",
+   "category": "legume",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 172420,
+   "aliases": [
+    "lentils",
+    "green lentils",
+    "brown lentils"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 90594,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "red lentils (dry)",
+   "slug": "lentils-red",
+   "category": "legume",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 174284,
+   "aliases": [
+    "red lentils",
+    "masoor dal",
+    "masoor"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 94081,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "tofu, firm",
+   "slug": "tofu-firm",
+   "category": "legume",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 172448,
+   "aliases": [
+    "tofu",
+    "firm tofu",
+    "extra firm tofu"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false
+  },
+  {
+   "name": "edamame, frozen",
+   "slug": "edamame",
+   "category": "legume",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 168410,
+   "aliases": [
+    "edamame",
+    "shelled edamame"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "freezer",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 83051,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "peanut butter",
+   "slug": "peanut-butter",
+   "category": "nut_seed",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 174266,
+   "aliases": [
+    "peanut butter",
+    "smooth peanut butter"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 94049,
+    "measure": "tbsp"
+   }
+  },
+  {
+   "name": "yellow onion",
+   "slug": "onion-yellow",
+   "category": "vegetable",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 170000,
+   "aliases": [
+    "onion",
+    "onions",
+    "yellow onions",
+    "brown onion"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "count_rounding_step": "0.5",
+   "count_unit_weight": {
+    "usda_portion_id": 85860
+   },
+   "units": [
+    {
+     "name": "cup_chopped",
+     "usda_portion_id": 85855
+    },
+    {
+     "name": "large",
+     "usda_portion_id": 85858
+    },
+    {
+     "name": "small",
+     "usda_portion_id": 85862
+    }
+   ]
+  },
+  {
+   "name": "red onion",
+   "slug": "onion-red",
+   "category": "vegetable",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 790577,
+   "aliases": [
+    "red onions",
+    "purple onion"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "count_rounding_step": "0.5",
+   "count_unit_weight": {
+    "usda_portion_id": 234609
+   }
+  },
+  {
+   "name": "green onion",
+   "slug": "green-onion",
+   "category": "vegetable",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 170005,
+   "aliases": [
+    "scallion",
+    "scallions",
+    "spring onion",
+    "green onions"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "count_rounding_step": "1",
+   "count_unit_weight": {
+    "usda_portion_id": 85881
+   },
+   "units": [
+    {
+     "name": "tbsp_chopped",
+     "usda_portion_id": 85879
+    }
+   ]
+  },
+  {
+   "name": "garlic",
+   "slug": "garlic",
+   "category": "vegetable",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 169230,
+   "aliases": [
+    "garlic cloves",
+    "fresh garlic",
+    "minced garlic"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 84479,
+    "measure": "tsp"
+   },
+   "units": [
+    {
+     "name": "clove",
+     "usda_portion_id": 84480
+    }
+   ]
+  },
+  {
+   "name": "ginger root",
+   "slug": "ginger",
+   "category": "vegetable",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 169231,
+   "aliases": [
+    "ginger",
+    "fresh ginger",
+    "ginger root"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 84482,
+    "measure": "tsp"
+   }
+  },
+  {
+   "name": "tomato",
+   "slug": "tomato",
+   "category": "vegetable",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 170457,
+   "aliases": [
+    "tomatoes",
+    "fresh tomato",
+    "roma tomato",
+    "plum tomato"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "count_rounding_step": "0.5",
+   "count_unit_weight": {
+    "usda_portion_id": 86686
+   },
+   "units": [
+    {
+     "name": "cup_chopped",
+     "usda_portion_id": 86682
+    },
+    {
+     "name": "cherry",
+     "usda_portion_id": 86684
+    }
+   ]
+  },
+  {
+   "name": "diced tomatoes, canned",
+   "slug": "tomatoes-canned",
+   "category": "vegetable",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 170051,
+   "aliases": [
+    "canned tomatoes",
+    "diced tomatoes",
+    "crushed tomatoes"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 85963,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "tomato paste",
+   "slug": "tomato-paste",
+   "category": "vegetable",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 170459,
+   "aliases": [
+    "tomato puree concentrate"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 86698,
+    "measure": "tbsp"
+   },
+   "units": [
+    {
+     "name": "can",
+     "usda_portion_id": 86699
+    }
+   ]
+  },
+  {
+   "name": "tomato sauce",
+   "slug": "tomato-sauce",
+   "category": "vegetable",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 170054,
+   "aliases": [
+    "canned tomato sauce",
+    "passata"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 85971,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "spinach, fresh",
+   "slug": "spinach",
+   "category": "vegetable",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 168462,
+   "aliases": [
+    "spinach",
+    "baby spinach",
+    "palak",
+    "fresh spinach"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "cup",
+     "usda_portion_id": 83132
+    },
+    {
+     "name": "bunch",
+     "usda_portion_id": 83133
+    }
+   ]
+  },
+  {
+   "name": "spinach, frozen",
+   "slug": "spinach-frozen",
+   "category": "vegetable",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 169287,
+   "aliases": [
+    "frozen spinach",
+    "frozen chopped spinach"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "freezer",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "cup",
+     "usda_portion_id": 84600
+    }
+   ]
+  },
+  {
+   "name": "broccoli florets",
+   "slug": "broccoli",
+   "category": "vegetable",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 169330,
+   "aliases": [
+    "broccoli",
+    "broccoli crowns"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "cup",
+     "usda_portion_id": 84659
+    }
+   ]
+  },
+  {
+   "name": "cauliflower",
+   "slug": "cauliflower",
+   "category": "vegetable",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 169986,
+   "aliases": [
+    "cauliflower florets",
+    "gobi"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "head",
+     "usda_portion_id": 85821
+    },
+    {
+     "name": "cup_chopped",
+     "usda_portion_id": 85818
+    }
+   ]
+  },
+  {
+   "name": "bell pepper",
+   "slug": "bell-pepper",
+   "category": "vegetable",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 170108,
+   "aliases": [
+    "red bell pepper",
+    "bell peppers",
+    "capsicum",
+    "sweet pepper",
+    "yellow bell pepper"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "count_rounding_step": "0.5",
+   "count_unit_weight": {
+    "usda_portion_id": 86066
+   },
+   "units": [
+    {
+     "name": "cup_chopped",
+     "usda_portion_id": 86062
+    }
+   ]
+  },
+  {
+   "name": "green bell pepper",
+   "slug": "bell-pepper-green",
+   "category": "vegetable",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 170427,
+   "aliases": [
+    "green pepper",
+    "green capsicum"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "count_rounding_step": "0.5",
+   "count_unit_weight": {
+    "usda_portion_id": 86627
+   }
+  },
+  {
+   "name": "carrot",
+   "slug": "carrot",
+   "category": "vegetable",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 170393,
+   "aliases": [
+    "carrots"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "count_rounding_step": "1",
+   "count_unit_weight": {
+    "usda_portion_id": 86559
+   },
+   "units": [
+    {
+     "name": "cup_chopped",
+     "usda_portion_id": 86555
+    }
+   ]
+  },
+  {
+   "name": "celery",
+   "slug": "celery",
+   "category": "vegetable",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 169988,
+   "aliases": [
+    "celery stalks",
+    "celery ribs"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "stalk",
+     "usda_portion_id": 85828
+    },
+    {
+     "name": "cup_chopped",
+     "usda_portion_id": 85824
+    }
+   ]
+  },
+  {
+   "name": "cucumber",
+   "slug": "cucumber",
+   "category": "vegetable",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 168409,
+   "aliases": [
+    "cucumbers",
+    "english cucumber"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "count_rounding_step": "0.5",
+   "count_unit_weight": {
+    "usda_portion_id": 83050
+   }
+  },
+  {
+   "name": "zucchini",
+   "slug": "zucchini",
+   "category": "vegetable",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 169291,
+   "aliases": [
+    "courgette",
+    "zucchinis"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "count_rounding_step": "0.5",
+   "count_unit_weight": {
+    "usda_portion_id": 84610
+   }
+  },
+  {
+   "name": "white mushrooms",
+   "slug": "mushrooms-white",
+   "category": "vegetable",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 169251,
+   "aliases": [
+    "mushrooms",
+    "button mushrooms"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "cup_sliced",
+     "usda_portion_id": 84526
+    },
+    {
+     "name": "medium",
+     "usda_portion_id": 84529
+    }
+   ]
+  },
+  {
+   "name": "green cabbage",
+   "slug": "cabbage-green",
+   "category": "vegetable",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 169975,
+   "aliases": [
+    "cabbage",
+    "head of cabbage"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "count_rounding_step": "0.25",
+   "count_unit_weight": {
+    "usda_portion_id": 85795
+   },
+   "units": [
+    {
+     "name": "head",
+     "usda_portion_id": 85795
+    },
+    {
+     "name": "cup_shredded",
+     "usda_portion_id": 85792
+    }
+   ]
+  },
+  {
+   "name": "kale",
+   "slug": "kale",
+   "category": "vegetable",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 168421,
+   "aliases": [
+    "curly kale",
+    "lacinato kale"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "cup",
+     "usda_portion_id": 83066
+    }
+   ]
+  },
+  {
+   "name": "romaine lettuce",
+   "slug": "romaine",
+   "category": "vegetable",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 169247,
+   "aliases": [
+    "romaine",
+    "romaine hearts",
+    "cos lettuce"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "head",
+     "usda_portion_id": 84509
+    },
+    {
+     "name": "cup_shredded",
+     "usda_portion_id": 84506
+    }
+   ]
+  },
+  {
+   "name": "iceberg lettuce",
+   "slug": "iceberg",
+   "category": "vegetable",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 169248,
+   "aliases": [
+    "iceberg",
+    "lettuce"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "head",
+     "usda_portion_id": 84514
+    }
+   ]
+  },
+  {
+   "name": "russet potato",
+   "slug": "potato-russet",
+   "category": "vegetable",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 170027,
+   "aliases": [
+    "potato",
+    "potatoes",
+    "russet potatoes",
+    "aloo"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "count_rounding_step": "0.5",
+   "count_unit_weight": {
+    "usda_portion_id": 85923
+   }
+  },
+  {
+   "name": "sweet potato",
+   "slug": "sweet-potato",
+   "category": "vegetable",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 168482,
+   "aliases": [
+    "sweet potatoes",
+    "yam (us)"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "count_rounding_step": "0.5",
+   "count_unit_weight": {
+    "usda_portion_id": 83167
+   }
+  },
+  {
+   "name": "green beans",
+   "slug": "green-beans",
+   "category": "vegetable",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 169961,
+   "aliases": [
+    "string beans",
+    "french beans",
+    "snap beans"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "cup",
+     "usda_portion_id": 85758
+    }
+   ]
+  },
+  {
+   "name": "peas, frozen",
+   "slug": "peas-frozen",
+   "category": "vegetable",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 170016,
+   "aliases": [
+    "frozen peas",
+    "green peas",
+    "peas",
+    "matar"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "freezer",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 85902,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "corn kernels, frozen",
+   "slug": "corn-frozen",
+   "category": "vegetable",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 168398,
+   "aliases": [
+    "frozen corn",
+    "corn",
+    "sweet corn"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "freezer",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 83030,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "jalapeño",
+   "slug": "jalapeno",
+   "category": "vegetable",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 168576,
+   "aliases": [
+    "jalapeno",
+    "jalapenos",
+    "green chili",
+    "green chile"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "count_rounding_step": "0.5",
+   "count_unit_weight": {
+    "usda_portion_id": 83357
+   }
+  },
+  {
+   "name": "cilantro",
+   "slug": "cilantro",
+   "category": "vegetable",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 169997,
+   "aliases": [
+    "fresh coriander",
+    "coriander leaves",
+    "dhania"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "cup",
+     "usda_portion_id": 85844
+    }
+   ]
+  },
+  {
+   "name": "parsley",
+   "slug": "parsley",
+   "category": "vegetable",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 170416,
+   "aliases": [
+    "fresh parsley",
+    "flat-leaf parsley"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 86608,
+    "measure": "tbsp"
+   },
+   "units": [
+    {
+     "name": "cup_chopped",
+     "usda_portion_id": 86607
+    }
+   ]
+  },
+  {
+   "name": "mint",
+   "slug": "mint",
+   "category": "vegetable",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 173475,
+   "aliases": [
+    "fresh mint",
+    "mint leaves",
+    "pudina"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false
+  },
+  {
+   "name": "eggplant",
+   "slug": "eggplant",
+   "category": "vegetable",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 169228,
+   "aliases": [
+    "aubergine",
+    "brinjal",
+    "baingan"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "count_rounding_step": "0.5",
+   "count_unit_weight": {
+    "usda_portion_id": 84476
+   }
+  },
+  {
+   "name": "okra",
+   "slug": "okra",
+   "category": "vegetable",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 169260,
+   "aliases": [
+    "bhindi",
+    "lady finger"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "cup",
+     "usda_portion_id": 84553
+    }
+   ]
+  },
+  {
+   "name": "asparagus",
+   "slug": "asparagus",
+   "category": "vegetable",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 168389,
+   "aliases": [
+    "asparagus spears"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "spear",
+     "usda_portion_id": 83014
+    }
+   ]
+  },
+  {
+   "name": "brussels sprouts",
+   "slug": "brussels-sprouts",
+   "category": "vegetable",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 170383,
+   "aliases": [
+    "brussel sprouts",
+    "sprouts"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "sprout",
+     "usda_portion_id": 86541
+    }
+   ]
+  },
+  {
+   "name": "banana",
+   "slug": "banana",
+   "category": "fruit",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 173944,
+   "aliases": [
+    "bananas",
+    "ripe banana"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "count_rounding_step": "0.5",
+   "count_unit_weight": {
+    "usda_portion_id": 93515
+   }
+  },
+  {
+   "name": "apple",
+   "slug": "apple",
+   "category": "fruit",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 171688,
+   "aliases": [
+    "apples",
+    "gala apple",
+    "honeycrisp apple"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "count_rounding_step": "1",
+   "count_unit_weight": {
+    "usda_portion_id": 89193
+   }
+  },
+  {
+   "name": "orange",
+   "slug": "orange",
+   "category": "fruit",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 169097,
+   "aliases": [
+    "oranges",
+    "navel orange"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "count_rounding_step": "1",
+   "count_unit_weight": {
+    "usda_portion_id": 84230
+   }
+  },
+  {
+   "name": "strawberries",
+   "slug": "strawberries",
+   "category": "fruit",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 167762,
+   "aliases": [
+    "strawberry",
+    "fresh strawberries"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "cup",
+     "usda_portion_id": 81922
+    }
+   ]
+  },
+  {
+   "name": "blueberries",
+   "slug": "blueberries",
+   "category": "fruit",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 171711,
+   "aliases": [
+    "blueberry",
+    "fresh blueberries"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "cup",
+     "usda_portion_id": 89238
+    }
+   ]
+  },
+  {
+   "name": "mango",
+   "slug": "mango",
+   "category": "fruit",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 169910,
+   "aliases": [
+    "mangoes",
+    "mangos"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "count_rounding_step": "0.5",
+   "count_unit_weight": {
+    "usda_portion_id": 85652
+   }
+  },
+  {
+   "name": "grapes",
+   "slug": "grapes",
+   "category": "fruit",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 174683,
+   "aliases": [
+    "green grapes",
+    "red grapes"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "cup",
+     "usda_portion_id": 94748
+    }
+   ]
+  },
+  {
+   "name": "lemon juice",
+   "slug": "lemon-juice",
+   "category": "fruit",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 167747,
+   "aliases": [
+    "fresh lemon juice",
+    "juice of lemon"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 81887,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "lime juice",
+   "slug": "lime-juice",
+   "category": "fruit",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 168156,
+   "aliases": [
+    "fresh lime juice",
+    "juice of lime"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 82572,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "lemon",
+   "slug": "lemon",
+   "category": "fruit",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 167746,
+   "aliases": [
+    "lemons",
+    "whole lemon"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "count_rounding_step": "0.5",
+   "count_unit_weight": {
+    "usda_portion_id": 81883
+   }
+  },
+  {
+   "name": "raisins",
+   "slug": "raisins",
+   "category": "fruit",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 168165,
+   "aliases": [
+    "dark raisins",
+    "kishmish"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 82588,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "dates, medjool",
+   "slug": "dates-medjool",
+   "category": "fruit",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 168191,
+   "aliases": [
+    "dates",
+    "medjool dates",
+    "khajur"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "count_rounding_step": "1",
+   "count_unit_weight": {
+    "usda_portion_id": 82634
+   }
+  },
+  {
+   "name": "avocado",
+   "slug": "avocado",
+   "category": "fruit",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 171705,
+   "aliases": [
+    "avocados",
+    "hass avocado"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "count_rounding_step": "0.5",
+   "count_unit_weight": {
+    "usda_portion_id": 89226
+   }
+  },
+  {
+   "name": "olive oil",
+   "slug": "olive-oil",
+   "category": "fat_oil",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 171413,
+   "aliases": [
+    "extra virgin olive oil",
+    "evoo",
+    "olive oil"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 88667,
+    "measure": "tbsp"
+   }
+  },
+  {
+   "name": "vegetable oil",
+   "slug": "vegetable-oil",
+   "category": "fat_oil",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 172336,
+   "aliases": [
+    "canola oil",
+    "neutral oil",
+    "cooking oil",
+    "vegetable oil",
+    "rapeseed oil"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 90374,
+    "measure": "tbsp"
+   },
+   "notes": "Mapped to canola oil."
+  },
+  {
+   "name": "coconut oil",
+   "slug": "coconut-oil",
+   "category": "fat_oil",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 171412,
+   "aliases": [
+    "virgin coconut oil"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 88664,
+    "measure": "tbsp"
+   }
+  },
+  {
+   "name": "sesame oil",
+   "slug": "sesame-oil",
+   "category": "fat_oil",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 171016,
+   "aliases": [
+    "toasted sesame oil"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 87777,
+    "measure": "tbsp"
+   }
+  },
+  {
+   "name": "almonds",
+   "slug": "almonds",
+   "category": "nut_seed",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 170567,
+   "aliases": [
+    "almond",
+    "raw almonds",
+    "badam"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "cup",
+     "usda_portion_id": 86863
+    }
+   ]
+  },
+  {
+   "name": "cashews",
+   "slug": "cashews",
+   "category": "nut_seed",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 170162,
+   "aliases": [
+    "cashew nuts",
+    "kaju"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false
+  },
+  {
+   "name": "peanuts",
+   "slug": "peanuts",
+   "category": "nut_seed",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 172430,
+   "aliases": [
+    "raw peanuts",
+    "groundnuts"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "cup",
+     "usda_portion_id": 90609
+    }
+   ]
+  },
+  {
+   "name": "walnuts",
+   "slug": "walnuts",
+   "category": "nut_seed",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 170187,
+   "aliases": [
+    "walnut halves",
+    "english walnuts"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "cup_chopped",
+     "usda_portion_id": 86201
+    }
+   ]
+  },
+  {
+   "name": "chia seeds",
+   "slug": "chia-seeds",
+   "category": "nut_seed",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 170554,
+   "aliases": [
+    "chia"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false
+  },
+  {
+   "name": "flaxseed",
+   "slug": "flaxseed",
+   "category": "nut_seed",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 169414,
+   "aliases": [
+    "flax seeds",
+    "linseed",
+    "ground flaxseed"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 84816,
+    "measure": "tbsp"
+   }
+  },
+  {
+   "name": "sesame seeds",
+   "slug": "sesame-seeds",
+   "category": "nut_seed",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 170150,
+   "aliases": [
+    "sesame",
+    "til"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 86136,
+    "measure": "tbsp"
+   }
+  },
+  {
+   "name": "sunflower seeds",
+   "slug": "sunflower-seeds",
+   "category": "nut_seed",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 170562,
+   "aliases": [
+    "sunflower kernels"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 86856,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "tahini",
+   "slug": "tahini",
+   "category": "nut_seed",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 170189,
+   "aliases": [
+    "sesame paste",
+    "tahina"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 86209,
+    "measure": "tbsp"
+   }
+  },
+  {
+   "name": "salt",
+   "slug": "salt",
+   "category": "spice",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 173468,
+   "aliases": [
+    "table salt",
+    "kosher salt",
+    "sea salt"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": true,
+   "density": {
+    "usda_portion_id": 92594,
+    "measure": "tsp"
+   }
+  },
+  {
+   "name": "black pepper",
+   "slug": "black-pepper",
+   "category": "spice",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 170931,
+   "aliases": [
+    "ground black pepper",
+    "pepper",
+    "kali mirch"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": true,
+   "density": {
+    "usda_portion_id": 87560,
+    "measure": "tsp"
+   }
+  },
+  {
+   "name": "ground cumin",
+   "slug": "cumin-ground",
+   "category": "spice",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 170923,
+   "aliases": [
+    "cumin",
+    "cumin powder",
+    "jeera powder"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": true,
+   "density": {
+    "usda_portion_id": 87544,
+    "measure": "tsp"
+   }
+  },
+  {
+   "name": "cumin seeds",
+   "slug": "cumin-seeds",
+   "category": "spice",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 170923,
+   "aliases": [
+    "whole cumin",
+    "jeera"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": true,
+   "density": {
+    "usda_portion_id": 87544,
+    "measure": "tsp"
+   }
+  },
+  {
+   "name": "ground coriander",
+   "slug": "coriander-ground",
+   "category": "spice",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 170922,
+   "aliases": [
+    "coriander",
+    "coriander powder",
+    "dhania powder"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": true,
+   "density": {
+    "usda_portion_id": 87542,
+    "measure": "tsp"
+   }
+  },
+  {
+   "name": "paprika",
+   "slug": "paprika",
+   "category": "spice",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 171329,
+   "aliases": [
+    "sweet paprika",
+    "kashmiri chili powder"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": true,
+   "density": {
+    "usda_portion_id": 88447,
+    "measure": "tsp"
+   }
+  },
+  {
+   "name": "smoked paprika",
+   "slug": "smoked-paprika",
+   "category": "spice",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 171329,
+   "aliases": [
+    "pimenton"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": true,
+   "density": {
+    "usda_portion_id": 88447,
+    "measure": "tsp"
+   },
+   "notes": "Nutrition from USDA paprika (no separate smoked entry)."
+  },
+  {
+   "name": "ground turmeric",
+   "slug": "turmeric",
+   "category": "spice",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 172231,
+   "aliases": [
+    "turmeric",
+    "turmeric powder",
+    "haldi"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": true,
+   "density": {
+    "usda_portion_id": 90123,
+    "measure": "tsp"
+   }
+  },
+  {
+   "name": "chili powder",
+   "slug": "chili-powder",
+   "category": "spice",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 171319,
+   "aliases": [
+    "chilli powder",
+    "red chili powder",
+    "mirchi powder"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": true,
+   "density": {
+    "usda_portion_id": 88427,
+    "measure": "tsp"
+   }
+  },
+  {
+   "name": "cayenne pepper",
+   "slug": "cayenne",
+   "category": "spice",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 170932,
+   "aliases": [
+    "cayenne",
+    "ground cayenne"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": true,
+   "density": {
+    "usda_portion_id": 87564,
+    "measure": "tsp"
+   }
+  },
+  {
+   "name": "red pepper flakes",
+   "slug": "red-pepper-flakes",
+   "category": "spice",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 170932,
+   "aliases": [
+    "crushed red pepper",
+    "chili flakes"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": true,
+   "density": {
+    "usda_portion_id": 87564,
+    "measure": "tsp"
+   },
+   "notes": "Nutrition from USDA red/cayenne pepper."
+  },
+  {
+   "name": "garlic powder",
+   "slug": "garlic-powder",
+   "category": "spice",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 171325,
+   "aliases": [
+    "granulated garlic"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": true,
+   "density": {
+    "usda_portion_id": 88439,
+    "measure": "tsp"
+   }
+  },
+  {
+   "name": "onion powder",
+   "slug": "onion-powder",
+   "category": "spice",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 171327,
+   "aliases": [
+    "granulated onion"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": true,
+   "density": {
+    "usda_portion_id": 88443,
+    "measure": "tsp"
+   }
+  },
+  {
+   "name": "dried oregano",
+   "slug": "oregano",
+   "category": "spice",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 171328,
+   "aliases": [
+    "oregano"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": true,
+   "density": {
+    "usda_portion_id": 88446,
+    "measure": "tsp"
+   }
+  },
+  {
+   "name": "dried basil",
+   "slug": "basil-dried",
+   "category": "spice",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 171317,
+   "aliases": [
+    "basil",
+    "dried basil leaves"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": true,
+   "density": {
+    "usda_portion_id": 88421,
+    "measure": "tsp"
+   }
+  },
+  {
+   "name": "dried thyme",
+   "slug": "thyme-dried",
+   "category": "spice",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 170938,
+   "aliases": [
+    "thyme",
+    "thyme leaves"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": true,
+   "density": {
+    "usda_portion_id": 87578,
+    "measure": "tsp"
+   }
+  },
+  {
+   "name": "ground cinnamon",
+   "slug": "cinnamon",
+   "category": "spice",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 171320,
+   "aliases": [
+    "cinnamon",
+    "dalchini"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": true,
+   "density": {
+    "usda_portion_id": 88429,
+    "measure": "tsp"
+   }
+  },
+  {
+   "name": "ground ginger",
+   "slug": "ginger-ground",
+   "category": "spice",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 170926,
+   "aliases": [
+    "ginger powder",
+    "dry ginger",
+    "sonth"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": true,
+   "density": {
+    "usda_portion_id": 87550,
+    "measure": "tsp"
+   }
+  },
+  {
+   "name": "bay leaf",
+   "slug": "bay-leaf",
+   "category": "spice",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 170917,
+   "aliases": [
+    "bay leaves",
+    "tej patta"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": true,
+   "density": {
+    "usda_portion_id": 87532,
+    "measure": "tsp"
+   }
+  },
+  {
+   "name": "ground cardamom",
+   "slug": "cardamom",
+   "category": "spice",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 170919,
+   "aliases": [
+    "cardamom",
+    "elaichi"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": true,
+   "density": {
+    "usda_portion_id": 87536,
+    "measure": "tsp"
+   }
+  },
+  {
+   "name": "ground cloves",
+   "slug": "cloves",
+   "category": "spice",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 171321,
+   "aliases": [
+    "cloves",
+    "laung"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": true,
+   "density": {
+    "usda_portion_id": 88431,
+    "measure": "tsp"
+   }
+  },
+  {
+   "name": "mustard seeds",
+   "slug": "mustard-seeds",
+   "category": "spice",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 170929,
+   "aliases": [
+    "mustard seed",
+    "rai"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": true,
+   "density": {
+    "usda_portion_id": 87556,
+    "measure": "tsp"
+   }
+  },
+  {
+   "name": "fenugreek seeds",
+   "slug": "fenugreek",
+   "category": "spice",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 171324,
+   "aliases": [
+    "fenugreek",
+    "methi seeds"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": true,
+   "density": {
+    "usda_portion_id": 88437,
+    "measure": "tsp"
+   }
+  },
+  {
+   "name": "curry powder",
+   "slug": "curry-powder",
+   "category": "spice",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 170924,
+   "aliases": [
+    "madras curry powder"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": true,
+   "density": {
+    "usda_portion_id": 87546,
+    "measure": "tsp"
+   }
+  },
+  {
+   "name": "garam masala",
+   "slug": "garam-masala",
+   "category": "spice",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 170924,
+   "aliases": [
+    "garam masala powder"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": true,
+   "density": {
+    "usda_portion_id": 87546,
+    "measure": "tsp"
+   },
+   "notes": "APPROXIMATE: USDA has no garam masala; nutrition from curry powder (FDC 170924). Review."
+  },
+  {
+   "name": "fennel seeds",
+   "slug": "fennel-seeds",
+   "category": "spice",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 171323,
+   "aliases": [
+    "fennel seed",
+    "saunf"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": true,
+   "density": {
+    "usda_portion_id": 88435,
+    "measure": "tsp"
+   }
+  },
+  {
+   "name": "baking powder",
+   "slug": "baking-powder",
+   "category": "other",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 172803,
+   "aliases": [
+    "double-acting baking powder"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": true,
+   "density": {
+    "usda_portion_id": 91437,
+    "measure": "tsp"
+   }
+  },
+  {
+   "name": "baking soda",
+   "slug": "baking-soda",
+   "category": "other",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 175040,
+   "aliases": [
+    "bicarbonate of soda",
+    "sodium bicarbonate"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": true,
+   "density": {
+    "usda_portion_id": 95484,
+    "measure": "tsp"
+   }
+  },
+  {
+   "name": "water",
+   "slug": "water",
+   "category": "beverage",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 173647,
+   "aliases": [
+    "tap water",
+    "cold water",
+    "warm water",
+    "hot water"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": true,
+   "density": {
+    "usda_portion_id": 93023,
+    "measure": "fl_oz"
+   }
+  },
+  {
+   "name": "low-sodium chicken broth",
+   "slug": "chicken-broth-low-sodium",
+   "category": "condiment",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 171609,
+   "aliases": [
+    "chicken broth",
+    "chicken stock",
+    "low sodium chicken stock",
+    "reduced sodium chicken broth"
+   ],
+   "diet_tags": [
+    "poultry"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 89069,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "chicken broth, regular",
+   "slug": "chicken-broth",
+   "category": "condiment",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 174536,
+   "aliases": [
+    "regular chicken broth"
+   ],
+   "diet_tags": [
+    "poultry"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 94531,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "vegetable broth",
+   "slug": "vegetable-broth",
+   "category": "condiment",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 171583,
+   "aliases": [
+    "vegetable stock",
+    "veggie broth"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 89026,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "soy sauce",
+   "slug": "soy-sauce",
+   "category": "condiment",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 174277,
+   "aliases": [
+    "shoyu",
+    "soya sauce",
+    "low sodium soy sauce"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 94068,
+    "measure": "tbsp"
+   }
+  },
+  {
+   "name": "hot sauce",
+   "slug": "hot-sauce",
+   "category": "condiment",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 174527,
+   "aliases": [
+    "pepper sauce",
+    "tabasco"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 94520,
+    "measure": "tsp"
+   }
+  },
+  {
+   "name": "sriracha",
+   "slug": "sriracha",
+   "category": "condiment",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 171186,
+   "aliases": [
+    "sriracha sauce"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 88133,
+    "measure": "tsp"
+   }
+  },
+  {
+   "name": "ketchup",
+   "slug": "ketchup",
+   "category": "condiment",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 168556,
+   "aliases": [
+    "catsup",
+    "tomato ketchup"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 83301,
+    "measure": "tbsp"
+   }
+  },
+  {
+   "name": "yellow mustard",
+   "slug": "mustard-yellow",
+   "category": "condiment",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 172234,
+   "aliases": [
+    "mustard",
+    "prepared mustard"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 90131,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "mayonnaise",
+   "slug": "mayonnaise",
+   "category": "condiment",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 171009,
+   "aliases": [
+    "mayo"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 87758,
+    "measure": "tbsp"
+   }
+  },
+  {
+   "name": "honey",
+   "slug": "honey",
+   "category": "sweetener",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 169640,
+   "aliases": [
+    "raw honey"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 85265,
+    "measure": "tbsp"
+   }
+  },
+  {
+   "name": "maple syrup",
+   "slug": "maple-syrup",
+   "category": "sweetener",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 169661,
+   "aliases": [
+    "pure maple syrup"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 85303,
+    "measure": "tbsp"
+   }
+  },
+  {
+   "name": "granulated sugar",
+   "slug": "sugar",
+   "category": "sweetener",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 169655,
+   "aliases": [
+    "sugar",
+    "white sugar",
+    "cane sugar"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 85288,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "brown sugar",
+   "slug": "brown-sugar",
+   "category": "sweetener",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 168833,
+   "aliases": [
+    "light brown sugar",
+    "dark brown sugar"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 83855,
+    "measure": "cup"
+   },
+   "notes": "Density is for packed brown sugar."
+  },
+  {
+   "name": "white vinegar",
+   "slug": "vinegar-white",
+   "category": "condiment",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 172237,
+   "aliases": [
+    "distilled vinegar",
+    "vinegar"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 90136,
+    "measure": "tbsp"
+   }
+  },
+  {
+   "name": "apple cider vinegar",
+   "slug": "vinegar-cider",
+   "category": "condiment",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 173469,
+   "aliases": [
+    "cider vinegar",
+    "acv"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 92598,
+    "measure": "tbsp"
+   }
+  },
+  {
+   "name": "salsa",
+   "slug": "salsa",
+   "category": "condiment",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 174524,
+   "aliases": [
+    "tomato salsa",
+    "jarred salsa"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 94515,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "coconut milk, canned",
+   "slug": "coconut-milk",
+   "category": "condiment",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 170173,
+   "aliases": [
+    "coconut milk",
+    "full fat coconut milk"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 86171,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "Worcestershire sauce",
+   "slug": "worcestershire",
+   "category": "condiment",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 171610,
+   "aliases": [
+    "worcestershire"
+   ],
+   "diet_tags": [
+    "fish"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 89070,
+    "measure": "tbsp"
+   },
+   "notes": "Contains anchovies (fish)."
+  },
+  {
+   "name": "vanilla extract",
+   "slug": "vanilla-extract",
+   "category": "condiment",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 173471,
+   "aliases": [
+    "vanilla",
+    "pure vanilla extract"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 92603,
+    "measure": "tsp"
+   }
+  },
+  {
+   "name": "unsweetened cocoa powder",
+   "slug": "cocoa-powder",
+   "category": "condiment",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 169593,
+   "aliases": [
+    "cocoa powder",
+    "cocoa",
+    "unsweetened cocoa"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 85187,
+    "measure": "tbsp"
+   }
+  },
+  {
+   "name": "brewed coffee",
+   "slug": "coffee-brewed",
+   "category": "beverage",
+   "default_unit_kind": "volume",
+   "nutrition_source": "usda",
+   "fdc_id": 171890,
+   "aliases": [
+    "coffee",
+    "black coffee"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "density": {
+    "usda_portion_id": 89520,
+    "measure": "cup"
+   }
+  },
+  {
+   "name": "protein powder, double chocolate",
+   "slug": "protein-powder-double-chocolate",
+   "category": "supplement",
+   "default_unit_kind": "mass",
+   "nutrition_source": "label",
+   "fdc_id": null,
+   "aliases": [
+    "protein powder",
+    "chocolate protein powder",
+    "whey protein",
+    "double chocolate protein powder",
+    "protein powder double chocolate"
+   ],
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "units": [
+    {
+     "name": "scoop",
+     "label": "protein-powder-double-chocolate"
+    }
+   ],
+   "notes": "Nutrition from your label (A2): scoop 31 g, 120 kcal, 25 g protein. Carbs and fat per scoop still needed."
+  }
+ ]
+}

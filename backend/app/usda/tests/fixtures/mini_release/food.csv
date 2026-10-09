@@ -1,0 +1,7 @@
+"fdc_id","data_type","description","food_category_id","publication_date"
+"9900001","sr_legacy_food","Test food A, raw","1","2019-04-01"
+"9900002","foundation_food","Test food B, no 208 energy","2","2026-04-30"
+"9900003","sample_food","Sample row that must be skipped","2","2026-04-30"
+"9900004","foundation_food","Test food C, only proximates","2","2026-04-30"
+"x99","sr_legacy_food","Malformed id","1","2019-04-01"
+"9900005","sr_legacy_food","","1","2019-04-01"

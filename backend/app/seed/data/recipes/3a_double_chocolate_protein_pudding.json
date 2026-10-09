@@ -1,0 +1,29 @@
+{
+ "family": "Protein pudding",
+ "title": "Double chocolate protein pudding",
+ "description": "Thick no-cook chocolate pudding made from double chocolate protein powder, cocoa and Greek yogurt.",
+ "meal_slots": ["protein_dessert", "snack"],
+ "mood": "simple",
+ "cuisine": null,
+ "flavor_tags": ["chocolate"],
+ "base_servings": 2,
+ "active_minutes": 5,
+ "total_minutes": 35,
+ "equipment": [],
+ "freezer_friendly": false,
+ "draft_note": "Draft quantities: adjust them in the app. Not plannable until the powder's carbs and fat per scoop are filled in (A2).",
+ "ingredients": [
+  {"ingredient": "protein-powder-double-chocolate", "quantity": "2", "unit": "scoop", "role": "protein"},
+  {"ingredient": "greek-yogurt-nonfat", "quantity": "340", "unit": "g", "role": "dairy"},
+  {"ingredient": "cocoa-powder", "quantity": "1", "unit": "tbsp", "role": "other"},
+  {"ingredient": "milk-2", "quantity": "60", "unit": "ml", "role": "dairy"},
+  {"ingredient": "vanilla-extract", "quantity": "1/2", "unit": "tsp", "role": "seasoning", "optional": true}
+ ],
+ "steps": [
+  {"section": "prep", "text": "Measure the protein powder, cocoa and milk into a mixing bowl."},
+  {"section": "no_cook", "text": "Whisk the protein powder, cocoa and milk into a smooth paste with no dry lumps."},
+  {"section": "no_cook", "text": "Fold the paste into the Greek yogurt with the vanilla until evenly chocolate."},
+  {"section": "portioning", "text": "Divide into 2 cups and chill at least 30 minutes before serving.", "duration_minutes": 30},
+  {"section": "storage", "text": "Cover the cups and refrigerate."}
+ ]
+}

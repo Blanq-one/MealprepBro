@@ -1,0 +1,35 @@
+{
+ "family": "Egg breakfast",
+ "title": "Egg, spinach and pepper breakfast wraps",
+ "description": "Soft scrambled eggs with peppers, onion and spinach rolled into small flour tortillas, two per serving.",
+ "meal_slots": ["breakfast"],
+ "mood": "simple",
+ "cuisine": "American",
+ "flavor_tags": ["savory"],
+ "base_servings": 4,
+ "active_minutes": 20,
+ "total_minutes": 25,
+ "equipment": ["stovetop"],
+ "freezer_friendly": true,
+ "draft_note": "Draft quantities: adjust them in the app. Wrap each one in foil to freeze.",
+ "ingredients": [
+  {"ingredient": "egg-large", "quantity": "8", "unit": "count", "role": "protein"},
+  {"ingredient": "spinach", "quantity": "100", "unit": "g", "preparation": "roughly chopped", "role": "vegetable"},
+  {"ingredient": "bell-pepper", "quantity": "1", "unit": "count", "preparation": "diced", "role": "vegetable"},
+  {"ingredient": "onion-yellow", "quantity": "1/2", "unit": "count", "preparation": "diced", "role": "vegetable"},
+  {"ingredient": "milk-2", "quantity": "2", "unit": "tbsp", "role": "dairy"},
+  {"ingredient": "olive-oil", "quantity": "1", "unit": "tbsp", "role": "fat"},
+  {"ingredient": "salt", "quantity": "1/2", "unit": "tsp", "role": "seasoning"},
+  {"ingredient": "black-pepper", "quantity": "1/4", "unit": "tsp", "role": "seasoning"},
+  {"ingredient": "flour-tortilla-small", "quantity": "8", "unit": "count", "preparation": "2 per serving", "role": "carb"}
+ ],
+ "steps": [
+  {"section": "prep", "text": "Dice the bell pepper and onion and roughly chop the spinach. Whisk the eggs with the milk, salt and pepper."},
+  {"section": "stovetop", "text": "Heat the oil in a large nonstick pan over medium heat. Cook the pepper and onion until soft, 4 to 5 minutes. Add the spinach and stir until wilted, about 1 minute.", "duration_minutes": 6},
+  {"section": "stovetop", "text": "Pour in the eggs and stir gently until fully set with no runny egg left, 3 to 4 minutes.", "duration_minutes": 4, "doneness_check_for": "egg-large"},
+  {"section": "assembly", "text": "Warm the tortillas on a dry pan about 30 seconds per side. Spoon the filling down the middle and roll them up tightly."},
+  {"section": "portioning", "text": "Pack 2 wraps per container. To freeze, wrap each one in foil first."},
+  {"section": "storage", "text": "Cool completely, then refrigerate or freeze."},
+  {"section": "reheating", "text": "Reheat in short microwave bursts, turning once, until hot throughout. From frozen, thaw overnight in the fridge first."}
+ ]
+}

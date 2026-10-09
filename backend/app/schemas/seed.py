@@ -1,0 +1,273 @@
+"""Pydantic models for the seed data files in app/seed/data/. They validate the JSON before anything is
+written to the database."""
+
+from decimal import Decimal
+from typing import Literal, Self
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+from app.domain.enums import (
+    Equipment,
+    IngredientCategory,
+    IngredientRole,
+    InstructionSection,
+    MealSlot,
+    NutritionSource,
+    PriceBasis,
+    PriceSource,
+    RecipeMood,
+    StorageLocation,
+)
+from app.domain.exclusions import KNOWN_DIET_TAGS
+from app.domain.food_safety import SafetyCategory
+from app.domain.quantities import parse_quantity
+from app.domain.units import UnitKind
+
+
+class _Strict(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
+# ---------------- nutrients ----------------
+class SeedNutrient(_Strict):
+    id: int = Field(ge=1, le=32767)
+    code: str
+    display_name: str
+    unit: Literal["kcal", "g", "mg", "ug"]
+    fdc_number: str
+    usda_nutrient_ids: list[int] = Field(min_length=1)  # in order of preference
+    is_core: bool
+    daily_value: Decimal | None = None
+
+
+class SeedNutrientFile(_Strict):
+    schema_version: Literal[1]
+    nutrients: list[SeedNutrient]
+
+
+# ---------------- ingredients ----------------
+class PortionRef(_Strict):
+    usda_portion_id: int
+    measure: Literal["tsp", "tbsp", "cup", "fl_oz"] | None = None  # required for densities
+
+
+class LabelRef(_Strict):
+    label: str  # key in label_inputs.json
+
+
+class SeedUnit(_Strict):
+    name: str
+    usda_portion_id: int | None = None
+    label: str | None = None
+
+    @model_validator(mode="after")
+    def _one_source(self) -> Self:
+        if (self.usda_portion_id is None) == (self.label is None):
+            raise ValueError(f"unit '{self.name}': give exactly one of usda_portion_id or label")
+        return self
+
+
+class SeedIngredient(_Strict):
+    name: str
+    slug: str = Field(pattern=r"^[a-z0-9]+(-[a-z0-9]+)*$")
+    category: IngredientCategory
+    default_unit_kind: UnitKind
+    nutrition_source: Literal[NutritionSource.USDA, NutritionSource.LABEL]
+    fdc_id: int | None
+    aliases: list[str] = Field(default_factory=list)
+    diet_tags: list[str] = Field(default_factory=list)
+    diet_review_note: str | None = None
+    heme_iron_fraction: Decimal = Field(ge=0, le=1)
+    safety_category: SafetyCategory | None = None
+    is_perishable: bool
+    typical_location: StorageLocation
+    assume_in_stock: bool = False
+    count_rounding_step: Decimal = Field(default=Decimal(1), gt=0)
+    density: PortionRef | None = None
+    count_unit_weight: PortionRef | LabelRef | None = None
+    units: list[SeedUnit] = Field(default_factory=list)
+    notes: str | None = None
+
+    @field_validator("diet_tags")
+    @classmethod
+    def _known_tags(cls, tags: list[str]) -> list[str]:
+        if unknown := set(tags) - KNOWN_DIET_TAGS:
+            raise ValueError(f"unknown diet tags: {sorted(unknown)}")
+        return tags
+
+    @model_validator(mode="after")
+    def _consistency(self) -> Self:
+        if self.nutrition_source is NutritionSource.USDA and self.fdc_id is None:
+            raise ValueError(f"{self.slug}: USDA-sourced ingredients need an fdc_id")
+        if self.density is not None and self.density.measure is None:
+            raise ValueError(f"{self.slug}: a density portion needs its measure (tsp/tbsp/cup/fl_oz)")
+        if self.default_unit_kind is UnitKind.COUNT and self.count_unit_weight is None:
+            raise ValueError(f"{self.slug}: count ingredients need a typical piece weight")
+        if "possible_beef" in self.diet_tags and not self.diet_review_note:
+            raise ValueError(f"{self.slug}: held (possible_beef) items need a review note")
+        return self
+
+
+class SeedIngredientFile(_Strict):
+    schema_version: Literal[1]
+    ingredients: list[SeedIngredient]
+
+
+# ---------------- labels ----------------
+class LabelNutrition(_Strict):
+    serving_unit: str
+    serving_grams: Decimal = Field(gt=0)
+    per_serving: dict[str, Decimal | None]
+    placeholders: list[str] = Field(default_factory=list)  # values still to be filled from the label
+    source: str
+
+
+class LabelPackage(_Strict):
+    count: int = Field(gt=0)
+    net_weight_g: Decimal = Field(gt=0)
+    is_estimate: bool
+    source: str
+
+
+class LabelInputsFile(_Strict):
+    schema_version: Literal[1]
+    labels: dict[str, LabelNutrition] = Field(default_factory=dict)
+    packages: dict[str, LabelPackage] = Field(default_factory=dict)
+
+
+# ---------------- stores, products, prices ----------------
+class SeedStore(_Strict):
+    name: str
+    priority: int = Field(ge=1)
+    region_code: str | None = None
+    notes: str | None = None
+
+
+class SeedStoreFile(_Strict):
+    schema_version: Literal[1]
+    stores: list[SeedStore]
+
+
+class SeedAmount(_Strict):
+    amount: Decimal = Field(gt=0)
+    unit: str
+
+
+class SeedPrice(_Strict):
+    store: str
+    price_cents: int = Field(ge=0)
+    per: SeedAmount  # the quantity the price covers ($1.99 per 1 lb, $1.99 per 30 count)
+    source: PriceSource
+    note: str | None = None
+
+
+class SeedProduct(_Strict):
+    ingredient: str  # slug
+    name: str
+    brand: str | None = None
+    store_brand_of: str | None = None  # store name when the product exists only at that store
+    package: SeedAmount | None  # None = sold loose
+    is_variable_weight: bool = False
+    price_basis: PriceBasis
+    display_unit: str
+    is_default: bool = False
+    prices: list[SeedPrice] = Field(min_length=1)
+
+
+class SeedProductFile(_Strict):
+    schema_version: Literal[1]
+    observed_on: str
+    products: list[SeedProduct]
+
+
+# ---------------- substitutions ----------------
+class SeedSubstitution(_Strict):
+    from_ingredient: str
+    to_ingredient: str
+    context_key: str = ""
+    status: Literal["accepted"]
+    quantity_rule: dict[str, str]
+    culinary_note: str | None = None
+    preparation_changes: str | None = None
+
+
+class SeedSubstitutionFile(_Strict):
+    schema_version: Literal[1]
+    substitutions: list[SeedSubstitution]
+
+
+# ---------------- recipes ----------------
+_SECTION_EQUIPMENT = {
+    InstructionSection.OVEN: Equipment.OVEN,
+    InstructionSection.AIR_FRYER: Equipment.AIR_FRYER,
+    InstructionSection.STOVETOP: Equipment.STOVETOP,
+    InstructionSection.MICROWAVE: Equipment.MICROWAVE,
+}
+
+
+class SeedRecipeIngredient(_Strict):
+    ingredient: str  # slug
+    quantity: str
+    unit: str
+    preparation: str | None = None
+    role: IngredientRole
+    component: str | None = None
+    optional: bool = False
+
+    @field_validator("quantity")
+    @classmethod
+    def _parses(cls, value: str) -> str:
+        parse_quantity(value)
+        return value
+
+
+class SeedRecipeStep(_Strict):
+    section: InstructionSection
+    text: str = Field(min_length=5, max_length=500)
+    duration_minutes: int | None = Field(default=None, ge=0, le=720)
+    appliance_temp_f: int | None = Field(default=None, ge=150, le=550)
+    doneness_check_for: str | None = None  # ingredient slug; the app inserts the safe temperature
+
+
+class SeedRecipe(_Strict):
+    family: str
+    title: str = Field(min_length=3, max_length=80)
+    description: str = Field(max_length=300)
+    meal_slots: list[MealSlot] = Field(min_length=1, max_length=3)
+    mood: RecipeMood
+    cuisine: str | None = None
+    flavor_tags: list[str] = Field(default_factory=list, max_length=6)
+    base_servings: int = Field(ge=1, le=12)
+    active_minutes: int = Field(ge=1, le=240)
+    total_minutes: int = Field(ge=1, le=720)
+    equipment: list[Equipment] = Field(default_factory=list)
+    freezer_friendly: bool
+    ingredients: list[SeedRecipeIngredient] = Field(min_length=2, max_length=25)
+    steps: list[SeedRecipeStep] = Field(min_length=3, max_length=30)
+    draft_note: str
+
+    @model_validator(mode="after")
+    def _structure(self) -> Self:
+        if self.total_minutes < self.active_minutes:
+            raise ValueError("total_minutes must be >= active_minutes")
+        slugs = [i.ingredient for i in self.ingredients]
+        if len(set(slugs)) != len(slugs):
+            raise ValueError("duplicate ingredient lines")
+        sections = {s.section for s in self.steps}
+        if InstructionSection.PREP not in sections or InstructionSection.PORTIONING not in sections:
+            raise ValueError("include at least one PREP and one PORTIONING step")
+        missing = {
+            eq for sec, eq in _SECTION_EQUIPMENT.items() if sec in sections and eq not in self.equipment
+        }
+        if missing:
+            raise ValueError(f"steps use equipment not listed: {sorted(missing)}")
+        for sec in (InstructionSection.OVEN, InstructionSection.AIR_FRYER):
+            sec_steps = [s for s in self.steps if s.section == sec]
+            if sec_steps and all(s.appliance_temp_f is None for s in sec_steps):
+                raise ValueError(f"{sec} steps must state an appliance temperature")
+        for step in self.steps:
+            if step.doneness_check_for is not None and step.doneness_check_for not in slugs:
+                raise ValueError(
+                    f"doneness check for '{step.doneness_check_for}', which is not an ingredient"
+                )
+        return self

@@ -1,0 +1,42 @@
+{
+ "family": "Chicken gravy with flour tortillas used as chapati",
+ "title": "Yogurt chicken gravy",
+ "description": "Yogurt-marinated chicken simmered with golden onions and tomato paste, finished with more yogurt, with flour tortillas used as chapati.",
+ "meal_slots": ["lunch", "dinner"],
+ "mood": "medium",
+ "cuisine": "Indian",
+ "flavor_tags": ["creamy", "tangy", "warm spices"],
+ "base_servings": 4,
+ "active_minutes": 35,
+ "total_minutes": 80,
+ "equipment": ["stovetop"],
+ "freezer_friendly": true,
+ "draft_note": "Draft quantities: adjust them in the app. Marinate 30 minutes or overnight. Freeze the gravy only.",
+ "ingredients": [
+  {"ingredient": "chicken-thigh-boneless-skinless", "quantity": "680", "unit": "g", "preparation": "bite-size pieces", "role": "protein", "component": "gravy"},
+  {"ingredient": "greek-yogurt-nonfat", "quantity": "200", "unit": "g", "preparation": "divided", "role": "sauce", "component": "gravy"},
+  {"ingredient": "onion-yellow", "quantity": "2", "unit": "count", "preparation": "medium, thinly sliced", "role": "vegetable", "component": "gravy"},
+  {"ingredient": "garlic", "quantity": "4", "unit": "clove", "preparation": "grated", "role": "seasoning", "component": "gravy"},
+  {"ingredient": "ginger", "quantity": "15", "unit": "g", "preparation": "grated", "role": "seasoning", "component": "gravy"},
+  {"ingredient": "tomato-paste", "quantity": "2", "unit": "tbsp", "role": "sauce", "component": "gravy"},
+  {"ingredient": "garam-masala", "quantity": "2", "unit": "tsp", "preparation": "divided", "role": "seasoning", "component": "gravy"},
+  {"ingredient": "turmeric", "quantity": "1/2", "unit": "tsp", "role": "seasoning", "component": "gravy"},
+  {"ingredient": "chili-powder", "quantity": "1", "unit": "tsp", "role": "seasoning", "component": "gravy"},
+  {"ingredient": "cumin-ground", "quantity": "1", "unit": "tsp", "role": "seasoning", "component": "gravy"},
+  {"ingredient": "salt", "quantity": "1", "unit": "tsp", "role": "seasoning", "component": "gravy"},
+  {"ingredient": "vegetable-oil", "quantity": "2", "unit": "tbsp", "role": "fat", "component": "gravy"},
+  {"ingredient": "water", "quantity": "200", "unit": "ml", "role": "other", "component": "gravy"},
+  {"ingredient": "flour-tortilla-small", "quantity": "8", "unit": "count", "preparation": "2 per serving", "role": "carb", "component": "tortillas"}
+ ],
+ "steps": [
+  {"section": "prep", "text": "Cut the chicken into bite-size pieces. Thinly slice the onions. Grate the ginger and garlic."},
+  {"section": "marinate", "text": "Mix half the yogurt with half the garam masala, the turmeric, chili powder and salt. Coat the chicken and marinate at least 30 minutes, or overnight in the fridge.", "duration_minutes": 30},
+  {"section": "stovetop", "text": "Heat the oil over medium heat and cook the onions until golden, about 10 minutes. Add the ginger, garlic, cumin and tomato paste and cook 2 minutes.", "duration_minutes": 12},
+  {"section": "stovetop", "text": "Add the chicken with its marinade and the water. Cover and simmer 15 to 18 minutes, stirring now and then, until the chicken is cooked through.", "duration_minutes": 18, "doneness_check_for": "chicken-thigh-boneless-skinless"},
+  {"section": "stovetop", "text": "Take the pot off the heat for 1 minute, then stir in the remaining yogurt and garam masala so the yogurt doesn't split. Return to low heat for 2 minutes without boiling.", "duration_minutes": 3},
+  {"section": "assembly", "text": "Warm each tortilla on a dry pan about 30 seconds per side, like chapati."},
+  {"section": "portioning", "text": "Divide the gravy among 4 containers, with 2 tortillas per serving packed separately."},
+  {"section": "storage", "text": "Cool the gravy, then refrigerate. Keep the tortillas in their bag."},
+  {"section": "reheating", "text": "Reheat gently, stirring, so the yogurt sauce stays smooth. Warm the tortillas just before eating."}
+ ]
+}

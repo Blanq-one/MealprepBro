@@ -1,0 +1,22 @@
+{
+ "schema_version": 1,
+ "nutrients": [
+  {"id": 1, "code": "energy_kcal", "display_name": "Energy", "unit": "kcal", "fdc_number": "208", "usda_nutrient_ids": [1008, 2048, 2047], "is_core": true, "daily_value": null},
+  {"id": 2, "code": "protein_g", "display_name": "Protein", "unit": "g", "fdc_number": "203", "usda_nutrient_ids": [1003], "is_core": true, "daily_value": "50"},
+  {"id": 3, "code": "carbohydrate_g", "display_name": "Carbohydrate", "unit": "g", "fdc_number": "205", "usda_nutrient_ids": [1005, 1050], "is_core": true, "daily_value": "275"},
+  {"id": 4, "code": "fat_g", "display_name": "Fat", "unit": "g", "fdc_number": "204", "usda_nutrient_ids": [1004, 1085], "is_core": true, "daily_value": "78"},
+  {"id": 5, "code": "fiber_g", "display_name": "Fiber", "unit": "g", "fdc_number": "291", "usda_nutrient_ids": [1079], "is_core": false, "daily_value": "28"},
+  {"id": 6, "code": "sugars_g", "display_name": "Total sugars", "unit": "g", "fdc_number": "269", "usda_nutrient_ids": [2000, 1063], "is_core": false, "daily_value": null},
+  {"id": 7, "code": "saturated_fat_g", "display_name": "Saturated fat", "unit": "g", "fdc_number": "606", "usda_nutrient_ids": [1258], "is_core": false, "daily_value": "20"},
+  {"id": 8, "code": "sodium_mg", "display_name": "Sodium", "unit": "mg", "fdc_number": "307", "usda_nutrient_ids": [1093], "is_core": false, "daily_value": "2300"},
+  {"id": 9, "code": "iron_mg", "display_name": "Iron", "unit": "mg", "fdc_number": "303", "usda_nutrient_ids": [1089], "is_core": false, "daily_value": "18"},
+  {"id": 10, "code": "calcium_mg", "display_name": "Calcium", "unit": "mg", "fdc_number": "301", "usda_nutrient_ids": [1087], "is_core": false, "daily_value": "1300"},
+  {"id": 11, "code": "potassium_mg", "display_name": "Potassium", "unit": "mg", "fdc_number": "306", "usda_nutrient_ids": [1092], "is_core": false, "daily_value": "4700"},
+  {"id": 12, "code": "vitamin_c_mg", "display_name": "Vitamin C", "unit": "mg", "fdc_number": "401", "usda_nutrient_ids": [1162], "is_core": false, "daily_value": "90"},
+  {"id": 13, "code": "vitamin_d_ug", "display_name": "Vitamin D", "unit": "ug", "fdc_number": "328", "usda_nutrient_ids": [1114], "is_core": false, "daily_value": "20"},
+  {"id": 14, "code": "vitamin_b12_ug", "display_name": "Vitamin B12", "unit": "ug", "fdc_number": "418", "usda_nutrient_ids": [1178], "is_core": false, "daily_value": "2.4"},
+  {"id": 15, "code": "folate_dfe_ug", "display_name": "Folate (DFE)", "unit": "ug", "fdc_number": "435", "usda_nutrient_ids": [1190], "is_core": false, "daily_value": "400"},
+  {"id": 16, "code": "magnesium_mg", "display_name": "Magnesium", "unit": "mg", "fdc_number": "304", "usda_nutrient_ids": [1090], "is_core": false, "daily_value": "420"},
+  {"id": 17, "code": "zinc_mg", "display_name": "Zinc", "unit": "mg", "fdc_number": "309", "usda_nutrient_ids": [1095], "is_core": false, "daily_value": "11"}
+ ]
+}

@@ -1,0 +1,57 @@
+"""All ORM models. Importing this package registers every table on Base.metadata."""
+
+from app.db.models.ingredient import (
+    Ingredient,
+    IngredientAlias,
+    IngredientNutrient,
+    IngredientSubstitution,
+    IngredientUnit,
+)
+from app.db.models.inventory import InventoryEvent, InventoryItem
+from app.db.models.llm import GenerationRun, LlmCall
+from app.db.models.nutrition import Nutrient, UsdaFood, UsdaFoodNutrient, UsdaFoodPortion, UsdaNutrient
+from app.db.models.plan import (
+    GroceryList,
+    GroceryListItem,
+    MealPlan,
+    PlanBatchIngredient,
+    PlanCookBatch,
+    PlanMeal,
+)
+from app.db.models.recipe import Recipe, RecipeFamily, RecipeIngredient, RecipeStep, RecipeVersion
+from app.db.models.store import PriceObservation, Product, Store
+from app.db.models.user import AppUser, IngredientPreference, UserSettingsRow
+
+__all__ = [
+    "AppUser",
+    "GenerationRun",
+    "GroceryList",
+    "GroceryListItem",
+    "Ingredient",
+    "IngredientAlias",
+    "IngredientNutrient",
+    "IngredientPreference",
+    "IngredientSubstitution",
+    "IngredientUnit",
+    "InventoryEvent",
+    "InventoryItem",
+    "LlmCall",
+    "MealPlan",
+    "Nutrient",
+    "PlanBatchIngredient",
+    "PlanCookBatch",
+    "PlanMeal",
+    "PriceObservation",
+    "Product",
+    "Recipe",
+    "RecipeFamily",
+    "RecipeIngredient",
+    "RecipeStep",
+    "RecipeVersion",
+    "Store",
+    "UsdaFood",
+    "UsdaFoodNutrient",
+    "UsdaFoodPortion",
+    "UsdaNutrient",
+    "UserSettingsRow",
+]

@@ -1,6 +1,6 @@
 # Mealbro Build Plan
 
-**Status:** v3, **approved** 2026-10-08 with the changes recorded in §12.1. Phase 0 in progress.
+**Status:** v3, **approved** 2026-10-08 with the changes recorded in §12.1. Phase 0 built; waiting for your review.
 **Source documents:** `CLAUDE.md` (build rules, wins on conflict), `docs/PRD.md` (product vision).
 
 This plan covers Phases 0–6. One phase per session. A phase is done only when its acceptance criteria are met, its tests pass, and the test output has been shown.
@@ -15,7 +15,7 @@ This plan covers Phases 0–6. One phase per session. A phase is done only when 
 |---|---|---|---|---|---|
 | — | Repo setup (git init, .gitignore, initial commit) | Done | 2026-10-08 | 2026-10-08 | Commit `3c7a499`. Done before Phase 0 per instruction. |
 | — | Build plan | Approved (v3) | 2026-10-08 | 2026-10-08 | v1 reviewed → v2 (seed library, per-phase migrations, narrow prose filter, rounded-plan validator, strict/best-effort). v3 = approval changes: table audit (§4.2a), exposure logging → Phase 2, beef-only exclusion + pork frequency cap, R1–R7 answers, A2 label values. |
-| 0 | Data foundation | In progress | 2026-10-08 | | |
+| 0 | Data foundation | Built, awaiting your review | 2026-10-08 | 2026-10-08 | 321 tests pass (local + Docker), domain coverage 99.6% (domain tests alone), ruff/mypy clean. 185 ingredients, 649 aliases, 9 draft seeds. Open: FoodSafety.gov chart (A1), powder carbs/fat (A2), R8. Deviations in the Phase 0 outcome note (§9). |
 | 1 | Planning brain | Not started | | | |
 | 2 | Mobile PWA + cloud deploy | Not started | | | |
 | 3 | Feedback loop | Not started | | | |
@@ -95,7 +95,8 @@ Mealbro/
 │       ├── services/                  # orchestration + DB access (+ tests/)
 │       ├── seed/                      # P0
 │       │   ├── data/
-│       │   │   ├── nutrients.json · ingredients.json · units.json
+│       │   │   ├── nutrients.json · ingredients.json   # each ingredient carries its aliases, named
+│       │   │   │                                       # units, density and piece weight (USDA portion ids)
 │       │   │   ├── stores.json · products_prices.json      # estimates flagged source=estimate
 │       │   │   ├── label_inputs.json  # values you fill from labels (protein powder, tortillas)
 │       │   │   ├── substitutions.json # accepted pairs, e.g. chapati → flour tortilla
@@ -1339,6 +1340,20 @@ How the filter decides:
 - *Estimated prices mislead.* `source=estimate` is shown as "est." and never used for deal or cheap labels; real entries supersede it.
 - *Windows line endings.* `.gitattributes`.
 
+**Outcome (2026-10-08).** All acceptance criteria are met except AC 7: the safety table prints its citation, but the chart values are *pending* because FoodSafety.gov returned 403 again (A1), so there's nothing for you to confirm yet. Deviations from the plan, all small:
+- `units.json` is folded into `ingredients.json`. Each ingredient lists its aliases, named units, density and piece weight, referencing USDA portion ids; the loader checks each portion belongs to the same FDC food and is the stated measure.
+- The `UserSettings` model and the seed-file schemas were built now (the plan had them in Phase 1), because the seed has to validate the settings JSONB. `InstructionSection` and `IngredientRole` live in `domain/enums.py` so the seed files and the Phase 1 LLM schema share them.
+- New CLI command `usda-subset` writes the committed test fixture (`app/testing/fixtures/usda_subset/`, ~180 foods), so tests and a fresh clone don't need the 10 MB download.
+- Cost rules: optional lines (cilantro, vanilla, banana topping) are listed and not counted. Unpriced `assume_in_stock` staples (salt, spices, water) are listed as "not costed" without making the cost incomplete.
+- The Atwater check counts fiber at 2 kcal/g. This cut false flags from 27 to 7; the 7 left are USDA's food-specific factors (citrus acids, cocoa, alcohol in vanilla, vinegar).
+- Search ranks exact aliases first, then per-word trigram similarity, so "chiken" finds chicken, not "green chile".
+- SQLAlchemy is pinned below 2.1 to match CLAUDE.md's "SQLAlchemy 2.0". Python 3.12 runs through uv locally and in the `python:3.12-slim` image.
+- Seed 5a uses chia 12 g instead of 1 tbsp, because USDA has no spoon measure for chia.
+- Pepperoni maps to the only USDA pepperoni (Foundation 2759006, "beef and pork"), which has no energy/protein/fat yet. It's held regardless.
+- Collagen peptides aren't in the ingredient table, since USDA has no entry for them.
+- The `price_observation` index is ascending; Postgres scans it backwards for "latest".
+- The pork frequency cap is implemented and tested at the domain and service level (counting, violations, cap 0 → exclusion while trace pork stays allowed). The solver-level "a plan never exceeds the cap" tests are Phase 1, since there's no solver yet.
+
 ---
 
 ### Phase 1: Planning brain (backend only)
@@ -1859,6 +1874,6 @@ All seeds are loaded as `origin=seed`, `created_by=system`, `is_draft=true`. The
 **Family 5: Protein oats** (breakfast; R3)
 
 - **5a. Chocolate protein overnight oats.** Simple · no-cook · base 2 · ≈ 5 min + refrigerate overnight.
-  - *Ingredients:* old-fashioned rolled oats 80 g · protein powder, double chocolate 2 scoops · milk (2%) 300 ml · Greek yogurt, plain nonfat 100 g · chia seeds 1 tbsp · banana 1 (optional, for topping).
+  - *Ingredients:* old-fashioned rolled oats 80 g · protein powder, double chocolate 2 scoops · milk (2%) 300 ml · Greek yogurt, plain nonfat 100 g · chia seeds 12 g (USDA has no spoon measure for chia, so it's authored in grams) · banana 1 (optional, for topping).
   - *Outline:* whisk powder into the milk until smooth; stir in yogurt, oats and chia; divide into 2 jars; refrigerate overnight; top with sliced banana when serving.
   - *Note:* not plannable until the powder's carbs and fat per scoop are filled (A2).

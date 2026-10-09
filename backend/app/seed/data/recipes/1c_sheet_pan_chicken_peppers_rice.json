@@ -1,0 +1,41 @@
+{
+ "family": "Chicken over rice",
+ "title": "Sheet-pan chicken and peppers over rice",
+ "description": "Paprika chicken thighs roasted with peppers and red onion on one pan, served over rice with a lemon yogurt sauce.",
+ "meal_slots": ["lunch", "dinner"],
+ "mood": "medium",
+ "cuisine": "Mediterranean",
+ "flavor_tags": ["roasted", "paprika"],
+ "base_servings": 4,
+ "active_minutes": 20,
+ "total_minutes": 45,
+ "equipment": ["oven", "stovetop"],
+ "freezer_friendly": true,
+ "draft_note": "Draft quantities: adjust them in the app.",
+ "ingredients": [
+  {"ingredient": "chicken-thigh-boneless-skinless", "quantity": "680", "unit": "g", "preparation": "cut into 1½-inch pieces", "role": "protein", "component": "chicken"},
+  {"ingredient": "bell-pepper", "quantity": "2", "unit": "count", "preparation": "sliced into strips", "role": "vegetable"},
+  {"ingredient": "onion-red", "quantity": "1", "unit": "count", "preparation": "cut into wedges", "role": "vegetable"},
+  {"ingredient": "olive-oil", "quantity": "2", "unit": "tbsp", "role": "fat"},
+  {"ingredient": "paprika", "quantity": "2", "unit": "tsp", "role": "seasoning"},
+  {"ingredient": "cumin-ground", "quantity": "1", "unit": "tsp", "role": "seasoning"},
+  {"ingredient": "garlic-powder", "quantity": "1", "unit": "tsp", "role": "seasoning"},
+  {"ingredient": "oregano", "quantity": "1", "unit": "tsp", "role": "seasoning"},
+  {"ingredient": "salt", "quantity": "1", "unit": "tsp", "role": "seasoning"},
+  {"ingredient": "black-pepper", "quantity": "1/2", "unit": "tsp", "role": "seasoning"},
+  {"ingredient": "rice-long-grain-white", "quantity": "300", "unit": "g", "preparation": "rinsed", "role": "carb", "component": "rice"},
+  {"ingredient": "water", "quantity": "540", "unit": "ml", "role": "other", "component": "rice"},
+  {"ingredient": "greek-yogurt-nonfat", "quantity": "150", "unit": "g", "role": "sauce", "component": "sauce"},
+  {"ingredient": "lemon-juice", "quantity": "1", "unit": "tbsp", "role": "sauce", "component": "sauce"}
+ ],
+ "steps": [
+  {"section": "prep", "text": "Preheat the oven to 425°F. Cut the chicken into 1½-inch pieces, slice the peppers into strips and cut the onion into wedges."},
+  {"section": "prep", "text": "Toss the chicken, peppers and onion with the oil, paprika, cumin, garlic powder, oregano, salt and pepper, and spread them on a sheet pan."},
+  {"section": "oven", "text": "Roast at 425°F for about 25 minutes, stirring once, until the chicken is cooked through and the peppers are charred at the edges.", "duration_minutes": 25, "appliance_temp_f": 425, "doneness_check_for": "chicken-thigh-boneless-skinless"},
+  {"section": "rice", "text": "Meanwhile, bring the water to a boil, add the rinsed rice, cover and simmer on low 15 minutes, then rest 10 minutes.", "duration_minutes": 25},
+  {"section": "assembly", "text": "Stir the yogurt with the lemon juice and a pinch of salt."},
+  {"section": "portioning", "text": "Divide the rice, chicken and vegetables among 4 containers; pack the sauce separately."},
+  {"section": "storage", "text": "Cool, then refrigerate the containers."},
+  {"section": "reheating", "text": "Reheat covered, stirring halfway. Add the sauce after reheating."}
+ ]
+}

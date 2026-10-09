@@ -1,0 +1,43 @@
+{
+ "family": "Chicken gravy with flour tortillas used as chapati",
+ "title": "Everyday chicken curry gravy",
+ "description": "Onion-tomato chicken curry finished with garam masala, served with small flour tortillas warmed like chapati.",
+ "meal_slots": ["lunch", "dinner"],
+ "mood": "medium",
+ "cuisine": "Indian",
+ "flavor_tags": ["warm spices", "onion-tomato"],
+ "base_servings": 4,
+ "active_minutes": 35,
+ "total_minutes": 50,
+ "equipment": ["stovetop"],
+ "freezer_friendly": true,
+ "draft_note": "Draft quantities: adjust them in the app. Freeze the gravy only; keep the tortillas separate.",
+ "ingredients": [
+  {"ingredient": "chicken-thigh-boneless-skinless", "quantity": "680", "unit": "g", "preparation": "bite-size pieces", "role": "protein", "component": "gravy"},
+  {"ingredient": "vegetable-oil", "quantity": "3", "unit": "tbsp", "role": "fat", "component": "gravy"},
+  {"ingredient": "onion-yellow", "quantity": "2", "unit": "count", "preparation": "medium, finely chopped", "role": "vegetable", "component": "gravy"},
+  {"ingredient": "tomato", "quantity": "3", "unit": "count", "preparation": "medium, chopped", "role": "vegetable", "component": "gravy"},
+  {"ingredient": "garlic", "quantity": "5", "unit": "clove", "preparation": "grated", "role": "seasoning", "component": "gravy"},
+  {"ingredient": "ginger", "quantity": "15", "unit": "g", "preparation": "grated", "role": "seasoning", "component": "gravy"},
+  {"ingredient": "turmeric", "quantity": "1/2", "unit": "tsp", "role": "seasoning", "component": "gravy"},
+  {"ingredient": "chili-powder", "quantity": "1", "unit": "tsp", "role": "seasoning", "component": "gravy"},
+  {"ingredient": "coriander-ground", "quantity": "2", "unit": "tsp", "role": "seasoning", "component": "gravy"},
+  {"ingredient": "cumin-ground", "quantity": "1", "unit": "tsp", "role": "seasoning", "component": "gravy"},
+  {"ingredient": "garam-masala", "quantity": "1 1/2", "unit": "tsp", "role": "seasoning", "component": "gravy"},
+  {"ingredient": "salt", "quantity": "1 1/4", "unit": "tsp", "role": "seasoning", "component": "gravy"},
+  {"ingredient": "water", "quantity": "250", "unit": "ml", "role": "other", "component": "gravy"},
+  {"ingredient": "cilantro", "quantity": "10", "unit": "g", "preparation": "chopped", "role": "garnish", "component": "gravy", "optional": true},
+  {"ingredient": "flour-tortilla-small", "quantity": "8", "unit": "count", "preparation": "2 per serving", "role": "carb", "component": "tortillas"}
+ ],
+ "steps": [
+  {"section": "prep", "text": "Cut the chicken into bite-size pieces. Finely chop the onions and tomatoes. Grate the ginger and garlic together into a paste."},
+  {"section": "stovetop", "text": "Heat the oil in a heavy pot over medium heat. Cook the onions, stirring often, until deep golden, 10 to 12 minutes.", "duration_minutes": 12},
+  {"section": "stovetop", "text": "Add the ginger-garlic paste and cook 1 minute. Add the tomatoes, turmeric, chili powder, coriander, cumin and salt; cook until the tomatoes break down and the oil separates, about 8 minutes.", "duration_minutes": 9},
+  {"section": "stovetop", "text": "Add the chicken and stir to coat. Pour in the water, cover and simmer 15 to 18 minutes, stirring now and then, until the chicken is cooked through.", "duration_minutes": 18, "doneness_check_for": "chicken-thigh-boneless-skinless"},
+  {"section": "stovetop", "text": "Stir in the garam masala and simmer 2 minutes more. Finish with chopped cilantro.", "duration_minutes": 2},
+  {"section": "assembly", "text": "Warm each tortilla on a dry pan about 30 seconds per side, like chapati."},
+  {"section": "portioning", "text": "Divide the gravy among 4 containers. Keep 2 tortillas per serving wrapped separately."},
+  {"section": "storage", "text": "Cool the gravy, then refrigerate. Keep the tortillas in their bag."},
+  {"section": "reheating", "text": "Reheat the gravy covered, stirring halfway. Warm the tortillas just before eating."}
+ ]
+}

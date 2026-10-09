@@ -1,0 +1,39 @@
+{
+ "family": "Chicken over rice",
+ "title": "Air-fryer chicken over rice with broccoli",
+ "description": "Smoky air-fried chicken breast and crisp-edged broccoli over plain rice, with a quick lemon yogurt sauce.",
+ "meal_slots": ["lunch", "dinner"],
+ "mood": "simple",
+ "cuisine": "American",
+ "flavor_tags": ["smoky", "lemony"],
+ "base_servings": 4,
+ "active_minutes": 15,
+ "total_minutes": 30,
+ "equipment": ["air_fryer", "stovetop"],
+ "freezer_friendly": true,
+ "draft_note": "Draft quantities: adjust them in the app.",
+ "ingredients": [
+  {"ingredient": "chicken-breast-boneless-skinless", "quantity": "680", "unit": "g", "preparation": "cut into 1-inch-thick pieces", "role": "protein", "component": "chicken"},
+  {"ingredient": "rice-long-grain-white", "quantity": "300", "unit": "g", "preparation": "rinsed", "role": "carb", "component": "rice"},
+  {"ingredient": "water", "quantity": "540", "unit": "ml", "role": "other", "component": "rice"},
+  {"ingredient": "broccoli", "quantity": "400", "unit": "g", "preparation": "florets", "role": "vegetable"},
+  {"ingredient": "olive-oil", "quantity": "1", "unit": "tbsp", "role": "fat"},
+  {"ingredient": "garlic-powder", "quantity": "1", "unit": "tsp", "role": "seasoning", "component": "chicken"},
+  {"ingredient": "smoked-paprika", "quantity": "1", "unit": "tsp", "role": "seasoning", "component": "chicken"},
+  {"ingredient": "cumin-ground", "quantity": "1/2", "unit": "tsp", "role": "seasoning", "component": "chicken"},
+  {"ingredient": "salt", "quantity": "1", "unit": "tsp", "role": "seasoning"},
+  {"ingredient": "black-pepper", "quantity": "1/2", "unit": "tsp", "role": "seasoning"},
+  {"ingredient": "greek-yogurt-nonfat", "quantity": "150", "unit": "g", "role": "sauce", "component": "sauce"},
+  {"ingredient": "lemon-juice", "quantity": "1", "unit": "tbsp", "role": "sauce", "component": "sauce"}
+ ],
+ "steps": [
+  {"section": "prep", "text": "Cut the chicken into even 1-inch-thick pieces. Toss with half the oil, the garlic powder, smoked paprika, cumin, 3/4 tsp of the salt and the pepper."},
+  {"section": "rice", "text": "Bring the water to a boil, add the rinsed rice and a pinch of salt, cover and simmer on low 15 minutes, then rest 10 minutes off the heat.", "duration_minutes": 25},
+  {"section": "air_fryer", "text": "Air fry the chicken in a single layer at 400F for 18 minutes, flipping at 9, until cooked through.", "duration_minutes": 18, "appliance_temp_f": 400, "doneness_check_for": "chicken-breast-boneless-skinless"},
+  {"section": "air_fryer", "text": "Toss the broccoli with the remaining oil and salt. Air fry at 400F for 8 to 10 minutes, shaking once, until the edges brown.", "duration_minutes": 10, "appliance_temp_f": 400},
+  {"section": "assembly", "text": "Stir the yogurt with the lemon juice and a pinch of salt for the sauce."},
+  {"section": "portioning", "text": "Divide the rice, chicken and broccoli among 4 containers, with the sauce in small cups."},
+  {"section": "storage", "text": "Cool, then refrigerate the containers."},
+  {"section": "reheating", "text": "Reheat covered, stirring halfway. Add the sauce after reheating."}
+ ]
+}

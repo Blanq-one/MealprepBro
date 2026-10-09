@@ -1,0 +1,4 @@
+{
+ "_comment": "TEST FIXTURE ONLY. Made-up carbs/fat for the protein powder so tests can show the pudding becoming complete. Not your label values.",
+ "protein-powder-double-chocolate": {"carbohydrate_g": "3", "fat_g": "1.5"}
+}

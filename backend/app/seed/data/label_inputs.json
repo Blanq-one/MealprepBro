@@ -1,0 +1,30 @@
+{
+ "schema_version": 1,
+ "labels": {
+  "protein-powder-double-chocolate": {
+   "serving_unit": "scoop",
+   "serving_grams": "31",
+   "per_serving": {
+    "energy_kcal": "120",
+    "protein_g": "25",
+    "carbohydrate_g": null,
+    "fat_g": null,
+    "fiber_g": null,
+    "sugars_g": null,
+    "sodium_mg": null,
+    "iron_mg": null,
+    "calcium_mg": null
+   },
+   "placeholders": ["carbohydrate_g", "fat_g"],
+   "source": "Your label (A2, 2026-10-08): scoop 31 g, 120 kcal, 25 g protein. Fill carbs and fat (and any other values listed) from the label."
+  }
+ },
+ "packages": {
+  "flour-tortilla-small": {
+   "count": 30,
+   "net_weight_g": "652",
+   "is_estimate": true,
+   "source": "Price Rite small flour tortillas, 30 count: net weight ≈ 23 oz (652 g), an estimate from a 20–26 oz range (A2, 2026-10-08). Replace with the exact net weight and serving size from the bag."
+  }
+ }
+}
