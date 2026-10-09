@@ -1,8 +1,8 @@
 # USDA mapping review
 
-Generated 2026-10-08 by `uv run python -m app.cli mapping-review` from the seeded database. Regenerate after changing mappings; don't edit this file by hand.
+Generated 2026-10-09 by `uv run python -m app.cli mapping-review` from the seeded database. Regenerate after changing mappings; don't edit this file by hand.
 
-- **Sorted by** each ingredient's share of the calories in all 9 seed recipes (base servings, optional lines excluded), highest first. Ingredients no seed uses come last, alphabetically.
+- **Sorted by** each ingredient's share of the calories in all seed recipes (base servings, optional lines excluded), highest first. Ingredients no seed uses come last, alphabetically.
 - **State** is the state the nutrition mapping describes, read from the USDA description (package labels are as-sold). Recipe quantities are raw / dry / as-sold weights unless a line says otherwise.
 - **Auto-flags:** `state:` = the mapping's state doesn't match how recipes use it. `description says '…'` = the USDA description contains fried / breaded / with skin / cooked / canned / sweetened while the ingredient's name, aliases and products imply otherwise. Package-label ingredients aren't checked for description issues. `note:` = other things worth a look.
 - The top 25 rows are marked **Krish to review** until you approve them; approved rows show the approval date.
@@ -17,38 +17,38 @@ Generated 2026-10-08 by `uv run python -m app.cli mapping-review` from the seede
 
 | # | Ingredient | Nutrition source | USDA description | FDC id | State | kcal per 100 g | % of seed calories | Flags |
 |---|---|---|---|---|---|---|---|---|
-| 1 | chicken thigh, boneless skinless | USDA | Chicken, broilers or fryers, dark meat, thigh, meat only, raw | 173627 | raw | 121 | 24.4% | approved 2026-10-08 |
-| 2 | flour tortilla (Price Rite, 37 g) | package label (+ USDA for nutrients not on the label) | Tortillas, ready-to-bake or -fry, flour, shelf stable | 167535 | as-sold | 297 | 20.9% | approved 2026-10-08 |
-| 3 | long-grain white rice (dry) | USDA | Rice, white, long-grain, regular, raw, enriched | 168877 | dry | 365 | 19.5% | approved 2026-10-08 |
-| 4 | vegetable oil | USDA | Oil, canola | 172336 | as-sold | 884 | 5.1% | approved 2026-10-08 |
-| 5 | chicken breast, boneless skinless | USDA | Chicken, broiler or fryers, breast, skinless, boneless, meat only, raw | 171077 | raw | 120 | 4.8% | approved 2026-10-08 |
-| 6 | olive oil | USDA | Oil, olive, salad or cooking | 171413 | as-sold | 884 | 4.2% | approved 2026-10-08 |
-| 7 | Greek yogurt, plain nonfat | USDA | Yogurt, Greek, plain, nonfat (Includes foods for USDA's Food Distribution Program) | 170894 | as-sold | 59 | 4.0% | approved 2026-10-08 |
-| 8 | egg, large | USDA | Egg, whole, raw, fresh | 171287 | raw | 143 | 3.4% | approved 2026-10-08 |
-| 9 | protein powder, double chocolate | package label | — | — | as-sold | 387 | 2.8% | approved 2026-10-08 |
-| 10 | rolled oats | USDA | Cereals, oats, regular and quick, not fortified, dry | 173904 | dry | 379 | 1.8% | approved 2026-10-08 |
-| 11 | yellow onion | USDA | Onions, raw | 170000 | raw | 40 | 1.4% | approved 2026-10-08 |
-| 12 | milk, 2% | USDA | Milk, reduced fat, fluid, 2% milkfat, with added vitamin A and vitamin D | 171267 | as-sold | 50 | 1.2% | approved 2026-10-08 |
-| 13 | tomato | USDA | Tomatoes, red, ripe, raw, year round average | 170457 | raw | 18 | 0.9% | approved 2026-10-08 |
-| 14 | broccoli florets | USDA | Broccoli, flower clusters, raw | 169330 | raw | 28 | 0.7% | approved 2026-10-08 |
-| 15 | bell pepper | USDA | Peppers, sweet, red, raw | 170108 | raw | 26 | 0.6% | approved 2026-10-08 |
-| 16 | spinach, fresh | USDA | Spinach, raw | 168462 | raw | 23 | 0.5% | approved 2026-10-08 |
-| 17 | low-sodium chicken broth | USDA | Soup, chicken broth, low sodium, canned | 171609 | as-sold | 16 | 0.5% | approved 2026-10-08; description says 'canned' |
-| 18 | red onion | USDA | Onions, red, raw | 790577 | raw | 44 | 0.5% | approved 2026-10-08 |
-| 19 | garlic | USDA | Garlic, raw | 169230 | raw | 149 | 0.5% | approved 2026-10-08 |
-| 20 | chia seeds | USDA | Seeds, chia seeds, dried | 170554 | dry | 486 | 0.3% | approved 2026-10-08 |
-| 21 | ground cumin | USDA | Spices, cumin seed | 170923 | dry | 375 | 0.3% | approved 2026-10-08 |
+| 1 | chicken thigh, boneless skinless | USDA | Chicken, broilers or fryers, dark meat, thigh, meat only, raw | 173627 | raw | 121 | 23.7% | approved 2026-10-08 |
+| 2 | flour tortilla (Price Rite, 37 g) | package label (+ USDA for nutrients not on the label) | Tortillas, ready-to-bake or -fry, flour, shelf stable | 167535 | as-sold | 297 | 20.3% | approved 2026-10-08 |
+| 3 | long-grain white rice (dry) | USDA | Rice, white, long-grain, regular, raw, enriched | 168877 | dry | 365 | 18.9% | approved 2026-10-08 |
+| 4 | vegetable oil | USDA | Oil, canola | 172336 | as-sold | 884 | 5.0% | approved 2026-10-08 |
+| 5 | chicken breast, boneless skinless | USDA | Chicken, broiler or fryers, breast, skinless, boneless, meat only, raw | 171077 | raw | 120 | 4.7% | approved 2026-10-08 |
+| 6 | olive oil | USDA | Oil, olive, salad or cooking | 171413 | as-sold | 884 | 4.1% | approved 2026-10-08 |
+| 7 | Greek yogurt, plain nonfat | USDA | Yogurt, Greek, plain, nonfat (Includes foods for USDA's Food Distribution Program) | 170894 | as-sold | 59 | 3.9% | approved 2026-10-08 |
+| 8 | protein powder, double chocolate | package label | — | — | as-sold | 387 | 3.5% | approved 2026-10-08 |
+| 9 | egg, large | USDA | Egg, whole, raw, fresh | 171287 | raw | 143 | 3.3% | approved 2026-10-08 |
+| 10 | milk, 2% | USDA | Milk, reduced fat, fluid, 2% milkfat, with added vitamin A and vitamin D | 171267 | as-sold | 50 | 2.2% | approved 2026-10-08 |
+| 11 | rolled oats | USDA | Cereals, oats, regular and quick, not fortified, dry | 173904 | dry | 379 | 1.7% | approved 2026-10-08 |
+| 12 | chia seeds | USDA | Seeds, chia seeds, dried | 170554 | dry | 486 | 1.5% | approved 2026-10-08 |
+| 13 | yellow onion | USDA | Onions, raw | 170000 | raw | 40 | 1.4% | approved 2026-10-08 |
+| 14 | tomato | USDA | Tomatoes, red, ripe, raw, year round average | 170457 | raw | 18 | 0.9% | approved 2026-10-08 |
+| 15 | broccoli florets | USDA | Broccoli, flower clusters, raw | 169330 | raw | 28 | 0.6% | approved 2026-10-08 |
+| 16 | bell pepper | USDA | Peppers, sweet, red, raw | 170108 | raw | 26 | 0.5% | approved 2026-10-08 |
+| 17 | spinach, fresh | USDA | Spinach, raw | 168462 | raw | 23 | 0.5% | approved 2026-10-08 |
+| 18 | low-sodium chicken broth | USDA | Soup, chicken broth, low sodium, canned | 171609 | as-sold | 16 | 0.5% | approved 2026-10-08; description says 'canned' |
+| 19 | red onion | USDA | Onions, red, raw | 790577 | raw | 44 | 0.5% | approved 2026-10-08 |
+| 20 | garlic | USDA | Garlic, raw | 169230 | raw | 149 | 0.5% | approved 2026-10-08 |
+| 21 | ground cumin | USDA | Spices, cumin seed | 170923 | dry | 375 | 0.2% | approved 2026-10-08 |
 | 22 | ginger root | USDA | Ginger root, raw | 169231 | raw | 80 | 0.2% | approved 2026-10-08 |
 | 23 | garam masala | USDA | Spices, curry powder | 170924 | dry | 325 | 0.2% | approved 2026-10-08; note: approximate mapping (no exact USDA food) |
 | 24 | tomato paste | USDA | Tomato products, canned, paste, without salt added (Includes foods for USDA's Food Distribution Program) | 170459 | as-sold | 82 | 0.2% | approved 2026-10-08 |
-| 25 | romaine lettuce | USDA | Lettuce, cos or romaine, raw | 169247 | raw | 17 | 0.2% | approved 2026-10-08 |
-| 26 | chili powder | USDA | Spices, chili powder | 171319 | dry | 282 | 0.1% | — |
-| 27 | ground coriander | USDA | Spices, coriander seed | 170922 | dry | 298 | 0.1% | — |
-| 28 | garlic powder | USDA | Spices, garlic powder | 171325 | dry | 331 | 0.1% | — |
-| 29 | paprika | USDA | Spices, paprika | 171329 | dry | 282 | 0.1% | — |
-| 30 | ground turmeric | USDA | Spices, turmeric, ground | 172231 | dry | 312 | 0.1% | — |
-| 31 | lemon juice | USDA | Lemon juice, raw | 167747 | raw | 22 | 0.1% | — |
-| 32 | unsweetened cocoa powder | USDA | Cocoa, dry powder, unsweetened | 169593 | dry | 228 | 0.1% | — |
+| 25 | romaine lettuce | USDA | Lettuce, cos or romaine, raw | 169247 | raw | 17 | 0.1% | approved 2026-10-08 |
+| 26 | unsweetened cocoa powder | USDA | Cocoa, dry powder, unsweetened | 169593 | dry | 228 | 0.1% | — |
+| 27 | chili powder | USDA | Spices, chili powder | 171319 | dry | 282 | 0.1% | — |
+| 28 | ground coriander | USDA | Spices, coriander seed | 170922 | dry | 298 | 0.1% | — |
+| 29 | garlic powder | USDA | Spices, garlic powder | 171325 | dry | 331 | 0.1% | — |
+| 30 | paprika | USDA | Spices, paprika | 171329 | dry | 282 | 0.1% | — |
+| 31 | ground turmeric | USDA | Spices, turmeric, ground | 172231 | dry | 312 | 0.1% | — |
+| 32 | lemon juice | USDA | Lemon juice, raw | 167747 | raw | 22 | 0.1% | — |
 | 33 | black pepper | USDA | Spices, pepper, black | 170931 | dry | 251 | 0.1% | — |
 | 34 | dried oregano | USDA | Spices, oregano, dried | 171328 | dry | 265 | 0.1% | — |
 | 35 | smoked paprika | USDA | Spices, paprika | 171329 | dry | 282 | 0.0% | — |

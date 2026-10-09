@@ -125,11 +125,15 @@ def test_calculation_validation_errors_are_problem_json(client, seeded_db):
 
 def test_seed_recipes_endpoint(client):
     recipes = client.get("/api/v1/recipes/seed").json()
-    assert len(recipes) == 9
+    assert len(recipes) == 10  # 9 Phase 0 drafts + the chia pudding added in Phase 1
     assert all(r["is_draft"] for r in recipes)
     by_title = {r["title"]: r for r in recipes}
     assert all(r["status"] == "complete" and r["incomplete_reasons"] == [] for r in recipes)
-    for title in ("Double chocolate protein pudding", "Chocolate protein overnight oats"):
+    for title in (
+        "Double chocolate protein pudding",
+        "Chocolate protein overnight oats",
+        "Chocolate protein chia pudding",
+    ):
         # nutrition complete, cost pending: no protein powder price yet
         assert all(c["unpriced"] == ["protein powder, double chocolate"] for c in by_title[title]["costs"])
         assert not any(c["complete"] for c in by_title[title]["costs"])

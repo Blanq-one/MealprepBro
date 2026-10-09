@@ -184,7 +184,7 @@ def render_markdown(rows: Sequence[MappingRow], generated_on: date) -> str:
         f"Generated {generated_on.isoformat()} by `uv run python -m app.cli mapping-review` from the seeded "
         "database. Regenerate after changing mappings; don't edit this file by hand.",
         "",
-        "- **Sorted by** each ingredient's share of the calories in all 9 seed recipes (base servings, "
+        "- **Sorted by** each ingredient's share of the calories in all seed recipes (base servings, "
         "optional lines excluded), highest first. Ingredients no seed uses come last, alphabetically.",
         "- **State** is the state the nutrition mapping describes, read from the USDA description "
         "(package labels are as-sold). Recipe quantities are raw / dry / as-sold weights unless a line says "

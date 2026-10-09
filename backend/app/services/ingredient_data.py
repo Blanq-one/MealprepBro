@@ -31,6 +31,8 @@ class IngredientData:
     nutrition_source: str
     fdc_id: int | None = None
     usda_description: str | None = None
+    is_perishable: bool = False
+    shelf_life_days_fridge: int | None = None
 
     @property
     def cap_view(self) -> CapIngredient:
@@ -79,6 +81,8 @@ def _build(
         nutrition_source=ingredient.nutrition_source,
         fdc_id=ingredient.fdc_id,
         usda_description=usda_description,
+        is_perishable=ingredient.is_perishable,
+        shelf_life_days_fridge=ingredient.shelf_life_days_fridge,
     )
 
 

@@ -4,7 +4,9 @@ A personal meal-prep and grocery optimizer. Build rules: [`CLAUDE.md`](CLAUDE.md
 [`docs/PRD.md`](docs/PRD.md). Build plan and progress: [`docs/BUILD_PLAN.md`](docs/BUILD_PLAN.md).
 Data provenance: [`docs/data-sources.md`](docs/data-sources.md).
 
-Status: Phase 0 (data foundation): schema, USDA nutrition cache, seed data and calculators. No LLM, no frontend.
+Status: Phase 1 (planning brain, backend only): weekly plans from your settings, seed and saved recipes first,
+Groq only for uncovered slots, a PuLP/HiGHS solver, practical rounding, independent validation and a store-grouped
+grocery list. No frontend yet (Phase 2).
 
 ## Quickstart (Docker only)
 
@@ -28,6 +30,8 @@ docker compose run --rm backend uv run --frozen python -m app.cli ingredient-rep
 docker compose run --rm backend uv run --frozen python -m app.cli safety-table
 docker compose run --rm backend uv run --frozen python -m app.cli mapping-review   # docs/review/usda_mappings.md
 
+docker compose run --rm backend uv run --frozen python -m app.cli plan-week --no-llm --dry-run
+
 docker compose up backend                # API on http://localhost:8000 (docs at /docs)
 ```
 
@@ -50,7 +54,36 @@ uv run python -m app.cli seed
 uv run uvicorn app.main:app --reload
 ```
 
-## API (Phase 0)
+## Planning a week (Phase 1)
+
+```bash
+cd backend
+uv run python -m app.cli plan-week --week 2026-10-12 --no-llm --dry-run   # seed recipes only, 0 LLM calls
+uv run python -m app.cli plan-week --week 2026-10-12                     # LLM fills uncovered slots (needs GROQ_API_KEY + LLM_MODEL)
+uv run python -m app.cli plan-week --slot dinner=550 --slot drink=100 --minutes mon=60 --budget 90 --hard-budget
+```
+
+It prints each day's meals, daily and weekly kcal and protein, cost by store (with the Price Rite split rule), notes
+and warnings, or the reasons no plan fits. Without `--dry-run` the plan is saved as a draft; `--accept` makes it the
+week's active plan.
+
+LLM tests use scripted responses. One opt-in smoke test calls Groq for real:
+`RUN_LIVE_LLM_TESTS=1 uv run pytest -m live_llm -s`.
+
+## API
+
+Phase 1:
+
+- `POST /api/v1/plans` → `202` with a run id; poll `GET /api/v1/generation-runs/{id}`
+- `GET /api/v1/plans/{id}` (the weekly summary), `POST /api/v1/plans/{id}/accept`,
+  `GET /api/v1/plans/{id}/grocery-list?group_by=store`
+- `GET /api/v1/recipes/{id}`, `GET /api/v1/recipe-versions/{id}?portions=&portion_size=` (rendered, with safety lines)
+- `GET/PUT /api/v1/settings`, `PUT/DELETE /api/v1/settings/ingredient-preferences/{ingredient_id}`
+- `GET/POST /api/v1/inventory`, `PATCH /api/v1/inventory/{id}`, `POST /api/v1/inventory/{id}/discard`
+- `GET/POST /api/v1/products`, `PATCH/DELETE /api/v1/products/{id}`, `POST /api/v1/prices` (a store is required)
+- `GET /api/v1/ingredients/suggested`, `POST /api/v1/ingredients/suggested/{name}/approve`
+
+Phase 0:
 
 - `GET /health`
 - `GET /api/v1/ingredients?q=` — alias and fuzzy search, with diet status (allowed / excluded / held)

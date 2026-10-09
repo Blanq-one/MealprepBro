@@ -42,3 +42,24 @@ def test_usda_import_without_downloads_explains_what_to_do(tmp_path, monkeypatch
 def test_unknown_command_is_rejected():
     with pytest.raises(SystemExit):
         cli.main(["nope"])
+
+
+def test_plan_week_prints_the_week_from_seeds_with_zero_llm_calls(use_test_db, capsys):
+    assert cli.main(["plan-week", "--week", "2026-10-12", "--no-llm", "--dry-run"]) == 0
+    out = capsys.readouterr().out
+    assert "Week of Mon Oct 12, 2026" in out and "0 LLM calls, 0 tokens" in out
+    assert "TUE Oct 13 | leftovers, no cooking" in out and "FRI Oct 16 | leftovers, no cooking" in out
+    assert out.count("  Day ") == 7 and "  WEEK " in out
+    assert "Grocery cost by store" in out and "Stop & Shop" in out and "Price Rite" in out
+    assert "protein powder, double chocolate (no price yet, so the cost is incomplete)" in out
+    assert "(dry run: nothing was saved)" in out
+
+
+def test_plan_week_explains_an_infeasible_week(use_test_db, capsys):
+    code = cli.main(
+        ["plan-week", "--week", "2026-10-12", "--no-llm", "--dry-run", "--budget", "80", "--hard-budget"]
+    )
+    assert code == 1
+    out = capsys.readouterr().out
+    assert "INFEASIBLE" in out and "No plan fits this week" in out
+    assert "protein powder, double chocolate has no price" in out

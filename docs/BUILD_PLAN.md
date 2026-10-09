@@ -1,6 +1,6 @@
 # Mealbro Build Plan
 
-**Status:** v3, **approved** 2026-10-08 with the changes recorded in §12.1. Phase 0 approved; pre-Phase 1 tasks done. Waiting for your go-ahead on Phase 1.
+**Status:** v3, **approved** 2026-10-08 with the changes recorded in §12.1. Phase 0 approved. Phase 1 built 2026-10-09 and waiting for your approval (outcome note at the end of Phase 1 in §9; your Phase 1 decisions are C1–C3 in §12.1).
 **Source documents:** `CLAUDE.md` (build rules, wins on conflict), `docs/PRD.md` (product vision).
 
 This plan covers Phases 0–6. One phase per session. A phase is done only when its acceptance criteria are met, its tests pass, and the test output has been shown.
@@ -17,7 +17,7 @@ This plan covers Phases 0–6. One phase per session. A phase is done only when 
 | — | Build plan | Approved (v3) | 2026-10-08 | 2026-10-08 | v1 reviewed → v2 (seed library, per-phase migrations, narrow prose filter, rounded-plan validator, strict/best-effort). v3 = approval changes: table audit (§4.2a), exposure logging → Phase 2, beef-only exclusion + pork frequency cap, R1–R7 answers, A2 label values. |
 | 0 | Data foundation | Approved | 2026-10-08 | 2026-10-08 | 321 tests pass (local + Docker), domain coverage 99.6% (domain tests alone), ruff/mypy clean. 185 ingredients, 649 aliases, 9 draft seeds. Open: FoodSafety.gov chart (A1), powder carbs/fat (A2), R8. Deviations in the Phase 0 outcome note (§9). |
 | — | Pre-Phase 1 tasks | Done | 2026-10-08 | 2026-10-08 | Package-label data (tortillas, protein powder), USDA mapping review sheet (`docs/review/usda_mappings.md`), raw/dry/as-sold rule + check (§7.8), CLAUDE.md machine-boundaries rule. Round 2: FoodSafety.gov chart transcribed (53 rows, §7.2), top-25 mappings approved, tortilla renamed, Docker rule clarified, fresh-clone check made a per-phase step. |
-| 1 | Planning brain | Not started | | | |
+| 1 | Planning brain | Done, awaiting approval | 2026-10-08 | 2026-10-09 | 645 tests pass (the opt-in live test skips), domain coverage 99%, ruff/mypy clean, fresh-clone check passed. Seed week plans with 0 LLM calls; live Groq run shown. Decisions C1–C3 (hands-on minutes, dessert cap + second dessert seed, HiGHS); deviations D1–D13 in the Phase 1 outcome note. |
 | 2 | Mobile PWA + cloud deploy | Not started | | | |
 | 3 | Feedback loop | Not started | | | |
 | 4 | Daily overrides | Not started | | | |
@@ -982,6 +982,8 @@ class PlanConstraints(_Frozen):
         return self
 ```
 
+**Phase 1 notes.** As built: `DaySpec.cook_minutes_available` counts **hands-on** minutes (C1); the weekly `max_portions_per_recipe` cap applies only to `VARIETY_CAPPED_SLOTS` = breakfast, lunch, dinner (C2); `held_ingredient_ids` (the held subset of `excluded_ingredient_ids`) was added so diagnostics can list items to review; `DaySpec.kcal_target` is the day's slot allocations added up (unallocated calories stay unplanned).
+
 Mapping from PRD §32's example: `daily_calorie_limit` → `daily_kcal_target`; `weekly_calorie_limit` → `weekly_kcal_target`; `meals_per_day` → `DaySpec.slots`; `portion_size` → `default_portion_size`; `cooking_time`/`recipe_mood` → per-day `cook_minutes_available`/`mood`; `budget_priority` → dropped in favor of `grocery_mode` (Q12); `equipment` → `equipment`.
 
 ### 6.3 LLM-generated recipe (`app/schemas/llm_recipe.py`, Phase 1)
@@ -1201,6 +1203,7 @@ How the filter decides:
 - **Groq strict structured outputs:** `openai/gpt-oss-20b`, `openai/gpt-oss-120b`, `qwen/qwen3.8-27b`. **Best-effort:** those plus `openai/gpt-oss-safeguard-20b`. Neither works with streaming or tool use.
 - **Published base limits** for those models: 30 req/min, 1K req/day, **8K tokens/min**, 200K tokens/day. The client reads `x-ratelimit-*`/`retry-after` rather than hardcoding limits.
 - **Implications:** 2–3 recipes per call, compact prompts, low reasoning effort, a daily token guard, and the seed library plus reuse to avoid calls.
+- **Observed in the Phase 1 live runs (2026-10-09, `openai/gpt-oss-120b`, strict):** a two-recipe batch is ~5.9K prompt + ~1.8K completion tokens, so a second call in the same minute gets a 429 (retry-after 7–39 s, handled). Strict mode still returned `json_validate_failed` once (retried as a parse error). A retry that re-sent the whole failed reply grew to 11.4K requested tokens and was refused with HTTP 413, so retries now re-send only short replies and `LLM_MAX_COMPLETION_TOKENS` defaults to 3000.
 
 ### 7.7 API and config conventions
 
@@ -1493,6 +1496,29 @@ How the filter decides:
 - *Cross-week leftovers* (Saturday's cooking feeding next Monday) aren't modeled until prepared portions exist (Phase 3). Each Phase 1 plan is self-contained.
 - *Scope.* If the phase runs long, I'll stop and propose splitting it into 1a (adapter + candidates) and 1b (solver + validator).
 
+**Outcome (2026-10-09).** All 13 acceptance criteria are met; test output, the fresh-clone check and a seed-only `plan-week` run are in the phase summary. Your decisions this phase are C1–C3 (§12.1). What changed from the plan, and why:
+
+- **D1. Portion variants.** One continuous multiplier per batch in [0.9, 1.1], linearized exactly (McCormick on binary × continuous), instead of three discrete copies of every batch. The copies tripled near-identical batches and kept weeks from solving in 30 s. `plan_cook_batch.portion_multiplier` stores size × multiplier × absorption scale.
+- **D2. Slot deviation.** The slot-kcal deviation is penalized only beyond ±15% of the slot target. Whole portions can't hit a slot target exactly, so the old term left a gap the LP bound could never close. Day and week limits stay hard.
+- **D3. Packages in the solver.** Whole-package integers only for perishable packs of $5 or more (chicken trays, 32 oz yogurt); everything else is costed per unit inside the MILP. Exact packages, stores and costs for every item are computed on the rounded plan as before. All-integer packages took ~56 s on the seed week; this takes ~6–8 s.
+- **D4. Store split.** In the MILP, using the secondary store costs a fixed charge equal to the threshold ($5), so it is used only when it saves at least that much. The grocery list applies R4 exactly on the rounded plan (savings vs all-primary ≥ threshold, ties stay at the primary store).
+- **D5. Rounding feedback.** Practical rounding moves kcal in steps (whole scoops, a minimum ½ onion), which pushed a seed week 274 kcal over. The first solve now starts from each recipe's typical rounding bias (rounded at 2–5 portions), keeps 5 kcal/day and 20 kcal/week of room inside the limits, and post-solve picks the multiplier whose rounded kcal is closest to the plan. Re-solves (still ≤ 2) add the observed per-recipe bias as well as tightening the failing bound.
+- **D6. Solver stopping.** HiGHS stops at a 0.5% relative or 1.0-point absolute gap (≈ $2 of groceries); the time limit is 12 s (AC 12: < 15 s). The seed week proves optimal in ~6–8 s. A week that reaches the limit returns its best plan, marked `feasible`; the 30-candidate test instance does (≈ 12.3 s).
+- **D7. Calorie target.** A small reward per planned kcal (0.002) makes plans aim at your target instead of settling at the 97% floor; the ceilings still cap it.
+- **D8. Constraint object.** `held_ingredient_ids` added; cook minutes mean hands-on minutes (C1); the variety cap covers meals only (C2). See the Phase 1 notes under §6.2.
+- **D9. LLM retries and tokens.** A retry re-sends the failed reply only when it is short (≤ 2,000 characters), and `LLM_MAX_COMPLETION_TOKENS` defaults to 3000, after Groq refused a growing third attempt (§7.6).
+- **D10. CLI.** `cli plan` is `plan-week` (your request) with `--no-llm`, `--dry-run`, `--slot`, `--minutes`, `--budget/--hard-budget`, `--priority`, `--accept`.
+- **D11. Partial persistence.** If an LLM call fails after its retries, nothing from that call and no plan is saved, but validated recipes from earlier calls in the same run stay saved for reuse (CLAUDE.md rule 7).
+- **D12. Compose.** The backend container gets `GROQ_API_KEY`, `LLM_MODEL` and `LLM_STRUCTURED_MODE` from the repo's `.env`.
+- **D13. PuLP pinned below 4.** PuLP 4 moved CBC into a separate package; the 3.x line keeps a working CBC fallback.
+
+Also as requested:
+- **Unpriced ingredients.** With a hard budget, a recipe with an unpriced, non-staple ingredient that inventory doesn't cover is left out and the plan says why ("protein powder … has no price at your stores, so your hard budget can't be checked"). With a soft or no budget it stays, and the cost shows as incomplete with the item named. Tests cover both.
+- **Pork cap at the solver level.** Tested directly (three best-scoring sausage recipes → at most one pork meal; a property test over random pools and caps 0–3; cap 0 keeps trace pork; a better, cheaper pork recipe with an open package of bacon still loses to an otherwise-equal chicken recipe) and on the planned seed week.
+- **Live smoke test** (`RUN_LIVE_LLM_TESTS=1`): one batch through the full validation path; a normal `pytest` run skips it.
+
+Open: the protein powder price (costs stay incomplete until you enter it); `LLM_MODEL` isn't in your `.env` yet (the live runs passed `openai/gpt-oss-120b` on the command line); A3 (cloud provider comparison) is due before Phase 2; R8 is still open. The USDA mapping review sheet was regenerated because 3b changes the calorie shares slightly.
+
 ---
 
 ### Phase 2: Mobile PWA + cloud deploy
@@ -1762,8 +1788,11 @@ Listed in CLAUDE.md: Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2.0, Alembic,
 | TanStack Query | 2 | Not used (Q17 default) | Plain fetch hooks instead |
 | Playwright (dev) | 2 | Not used (Q17 default) | Manual checklist instead |
 | `scikit-learn` + `numpy` | 6 | Not used (Q25 default) | Pure-Python logistic regression instead |
+| `pulp` (pinned 3.3.x) | 1 | Listed in CLAUDE.md | PuLP 4 moved CBC into a separate `cbcbox` package; 3.x keeps the bundled CBC as a fallback |
+| `groq` | 1 | Listed in CLAUDE.md | The Groq SDK, imported only in `app/llm/client.py` |
+| `highspy` (pulls in `numpy`) | 1 | **Approved 2026-10-09 (C3)** | HiGHS MILP solver behind PuLP: the CBC bundled for Windows hangs and ignores its time limit |
 
-No other dependencies are planned. Auth uses the stdlib, and the solver uses PuLP's bundled CBC. If one becomes necessary, I'll ask first with a one-line justification.
+No other dependencies are planned. Auth uses the stdlib, and the solver uses HiGHS through PuLP (C3). If one becomes necessary, I'll ask first with a one-line justification.
 
 ---
 
@@ -1844,6 +1873,14 @@ No other dependencies are planned. Auth uses the stdlib, and the solver uses PuL
 | L9 | Docker rule | Starting/stopping this repo's own containers from `docker-compose.yml` is allowed; launching Docker Desktop or any other application still requires asking. |
 | L10 | Fresh-clone check | Run `scripts/fresh_clone_check.sh` at the end of every phase, even when dependencies didn't change. |
 
+**Phase 1 (2026-10-08 / 09)**
+
+| # | Topic | Decision |
+|---|---|---|
+| C1 | Cook time | A cook day's minutes are **hands-on** minutes: the batches' `active_minutes` added up. Simmering, chilling and soaking overlap with other work. Mood limits use active minutes too (simple ≤ 30, medium ≤ 60, fancy ≤ 240). Replaces Q7's start-to-finish reading, which fit only one seed recipe per 45-minute cook day. |
+| C2 | Variety cap | The weekly 5-portion cap applies to breakfast, lunch and dinner; desserts, snacks and drinks are limited only by "never twice in a day". A second protein-dessert seed was added for variety: 3b Chocolate protein chia pudding (it also uses the protein powder). |
+| C3 | Solver | HiGHS (`highspy`) runs the MILP through PuLP. The CBC 2.10.3 bundled with PuLP for Windows hangs on these models and ignores its time limit (the Linux build is fine); CBC stays only as a fallback when HiGHS is missing. |
+
 ### 12.2 Remaining questions (from applying your answers)
 
 - **R8. Other possibly-beef items.** I applied your gelatin rule ("source not stated → excluded by default, since it may be bovine") to the other items from the old R2 list that could contain beef. All are **held** (excluded until you allow them), and none is in a seed recipe, so nothing is blocked today:
@@ -1866,7 +1903,7 @@ No other dependencies are planned. Auth uses the stdlib, and the solver uses PuL
 
 ## 13. Seed recipe library (DRAFTS: quantities for you to adjust)
 
-All seeds are loaded as `origin=seed`, `created_by=system`, `is_draft=true`. They are usable by the planner on cold start and shown with a "draft" badge. Editing one creates your confirmed version. **Quantities are raw/dry as purchased, for the stated base servings. Calories, macros and cost are computed by code in Phase 0 and deliberately not written here.** Full step text is written into the seed JSON in Phase 0 and passes the same prose filter and safety injection as LLM recipes. **9 versions in 5 families.** No seed uses beef, a held (possible-beef) item or a pork component (R2). Defaults accepted (R6).
+All seeds are loaded as `origin=seed`, `created_by=system`, `is_draft=true`. They are usable by the planner on cold start and shown with a "draft" badge. Editing one creates your confirmed version. **Quantities are raw/dry as purchased, for the stated base servings. Calories, macros and cost are computed by code in Phase 0 and deliberately not written here.** Full step text is written into the seed JSON in Phase 0 and passes the same prose filter and safety injection as LLM recipes. **10 versions in 5 families** (3b added in Phase 1, C2). No seed uses beef, a held (possible-beef) item or a pork component (R2). Defaults accepted (R6).
 
 **Family 1: Chicken over rice** (lunch, dinner)
 
@@ -1898,6 +1935,11 @@ All seeds are loaded as `origin=seed`, `created_by=system`, `is_draft=true`. The
   - *Ingredients:* protein powder, double chocolate 2 scoops (31 g each, from your label) · Greek yogurt, plain nonfat 340 g · unsweetened cocoa powder 1 tbsp · milk (2%) 60 ml · vanilla extract ½ tsp (optional).
   - *Outline:* whisk powder, cocoa and milk into a smooth paste; fold into the yogurt; divide into 2 cups; chill.
   - *Note:* nutrition complete from your package label (L1); cost pending until you give the powder's price.
+
+- **3b. Chocolate protein chia pudding** (added in Phase 1, C2). Simple · no-cook · base 2 · ≈ 5 min + chill 2 hours.
+  - *Ingredients:* chia seeds 40 g · milk (2%) 1½ cups · protein powder, double chocolate 1 scoop · unsweetened cocoa powder 1 tbsp · vanilla extract ½ tsp (optional).
+  - *Outline:* whisk powder and cocoa into the milk; stir in chia, wait 5 minutes and stir again; divide into 2 jars; chill until thick.
+  - *Note:* cost pending until you give the powder's price.
 
 **Family 4: Egg breakfast** (breakfast; R3)
 

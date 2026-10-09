@@ -249,7 +249,7 @@ def test_price_rite_chicken_estimate_below_stop_and_shop(seeded_db):
 
 def test_seed_recipes(seeded_db):
     versions = seeded_db.scalars(select(RecipeVersion)).all()
-    assert len(versions) == 9
+    assert len(versions) == 10  # the chia pudding joined "Protein pudding" in Phase 1
     assert all(v.is_draft and v.version_number == 1 and v.created_by == "system" for v in versions)
     families = seeded_db.scalars(select(RecipeFamily.name)).all()
     assert sorted(families) == sorted(
@@ -340,7 +340,11 @@ def test_all_seed_recipes_have_complete_nutrition(seeded_db):
     user = seeded_db.scalars(select(AppUser)).one()
     views = {v.version.title: v.calculation for v in seed_recipes(seeded_db, user.id)}
     assert all(c.nutrition_complete for c in views.values())
-    powder_recipes = {"Double chocolate protein pudding", "Chocolate protein overnight oats"}
+    powder_recipes = {
+        "Double chocolate protein pudding",
+        "Chocolate protein overnight oats",
+        "Chocolate protein chia pudding",
+    }
     for title, calc in views.items():
         if title in powder_recipes:  # protein powder price still pending
             assert all(c.total.unpriced == ("protein powder, double chocolate",) for c in calc.costs), title
@@ -454,7 +458,7 @@ def test_seed_rejects_a_recipe_with_a_pork_component(seeded_db, tmp_path):
 
 def test_seed_files_validate():
     files = load_seed_files()
-    assert len(files.recipes) == 9
+    assert len(files.recipes) == 10
     assert len(files.ingredients.ingredients) >= 150
 
 

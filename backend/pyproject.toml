@@ -11,6 +11,9 @@ dependencies = [
     "alembic>=1.14",
     "psycopg[binary]>=3.2",
     "uvicorn>=0.32",
+    "pulp>=3.3,<4",  # PuLP 4 moved CBC into the separate `cbcbox` extra; 3.x bundles CBC (BUILD_PLAN §10)
+    "groq>=1.7",  # imported only in app/llm/client.py (CLAUDE.md rule 6)
+    "highspy>=1.13,<2",  # HiGHS MILP solver behind PuLP (approved 2026-10-09): the bundled Windows CBC hangs
 ]
 
 [dependency-groups]
@@ -33,11 +36,14 @@ addopts = "-ra --strict-markers"
 filterwarnings = [
     # Starlette suggests a different HTTP client package for TestClient; httpx is the approved one.
     "ignore:Using `httpx` with `starlette.testclient` is deprecated",
+    # PuLP 3.3 announces PuLP 4's variable API; we pin PuLP < 4 (CBC bundling, see dependencies)
+    "ignore:Constructing LpVariable:DeprecationWarning",
 ]
 markers = [
     "db: needs the db-test Postgres",
     "slow: slow tests",
-    "live_llm: makes a real LLM call (opt-in, Phase 1+)",
+    "live_llm: makes a real LLM call (opt-in: set RUN_LIVE_LLM_TESTS=1)",
+    "with_margins: solver tests that keep the rounding margin inside the calorie limits",
 ]
 
 [tool.coverage.run]
@@ -76,3 +82,8 @@ disallow_untyped_defs = false
 disallow_incomplete_defs = false
 disallow_untyped_calls = false
 check_untyped_defs = false
+
+[[tool.mypy.overrides]]
+# PuLP ships no type information; the solver modules wrap it.
+module = ["pulp", "pulp.*"]
+ignore_missing_imports = true

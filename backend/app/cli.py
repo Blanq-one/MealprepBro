@@ -5,27 +5,42 @@ usda-subset              rebuild the committed test fixture from the full zips
 seed                     load seed data (idempotent; run after usda-import)
 ingredient-report        data-quality report: errors, placeholders, held items, Atwater mismatches
 safety-table             print the hardcoded food-safety table and its citation
+plan-week [--week DATE]  plan a week from your current settings and print it (Phase 1 demo)
 """
 
 import argparse
 import sys
 from collections.abc import Sequence
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.config import BACKEND_DIR, get_settings
+from app.db.models import RecipeVersion
 from app.db.session import get_engine
 from app.domain import food_safety as fs
 from app.domain import storage_chart
+from app.domain.enums import CalorieMode, MealSlot, NutritionPriority
+from app.llm.client import make_client
+from app.llm.errors import LLMConfigError
+from app.planning.persistence import accept_plan
+from app.planning.text_report import format_failure, format_plan
+from app.schemas.plans import DayOverride, PlanRequest
 from app.seed.files import load_seed_files
 from app.seed.loader import seed_all
 from app.seed.mapping_review import build_rows, flag_summary, render_markdown
 from app.seed.report import build_report, format_report
+from app.services.plans import run_plan_now
+from app.services.pricing import active_stores
+from app.services.settings import current_user
 from app.usda.importer import import_release
 from app.usda.release import find_releases
 from app.usda.subset import build_subset
+
+PRIORITIES = ["protein", "carb", "iron", "balanced"]
+WEEKDAY_NAMES = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 
 REVIEW_SHEET = BACKEND_DIR.parent / "docs" / "review" / "usda_mappings.md"
 SUBSET_DIR = BACKEND_DIR / "app" / "testing" / "fixtures" / "usda_subset"
@@ -123,7 +138,79 @@ def _safety_table() -> int:
     return 0
 
 
+def _next_monday(today: date) -> date:
+    return today + timedelta(days=(7 - today.weekday()) % 7 or 7)
+
+
+def _plan_week(args: argparse.Namespace) -> int:
+    slot_kcal: dict[MealSlot, int] = {}
+    for item in args.slot or []:
+        name, _, kcal = item.partition("=")
+        try:
+            slot_kcal[MealSlot(name.strip())] = int(kcal)
+        except ValueError:
+            print(f"--slot needs slot=kcal with a known slot, got '{item}'", file=sys.stderr)
+            return 2
+    week_start = args.week or _next_monday(datetime.now(UTC).astimezone().date())
+    overrides: list[DayOverride] = []
+    for item in args.minutes or []:
+        name, _, minutes = item.partition("=")
+        if name.strip().lower() not in WEEKDAY_NAMES or not minutes.strip().isdigit():
+            print(f"--minutes needs weekday=minutes (e.g. mon=60), got '{item}'", file=sys.stderr)
+            return 2
+        offset = (WEEKDAY_NAMES.index(name.strip().lower()) - week_start.weekday()) % 7
+        overrides.append(DayOverride(day=week_start + timedelta(days=offset), cook_minutes=int(minutes)))
+    budget = round(args.budget * 100) if args.budget is not None else None
+    hard = True if args.hard_budget else (False if args.soft_budget else None)
+    request = PlanRequest(
+        week_start=week_start,
+        days=args.days,
+        day_overrides=overrides,
+        slot_kcal=slot_kcal,
+        nutrition_priority=NutritionPriority(args.priority) if args.priority else None,
+        secondary_priority=NutritionPriority(args.secondary) if args.secondary else None,
+        calorie_mode=CalorieMode(args.calorie_mode) if args.calorie_mode else None,
+        weekly_budget_cents=budget,
+        budget_is_hard=hard,
+        allow_llm=not args.no_llm,
+    )
+    client = None
+    if not args.no_llm:
+        try:
+            client = make_client(get_settings())
+        except LLMConfigError as exc:
+            print(f"note: {exc}; planning from saved recipes only (pass --no-llm to hide this note)")
+            request = request.model_copy(update={"allow_llm": False})
+    with Session(get_engine()) as session:
+        user = current_user(session)
+        outcome = run_plan_now(session, user.id, request, client)
+        if outcome.status == "succeeded" and outcome.plan is not None:
+            if args.accept and outcome.plan_id is not None:
+                accept_plan(session, user.id, outcome.plan_id)
+            stores = {s.id: s.name for s in active_stores(session)}
+            versions = [b.version_id for b in outcome.plan.batches]
+            drafts = set(
+                session.scalars(
+                    select(RecipeVersion.id).where(
+                        RecipeVersion.id.in_(versions), RecipeVersion.is_draft.is_(True)
+                    )
+                )
+            )
+            print(format_plan(outcome.plan, outcome, stores, drafts))
+        else:
+            print(format_failure(outcome))
+        if args.dry_run:
+            session.rollback()
+            print()
+            print("(dry run: nothing was saved)")
+        else:
+            session.commit()
+    return 0 if outcome.status == "succeeded" else 1
+
+
 def main(argv: Sequence[str] | None = None) -> int:
+    if hasattr(sys.stdout, "reconfigure"):  # Windows consoles default to a legacy code page
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(prog="python -m app.cli", description="Mealbro backend commands")
     sub = parser.add_subparsers(dest="command", required=True)
     usda = sub.add_parser("usda-import", help="import USDA FoodData Central CSV zips")
@@ -134,6 +221,25 @@ def main(argv: Sequence[str] | None = None) -> int:
     sub.add_parser("safety-table", help="print the food-safety table with its citation")
     review = sub.add_parser("mapping-review", help="write the USDA mapping review sheet")
     review.add_argument("--out", type=Path, default=REVIEW_SHEET)
+    plan = sub.add_parser("plan-week", help="plan a week from your current settings and print it")
+    plan.add_argument("--week", type=date.fromisoformat, help="first day, YYYY-MM-DD (default: next Monday)")
+    plan.add_argument("--days", type=int, default=7)
+    plan.add_argument("--no-llm", action="store_true", help="seed and saved recipes only: zero LLM calls")
+    plan.add_argument("--budget", type=float, help="weekly budget in dollars for this plan")
+    budget_kind = plan.add_mutually_exclusive_group()
+    budget_kind.add_argument("--hard-budget", action="store_true")
+    budget_kind.add_argument("--soft-budget", action="store_true")
+    plan.add_argument("--priority", choices=PRIORITIES)
+    plan.add_argument("--secondary", choices=PRIORITIES)
+    plan.add_argument("--calorie-mode", choices=["weekly", "strict_daily"])
+    plan.add_argument(
+        "--slot", action="append", metavar="SLOT=KCAL", help="per-plan slot allocation (0 removes)"
+    )
+    plan.add_argument(
+        "--minutes", action="append", metavar="DAY=MIN", help="hands-on minutes for one weekday (mon=60)"
+    )
+    plan.add_argument("--accept", action="store_true", help="make the new plan the week's active plan")
+    plan.add_argument("--dry-run", action="store_true", help="print the plan but save nothing")
     args = parser.parse_args(argv)
     if args.command == "usda-import":
         return _usda_import(args.paths)
@@ -145,6 +251,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _ingredient_report()
     if args.command == "mapping-review":
         return _mapping_review(args.out)
+    if args.command == "plan-week":
+        return _plan_week(args)
     return _safety_table()
 
 

@@ -1,0 +1,277 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "recipes": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "(min length 3, max length 80)"
+          },
+          "description": {
+            "type": "string",
+            "description": "(max length 300)"
+          },
+          "meal_slots": {
+            "items": {
+              "enum": [
+                "breakfast",
+                "lunch",
+                "dinner",
+                "snack",
+                "protein_dessert",
+                "drink"
+              ],
+              "type": "string"
+            },
+            "type": "array",
+            "description": "(min items 1, max items 3)"
+          },
+          "mood": {
+            "enum": [
+              "simple",
+              "medium",
+              "fancy"
+            ],
+            "type": "string"
+          },
+          "cuisine": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "(max length 40)"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "flavor_tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "description": "(max items 6)"
+          },
+          "base_servings": {
+            "type": "integer",
+            "description": "(≥ 1, ≤ 12)"
+          },
+          "active_minutes": {
+            "description": "Hands-on minutes (≥ 1, ≤ 240)",
+            "type": "integer"
+          },
+          "total_minutes": {
+            "description": "Start-to-finish minutes, including waiting (≥ 1, ≤ 720)",
+            "type": "integer"
+          },
+          "equipment": {
+            "items": {
+              "enum": [
+                "stovetop",
+                "oven",
+                "air_fryer",
+                "microwave",
+                "rice_cooker",
+                "pressure_cooker",
+                "slow_cooker",
+                "blender",
+                "food_processor",
+                "grill"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "freezer_friendly": {
+            "type": "boolean"
+          },
+          "ingredients": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "description": "Name from the provided ingredient list (min length 2, max length 80)",
+                  "type": "string"
+                },
+                "quantity": {
+                  "description": "Raw/dry, as-purchased amount for base_servings (≤ 5000, > 0)",
+                  "type": "number"
+                },
+                "unit": {
+                  "enum": [
+                    "g",
+                    "kg",
+                    "oz",
+                    "lb",
+                    "ml",
+                    "l",
+                    "tsp",
+                    "tbsp",
+                    "cup",
+                    "fl_oz",
+                    "count",
+                    "clove",
+                    "slice",
+                    "can",
+                    "head",
+                    "scoop"
+                  ],
+                  "type": "string"
+                },
+                "preparation": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "description": "(max length 80)"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "role": {
+                  "enum": [
+                    "protein",
+                    "carb",
+                    "vegetable",
+                    "fruit",
+                    "dairy",
+                    "fat",
+                    "sauce",
+                    "seasoning",
+                    "garnish",
+                    "other"
+                  ],
+                  "type": "string"
+                },
+                "component": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "description": "(max length 40)"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "optional": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "name",
+                "quantity",
+                "unit",
+                "preparation",
+                "role",
+                "component",
+                "optional"
+              ],
+              "type": "object"
+            },
+            "type": "array",
+            "description": "(min items 2, max items 25)"
+          },
+          "steps": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "section": {
+                  "enum": [
+                    "prep",
+                    "marinate",
+                    "stovetop",
+                    "oven",
+                    "air_fryer",
+                    "rice",
+                    "microwave",
+                    "no_cook",
+                    "assembly",
+                    "portioning",
+                    "storage",
+                    "reheating"
+                  ],
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string",
+                  "description": "(min length 5, max length 500)"
+                },
+                "duration_minutes": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "description": "(≥ 0, ≤ 720)"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "appliance_temp_f": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "description": "(≥ 150, ≤ 550)"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Oven / air-fryer / pan setting. Never an internal food temperature."
+                },
+                "doneness_check_for": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "description": "(max length 80)"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Ingredient whose doneness is checked here; the app inserts the safe temperature."
+                }
+              },
+              "required": [
+                "section",
+                "text",
+                "duration_minutes",
+                "appliance_temp_f",
+                "doneness_check_for"
+              ],
+              "type": "object"
+            },
+            "type": "array",
+            "description": "(min items 3, max items 30)"
+          }
+        },
+        "required": [
+          "title",
+          "description",
+          "meal_slots",
+          "mood",
+          "cuisine",
+          "flavor_tags",
+          "base_servings",
+          "active_minutes",
+          "total_minutes",
+          "equipment",
+          "freezer_friendly",
+          "ingredients",
+          "steps"
+        ],
+        "type": "object"
+      },
+      "type": "array",
+      "description": "(min items 1, max items 6)"
+    }
+  },
+  "required": [
+    "recipes"
+  ],
+  "type": "object"
+}

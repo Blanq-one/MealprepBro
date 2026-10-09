@@ -1,0 +1,29 @@
+{
+ "family": "Protein pudding",
+ "title": "Chocolate protein chia pudding",
+ "description": "Chia seeds soaked in chocolate protein milk until thick and spoonable.",
+ "meal_slots": ["protein_dessert", "snack"],
+ "mood": "simple",
+ "cuisine": null,
+ "flavor_tags": ["chocolate"],
+ "base_servings": 2,
+ "active_minutes": 5,
+ "total_minutes": 125,
+ "equipment": [],
+ "freezer_friendly": false,
+ "draft_note": "Draft quantities: adjust them in the app. Cost stays incomplete until the protein powder's price is entered.",
+ "ingredients": [
+  {"ingredient": "chia-seeds", "quantity": "40", "unit": "g", "role": "other"},
+  {"ingredient": "milk-2", "quantity": "1 1/2", "unit": "cup", "role": "dairy"},
+  {"ingredient": "protein-powder-double-chocolate", "quantity": "1", "unit": "scoop", "role": "protein"},
+  {"ingredient": "cocoa-powder", "quantity": "1", "unit": "tbsp", "role": "other"},
+  {"ingredient": "vanilla-extract", "quantity": "1/2", "unit": "tsp", "role": "seasoning", "optional": true}
+ ],
+ "steps": [
+  {"section": "prep", "text": "Set out 2 jars with lids and measure the milk, protein powder and cocoa."},
+  {"section": "no_cook", "text": "Whisk the protein powder and cocoa into the milk until smooth, then whisk in the vanilla."},
+  {"section": "no_cook", "text": "Stir in the chia seeds, wait 5 minutes, then stir again to break up any clumps.", "duration_minutes": 5},
+  {"section": "portioning", "text": "Divide between the 2 jars, seal and chill at least 2 hours, or overnight, until thick.", "duration_minutes": 120},
+  {"section": "storage", "text": "Keep the jars sealed in the fridge."}
+ ]
+}

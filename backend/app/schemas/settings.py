@@ -124,3 +124,21 @@ class UserSettings(_Strict):
 
     def cook_day(self, weekday: Weekday) -> CookDaySetting:
         return next(d for d in self.cook_schedule if d.weekday == weekday)
+
+
+# ---------------- settings API (Phase 1) ----------------
+class PreferenceIn(_Strict):
+    preference: Literal["exclude", "dislike", "like", "allow"]
+    reason: str | None = Field(default=None, max_length=300)
+
+
+class PreferenceOut(BaseModel):
+    ingredient_id: int
+    name: str
+    preference: str
+    reason: str | None
+
+
+class SettingsOut(BaseModel):
+    settings: UserSettings
+    preferences: list[PreferenceOut]

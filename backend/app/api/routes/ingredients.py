@@ -1,9 +1,15 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Query
+from pydantic import BaseModel, ConfigDict, model_validator
 
 from app.api.deps import CurrentUser, DbSession
 from app.api.presenters import price_out
+from app.domain.enums import IngredientCategory, StorageLocation
+from app.domain.units import UnitKind
 from app.schemas.api import IngredientDetailOut, IngredientSearchHitOut, NutrientPer100gOut, UnitOut
 from app.services import ingredients as service
+from app.services import suggestions
 
 router = APIRouter(prefix="/api/v1/ingredients", tags=["ingredients"])
 
@@ -29,6 +35,64 @@ def search_ingredients(
         )
         for h in service.search(session, user.id, q, limit)
     ]
+
+
+class SuggestionOut(BaseModel):
+    name: str
+    times_seen: int
+    last_seen: datetime
+
+
+class NewIngredientIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    fdc_id: int
+    category: IngredientCategory
+    default_unit_kind: UnitKind
+    is_perishable: bool
+    typical_location: StorageLocation
+    diet_tags: list[str]  # required, even if empty: you state what it is
+    name: str | None = None
+
+
+class ApproveIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    alias_of: int | None = None
+    new_ingredient: NewIngredientIn | None = None
+
+    @model_validator(mode="after")
+    def _one(self) -> "ApproveIn":
+        if (self.alias_of is None) == (self.new_ingredient is None):
+            raise ValueError("give exactly one of alias_of or new_ingredient")
+        return self
+
+
+class ApprovedOut(BaseModel):
+    name: str
+    ingredient_id: int
+    created_ingredient: bool
+
+
+@router.get("/suggested", response_model=list[SuggestionOut])
+def list_suggested(session: DbSession, user: CurrentUser) -> list[SuggestionOut]:
+    """Names the LLM used that aren't in the ingredient table yet (from the llm_call log)."""
+    return [
+        SuggestionOut(name=s.name, times_seen=s.times_seen, last_seen=s.last_seen)
+        for s in suggestions.list_suggestions(session)
+    ]
+
+
+@router.post("/suggested/{name}/approve", response_model=ApprovedOut, status_code=201)
+def approve_suggested(name: str, body: ApproveIn, session: DbSession, user: CurrentUser) -> ApprovedOut:
+    if body.alias_of is not None:
+        alias = suggestions.approve_as_alias(session, name, body.alias_of)
+        session.commit()
+        return ApprovedOut(name=name, ingredient_id=alias.ingredient_id, created_ingredient=False)
+    assert body.new_ingredient is not None
+    ingredient = suggestions.approve_as_new(
+        session, name, suggestions.NewIngredient(**body.new_ingredient.model_dump())
+    )
+    session.commit()
+    return ApprovedOut(name=name, ingredient_id=ingredient.id, created_ingredient=True)
 
 
 @router.get("/{ingredient_id}", response_model=IngredientDetailOut)

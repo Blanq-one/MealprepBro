@@ -11,9 +11,16 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.domain.quantities import QuantityParseError
 from app.domain.scaling import ScalingError
 from app.domain.units import InvalidQuantityError, UnitError
+from app.planning.constraint_builder import ConstraintError
+from app.planning.persistence import PlanNotFoundError
 from app.services.calculations import CalculationError
 from app.services.ingredients import IngredientNotFoundError
-from app.services.settings import NotSeededError
+from app.services.inventory import InventoryError
+from app.services.plans import RunNotFoundError
+from app.services.products import ProductError
+from app.services.recipes import RecipeNotFoundError
+from app.services.settings import NotSeededError, SettingsError
+from app.services.suggestions import SuggestionError
 
 PROBLEM_JSON = "application/problem+json"
 
@@ -21,6 +28,9 @@ PROBLEM_JSON = "application/problem+json"
 def problem(status: int, title: str, detail: str, **extra: Any) -> JSONResponse:
     body = {"type": "about:blank", "title": title, "status": status, "detail": detail, **extra}
     return JSONResponse(jsonable_encoder(body), status_code=status, media_type=PROBLEM_JSON)
+
+
+NOT_FOUND = (IngredientNotFoundError, PlanNotFoundError, RunNotFoundError, RecipeNotFoundError)
 
 
 def install_error_handlers(app: FastAPI) -> None:
@@ -33,17 +43,24 @@ def install_error_handlers(app: FastAPI) -> None:
     async def _http(_: Request, exc: StarletteHTTPException) -> JSONResponse:
         return problem(exc.status_code, "HTTP error", str(exc.detail))
 
-    domain_errors = (UnitError, InvalidQuantityError, QuantityParseError, ScalingError, CalculationError)
+    calc_errors = (UnitError, InvalidQuantityError, QuantityParseError, ScalingError, CalculationError)
+    rejected = (SettingsError, InventoryError, ProductError, SuggestionError, ConstraintError)
 
     @app.exception_handler(ValueError)
     async def _domain(request: Request, exc: ValueError) -> JSONResponse:
-        if isinstance(exc, domain_errors):
+        if isinstance(exc, calc_errors):
             return problem(422, "Cannot calculate", str(exc))
+        if isinstance(exc, rejected):
+            message = str(exc)
+            status = 404 if "not found" in message else 422
+            return problem(status, "Not found" if status == 404 else "Rejected", message)
         raise exc
 
-    @app.exception_handler(IngredientNotFoundError)
-    async def _not_found(_: Request, exc: IngredientNotFoundError) -> JSONResponse:
-        return problem(404, "Not found", str(exc))
+    @app.exception_handler(LookupError)
+    async def _not_found(_: Request, exc: LookupError) -> JSONResponse:
+        if isinstance(exc, NOT_FOUND):
+            return problem(404, "Not found", str(exc))
+        raise exc
 
     @app.exception_handler(NotSeededError)
     async def _not_seeded(_: Request, exc: NotSeededError) -> JSONResponse:
