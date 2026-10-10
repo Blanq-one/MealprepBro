@@ -4,6 +4,9 @@ in exactly one culinary group, the versions carry the right diet tags, and every
 import importlib.util
 import json
 from decimal import Decimal
+from typing import Any
+
+import pytest
 
 from app.domain.units import convert, to_base
 from app.schemas.seed import PantryCatalogFile
@@ -18,16 +21,28 @@ def seed_ingredients() -> dict[str, object]:
     return {i.slug: i for i in load_seed_files().ingredients.ingredients}
 
 
-def test_the_file_is_what_the_builder_writes():
+def _builder() -> Any:
     spec = importlib.util.spec_from_file_location(
         "builder", CATALOG_PATH.parents[3] / "scripts" / "build_pantry_catalog.py"
     )
     assert spec is not None and spec.loader is not None
     builder = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(builder)
+    return builder
+
+
+def test_the_file_is_what_the_builder_writes():
+    builder = _builder()
     assert json.loads(CATALOG_PATH.read_bytes()) == json.loads(json.dumps(builder.build()))
     PantryCatalogFile.model_validate_json(CATALOG_PATH.read_bytes())
-    # the review sheet (groups and package sizes to skim) is current too
+
+
+def test_the_review_sheet_is_current():
+    """docs/review/pantry_catalog.md (the groups and package sizes to skim). The backend image is built from
+    backend/ alone, so the docs folder isn't there and this is skipped."""
+    builder = _builder()
+    if not builder.REVIEW.parent.is_dir():
+        pytest.skip("docs/review isn't part of the backend image")
     assert builder.REVIEW.read_bytes().decode().replace("\r\n", "\n") == builder.review_sheet()
 
 
