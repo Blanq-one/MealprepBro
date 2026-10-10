@@ -7,19 +7,23 @@
  *   with `x-mealbro-cache: hit` so the screen can say it is showing the offline copy.
  * - Anything that isn't a GET is never cached (the page's own offline queue handles check-offs).
  */
-const VERSION = "v1";
+const VERSION = "v2"; // v2 (Phase 2b): the four tabs, onboarding and the Settings editors
 const SHELL_CACHE = `mealbro-shell-${VERSION}`;
 const STATIC_CACHE = `mealbro-static-${VERSION}`;
 const API_CACHE = `mealbro-api-${VERSION}`;
 const SHELL_PAGES = [
   "/",
+  "/cook/",
+  "/welcome/",
   "/plan/",
   "/plan/new/",
   "/day/",
   "/recipe/",
+  "/pantry/",
   "/inventory/",
   "/grocery/",
   "/settings/",
+  "/settings/edit/",
   "/login/",
 ];
 const SHELL_FILES = [
@@ -99,7 +103,7 @@ async function networkFirstPage(request) {
     if (response.ok) await cache.put(pageKey(request.url), response.clone());
     return response;
   } catch {
-    const cached = (await cache.match(pageKey(request.url))) || (await cache.match("/plan/"));
+    const cached = (await cache.match(pageKey(request.url))) || (await cache.match("/cook/"));
     return cached || Response.error();
   }
 }

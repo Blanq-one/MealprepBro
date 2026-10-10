@@ -2,6 +2,8 @@
 // sign in (except on the sign-in page itself).
 
 export type Diagnostic = { code?: string; message: string; slot?: string; day?: string; amount?: number };
+/** A validation error as the server sent it: the field path and the message. */
+export type ValidationIssue = { loc: (string | number)[]; msg: string };
 
 export class ApiError extends Error {
   readonly status: number;
@@ -9,6 +11,7 @@ export class ApiError extends Error {
   readonly detail: string;
   readonly diagnostics: Diagnostic[];
   readonly retryAfterS: number | null;
+  readonly errors: ValidationIssue[];
 
   constructor(
     status: number,
@@ -16,6 +19,7 @@ export class ApiError extends Error {
     detail: string,
     diagnostics: Diagnostic[] = [],
     retryAfterS: number | null = null,
+    errors: ValidationIssue[] = [],
   ) {
     super(detail || title);
     this.name = "ApiError";
@@ -24,6 +28,7 @@ export class ApiError extends Error {
     this.detail = detail;
     this.diagnostics = diagnostics;
     this.retryAfterS = retryAfterS;
+    this.errors = errors;
   }
 }
 
@@ -72,6 +77,7 @@ export async function problemFrom(response: Response): Promise<ApiError> {
       typeof b.detail === "string" ? b.detail : "",
       diagnostics,
       retryAfterS,
+      errors.map((e) => ({ loc: Array.isArray(e.loc) ? (e.loc as (string | number)[]) : [], msg: e.msg ?? "" })),
     );
   }
   return new ApiError(

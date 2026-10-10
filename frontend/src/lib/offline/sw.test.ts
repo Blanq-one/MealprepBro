@@ -23,6 +23,9 @@ const sw = loadServiceWorker();
 describe("service worker routing", () => {
   it.each([
     ["/plan/", "GET", "page"],
+    ["/cook/", "GET", "page"],
+    ["/welcome/?step=targets", "GET", "page"],
+    ["/settings/edit/?field=always_have", "GET", "page"],
     ["/recipe/?batch=12", "GET", "page"],
     ["/inventory", "GET", "page"],
     ["/plan/index.txt", "GET", "data"],
@@ -50,7 +53,20 @@ describe("service worker routing", () => {
 
   it("precaches every screen of the app shell", () => {
     expect(sw.SHELL_PAGES).toEqual(
-      expect.arrayContaining(["/plan/", "/plan/new/", "/day/", "/recipe/", "/inventory/", "/grocery/", "/settings/", "/login/"]),
+      expect.arrayContaining([
+        "/cook/",
+        "/welcome/",
+        "/plan/",
+        "/plan/new/",
+        "/day/",
+        "/recipe/",
+        "/pantry/",
+        "/inventory/",
+        "/grocery/",
+        "/settings/",
+        "/settings/edit/",
+        "/login/",
+      ]),
     );
   });
 

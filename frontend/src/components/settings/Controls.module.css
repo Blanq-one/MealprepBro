@@ -1,0 +1,43 @@
+.messages {
+  margin: 4px 0 12px;
+  padding: 8px 12px 8px 28px;
+  border-radius: 12px;
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: var(--text-small);
+}
+
+.mealSteppers {
+  display: flex;
+  flex-direction: column;
+}
+
+.planned {
+  margin: 8px 0 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: var(--surface-2);
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.dayName {
+  margin: 12px 0 -4px;
+  font-weight: 700;
+}
+
+.addStore {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.addStore input {
+  flex: 1;
+  min-width: 0;
+}
+
+.rule {
+  margin-bottom: 12px;
+}

@@ -1,6 +1,6 @@
 # Mealbro Build Plan
 
-**Status:** v3, **approved** 2026-10-08 with the changes recorded in §12.1. Phase 0 approved. Phase 1 approved 2026-10-09 (with C1–C8 and D1–D22); a post-approval round (C9–C14, D23–D28) is done. A3 is answered in `docs/hosting.md`; the hosting decision changed at the Phase 2 kickoff to Vercel Hobby + Neon Free, $0/month (K1, §12.1). Phase 2 (PWA, deploy prep only) was approved 2026-10-10. **Phase 2b (cook-first redesign) was added and its spec approved 2026-10-10** (with changes E10–E13, §12.1): the spec is `docs/FLOW_SPEC.md` and the build steps are in §9. Step 2b.1 (backend foundations) was built 2026-10-10 and awaits approval. **Addition (2026-10-10, E15–E17):** two-stage recipe generation (ideas for the cards, steps on first open, and after the first More ideas tap a background batch for later taps) to fit Groq's 8K tokens a minute; the target-0 fallback for the protein cap; and step 2b.3 split into 2b.3a (ranking and cards) and 2b.3b (ideas, steps, background batch). All approved.
+**Status:** v3, **approved** 2026-10-08 with the changes recorded in §12.1. Phase 0 approved. Phase 1 approved 2026-10-09 (with C1–C8 and D1–D22); a post-approval round (C9–C14, D23–D28) is done. A3 is answered in `docs/hosting.md`; the hosting decision changed at the Phase 2 kickoff to Vercel Hobby + Neon Free, $0/month (K1, §12.1). Phase 2 (PWA, deploy prep only) was approved 2026-10-10. **Phase 2b (cook-first redesign) was added and its spec approved 2026-10-10** (with changes E10–E13, §12.1): the spec is `docs/FLOW_SPEC.md` and the build steps are in §9. Step 2b.1 (backend foundations) was built and **approved 2026-10-10, including D44–D53**; step 2b.2 (look, shell, onboarding, Settings, Pantry) started the same day. **Addition (2026-10-10, E15–E17):** two-stage recipe generation (ideas for the cards, steps on first open, and after the first More ideas tap a background batch for later taps) to fit Groq's 8K tokens a minute; the target-0 fallback for the protein cap; and step 2b.3 split into 2b.3a (ranking and cards) and 2b.3b (ideas, steps, background batch). All approved.
 **Source documents:** `CLAUDE.md` (build rules, wins on conflict), `docs/PRD.md` (product vision; "Primary user flow" at the top), `docs/FLOW_SPEC.md` (screens and backend work for Phase 2b).
 
 This plan covers Phases 0–6, plus Phase 2b. One phase per session; Phase 2b is split into build steps, one per session (§9). A phase or step is done only when its acceptance criteria are met, its tests pass, and the test output has been shown.
@@ -19,7 +19,7 @@ This plan covers Phases 0–6, plus Phase 2b. One phase per session; Phase 2b is
 | — | Pre-Phase 1 tasks | Done | 2026-10-08 | 2026-10-08 | Package-label data (tortillas, protein powder), USDA mapping review sheet (`docs/review/usda_mappings.md`), raw/dry/as-sold rule + check (§7.8), CLAUDE.md machine-boundaries rule. Round 2: FoodSafety.gov chart transcribed (53 rows, §7.2), top-25 mappings approved, tortilla renamed, Docker rule clarified, fresh-clone check made a per-phase step. |
 | 1 | Planning brain | Approved 2026-10-09; post-approval round done | 2026-10-08 | 2026-10-09 | First pass: 645 tests, fresh-clone check passed; D1–D13 and C1–C3 approved 2026-10-09. Fix-up round (C4–C8: budget per request with inventory/shop modes, cash vs food eaten, freeze-on-shopping-day and waste, 100 g protein floor, elapsed time): 705 tests pass (the opt-in live test skips), domain coverage 99%, ruff/mypy clean, fresh-clone check passed; deviations D14–D22 in the fix-up note. Approved 2026-10-09. Post-approval round (C9–C14: powder prices, stock-up items, shelf-life fix, regular chicken packs, two-week steady-state check, A3 hosting): 721 tests pass (the opt-in live test skips), domain coverage 99%; deviations D23–D28. |
 | 2 | Mobile PWA + cloud deploy (deploy prep only, K7) | Approved 2026-10-10 | 2026-10-09 | 2026-10-09 | Pre-work K2–K6 done; PWA, auth, shopping, Mark cooked, quick add, exposure log. 800 backend tests pass (2 opt-in skipped), 78 frontend tests; not deployed (your step, `docs/deploy.md`). Deviations D29–D43 in the Phase 2 outcome note (§9). |
-| 2b | Cook-first flow redesign | Step 2b.1 built 2026-10-10, awaiting approval | 2026-10-10 | | `docs/FLOW_SPEC.md`; PRD "Primary user flow"; 9 build steps (2b.1, 2b.2, 2b.3a, 2b.3b, 2b.4–2b.8; §9); changes F1–F21 approved (FLOW_SPEC §16); decisions E1–E17 (§12.1). Two-stage generation added the same day (E15, E17; built in 2b.3b). **2b.1 (backend foundations):** 898 backend tests pass (2 opt-in skipped), 78 frontend tests, ruff/mypy clean; deviations D44–D53 in the 2b.1 outcome note (§9). |
+| 2b | Cook-first flow redesign | 2b.1 approved 2026-10-10 (D44–D53); 2b.2 built 2026-10-10, awaiting approval | 2026-10-10 | | `docs/FLOW_SPEC.md`; PRD "Primary user flow"; 9 build steps (2b.1, 2b.2, 2b.3a, 2b.3b, 2b.4–2b.8; §9); changes F1–F21 approved (FLOW_SPEC §16); decisions E1–E17 (§12.1). Two-stage generation added the same day (E15, E17; built in 2b.3b). **2b.1 (backend foundations):** 898 backend tests pass (2 opt-in skipped), 78 frontend tests, ruff/mypy clean; deviations D44–D53 in the 2b.1 outcome note (§9). **2b.2 (look, shell, onboarding, Settings, Pantry):** 180 frontend tests (78 before), 899 backend tests pass (2 opt-in skipped), type checks clean, static export builds; AA contrast tested, 375 px not yet checked on a device; deviations D54–D64 in the 2b.2 outcome note (§9). |
 | 3 | Feedback loop | Not started | | | Favorites moved to 2b. |
 | 4 | Daily overrides | Not started | | | |
 | 5 | Grocery intelligence | Not started | | | |
@@ -1846,7 +1846,7 @@ Every number still comes from code, and the LLM still only writes recipes.
 
 **Tests.** `test_cook_flow_migration.py`, `test_favorites.py`, `test_settings_v3.py`, `test_always_have.py`, `test_cost_split.py`, `test_quick_pick_amounts.py`, `domain/tests/test_dish_category.py`; grocery-list tests extended (water, 0 g).
 
-**2b.1 outcome (2026-10-10, awaiting approval).** Every deliverable and acceptance criterion is met.
+**2b.1 outcome (2026-10-10, approved 2026-10-10 including D44–D53).** Every deliverable and acceptance criterion is met.
 898 backend tests pass (2 opt-in skipped: the live Groq call and the timed solve), 78 frontend tests pass,
 ruff and mypy are clean. New tests: `db/tests/test_cook_flow_migration.py`, `services/tests/test_favorites.py`,
 `services/tests/test_settings_v3.py`, `planning/tests/test_always_have.py`, `planning/tests/test_cost_split.py`,
@@ -1903,6 +1903,9 @@ What changed from the plan, and why:
   step.
 - **D53. The timed AC 1.12 test keeps the 12 s limit.** With the production limit now 30 s (E7), the opt-in perf
   test (< 15 s) runs with the Phase 1 limit it was written for. The deadline test now expects 30.
+  **Changed at approval (2b.2 pre-work):** the test now solves with the production limit
+  (`SOLVER_TIME_LIMIT_SECONDS`, 30 s) and must finish within that limit plus the same 3 s headroom AC 1.12 had
+  (< 33 s); it took 5.5 s on this PC.
 
 Also: the OpenAPI schema and the generated frontend types were regenerated; the frontend test fixtures gained the
 new required fields (no UI changes, 2b.2 builds the screens). `save_plan` takes a `kind` for later steps;
@@ -1926,6 +1929,79 @@ new required fields (no UI changes, 2b.2 builds the screens). `save_plan` takes 
 3. The frontend still has no nutrition, unit or money arithmetic (the Phase 2 AC 7 check covers the new files).
 
 **Tests (Vitest).** Stepper bounds and hold-repeat; the two-nutrition-goal limit; segmented `aria-pressed`; onboarding draft and final PUT; Skip sends only the onboarding flag; paired screens validate both controls; strict mode hides the band; the amount picker sends the option key; theme switch.
+
+**2b.2 outcome (2026-10-10, awaiting approval).** Every deliverable is built and the acceptance criteria are met,
+with one limit on AC 2 (below). Frontend: 180 Vitest tests pass (78 before), type check clean, the static export
+builds 16 pages. Backend: one small endpoint (D54) and its test; 899 tests pass (2 opt-in skipped), ruff and mypy
+clean. Pre-work: the opt-in timed solve now uses the 30 s production limit (D53, passed in 5.5 s). New tests:
+`ui/Stepper.test.tsx` (bounds, hold-repeat, typing, decimal steps), `ui/GoalTiles.test.tsx` (the two-goal limit),
+`ui/Segmented.test.tsx` (`aria-pressed`), `onboarding/Onboarding.test.tsx` (nine screens, the draft and one final
+PUT, Skip = PATCH of the flag alone, paired screens, a new meal needs its calories, a typed store, a save error on
+W8, offline), `settings/Settings.test.tsx` (strict mode hides the band, theme switch, editors save one field, errors
+under the control), `pantry/AmountPicker.test.tsx` (the option key; a custom amount in the server's units),
+`cook/TodayCard.test.tsx`, `ui/Blocks.test.tsx` (recipe card, Pottle's five states, building steps, empty and
+error patterns, bottom sheet), `lib/theme/theme.test.ts`, `test/contrast.test.ts` (AC 2) and
+`test/no-math.test.ts` (AC 3).
+
+- **AC 1:** met (onboarding tests).
+- **AC 2:** AA contrast is tested on 51 text/background pairs in both themes. The 375 px layout and 48 px targets
+  are written in CSS (two-column tiles, 64 px stepper buttons, 48 px segments, chips, switches, back arrow and
+  checkboxes, a 56 px bottom button) but **not checked in a real browser**: opening one is outside the repo, so it
+  is on your manual checklist (the steps to open the UI are in the step summary).
+- **AC 3:** met; `src/test/no-math.test.ts` scans every app source file for arithmetic on nutrition, amount or
+  money values and for sums, and finds none.
+
+What changed from the plan, and why:
+
+- **D54. `GET /settings/always-have` (backend).** S2 needs every ingredient with common staples first, and no
+  endpoint lists ingredients without a search term. Common staples are a short fixed list (salt, black pepper,
+  olive and vegetable oil, white rice, garlic, onion, flour, sugar, soy sauce) plus every assume-in-stock spice;
+  the rest follow by name. Water (always Always have) and beef items (refused, 422) aren't listed. Saving uses
+  `PATCH /settings {always_have}`. `ALWAYS_HAVE_SLUGS` moved from `planning/inputs.py` to `services/settings.py` to
+  avoid an import cycle (same value).
+- **D55. Two text colors added for AA.** FLOW_SPEC §4.2's terracotta `#B5482F` measures 4.35:1 on `--accent-soft`
+  and the herb green `#3F7D58` 4.33:1 on `--surface-2`, both under 4.5:1. Text on those backgrounds uses
+  `--accent-ink` `#A3412A` and `--herb-ink` `#367050` (light only; dark keeps the spec colors). Fills, buttons and
+  selected tiles keep the spec colors. `--herb-soft` was added for the New badge.
+- **D56. How the theme is applied.** `<html data-theme>`, set by a tiny script in `<head>` before the first paint
+  (no light flash for a dark choice), with the toolbar color following it. "Match my phone" follows the phone
+  while the app is open. The manifest now starts at `/cook/` with the cream color.
+- **D57. Which old routes redirect now.** `/` → `/cook/` and `/inventory/` → `/pantry/` (query kept). `/plan/` and
+  `/day/` stay until 2b.7 retires them, because this step's Cook home links to "the existing plan view"; the Cook
+  tab is highlighted there. Sign-in lands on `/cook/`.
+- **D58. What onboarding saves before "Start cooking".** Only the held-item Allow switches (W7), which write the
+  ingredient decision at once (FLOW_SPEC W7) and so need a connection. Everything else stays in the device draft
+  (local storage, so closing the app keeps it). A store typed in on W6 stays in the draft and is created with
+  `POST /stores` right before the one `PUT /settings`; until then the preview checks the draft without it, and W8
+  shows the store line from the draft order.
+- **D59. When the wizard runs, and how it validates.** The app shell checks `GET /settings` once per app start
+  and opens `/welcome/` while `onboarding_completed` is false; `/welcome/` opens Cook home once it's done. Continue
+  is checked on the phone first (bounds that mirror the API's) and then with `POST /settings/preview`. Each server
+  error goes to the screen of its field; a whole-settings check is routed by its message, so "slot allocations
+  exceed the daily kcal target" belongs to W3 (lowering calories on W2 doesn't block W2; W3 shows it beside the
+  API's planned line). Offline you can still step through.
+- **D60. Settings rows and editors.** "Calorie mode" is one row that carries the band in weekly mode ("Weekly ·
+  each day within ±150 kcal"); its editor shows the band stepper only in weekly mode. Each editor saves its field
+  alone with `PATCH /settings`. "Excluded and disliked" is a search with Never use / Use less (saved at once, like
+  held items); frequency caps get one stepper each. Row values are the API's summary lines where one exists,
+  otherwise the setting's own values, formatted.
+- **D61. Money controls never add to money.** The budget ($0–$200 by $5, then No limit) and the store-split
+  threshold ($0–$20 by $1) are the browser's range input in cents. The stepper's − and + work on calories, grams,
+  minutes, people and custom amounts (input stepping, with the step's decimals so 0.1 + 0.2 shows 0.3); a unit
+  change in the amount picker restarts from the server's value for that unit, never a conversion.
+- **D62. Cook home in this step.** The greeting with Pottle, the Today card (built from `GET /plans` and
+  `GET /plans/{id}`, since `GET /cook/home` is 2b.3a), then "Your plans" and "Plan a week". The Today card opens the
+  existing day view. A meal now and Meal prep arrive with their screens (2b.4, 2b.7).
+- **D63. Building blocks waiting for their screens.** The recipe card, building steps (with the wait countdown),
+  goal tiles (the two-goal rule), chips and toggle rows are built and tested now and first appear on a screen in
+  2b.4. The quick-add rate-limit countdown on the Pantry tab (FLOW_SPEC §9) needs the backend's `waiting` events
+  from 2b.3b, so it lands with 2b.4's countdown work.
+- **D64. Small Phase 2 touch-ups.** Every segmented control (grocery grouping, the plan form) uses the fixed
+  selected state; the grocery checkboxes and `.btn-small` are now 48 px targets; the grocery header shows
+  `cash_split_display` ("$37.45 groceries + $62.50 stock-up").
+
+Also: the service worker cache is `v2` with the new pages in its shell; `ApiError` keeps the server's validation
+`errors` so a field's message can sit under its control; README lists the 2b endpoints and the four tabs.
 
 #### 2b.3a A meal now: ranking and cards (backend)
 

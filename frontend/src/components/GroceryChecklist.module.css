@@ -18,12 +18,12 @@
   width: 30px;
   min-height: 30px;
   height: 30px;
-  margin: 7px;
+  margin: 9px; /* a 48 px target */
   accent-color: var(--accent);
 }
 
 .boxSpacer {
-  flex: 0 0 44px;
+  flex: 0 0 48px;
 }
 
 .text {
@@ -58,5 +58,5 @@
 }
 
 .details {
-  padding: 4px 0 12px 54px;
+  padding: 4px 0 12px 58px;
 }

@@ -6,14 +6,14 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Mealbro",
     short_name: "Mealbro",
-    description: "Your weekly meal-prep plan, recipes, inventory and grocery list.",
+    description: "Cook a meal now or prep for the days ahead, from what you have.",
     id: "/",
-    start_url: "/plan/",
+    start_url: "/cook/",
     scope: "/",
     display: "standalone",
     orientation: "portrait",
-    background_color: "#f6f5f1",
-    theme_color: "#2f6f4e",
+    background_color: "#fff8f1",
+    theme_color: "#fff8f1",
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
       { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },

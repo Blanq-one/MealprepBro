@@ -14,9 +14,7 @@ from app.schemas.plans import PlanRequest
 from app.services.exclusions import diet_status, preferences
 from app.services.favorites import favorite_recipe_ids
 from app.services.pricing import active_stores
-from app.services.settings import load_settings
-
-ALWAYS_HAVE_SLUGS = ("water",)  # tap water: always there, never bought, never on a list
+from app.services.settings import ALWAYS_HAVE_SLUGS, load_settings
 
 
 def always_have_ids(session: Session, slugs: Iterable[str]) -> frozenset[int]:

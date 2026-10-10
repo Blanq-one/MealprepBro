@@ -1,0 +1,76 @@
+.card {
+  padding: 14px 16px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon {
+  flex: none;
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+  color: var(--text);
+  font-weight: 700;
+  font-size: 1.15rem;
+  line-height: 1.25;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.toggle {
+  flex: none;
+  width: var(--tap);
+  height: var(--tap);
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--accent-ink);
+  font-size: 1.45rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bookmark[aria-pressed="false"] {
+  filter: grayscale(1);
+  opacity: 0.6;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0 0 6px 44px;
+}
+
+.numbers {
+  margin: 0 0 4px 44px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.line {
+  margin: 0 0 2px 44px;
+  font-size: var(--text-small);
+}
+
+.missing {
+  color: var(--warn);
+}
+
+.why {
+  margin: 4px 0 0 44px;
+  font-size: var(--text-small);
+  color: var(--herb-ink);
+  font-weight: 600;
+}

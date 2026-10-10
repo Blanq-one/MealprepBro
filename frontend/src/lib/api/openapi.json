@@ -1,6 +1,45 @@
 {
  "components": {
   "schemas": {
+   "AlwaysHaveOptionOut": {
+    "description": "An ingredient you can mark as Always have (S2); common staples come first.",
+    "properties": {
+     "category": {
+      "title": "Category",
+      "type": "string"
+     },
+     "common": {
+      "title": "Common",
+      "type": "boolean"
+     },
+     "ingredient_id": {
+      "title": "Ingredient Id",
+      "type": "integer"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "selected": {
+      "title": "Selected",
+      "type": "boolean"
+     },
+     "slug": {
+      "title": "Slug",
+      "type": "string"
+     }
+    },
+    "required": [
+     "ingredient_id",
+     "slug",
+     "name",
+     "category",
+     "common",
+     "selected"
+    ],
+    "title": "AlwaysHaveOptionOut",
+    "type": "object"
+   },
    "AmountOptionOut": {
     "properties": {
      "display": {
@@ -7257,6 +7296,32 @@
      }
     },
     "summary": "Put Settings",
+    "tags": [
+     "settings"
+    ]
+   }
+  },
+  "/api/v1/settings/always-have": {
+   "get": {
+    "description": "The ingredients you can mark as Always have, common staples first, with your current choices. Save\nthe list with PATCH /settings {\"always_have\": [...slugs]}.",
+    "operationId": "list_always_have_options_api_v1_settings_always_have_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/AlwaysHaveOptionOut"
+         },
+         "title": "Response List Always Have Options Api V1 Settings Always Have Get",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "List Always Have Options",
     "tags": [
      "settings"
     ]

@@ -25,6 +25,7 @@ WEEKDAY_LABELS = {
     Weekday.SAT: "Sat",
     Weekday.SUN: "Sun",
 }
+ALWAYS_HAVE_SLUGS = ("water",)  # tap water: always there, never bought, never on a list
 
 
 class NotSeededError(RuntimeError):
@@ -287,6 +288,66 @@ def clear_preference(session: Session, user_id: int, ingredient_id: int) -> bool
     session.delete(row)
     session.flush()
     return True
+
+
+# ---------------- Always have options (Phase 2b, S2) ----------------
+# Shown first in the Always-have list, after which the other assume-in-stock staples (spices) and then every
+# other ingredient follow by name. A slug missing from the ingredient table is skipped.
+COMMON_STAPLES = (
+    "salt",
+    "black-pepper",
+    "olive-oil",
+    "vegetable-oil",
+    "rice-long-grain-white",
+    "garlic",
+    "onion-yellow",
+    "flour-all-purpose",
+    "sugar",
+    "soy-sauce",
+)
+
+
+@dataclass(frozen=True)
+class AlwaysHaveOption:
+    ingredient_id: int
+    slug: str
+    name: str
+    category: str
+    common: bool  # a common staple, listed first
+    selected: bool  # in your Always-have list
+
+
+def always_have_options(session: Session, user_id: int) -> list[AlwaysHaveOption]:
+    """Every ingredient that can be Always have: common staples first, then the rest by name. Water is
+    always Always have (never listed) and hard-excluded (beef) items can't be."""
+    settings = load_settings(session, user_id)
+    hard_tags = set(settings.excluded_diet_tags) | ALWAYS_EXCLUDED_TAGS
+    chosen = set(settings.always_have)
+    candidates = [
+        i
+        for i in session.scalars(
+            select(Ingredient).where(Ingredient.archived_at.is_(None)).order_by(Ingredient.name)
+        )
+        if i.slug not in ALWAYS_HAVE_SLUGS and not set(i.diet_tags or ()) & hard_tags
+    ]
+    first = {slug: n for n, slug in enumerate(COMMON_STAPLES)}
+
+    def rank(i: Ingredient) -> tuple[int, int, str]:
+        if i.slug in first:
+            return (0, first[i.slug], i.name)
+        return (1 if i.assume_in_stock else 2, 0, i.name)
+
+    return [
+        AlwaysHaveOption(
+            ingredient_id=i.id,
+            slug=i.slug,
+            name=i.name,
+            category=i.category,
+            common=rank(i)[0] < 2,
+            selected=i.slug in chosen,
+        )
+        for i in sorted(candidates, key=rank)
+    ]
 
 
 # ---------------- stores (Phase 2b) ----------------

@@ -9,6 +9,7 @@ from app.api.deps import CurrentUser, DbSession
 from app.db.models import Ingredient
 from app.domain.exclusions import Preference
 from app.schemas.settings import (
+    AlwaysHaveOptionOut,
     DietReviewOut,
     FieldErrorOut,
     PreferenceIn,
@@ -95,6 +96,23 @@ def preview_settings(body: SettingsChanges, session: DbSession, user: CurrentUse
         summary=[SummaryLineOut(key=s.key, label=s.label, value=s.value) for s in preview.summary],
         settings=preview.settings,
     )
+
+
+@router.get("/always-have", response_model=list[AlwaysHaveOptionOut])
+def list_always_have_options(session: DbSession, user: CurrentUser) -> list[AlwaysHaveOptionOut]:
+    """The ingredients you can mark as Always have, common staples first, with your current choices. Save
+    the list with PATCH /settings {"always_have": [...slugs]}."""
+    return [
+        AlwaysHaveOptionOut(
+            ingredient_id=o.ingredient_id,
+            slug=o.slug,
+            name=o.name,
+            category=o.category,
+            common=o.common,
+            selected=o.selected,
+        )
+        for o in service.always_have_options(session, user.id)
+    ]
 
 
 @router.put("/ingredient-preferences/{ingredient_id}", response_model=SettingsOut)

@@ -1,5 +1,122 @@
 // API-shaped test data (types from the generated schema, so a backend change breaks these at compile time).
-import type { GroceryItem, GroceryList, PlanSummary, RecipeVersion } from "@/lib/api/types";
+import type {
+  GroceryItem,
+  GroceryList,
+  PlanSummary,
+  QuickPick,
+  RecipeVersion,
+  SettingsOut,
+  SettingsPreview,
+  Store,
+  UserSettings,
+} from "@/lib/api/types";
+
+/** The seeded default settings (backend/app/seed/data/settings_default.json). */
+export function userSettings(overrides: Partial<UserSettings> = {}): UserSettings {
+  return {
+    schema_version: 3,
+    household_size: 1,
+    always_have: [],
+    default_budget_cents: null,
+    onboarding_completed: false,
+    daily_kcal_target: 1800,
+    calorie_mode: "weekly",
+    daily_band_kcal: 150,
+    weekly_under_pct: 3,
+    daily_under_pct: 5,
+    slot_allocations: [
+      { slot: "breakfast", kcal: 400 },
+      { slot: "lunch", kcal: 550 },
+      { slot: "dinner", kcal: 650 },
+      { slot: "protein_dessert", kcal: 200 },
+    ],
+    daily_protein_target_g: 100,
+    nutrition_priority: "protein",
+    secondary_priority: null,
+    grocery_mode: "balanced",
+    equipment: ["stovetop", "oven", "air_fryer", "microwave"],
+    cook_schedule: [
+      { weekday: "mon", is_cook_day: true, cook_minutes: 45, mood: "medium" },
+      { weekday: "tue", is_cook_day: false, cook_minutes: 0, mood: "simple" },
+      { weekday: "wed", is_cook_day: true, cook_minutes: 45, mood: "medium" },
+      { weekday: "thu", is_cook_day: true, cook_minutes: 45, mood: "medium" },
+      { weekday: "fri", is_cook_day: false, cook_minutes: 0, mood: "simple" },
+      { weekday: "sat", is_cook_day: true, cook_minutes: 45, mood: "medium" },
+      { weekday: "sun", is_cook_day: true, cook_minutes: 45, mood: "medium" },
+    ],
+    leftover_fridge_days: 3,
+    excluded_diet_tags: ["beef"],
+    frequency_caps: [{ label: "Pork as a meal component", target_type: "tag", target: "pork", max_meals_per_week: 1, never_favor: true }],
+    store_order: ["Stop & Shop", "Price Rite"],
+    store_split_min_savings_cents: 500,
+    default_portion_size: "normal",
+    region_code: "MA",
+    units: "us",
+    ...overrides,
+  };
+}
+
+export function settingsOut(overrides: Partial<UserSettings> = {}): SettingsOut {
+  return {
+    settings: userSettings(overrides),
+    preferences: [],
+    diet_review: [
+      { ingredient_id: 40, name: "gelatin, unflavored", note: "Source not stated; may be bovine.", decision: "held" },
+      { ingredient_id: 41, name: "marshmallows", note: null, decision: "held" },
+    ],
+  };
+}
+
+export function preview(overrides: Partial<SettingsPreview> = {}): SettingsPreview {
+  return {
+    valid: true,
+    errors: [],
+    kcal_planned_display: "1,800 of 1,800 kcal a day planned",
+    summary: [
+      { key: "people", label: "People", value: "1 person" },
+      { key: "budget", label: "Weekly budget", value: "No limit" },
+      { key: "targets", label: "Daily targets", value: "1,800 kcal · 100 g protein" },
+      { key: "meals", label: "Meals", value: "Breakfast 400 · Lunch 550 · Dinner 650 · Protein dessert 200 (1,800 of 1,800 kcal planned)" },
+      { key: "cook_days", label: "Cook days", value: "Mon, Wed, Thu, Sat, Sun · 45 min hands-on" },
+      { key: "equipment", label: "Kitchen", value: "Stovetop, Oven, Air fryer, Microwave" },
+      { key: "stores", label: "Stores", value: "1 Stop & Shop · 2 Price Rite" },
+      { key: "food_rules", label: "Food rules", value: "Beef: never · Pork: up to 1 meal a week · 2 held, 0 allowed" },
+      { key: "always_have", label: "Always have", value: "Nothing yet" },
+    ],
+    settings: null,
+    ...overrides,
+  };
+}
+
+export const stores: Store[] = [
+  { id: 1, name: "Stop & Shop", priority: 1, order: 1 },
+  { id: 2, name: "Price Rite", priority: 2, order: 2 },
+];
+
+export function quickPick(overrides: Partial<QuickPick> = {}): QuickPick {
+  return {
+    ingredient_id: 1,
+    name: "chicken thigh, boneless skinless",
+    category: "protein",
+    product_id: 12,
+    quantity: "907.185",
+    unit: "g",
+    display: "family pack, 2 lb (907 g)",
+    location: "fridge",
+    amount_options: [
+      { key: "full", quantity: "907.185", unit: "g", display: "Full · 2 lb (907 g)" },
+      { key: "three_quarters", quantity: "680.389", unit: "g", display: "¾ · 1.5 lb (680 g)" },
+      { key: "half", quantity: "453.593", unit: "g", display: "½ · 1 lb (454 g)" },
+      { key: "quarter", quantity: "226.796", unit: "g", display: "¼ · 8 oz (227 g)" },
+    ],
+    custom_units: [
+      { unit: "lb", label: "lb", step: "0.25", start: "2" },
+      { unit: "oz", label: "oz", step: "1", start: "32" },
+      { unit: "g", label: "g", step: "25", start: "900" },
+    ],
+    ...overrides,
+  };
+}
 
 export function plan(overrides: Partial<PlanSummary> = {}): PlanSummary {
   return {

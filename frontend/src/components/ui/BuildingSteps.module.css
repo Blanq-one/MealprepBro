@@ -1,0 +1,72 @@
+.building {
+  padding: 8px 0;
+}
+
+.pottle {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.stages {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.stage {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 44px;
+  padding: 8px 0;
+  font-size: 1.1rem;
+}
+
+.mark {
+  flex: none;
+  width: 28px;
+  text-align: center;
+  font-weight: 800;
+}
+
+.done {
+  color: var(--text);
+}
+
+.done .mark {
+  color: var(--herb-ink);
+}
+
+.current {
+  font-weight: 700;
+}
+
+.current .mark {
+  color: var(--accent-ink);
+}
+
+.pending {
+  color: var(--muted);
+}
+
+.note {
+  display: block;
+  font-weight: 500;
+  font-size: var(--text-small);
+  color: var(--muted);
+}
+
+.wait {
+  margin: 8px 0 0 40px;
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+.elapsed {
+  margin: 4px 0 0;
+  text-align: right;
+  color: var(--muted);
+  font-size: var(--text-small);
+  font-variant-numeric: tabular-nums;
+}

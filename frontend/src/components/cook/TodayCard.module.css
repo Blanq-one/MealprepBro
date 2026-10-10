@@ -1,0 +1,49 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.heading {
+  margin-bottom: 4px;
+}
+
+.meal {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 4px 0;
+}
+
+.icon {
+  flex: none;
+  font-size: 1.7rem;
+  line-height: 1;
+}
+
+.slot {
+  display: block;
+  color: var(--muted);
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.title {
+  display: block;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.cook {
+  margin: 8px 0 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: var(--surface-2);
+  font-weight: 600;
+}

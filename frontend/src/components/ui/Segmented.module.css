@@ -1,0 +1,42 @@
+.segmented {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  margin: 12px 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+
+.segment {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: var(--tap);
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--text-label);
+  font-weight: 500;
+  line-height: 1.15;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--motion), color var(--motion);
+}
+
+.segment:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.on {
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 800;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 18%);
+}
+
+.check {
+  margin-right: 4px;
+}

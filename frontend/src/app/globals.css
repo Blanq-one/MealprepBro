@@ -1,46 +1,98 @@
+/* Design tokens (docs/FLOW_SPEC.md §4.2–§4.3). Light is the default; dark applies when <html data-theme="dark">,
+ * which lib/theme sets from your choice (Light / Dark / Match my phone). Every text/background pair used here
+ * meets WCAG AA (src/test/contrast.test.ts). */
 :root {
-  --bg: #f6f5f1;
+  --bg: #fff8f1;
   --surface: #ffffff;
-  --surface-2: #efede6;
-  --text: #1d211e;
-  --muted: #5d6460;
-  --border: #dcd9cf;
-  --accent: #2f6f4e;
+  --surface-2: #fbefe3;
+  --text: #2a211c;
+  --muted: #6b5e55;
+  --border: #ebddd0;
+  --accent: #b5482f;
   --accent-text: #ffffff;
-  --accent-soft: #dcebe2;
+  --accent-soft: #fbe3d9;
+  --accent-ink: #a3412a; /* accent-colored text on --accent-soft and --surface-2 */
+  --herb: #3f7d58;
+  --herb-ink: #367050; /* "you have it" text on any surface */
+  --herb-soft: #e3f1e8;
+  --honey: #e9a93b; /* highlights only, never text on light */
   --warn: #8a5a00;
   --warn-soft: #fbefd4;
   --danger: #a3302a;
   --danger-soft: #f8dedb;
   --safety: #7a3d00;
   --safety-soft: #fff1e0;
-  --radius: 14px;
+  --shadow: 0 1px 2px rgb(42 33 28 / 6%), 0 4px 14px rgb(42 33 28 / 7%);
+  --card-border: transparent;
+
+  --pottle-body: #c9653f;
+  --pottle-rim: #a9502f;
+  --pottle-lid: #f6e7d3;
+  --pottle-line: #6e3520;
+  --pottle-face: #3b2418;
+  --pottle-steam: #9a8a7d;
+
+  --font: ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --text-body: 1.125rem; /* 18px */
+  --text-small: 0.9375rem; /* 15px */
+  --text-label: 1rem; /* 16px */
+  --text-h1: 1.875rem; /* 30px */
+  --text-h2: 1.4375rem; /* 23px */
+  --text-value: 2.5rem; /* 40px stepper value */
+
+  --radius-card: 20px;
+  --radius-tile: 18px;
+  --radius-button: 16px;
+  --radius: var(--radius-card);
   --tap: 48px;
+  --primary-height: 56px;
+  --gutter: 16px;
+  --section-gap: 24px;
   --nav-height: 64px;
+  --motion: 200ms;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
-  color-scheme: light dark;
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
+:root[data-theme="dark"] {
+  --bg: #1c1714;
+  --surface: #26201c;
+  --surface-2: #312923;
+  --text: #f6ede4;
+  --muted: #bba99a;
+  --border: #3d332c;
+  --accent: #f08a68;
+  --accent-text: #2a140c;
+  --accent-soft: #4a2a1f;
+  --accent-ink: #f08a68;
+  --herb: #7cc79a;
+  --herb-ink: #7cc79a;
+  --herb-soft: #1f3a2b;
+  --honey: #f2c063;
+  --warn: #f0c46a;
+  --warn-soft: #3a2f16;
+  --danger: #f08c84;
+  --danger-soft: #3d1f1c;
+  --safety: #ffc58a;
+  --safety-soft: #3a2914;
+  --shadow: none;
+  --card-border: var(--border);
+
+  --pottle-body: #d2704a;
+  --pottle-rim: #b05a37;
+  --pottle-lid: #f3e2cc;
+  --pottle-line: #5a2a18;
+  --pottle-face: #2e1a10;
+  --pottle-steam: #8f7f72;
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
   :root {
-    --bg: #121513;
-    --surface: #1b1f1c;
-    --surface-2: #232825;
-    --text: #edf0ec;
-    --muted: #a3aba6;
-    --border: #333a35;
-    --accent: #6fbf94;
-    --accent-text: #0d1a12;
-    --accent-soft: #1f3a2b;
-    --warn: #f0c46a;
-    --warn-soft: #3a2f16;
-    --danger: #f08c84;
-    --danger-soft: #3d1f1c;
-    --safety: #ffc58a;
-    --safety-soft: #3a2914;
+    --motion: 0ms;
   }
 }
 
@@ -59,15 +111,14 @@ body {
   padding: 0;
   background: var(--bg);
   color: var(--text);
-  font-family:
-    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  font-size: 17px;
-  line-height: 1.45;
+  font-family: var(--font);
+  font-size: var(--text-body);
+  line-height: 1.5;
   overflow-x: hidden;
 }
 
 a {
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 h1,
@@ -78,15 +129,17 @@ h3 {
 }
 
 h1 {
-  font-size: 1.5rem;
+  font-size: var(--text-h1);
+  font-weight: 700;
 }
 
 h2 {
-  font-size: 1.2rem;
+  font-size: var(--text-h2);
+  font-weight: 700;
 }
 
 h3 {
-  font-size: 1.05rem;
+  font-size: 1.15rem;
 }
 
 p {
@@ -106,12 +159,12 @@ select,
 textarea {
   min-height: var(--tap);
   width: 100%;
-  padding: 10px 12px;
+  padding: 10px 14px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 14px;
   background: var(--surface);
   /* 16px+ keeps iOS Safari from zooming into a focused field */
-  font-size: 17px;
+  font-size: var(--text-body);
 }
 
 textarea {
@@ -121,8 +174,14 @@ textarea {
 
 label {
   display: block;
+  font-size: var(--text-label);
   font-weight: 600;
   margin: 12px 0 4px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .btn {
@@ -134,13 +193,14 @@ label {
   min-width: var(--tap);
   padding: 10px 18px;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-button);
   background: var(--surface);
   font-weight: 600;
   text-decoration: none;
   color: var(--text);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  transition: background var(--motion), opacity var(--motion);
 }
 
 .btn:disabled {
@@ -164,17 +224,26 @@ label {
 }
 
 .btn-small {
-  min-height: 44px;
-  padding: 6px 12px;
-  font-size: 0.95rem;
+  min-height: var(--tap);
+  padding: 6px 14px;
+  font-size: var(--text-small);
+}
+
+.btn-link {
+  border-color: transparent;
+  background: transparent;
+  color: var(--accent-ink);
+  padding-left: 4px;
+  padding-right: 4px;
 }
 
 .card {
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px;
-  margin: 0 0 12px;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  margin: 0 0 16px;
 }
 
 .muted {
@@ -182,14 +251,14 @@ label {
 }
 
 .small {
-  font-size: 0.9rem;
+  font-size: var(--text-small);
 }
 
 .badge {
   display: inline-block;
-  padding: 2px 8px;
+  padding: 2px 10px;
   border-radius: 999px;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 600;
   background: var(--surface-2);
   color: var(--muted);
@@ -198,7 +267,12 @@ label {
 
 .badge-accent {
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.badge-herb {
+  background: var(--herb-soft);
+  color: var(--herb-ink);
 }
 
 .badge-warn {
@@ -212,8 +286,8 @@ label {
 }
 
 .notice {
-  border-radius: 12px;
-  padding: 10px 12px;
+  border-radius: 14px;
+  padding: 10px 14px;
   margin: 0 0 12px;
   background: var(--surface-2);
 }
@@ -256,25 +330,8 @@ label {
   padding: 0;
 }
 
-.segmented {
-  display: flex;
-  gap: 0;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.segmented button {
-  flex: 1;
-  min-height: var(--tap);
-  border: 0;
-  background: var(--surface);
-  font-weight: 600;
-}
-
-.segmented button[aria-pressed="true"] {
-  background: var(--accent);
-  color: var(--accent-text);
+.section {
+  margin-top: var(--section-gap);
 }
 
 .sr-only {

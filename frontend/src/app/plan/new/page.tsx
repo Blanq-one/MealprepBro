@@ -5,6 +5,7 @@ import { type FormEvent, useState } from "react";
 
 import { PlanFailure, PlanProgress } from "@/components/PlanProgress";
 import { ProblemNotice } from "@/components/Status";
+import { Segmented } from "@/components/ui/Segmented";
 import { api } from "@/lib/api/client";
 import { streamPlan } from "@/lib/api/ndjson";
 import type { GenerationRun, NutritionPriority, PlanRequestBody, PlanStreamEvent } from "@/lib/api/types";
@@ -94,14 +95,15 @@ export default function NewPlanPage() {
       <input id="week" type="date" value={weekStart} onChange={(e) => setWeekStart(e.target.value)} required />
 
       <label id="mode-label">What are you doing?</label>
-      <div className="segmented" role="group" aria-labelledby="mode-label">
-        <button type="button" aria-pressed={mode === "shop"} onClick={() => setMode("shop")}>
-          Shopping
-        </button>
-        <button type="button" aria-pressed={mode === "inventory"} onClick={() => setMode("inventory")}>
-          Cook from what I have
-        </button>
-      </div>
+      <Segmented
+        label="What are you doing?"
+        options={[
+          { value: "shop", label: "Shopping" },
+          { value: "inventory", label: "Cook from what I have" },
+        ]}
+        value={mode}
+        onChange={setMode}
+      />
 
       <label htmlFor="money">{mode === "shop" ? "Budget for this trip (optional)" : "Top-up allowance (optional)"}</label>
       <input

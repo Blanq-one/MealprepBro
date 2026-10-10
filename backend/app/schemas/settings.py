@@ -186,6 +186,17 @@ class SettingsPreviewOut(BaseModel):
     settings: UserSettings | None  # what a save would store, when valid
 
 
+class AlwaysHaveOptionOut(BaseModel):
+    """An ingredient you can mark as Always have (S2); common staples come first."""
+
+    ingredient_id: int
+    slug: str
+    name: str
+    category: str
+    common: bool
+    selected: bool
+
+
 class StoreIn(_Strict):
     name: str = Field(min_length=1, max_length=60)
 

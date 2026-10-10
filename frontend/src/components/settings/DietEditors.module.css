@@ -1,0 +1,22 @@
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 56px;
+  border-top: 1px solid var(--border);
+}
+
+.row:first-child {
+  border-top: 0;
+}
+
+.add {
+  margin-top: var(--section-gap);
+}
+
+.hit {
+  justify-content: space-between;
+  margin-top: 6px;
+  text-align: left;
+}

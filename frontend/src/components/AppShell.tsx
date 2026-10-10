@@ -1,11 +1,15 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 
+import type { SettingsOut } from "@/lib/api/types";
+import { clockTime } from "@/lib/format/dates";
+import { latestSync } from "@/lib/offline/lastSynced";
 import { appQueue, type Conflict } from "@/lib/offline/queue";
+import { applyTheme, followSystemTheme, readThemeChoice } from "@/lib/theme/theme";
 
-import { BottomNav } from "./BottomNav";
+import { BottomNav, showsTabs } from "./BottomNav";
 import styles from "./AppShell.module.css";
 
 function registerServiceWorker(): void {
@@ -53,19 +57,46 @@ function useQueueState(online: boolean): { pending: number; conflicts: Conflict[
   };
 }
 
+let onboardingChecked = false;
+
+/** On launch, the wizard runs if your settings say onboarding isn't done yet (FLOW_SPEC §6). Checked once
+ * per app start; a failed check (offline, signed out) just skips it. */
+function useOnboardingGate(pathname: string): void {
+  const router = useRouter();
+  useEffect(() => {
+    if (onboardingChecked || pathname.startsWith("/login") || pathname.startsWith("/welcome")) return;
+    onboardingChecked = true;
+    fetch("/api/v1/settings", { credentials: "same-origin", headers: { Accept: "application/json" } })
+      .then((response) => (response.ok ? (response.json() as Promise<SettingsOut>) : null))
+      .then((body) => {
+        if (body && body.settings.onboarding_completed === false) router.replace("/welcome/");
+      })
+      .catch(() => undefined);
+  }, [pathname, router]);
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "/";
   const online = useOnline();
   const { pending, conflicts, dismiss } = useQueueState(online);
-  const showNav = !pathname.startsWith("/login");
+  const showNav = showsTabs(pathname);
+  const [syncedAt, setSyncedAt] = useState<number | null>(null);
 
   useEffect(registerServiceWorker, []);
+  useEffect(() => {
+    applyTheme(readThemeChoice());
+    return followSystemTheme();
+  }, []);
+  useEffect(() => {
+    if (!online) setSyncedAt(latestSync());
+  }, [online, pathname]);
+  useOnboardingGate(pathname);
 
   return (
     <div className={styles.shell}>
       {!online && (
         <div className={styles.banner} role="status">
-          Offline: showing what was saved on this phone.
+          You&apos;re offline{syncedAt !== null ? ` · showing what was saved at ${clockTime(syncedAt)}` : ""}.
           {pending > 0 && ` ${pending} change${pending === 1 ? "" : "s"} will sync when you're back online.`}
         </div>
       )}

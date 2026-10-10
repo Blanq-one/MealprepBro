@@ -44,6 +44,27 @@ export function todayIso(): string {
   return toIso(new Date());
 }
 
+/** A time of day: "3:42 pm". */
+export function clockTime(timestamp: number): string {
+  const date = new Date(timestamp);
+  const hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${hours % 12 || 12}:${minutes} ${hours < 12 ? "am" : "pm"}`;
+}
+
+/** "Morning", "Afternoon" or "Evening", from the clock. */
+export function partOfDay(date: Date = new Date()): "Morning" | "Afternoon" | "Evening" {
+  const hour = date.getHours();
+  if (hour >= 4 && hour < 12) return "Morning";
+  if (hour >= 12 && hour < 17) return "Afternoon";
+  return "Evening";
+}
+
+/** "Monday" for a "YYYY-MM-DD" date. */
+export function weekdayName(iso: string): string {
+  return ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][parseDay(iso).getDay()] as string;
+}
+
 /** "just now", "3 min ago", "2 h ago", or a date. */
 export function agoLabel(timestamp: number, now: number = Date.now()): string {
   const seconds = Math.max(0, Math.round((now - timestamp) / 1000));

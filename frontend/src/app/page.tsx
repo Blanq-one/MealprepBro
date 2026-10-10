@@ -1,20 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { Redirect } from "@/components/Redirect";
 
-// The installed app starts at /plan/; anyone opening "/" goes there too.
+// The app opens on the Cook tab.
 export default function Home() {
-  const router = useRouter();
-  useEffect(() => {
-    router.replace("/plan/");
-  }, [router]);
-  return (
-    <main>
-      <p>
-        <Link href="/plan/">Open your week</Link>
-      </p>
-    </main>
-  );
+  return <Redirect to="/cook/" label="Open Mealbro" />;
 }

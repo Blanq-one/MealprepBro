@@ -1,0 +1,17 @@
+.greeting {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

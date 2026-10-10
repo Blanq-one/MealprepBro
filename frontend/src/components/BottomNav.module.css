@@ -21,16 +21,23 @@
   min-height: var(--nav-height);
   color: var(--muted);
   text-decoration: none;
-  font-size: 0.78rem;
+  font-size: 0.85rem;
   font-weight: 600;
   -webkit-tap-highlight-color: transparent;
 }
 
 .icon {
-  font-size: 1.35rem;
+  font-size: 1.45rem;
   line-height: 1;
+  filter: grayscale(0.6);
+  opacity: 0.75;
 }
 
 .active {
-  color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.active .icon {
+  filter: none;
+  opacity: 1;
 }

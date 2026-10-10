@@ -2,12 +2,13 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
 import { AppShell } from "@/components/AppShell";
+import { THEME_SCRIPT } from "@/lib/theme/theme";
 
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: { default: "Mealbro", template: "%s · Mealbro" },
-  description: "Your weekly meal-prep plan, recipes, inventory and grocery list.",
+  description: "Cook a meal now or prep for the days ahead, from what you have.",
   applicationName: "Mealbro",
   appleWebApp: { capable: true, title: "Mealbro", statusBarStyle: "default" },
   icons: {
@@ -24,15 +25,16 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#2f6f4e" },
-    { media: "(prefers-color-scheme: dark)", color: "#121513" },
-  ],
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    // data-theme is set by the script below before the first paint (your Light / Dark / Match my phone choice)
+    <html lang="en" data-theme="light" suppressHydrationWarning>
+      <head>
+        <meta name="theme-color" content="#fff8f1" />
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body>
         <AppShell>{children}</AppShell>
       </body>

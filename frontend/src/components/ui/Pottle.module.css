@@ -1,0 +1,80 @@
+.pottle {
+  display: inline-block;
+  flex: none;
+  overflow: visible;
+}
+
+.body {
+  fill: var(--pottle-body);
+}
+
+.rim {
+  fill: var(--pottle-rim);
+}
+
+.lid {
+  fill: var(--pottle-lid);
+  stroke: var(--pottle-line);
+  stroke-width: 1.4;
+}
+
+.face {
+  fill: var(--pottle-face);
+}
+
+.mouth {
+  fill: none;
+  stroke: var(--pottle-face);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.mouthO {
+  fill: none;
+  stroke: var(--pottle-face);
+  stroke-width: 1.6;
+}
+
+.steam path {
+  fill: none;
+  stroke: var(--pottle-steam);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.heart {
+  fill: var(--accent);
+}
+
+.rising path {
+  animation: rise 1.6s ease-in-out infinite;
+}
+
+.rising path:nth-child(2) {
+  animation-delay: 0.3s;
+}
+
+.rising path:nth-child(3) {
+  animation-delay: 0.6s;
+}
+
+@keyframes rise {
+  0% {
+    transform: translateY(2px);
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-3px);
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rising path {
+    animation: none;
+  }
+}

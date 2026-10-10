@@ -151,6 +151,32 @@ def test_summary_lines_follow_the_settings(seeded_db):
     assert lines["always_have"] == "Nothing yet"
 
 
+def test_always_have_options_list_common_staples_first(client):
+    """S2 (step 2b.2): every ingredient that can be Always have, common staples first, your choices marked."""
+    client.patch("/api/v1/settings", json={"always_have": ["garlic", "cumin-ground"]})
+    reply = client.get("/api/v1/settings/always-have")
+    assert reply.status_code == 200, reply.text
+    options = reply.json()
+    slugs = [o["slug"] for o in options]
+    assert slugs[:7] == [
+        "salt",
+        "black-pepper",
+        "olive-oil",
+        "vegetable-oil",
+        "rice-long-grain-white",
+        "garlic",
+        "onion-yellow",
+    ]
+    common = [o for o in options if o["common"]]
+    assert options[: len(common)] == common  # the common ones come first, then the rest by name
+    assert "cumin-ground" in {o["slug"] for o in common}  # assume-in-stock spices count as common
+    rest = [o["name"] for o in options[len(common) :]]
+    assert rest == sorted(rest)
+    assert {o["slug"] for o in options if o["selected"]} == {"garlic", "cumin-ground"}
+    assert "water" not in slugs  # always Always have, never listed
+    assert "beef-broth" not in slugs and "beef-tallow" not in slugs  # beef can't be Always have
+
+
 def test_stores_list_your_grocery_stores_in_order(client):
     stores = client.get("/api/v1/stores").json()
     assert [(s["name"], s["order"]) for s in stores] == [("Stop & Shop", 1), ("Price Rite", 2)]  # no "Other"

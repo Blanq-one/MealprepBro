@@ -1,13 +1,14 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { useOnline } from "@/components/AppShell";
 import { GroceryChecklist, type ItemOverride } from "@/components/GroceryChecklist";
 import { Page } from "@/components/Page";
-import { ProblemNotice, Spinner, SyncNote } from "@/components/Status";
+import { ProblemNotice, SyncNote } from "@/components/Status";
+import { Segmented } from "@/components/ui/Segmented";
+import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { api } from "@/lib/api/client";
 import type { GroceryComplete, GroceryItem, GroceryItemPatch, GroceryList, PlanListItem } from "@/lib/api/types";
 import { useApi } from "@/lib/hooks/useApi";
@@ -68,41 +69,42 @@ function Grocery() {
     }
   }
 
-  if (plans.loading || (list.loading && !list.data)) return <Spinner />;
+  if (plans.loading || (list.loading && !list.data)) return <Skeleton cards={3} label="Loading your grocery list" />;
   if (!planId) {
+    if (plans.error) return <ErrorState error={plans.error} onRetry={() => void plans.reload()} />;
     return (
-      <section className="card">
-        <h1>No grocery list</h1>
-        <p className="muted">Plan a week and its grocery list appears here.</p>
-        <Link href="/plan/new/" className="btn btn-primary btn-block">
-          Plan a week
-        </Link>
-      </section>
+      <>
+        <h1>Grocery</h1>
+        <EmptyState message="No list yet." action={{ label: "Plan a week", href: "/plan/new/" }} />
+      </>
     );
   }
-  if (!list.data) return <ProblemNotice error={list.error ?? plans.error} />;
+  if (!list.data) return <ErrorState error={list.error ?? plans.error} onRetry={() => void list.reload()} />;
   const g = list.data;
   const isDone = g.status === "done";
 
   return (
     <>
-      <div className="row-between">
-        <h1>Grocery list</h1>
-        <span className="muted">{g.total_display}</span>
-      </div>
-      <p className="small muted">
-        {g.checked_count} of {g.to_check_count} checked
-        {g.stock_up_cents > 0 ? " · stock-up items are listed separately" : ""}
-      </p>
+      <h1>Grocery</h1>
+      <section className="card" aria-label="This trip">
+        <p className="small muted" style={{ margin: 0 }}>
+          This trip
+        </p>
+        <p style={{ fontSize: "1.25rem", fontWeight: 700, margin: "0 0 4px" }}>{g.cash_split_display}</p>
+        <p className="small muted" style={{ margin: 0 }}>
+          {g.checked_count} of {g.to_check_count} checked
+        </p>
+      </section>
       <SyncNote syncedAt={list.syncedAt} fromCache={list.fromCache} />
-      <div className="segmented" role="group" aria-label="Group by" style={{ marginBottom: 12 }}>
-        <button type="button" aria-pressed={groupBy === "store"} onClick={() => setGroupBy("store")}>
-          By store
-        </button>
-        <button type="button" aria-pressed={groupBy === "category"} onClick={() => setGroupBy("category")}>
-          By category
-        </button>
-      </div>
+      <Segmented
+        label="Group by"
+        options={[
+          { value: "store", label: "By store" },
+          { value: "category", label: "By category" },
+        ]}
+        value={groupBy}
+        onChange={setGroupBy}
+      />
       {!g.complete && g.unpriced.length > 0 && (
         <p className="notice notice-warn">No price yet for {g.unpriced.join(", ")}.</p>
       )}

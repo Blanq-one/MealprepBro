@@ -32,7 +32,6 @@ from app.domain.enums import MealSlot
 from app.domain.units import GRAMS_PER_UNIT, ML_PER_UNIT
 from app.llm.client import LLMClient
 from app.llm.errors import LLMConfigError
-from app.planning.inputs import ALWAYS_HAVE_SLUGS
 from app.planning.orchestrator import Orchestrator, PlanOutcome, ProgressListener, problem_json
 from app.planning.perishables import freeze_text
 from app.planning.persistence import PlanNotFoundError, accept_plan
@@ -57,6 +56,7 @@ from app.schemas.plans import (
 )
 from app.services.dishes import dish_categories
 from app.services.ingredient_data import IngredientData, load_ingredients
+from app.services.settings import ALWAYS_HAVE_SLUGS
 
 log = logging.getLogger(__name__)
 

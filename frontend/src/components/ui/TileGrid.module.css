@@ -1,0 +1,79 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 96px;
+  padding: 12px 10px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-tile);
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--motion), border-color var(--motion);
+}
+
+.tile:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.icon {
+  font-size: 1.9rem;
+  line-height: 1;
+  display: flex;
+}
+
+.label {
+  font-size: var(--text-label);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.hint {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent-text);
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.notice {
+  margin: -4px 0 12px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-size: var(--text-small);
+  font-weight: 600;
+}

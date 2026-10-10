@@ -74,7 +74,12 @@ npm run gen:api      # regenerate src/lib/api/schema.d.ts from src/lib/api/opena
 ```
 
 The API types come from the backend's OpenAPI schema: `cd backend && uv run python -m app.cli openapi`, then
-`npm run gen:api`. The PWA does no nutrition, unit or cost arithmetic; every number arrives from the API.
+`npm run gen:api`. The PWA does no nutrition, unit or cost arithmetic; every number arrives from the API
+(`src/test/no-math.test.ts` audits the source for it).
+
+The app has four tabs: **Cook** (opens here), **Grocery**, **Pantry** and **Settings**. The first launch runs a
+nine-screen setup (`/welcome/`) pre-filled from your saved settings. Light is the default; Settings → Appearance
+switches to Dark or Match my phone (stored on each device).
 
 ## Local development (uv)
 
@@ -130,6 +135,15 @@ LLM tests use scripted responses. One opt-in smoke test calls Groq for real:
 
 Every `/api/v1` route needs a signed-in session cookie, except sign-in; changes must come from the app's own
 origin. `GET /health` is open.
+
+Phase 2b (cook-first flow, `docs/FLOW_SPEC.md`):
+
+- `PATCH /api/v1/settings` (only the fields sent), `POST /api/v1/settings/preview` (field errors, "kcal a day
+  planned" and summary lines; nothing saved), `GET /api/v1/settings/always-have` (the Always-have list, common
+  staples first), `GET/POST /api/v1/stores`
+- `PUT/DELETE /api/v1/recipes/{id}/favorite` and `/saved`, `GET /api/v1/recipes/saved?list=favorites|later`
+- `GET /api/v1/inventory/quick-picks` carries `amount_options` and `custom_units`; `POST /api/v1/inventory/bulk`
+  takes an `amount_option` key or a `custom_amount` + `custom_unit`
 
 Phase 2:
 
