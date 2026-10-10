@@ -121,6 +121,11 @@ class PlanConstraints(_Frozen):
     # Phase 2b: unlimited stock you own (settings "Always have", and water): never bought or listed; food
     # eaten is still costed at its unit price where one is known
     always_have_ingredient_ids: frozenset[int] = frozenset()
+    # Phase 2b: pantry items you turned off for this request ("not for this search"): their lots aren't used
+    lots_off_ingredient_ids: frozenset[int] = frozenset()
+    # Phase 2b: a meal is this many equal portions from one batch; calorie and protein limits are for your
+    # portion. Used by one-meal plans from step 2b.3a; the solver takes it from step 2b.5.
+    household_size: int = Field(default=1, ge=1, le=8)
     max_portions_per_recipe: int = Field(default=5, ge=1, le=14)  # per week, VARIETY_CAPPED_SLOTS only
     region_code: str | None = None
 
@@ -217,6 +222,7 @@ class PlanConstraints(_Frozen):
             "disliked_ingredient_ids",
             "favorite_recipe_ids",
             "always_have_ingredient_ids",
+            "lots_off_ingredient_ids",
         ):
             data[key] = sorted(data[key])
         for cap in data["frequency_caps"]:

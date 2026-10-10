@@ -17,7 +17,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
-from typing import Any
+from typing import Any, Literal
 
 from app.domain.cook_time import mood_allows
 from app.domain.enums import CalorieMode, MealSlot, PlanningMode
@@ -43,6 +43,8 @@ QTY_TOLERANCE = Decimal("0.001")
 _PROTEIN = Decimal("0.1")
 SCALE_TOLERANCE = Decimal("0.0001")
 ABSORBED_TOLERANCE = {"g": Decimal(10), "ml": Decimal(10), "count": Decimal(1)}
+
+Scope = Literal["week", "single"]
 
 # Errors a re-solve with a tightened bound can fix.
 RESOLVABLE = frozenset(
@@ -175,10 +177,13 @@ def _render_check(batch: RoundedBatch, recipe: RefRecipe, ref: ReferenceData) ->
     )
 
 
-def validate_plan(plan: RoundedPlan, ref: ReferenceData) -> ValidationReport:
+def validate_plan(plan: RoundedPlan, ref: ReferenceData, *, scope: Scope = "week") -> ValidationReport:
+    """`scope` "single" (a one-meal plan, Phase 2b): one meal isn't a day, so the day and week calorie limits
+    and the protein target are skipped; every other check runs."""
     if not isinstance(plan, RoundedPlan):
         raise TypeError(f"the plan validator only accepts a RoundedPlan, not {type(plan).__name__}")
     c = plan.constraints
+    whole_days = scope == "week"
     errors: list[Issue] = []
     warnings: list[Issue] = []
     days = {d.day: d for d in c.days}
@@ -374,12 +379,14 @@ def validate_plan(plan: RoundedPlan, ref: ReferenceData) -> ValidationReport:
     for key_day, key_slot in filled:
         if key_day not in days or key_slot not in days[key_day].slots:
             errors.append(Issue("SLOT_NOT_PLANNED", f"{key_day} {key_slot.value} is not a planned slot"))
+    people = c.household_size  # a meal is this many portions
     for index, batch in enumerate(plan.batches):
-        if eaten_by_batch[index] + batch.portions_to_freeze != batch.portions:
+        if eaten_by_batch[index] * people + batch.portions_to_freeze != batch.portions:
+            eaten = eaten_by_batch[index] * people
             errors.append(
                 Issue(
                     "PORTIONS_MISMATCH",
-                    f"{batch.title}: {batch.portions} portions cooked, {eaten_by_batch[index]} eaten + "
+                    f"{batch.title}: {batch.portions} portions cooked, {eaten} eaten + "
                     f"{batch.portions_to_freeze} frozen",
                 )
             )
@@ -404,7 +411,7 @@ def validate_plan(plan: RoundedPlan, ref: ReferenceData) -> ValidationReport:
 
     # ---- calories per mode (from the recomputed, displayed meal values) ----
     tol = c.tolerance
-    for spec in c.days:
+    for spec in c.days if whole_days else ():
         k = day_kcal[spec.day]
         if c.calorie_mode is CalorieMode.STRICT_DAILY:
             ceiling, floor = spec.kcal_target, round(spec.kcal_target * (1 - tol.daily_under_pct / 100))
@@ -429,7 +436,7 @@ def validate_plan(plan: RoundedPlan, ref: ReferenceData) -> ValidationReport:
                 )
             )
     week = sum(day_kcal.values())
-    if c.calorie_mode is CalorieMode.WEEKLY:
+    if c.calorie_mode is CalorieMode.WEEKLY and whole_days:
         week_floor = round(c.weekly_kcal_target * (1 - tol.weekly_under_pct / 100))
         if week > c.weekly_kcal_target:
             errors.append(
@@ -452,7 +459,7 @@ def validate_plan(plan: RoundedPlan, ref: ReferenceData) -> ValidationReport:
 
     # ---- protein target per mode (a floor) ----
     target = c.daily_protein_target_g
-    if target > 0:
+    if target > 0 and whole_days:
         if c.calorie_mode is CalorieMode.STRICT_DAILY:
             for spec in c.days:
                 short = Decimal(target) - day_protein[spec.day]

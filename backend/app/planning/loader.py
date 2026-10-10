@@ -128,9 +128,12 @@ def load_ingredient_plans(
     ingredient_ids: Iterable[int],
     store_ids: Iterable[int],
     always_have_ids: frozenset[int] = frozenset(),
+    *,
+    lots_off_ids: frozenset[int] = frozenset(),
 ) -> dict[int, IngredientPlan]:
     """Ingredient data, offers at the given stores and active inventory lots, all in one planning unit per
-    ingredient. Used by the problem loader and, separately, by the plan validator's own reload."""
+    ingredient. Used by the problem loader and, separately, by the plan validator's own reload.
+    `lots_off_ids`: pantry items turned off for this request; their lots are left out."""
     ids = sorted(set(ingredient_ids))
     data = load_ingredients(session, ids)
     allowed = set(store_ids)
@@ -146,7 +149,7 @@ def load_ingredient_plans(
             select(InventoryItem)
             .where(
                 InventoryItem.user_id == user_id,
-                InventoryItem.ingredient_id.in_(ids),
+                InventoryItem.ingredient_id.in_(set(ids) - lots_off_ids),
                 InventoryItem.status == "active",
                 InventoryItem.quantity > 0,
             )
@@ -197,13 +200,27 @@ def _cook_day_fits(c: PlanConstraints, mood: RecipeMood, active_minutes: int) ->
     )
 
 
-def build_problem(session: Session, user_id: int, constraints: PlanConstraints) -> PlanningProblem:
+def build_problem(
+    session: Session,
+    user_id: int,
+    constraints: PlanConstraints,
+    pairs: list[tuple[Recipe, RecipeVersion]] | None = None,
+) -> PlanningProblem:
+    """`pairs`: the recipe versions to offer (default: the default version of every live recipe)."""
     c = constraints
     week_slots = {s for d in c.days for s in d.slots}
-    pairs = candidate_versions(session, user_id)
+    if pairs is None:
+        pairs = candidate_versions(session, user_id)
     lines = version_lines(session, [v.id for _, v in pairs])
     ingredient_ids = {line.ingredient_id for ls in lines.values() for line in ls}
-    plans = load_ingredient_plans(session, user_id, ingredient_ids, c.store_ids, c.always_have_ingredient_ids)
+    plans = load_ingredient_plans(
+        session,
+        user_id,
+        ingredient_ids,
+        c.store_ids,
+        c.always_have_ingredient_ids,
+        lots_off_ids=c.lots_off_ingredient_ids,
+    )
     data = load_ingredients(session, ingredient_ids)
     store_names = {s.id: s.name for s in active_stores(session) if s.id in c.store_ids}
     never_favored_ids = frozenset(

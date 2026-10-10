@@ -1,22 +1,46 @@
 """Recipe nutrition and cost, computed by code from stored per-100 g values and per-store prices."""
 
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
+from app.db.models import Store
 from app.domain.cost import CostLine, CostTotal, consumed_cost, per_portion_cents
 from app.domain.enums import NutritionSource
 from app.domain.nutrition import CORE_CODES, NutritionLine, NutritionTotals, divide, total
 from app.domain.scaling import ScaledLine, scale_factor, scale_line
 from app.domain.units import grams_of, normalize_unit, to_base
 from app.services.ingredient_data import IngredientData, load_ingredients, nutrient_codes
-from app.services.pricing import active_stores, best_price_at_store, current_prices
+from app.services.pricing import StorePrice, active_stores, best_price_at_store, current_prices
 
 
 class CalculationError(ValueError):
     pass
+
+
+@dataclass(frozen=True)
+class CalcContext:
+    """Everything `calculate` reads from the database, loaded once for many recipes (the meal-now cards).
+    A calculation with a context gives exactly the numbers it gives without one."""
+
+    data: dict[int, IngredientData]
+    codes: list[str]
+    prices: list[StorePrice]
+    grocery_stores: list[Store]
+    other_store_ids: list[int]
+
+
+def load_context(session: Session, ingredient_ids: Iterable[int]) -> CalcContext:
+    ids = set(ingredient_ids)
+    return CalcContext(
+        data=load_ingredients(session, ids),
+        codes=nutrient_codes(session),
+        prices=current_prices(session, ids),
+        grocery_stores=active_stores(session, "grocery"),
+        other_store_ids=[s.id for s in active_stores(session, "other")],
+    )
 
 
 @dataclass(frozen=True)
@@ -83,16 +107,18 @@ def _label_reason(data: IngredientData, missing: Sequence[str]) -> str:
     return f"incomplete: {data.name} has no {', '.join(missing)} in its nutrition source"
 
 
-def calculate(session: Session, lines: Sequence[LineInput], portions: int) -> RecipeCalculation:
+def calculate(
+    session: Session, lines: Sequence[LineInput], portions: int, *, context: CalcContext | None = None
+) -> RecipeCalculation:
     if portions < 1:
         raise CalculationError("portions must be at least 1")
     if not lines:
         raise CalculationError("a recipe needs at least one ingredient line")
-    data = load_ingredients(session, [line.ingredient_id for line in lines])
-    resolved = _resolve(lines, data)
+    if context is None:
+        context = load_context(session, [line.ingredient_id for line in lines])
+    resolved = _resolve(lines, context.data)
     counted = [r for r in resolved if not r.optional]
-    codes = nutrient_codes(session)
-    totals = total([NutritionLine(r.ingredient.profile, r.grams) for r in counted], codes)
+    totals = total([NutritionLine(r.ingredient.profile, r.grams) for r in counted], context.codes)
 
     reasons: list[str] = []
     for r in counted:
@@ -100,10 +126,11 @@ def calculate(session: Session, lines: Sequence[LineInput], portions: int) -> Re
         if missing_core:
             reasons.append(_label_reason(r.ingredient, missing_core))
 
-    prices = current_prices(session, [r.ingredient.id for r in counted])
-    others = [s.id for s in active_stores(session, "other")]
+    counted_ids = {r.ingredient.id for r in counted}
+    prices = [p for p in context.prices if p.ingredient_id in counted_ids]
+    others = context.other_store_ids
     costs = []
-    for store in active_stores(session, "grocery"):
+    for store in context.grocery_stores:
         cost_lines = []
         estimates = False
         for r in counted:
@@ -154,19 +181,22 @@ def calculate_scaled(
     base_servings: int,
     portions: int,
     portion_multiplier: Decimal = Decimal(1),
+    *,
+    context: CalcContext | None = None,
 ) -> ScaledCalculation:
     """Scale to `portions`, round every line to a practical amount, then compute nutrition and cost
     from the ROUNDED amounts (BUILD_PLAN §2.5)."""
     factor = scale_factor(base_servings, portions, portion_multiplier)
-    data = load_ingredients(session, [line.ingredient_id for line in lines])
+    if context is None:
+        context = load_context(session, [line.ingredient_id for line in lines])
     scaled: list[ScaledLine] = []
     practical: list[LineInput] = []
     for line in lines:
-        ingredient = data.get(line.ingredient_id)
+        ingredient = context.data.get(line.ingredient_id)
         if ingredient is None:
             raise CalculationError(f"unknown ingredient id {line.ingredient_id}")
         unit = normalize_unit(line.unit, ingredient.units.named_units)
         result = scale_line(line.quantity, unit, factor, ingredient.count_rounding_step)
         scaled.append(result)
         practical.append(LineInput(line.ingredient_id, result.amount, result.unit, line.optional))
-    return ScaledCalculation(factor, tuple(scaled), calculate(session, practical, portions))
+    return ScaledCalculation(factor, tuple(scaled), calculate(session, practical, portions, context=context))

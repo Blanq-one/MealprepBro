@@ -209,4 +209,26 @@ describe("onboarding", () => {
     render(<Wizard start="done" online={false} />);
     expect(await screen.findByRole("button", { name: "Needs a connection to save" })).toBeDisabled();
   });
+
+  it("every screen reserves the Continue footer's height, so the minutes stepper is never behind it", async () => {
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
+      const h = this.dataset.testid === "question-footer" ? 136 : 0;
+      return { x: 0, y: 0, top: 0, left: 0, right: 375, bottom: h, width: 375, height: h, toJSON: () => ({}) } as DOMRect;
+    });
+    api();
+    for (const start of STEPS) {
+      const { unmount } = render(<Wizard start={start} />);
+      const question = await screen.findByTestId("question-screen");
+      expect(question.style.getPropertyValue("--footer-height")).toBe("136px");
+      if (start === "cooking") {
+        await screen.findByRole("heading", { name: "When do you cook?" });
+        const footer = screen.getByTestId("question-footer");
+        const minutes = screen.getAllByRole("button").filter((b) => /minutes/i.test(b.getAttribute("aria-label") ?? ""));
+        expect(minutes.length).toBeGreaterThan(0);
+        for (const b of minutes) expect(footer).not.toContainElement(b);
+      }
+      unmount();
+    }
+    vi.restoreAllMocks();
+  });
 });

@@ -1,6 +1,6 @@
 # Mealbro Build Plan
 
-**Status:** v3, **approved** 2026-10-08 with the changes recorded in §12.1. Phase 0 approved. Phase 1 approved 2026-10-09 (with C1–C8 and D1–D22); a post-approval round (C9–C14, D23–D28) is done. A3 is answered in `docs/hosting.md`; the hosting decision changed at the Phase 2 kickoff to Vercel Hobby + Neon Free, $0/month (K1, §12.1). Phase 2 (PWA, deploy prep only) was approved 2026-10-10. **Phase 2b (cook-first redesign) was added and its spec approved 2026-10-10** (with changes E10–E13, §12.1): the spec is `docs/FLOW_SPEC.md` and the build steps are in §9. Step 2b.1 (backend foundations) was built and **approved 2026-10-10, including D44–D53**; step 2b.2 (look, shell, onboarding, Settings, Pantry) started the same day. **Addition (2026-10-10, E15–E17):** two-stage recipe generation (ideas for the cards, steps on first open, and after the first More ideas tap a background batch for later taps) to fit Groq's 8K tokens a minute; the target-0 fallback for the protein cap; and step 2b.3 split into 2b.3a (ranking and cards) and 2b.3b (ideas, steps, background batch). All approved.
+**Status:** v3, **approved** 2026-10-08 with the changes recorded in §12.1. Phase 0 approved. Phase 1 approved 2026-10-09 (with C1–C8 and D1–D22); a post-approval round (C9–C14, D23–D28) is done. A3 is answered in `docs/hosting.md`; the hosting decision changed at the Phase 2 kickoff to Vercel Hobby + Neon Free, $0/month (K1, §12.1). Phase 2 (PWA, deploy prep only) was approved 2026-10-10. **Phase 2b (cook-first redesign) was added and its spec approved 2026-10-10** (with changes E10–E13, §12.1): the spec is `docs/FLOW_SPEC.md` and the build steps are in §9. Step 2b.1 (backend foundations) was built and **approved 2026-10-10, including D44–D53**; step 2b.2 (look, shell, onboarding, Settings, Pantry) started the same day. **Addition (2026-10-10, E15–E17):** two-stage recipe generation (ideas for the cards, steps on first open, and after the first More ideas tap a background batch for later taps) to fit Groq's 8K tokens a minute; the target-0 fallback for the protein cap; and step 2b.3 split into 2b.3a (ranking and cards) and 2b.3b (ideas, steps, background batch). All approved. **Step 2b.2 was approved 2026-10-10, including D54–D64** (H1–H6, §12.1): a footer fix on question screens, a new build order (**2b.3a → 2b.4 → 2b.3b**, then 2b.5–2b.8, so the meal-now flow can be used before LLM ideas exist), notes for 2b.5 and 2b.7 (the plan view's Prep notes row; a "How do you want to cook?" step with four options) and a pre-deploy item (§12.4). Step 2b.3a (ranking and cards) was built the same day and awaits approval (D65–D76).
 **Source documents:** `CLAUDE.md` (build rules, wins on conflict), `docs/PRD.md` (product vision; "Primary user flow" at the top), `docs/FLOW_SPEC.md` (screens and backend work for Phase 2b).
 
 This plan covers Phases 0–6, plus Phase 2b. One phase per session; Phase 2b is split into build steps, one per session (§9). A phase or step is done only when its acceptance criteria are met, its tests pass, and the test output has been shown.
@@ -19,7 +19,7 @@ This plan covers Phases 0–6, plus Phase 2b. One phase per session; Phase 2b is
 | — | Pre-Phase 1 tasks | Done | 2026-10-08 | 2026-10-08 | Package-label data (tortillas, protein powder), USDA mapping review sheet (`docs/review/usda_mappings.md`), raw/dry/as-sold rule + check (§7.8), CLAUDE.md machine-boundaries rule. Round 2: FoodSafety.gov chart transcribed (53 rows, §7.2), top-25 mappings approved, tortilla renamed, Docker rule clarified, fresh-clone check made a per-phase step. |
 | 1 | Planning brain | Approved 2026-10-09; post-approval round done | 2026-10-08 | 2026-10-09 | First pass: 645 tests, fresh-clone check passed; D1–D13 and C1–C3 approved 2026-10-09. Fix-up round (C4–C8: budget per request with inventory/shop modes, cash vs food eaten, freeze-on-shopping-day and waste, 100 g protein floor, elapsed time): 705 tests pass (the opt-in live test skips), domain coverage 99%, ruff/mypy clean, fresh-clone check passed; deviations D14–D22 in the fix-up note. Approved 2026-10-09. Post-approval round (C9–C14: powder prices, stock-up items, shelf-life fix, regular chicken packs, two-week steady-state check, A3 hosting): 721 tests pass (the opt-in live test skips), domain coverage 99%; deviations D23–D28. |
 | 2 | Mobile PWA + cloud deploy (deploy prep only, K7) | Approved 2026-10-10 | 2026-10-09 | 2026-10-09 | Pre-work K2–K6 done; PWA, auth, shopping, Mark cooked, quick add, exposure log. 800 backend tests pass (2 opt-in skipped), 78 frontend tests; not deployed (your step, `docs/deploy.md`). Deviations D29–D43 in the Phase 2 outcome note (§9). |
-| 2b | Cook-first flow redesign | 2b.1 approved 2026-10-10 (D44–D53); 2b.2 built 2026-10-10, awaiting approval | 2026-10-10 | | `docs/FLOW_SPEC.md`; PRD "Primary user flow"; 9 build steps (2b.1, 2b.2, 2b.3a, 2b.3b, 2b.4–2b.8; §9); changes F1–F21 approved (FLOW_SPEC §16); decisions E1–E17 (§12.1). Two-stage generation added the same day (E15, E17; built in 2b.3b). **2b.1 (backend foundations):** 898 backend tests pass (2 opt-in skipped), 78 frontend tests, ruff/mypy clean; deviations D44–D53 in the 2b.1 outcome note (§9). **2b.2 (look, shell, onboarding, Settings, Pantry):** 180 frontend tests (78 before), 899 backend tests pass (2 opt-in skipped), type checks clean, static export builds; AA contrast tested, 375 px not yet checked on a device; deviations D54–D64 in the 2b.2 outcome note (§9). |
+| 2b | Cook-first flow redesign | 2b.1 approved 2026-10-10 (D44–D53); 2b.2 approved 2026-10-10 (D54–D64, H1–H6); 2b.3a built 2026-10-10, awaiting approval | 2026-10-10 | | `docs/FLOW_SPEC.md`; PRD "Primary user flow"; 9 build steps, built in the order 2b.1, 2b.2, 2b.3a, **2b.4, 2b.3b**, 2b.5–2b.8 (H3; §9); changes F1–F21 approved (FLOW_SPEC §16); decisions E1–E17 (§12.1). Two-stage generation added the same day (E15, E17; built in 2b.3b). **2b.1 (backend foundations):** 898 backend tests pass (2 opt-in skipped), 78 frontend tests, ruff/mypy clean; deviations D44–D53 in the 2b.1 outcome note (§9). **2b.2 (look, shell, onboarding, Settings, Pantry):** 180 frontend tests (78 before), 899 backend tests pass (2 opt-in skipped), type checks clean, static export builds; AA contrast tested, 375 px not yet checked on a device; deviations D54–D64 in the 2b.2 outcome note (§9). Footer fix H2 done before 2b.3a. **2b.3a (ranking and cards, no LLM calls):** 964 backend tests pass (2 opt-in skipped), 187 frontend tests, ruff, mypy and type check clean; deviations D65–D76 in the 2b.3a outcome note (§9). |
 | 3 | Feedback loop | Not started | | | Favorites moved to 2b. |
 | 4 | Daily overrides | Not started | | | |
 | 5 | Grocery intelligence | Not started | | | |
@@ -1812,7 +1812,10 @@ Every number still comes from code, and the LLM still only writes recipes.
 - **From Phase 4:** the pinned re-solve, for the single-meal swap. Consumption, day-level overrides, rebalancing and the mode toggle stay in Phase 4.
 - **From Phase 5:** a basic "What should I buy?" with templated reasons from current prices. Price history, deals, seasonality, usual items and the cart optimizer stay in Phase 5.
 
-**How the steps run.** Nine build steps, one per session, in order: 2b.1, 2b.2, 2b.3a, 2b.3b, 2b.4, 2b.5, 2b.6, 2b.7, 2b.8 (2b.3 was split into 2b.3a and 2b.3b on 2026-10-10, E17).
+**How the steps run.** Nine build steps, one per session, in this order: 2b.1, 2b.2, 2b.3a, **2b.4, 2b.3b**, 2b.5, 2b.6, 2b.7, 2b.8.
+- 2b.3 was split into 2b.3a and 2b.3b on 2026-10-10 (E17).
+- **New order (H3, 2026-10-10):** 2b.4 (the meal-now screens) is built right after 2b.3a, with seed and saved recipes only, so you can use the new flow sooner. 2b.3b (LLM ideas, steps, background batch) follows 2b.4 and also takes the screen work that needs ideas (the countdown wait states, the held `prefetched` list, the C8 steps state). Until 2b.3b, More ideas shows disabled with "coming soon".
+- The step numbers stay as they are, so earlier references still point to the right step.
 - Each step ends exactly like a phase: its acceptance criteria met, `pytest` (and from 2b.2 `vitest`) output shown, a commit, `scripts/fresh_clone_check.sh` after committing, a short summary, then a stop for your approval.
 - Each step's session reads this section, the shared sections, and the FLOW_SPEC sections listed with the step.
 - The phase-end rules in CLAUDE.md apply to every step (see §11 item 7).
@@ -1930,7 +1933,17 @@ new required fields (no UI changes, 2b.2 builds the screens). `save_plan` takes 
 
 **Tests (Vitest).** Stepper bounds and hold-repeat; the two-nutrition-goal limit; segmented `aria-pressed`; onboarding draft and final PUT; Skip sends only the onboarding flag; paired screens validate both controls; strict mode hides the band; the amount picker sends the option key; theme switch.
 
-**2b.2 outcome (2026-10-10, awaiting approval).** Every deliverable is built and the acceptance criteria are met,
+**Approved 2026-10-10, including D54–D64 (H1).** Fix at approval (H2), done at the start of the 2b.3a session: the
+fixed Continue button covered content on some question screens (the hands-on minutes stepper on "When do you
+cook?"). `QuestionScreen` now measures its footer (a `ResizeObserver`, so a secondary button, a footer note, the
+safe area or larger iOS text all count) and keeps `--footer-height` on the screen, whose bottom padding is that
+height plus a 16 px gap; the old fixed guess is only the first-paint fallback. Every question screen (onboarding
+W0–W8 and every Settings editor) uses this component. Tests: `ui/QuestionScreen.test.tsx` (the measured height,
+resizes, no `ResizeObserver`, controls stay out of the footer, and a layout check that the padding rule is in the
+CSS and no other fixed bottom button exists) and an onboarding test that every screen, "When do you cook?"
+included, reserves the footer's height.
+
+**2b.2 outcome (2026-10-10).** Every deliverable is built and the acceptance criteria are met,
 with one limit on AC 2 (below). Frontend: 180 Vitest tests pass (78 before), type check clean, the static export
 builds 16 pages. Backend: one small endpoint (D54) and its test; 899 tests pass (2 opt-in skipped), ruff and mypy
 clean. Pre-work: the opt-in timed solve now uses the 30 s production limit (D53, passed in 5.5 s). New tests:
@@ -2038,9 +2051,98 @@ Also: the service worker cache is `v2` with the new pages in its shell; `ApiErro
 - `test_meal_now_stream.py`: event order, cache hit and miss, gap-rule outcome, 0 LLM calls.
 - `test_cook_home.py`, `test_single_meal_plan.py`, `test_exposure_meal_now.py`.
 
-#### 2b.3b A meal now: ideas, steps and the background batch (backend)
+**2b.3a outcome (2026-10-10, awaiting approval).** Every deliverable is built and every acceptance criterion is
+met. Backend: 964 tests pass (899 before; 2 opt-in skipped: the live Groq call and the timed solve), ruff and mypy clean. Frontend: 187 Vitest tests pass (180 before; the 7 new ones are the H2 footer
+fix), type check clean; the frontend types were regenerated from the new OpenAPI schema. No migration, no seed
+change, no new dependency. New code: `app/cook/` (`answers`, `coverage`, `substitutes`, `ranking`, `caps`, `pool`,
+`cards`, `search`, `stream`, `single_meal`, `saved`, `home`), `app/schemas/cook.py` and `cards.py`,
+`app/api/routes/cook.py` (`GET /cook/home`, `POST /cook/meal-now`, `GET /cook/searches/{id}`, `POST /cook/meals`).
+New tests (65, in `app/cook/tests/`): `test_ranking.py` (components, never-favored, filters, the protein cap,
+sort, gap rule, golden orderings, the pork cap's week boundaries, two people), `test_substitutes.py`,
+`test_meal_now_stream.py`, `test_cook_home.py`, `test_single_meal_plan.py`, `test_exposure_meal_now.py`.
+
+- **AC 1:** every card's kcal, protein, minutes and cost equal `GET /recipe-versions/{id}?portions=h` (with the
+  card's `portion_size`) for 1, 2 and 3 people; cards use the recipe page's own calculation, with its data loaded
+  once (`CalcContext`).
+- **AC 2:** beef never appears; a held item appears only once you allow it; a used-up pork cap filters the recipe
+  (`frequency_cap`); a pork-component recipe ranks below an otherwise-equal one even when it is better on every
+  goal, pantry and cost term.
+- **AC 3:** an identical repeat returns the stored result in the same order (no new run, no new exposures);
+  changing the pantry, the answers, settings, the pool (a new recipe or a favorite) or a price the cards use
+  misses the cache.
+- **AC 4:** "ideas needed" exactly below 3 good matches; no request makes an LLM call (the test's client factory
+  fails if asked, and `llm_call` stays empty).
+- **AC 5:** a one-meal plan passes the validator (scope "single"), Mark cooked deducts its lots, and it is never
+  the current plan (not listed, not current, accept refused with 409, no Today card).
+
+What changed from the plan, and why:
+
+- **D65. Never favored: penalties take the pool's worst.** §14 says a pork-component recipe's goal, pantry, use-up
+  and cost terms are zero. For the bonuses, zero is the worst value. For the penalties (missing items, could-buy
+  lines, the Cheap cost term) zero is the *best* value, so a pork recipe would gain from missing nothing or
+  costing little. Those terms take the eligible pool's worst value instead, so it never gains on them; the
+  −0.05 tie-break is unchanged.
+- **D66. Pantry substitutes: what "same role" means.** A pantry item has no role of its own, so "same role" reads
+  as "your recipes use it in that role". Without that rule, tomato paste (a sauce line, category vegetable) would
+  become spinach. Seasoning, garnish and "other" lines (broth, water) get no pantry substitute, since they carry
+  the flavor or the structure. Each thing you have stands in for at most one line of a recipe. Amounts keep
+  protein grams for a protein, kcal for a carb and mass otherwise (fat, dairy, sauce and fruit lines included),
+  in the substitute's natural unit (pieces, cups or spoons, grams). **Worth a look:** the category rule still
+  suggests "yellow onion → spinach" (both vegetables in your recipes). If that's too loose, I can tighten
+  vegetable swaps, e.g. to the same storage place or a short hand-made list; tell me which.
+- **D67. Partial stock is "short".** A line you have some of, but not enough, shows in Uses as "chicken thigh
+  (some)" and adds a top-up line ("more chicken thigh · buy $5.99", `MissingLineOut.kind = top_up`). It counts
+  half toward pantry fit and its top-up counts as a could-buy line and toward cash. §14 had only have, could buy
+  and missing.
+- **D68. The gap rule with an empty pantry.** "Uses one of your items as its protein or carb" can't hold with
+  nothing in the pantry, so every search would ask for ideas. With an empty pantry, passing the filters is
+  enough. Otherwise the rule is as written; with the seed library, common aromatics and oil count as missing
+  unless they're in Always have.
+- **D69. No goal tiles: your Settings priority, protein included.** The solver gives a protein priority no score
+  (C7: it's a floor). For one meal, your Settings priority of protein uses the same capped per-meal protein term
+  as the High protein tile (E11), so it can't reward more than the meal's share of 1.5 × your target.
+- **D70. Card numbers and the Saved lists.** Cards are at your household's portions and your portion size. The
+  Saved lists now use the same card builder, so their numbers are at those portions too (D48 had the recipe as
+  written), with pantry coverage (`uses`, `missing`; `could_buy` stays empty outside a search). `SavedRecipeOut`
+  gains `portion_size`, `uses`, `could_buy` and `missing`; the old card code left `services/favorites.py`.
+- **D71. One-meal plans.** `PlanConstraints` gains two optional fields now (both planned for 2b.5):
+  `household_size` (the meal is that many portions eaten together: the validator's portion check and the cost
+  split use it) and `lots_off_ingredient_ids` (pantry items turned off for the search; the loader and the
+  validator's reload skip their lots). "Have it" extras count as Always have for that plan (never bought or
+  listed, not deducted). The plan is one cook day in shop mode with no limit, so whatever you lack becomes the Buy
+  first list; its day mood and minutes are the search's (Fancy and 600 without one). Cook this again for the same
+  search returns that plan (200) until it's cooked; a new one is made after that (201). One-meal plans aren't
+  listed by `GET /plans`.
+- **D72. Calendar-week caps.** Meals count Monday to Sunday in your timezone from active plans and one-meal plans.
+  A one-meal plan counts once cooked, or while it's planned for today or later; an old one never cooked was
+  abandoned and doesn't block the week. Cook this refuses a capped recipe once the week's allowance is used (422).
+  2b.5 takes the same count into the solver and validator.
+- **D73. The cache key** hashes the answers, the day, the resolved meal, people and mood, and what was loaded:
+  settings, the pool (recipe, version, steps state), favorites and saved marks, diet statuses, your lots, the
+  price observations of the pool's ingredients, the store order, this week's cap use and the accepted pairs. A
+  hit is a new `cook_search` row pointing at the run that ranked it, so "Same as last time" stays current and
+  Cook this from a cached search marks the original exposure row.
+- **D74. API additions.** `GET /cook/searches/{id}` (reopen a search's results). The `result` line carries
+  `cached`, `good_matches`, `ideas_needed`, `header` ("Dinner for 1 · High protein, Quick · Simple") and, when
+  nothing fits, `empty_reason` and `empty_filter` (the filter that removed the most, for C5's button). Cards
+  carry `good_match` and `portion_size`; cost and missing lines carry a `display` string. `GET
+  /recipe-versions/{id}` gains `search_context` (with `?search=`) and `steps_ready`. The card line models live in
+  `app/schemas/cards.py`, shared with the recipe schemas.
+- **D75. Stream lifecycle.** `started` is sent once the search's records are saved (after the pool loads, since a
+  cached result reuses the original run id). A later failure marks those same records failed and ends with a
+  `failed` result carrying the problem; a failed search writes no exposures and isn't "Same as last time".
+- **D76. Names and time.** Cards use canonical names ("chicken thigh, boneless skinless"); short names come with
+  2b.3b's prompt names. The meal guess, today's mood and the cap week use your local time (`app_user.timezone`,
+  UTC if unknown).
+
+Also: the meal-now filter codes add `mood`; `planning/exposure.source_of` is public; `build_problem` takes the
+versions to offer and `load_ingredient_plans` the lots to skip. Nothing changed in the dev database.
+
+#### 2b.3b A meal now: ideas, steps and the background batch (backend, plus the screens that need them)
 
 *Reads FLOW_SPEC §5.5, §7 (C5, C8), §13.1 (E2, E17–E19), §13.2 (stream events, rate-limit waits), §13.4 (`steps_status`, write-once steps), §13.5–§13.7, §14 (gap rule, background batch), §15.*
+
+**Built after 2b.4 (H3).** Besides the backend below, it takes the screen work moved out of 2b.4 (deliverable 11) and turns on More ideas. If the step runs long, I'll stop and propose splitting the screens off rather than rush it.
 
 **Deliverables**
 1. Two-stage generation (E15, FLOW_SPEC §13.5), used by meal now here and by meal prep, swap and grocery advice from 2b.5:
@@ -2070,6 +2172,10 @@ Also: the service worker cache is `v2` with the new pages in its shell; `ApiErro
    - A wait too long for the request ends it as `partial` (`waiting` for steps) with `retry_after_s`, never as a problem error.
 9. `LLM_PREFETCH_DAILY_RESERVE` in `config.py` and `.env.example`.
 10. The opt-in live test (`llm/tests/test_live.py`, extended) for AC 7.
+11. **Screens moved from 2b.4 (H3):**
+    - C5: New badges, the "Writing new ideas…" strip, the generation-failed note, and the countdown wait state (strip and "Ready in 0:45" button; also in the Pantry quick-add sheet, D63);
+    - More ideas turned on: the first tap in a search calls E18 live (strip or countdown); a later tap shows the held `prefetched` list at once (and calls E18), reads "Writing…" while the background batch is still running, and otherwise calls E18 live;
+    - C8 for an idea: the method line, "Writing the steps for this one…", the countdown in the Steps section, Try again, and Cook this as "Writing steps…" until the steps land (E19).
 
 **Acceptance criteria**
 1. For an idea, a card's numbers equal `GET /recipe-versions/{id}?portions=h`, and they are identical before and after its steps are written.
@@ -2104,6 +2210,7 @@ Also: the service worker cache is `v2` with the new pages in its shell; `ApiErro
    - The second one either shows the held batch, waits and finishes (a `waiting` event with a decreasing countdown), or ends `partial` with `retry_after_s` and the saved results intact.
    - The same holds for a 429 reply, and for a steps request.
    - Only the daily guard gives the "back tomorrow" note.
+9. **Screens (moved from 2b.4):** every C5 and C8 idea state (writing, rate-limit wait, failed, ready) is reachable in tests; a rate-limit wait never shows the error pattern; the frontend still has no nutrition, unit or cost arithmetic (the countdown is only a timer).
 
 **Tests.**
 - `test_ideas_pass.py`: idea checks, the count choice from the token estimate, short names mapping back, revision only when none pass, the reasoning effort sent.
@@ -2117,30 +2224,32 @@ Also: the service worker cache is `v2` with the new pages in its shell; `ApiErro
   - the calibrated estimate, and prompt + maximum completion within the limit;
   - the same on the meal-prep stream, the steps stream and quick-add parse.
 - `llm/tests/test_live.py` (opt-in): AC 7.
+- **Vitest (moved from 2b.4):** stream reducer (new ids and New badges; a held `prefetched` list never shown before the next More ideas tap; the first tap always calls live); the countdown from `wait_s` and `retry_after_s` re-enables More ideas at zero; the C8 steps state (writing, waiting, failed, ready; Cook this disabled until ready).
 
 #### 2b.4 A meal now: screens (frontend)
 
-*Reads FLOW_SPEC §5, §7 (C0, C2–C5, C7, C8).*
+*Reads FLOW_SPEC §5, §7 (C0, C2–C5, C7, C8). Built right after 2b.3a and before 2b.3b (H3), so it uses seed and saved recipes only.*
 
 **Deliverables**
-1. Cook home (C0), complete: **A meal now** and **Meal prep** are the two dominant buttons at the top, with Same as last time, Today and Saved below them (E12).
+1. Cook home (C0), complete: **A meal now** and **Meal prep** are the two dominant buttons at the top, with Same as last time, Today and Saved below them (E12). Until 2b.7, **Meal prep** opens the existing plan flow (`/plan/new/`).
 2. C2 goals; C3 "What do you have?": toggles, have it / could buy, typed and quick add, chips from last time.
-3. Building → C5 streamed results: New badges, fallbacks, and the countdown wait state (strip and "Ready in 0:45" button; also in the Pantry quick-add sheet). More ideas: the first tap in a search calls E18 live (strip or countdown). A later tap shows the held `prefetched` list at once (and calls E18), reads "Writing…" while the background batch is still running, and otherwise calls E18 live.
+3. Building → C5 streamed results from `POST /cook/meal-now` (seed and saved recipes), with the empty, error and stream-error states. **More ideas** is shown disabled with "coming soon" until 2b.3b.
 4. C7 Saved lists.
 5. C8 recipe-page actions:
-   - for an idea, the steps state: method line, "Writing the steps for this one…", the countdown in the Steps section, Try again, and Cook this as "Writing steps…" until the steps land (E19);
    - Cook this → a one-meal plan, with a Buy first checklist when needed;
    - cooking mode (screen kept awake);
    - Mark cooked.
 6. ♥ and 🔖 optimistic and queued offline.
 
-**Acceptance criteria**
-1. The meal-now flow works end to end against the backend.
-2. On a 375 × 667 screen, both choice buttons are fully visible without scrolling, with every Cook home section present, and nothing renders above them except the one-line greeting.
-3. Every C0–C8 state (loading, empty, error, offline, rate-limit wait) is reachable in tests. A rate-limit wait never shows the error pattern.
-4. The frontend still has no nutrition, unit or cost arithmetic (the countdown is only a timer).
+**Moved to 2b.3b (H3)**, because they need LLM ideas: New badges and the "Writing new ideas…" strip; the countdown wait state (strip, "Ready in 0:45" button, and the Pantry quick-add sheet, D63); More ideas live and the held `prefetched` list; the C8 steps state for an idea.
 
-**Tests (Vitest).** Stream reducer (results replace, new ids, partial, a held `prefetched` list never shown before the next More ideas tap; the first tap always calls live); answers → request (only toggled-off items sent); cards render server strings only; Cook home order (the two buttons first); the countdown from `wait_s` and `retry_after_s` re-enables More ideas at zero; the C8 steps state (writing, waiting, failed, ready; Cook this disabled until ready); favorites queue replay; cooking-mode navigation.
+**Acceptance criteria**
+1. The meal-now flow works end to end against the backend, with seed and saved recipes.
+2. On a 375 × 667 screen, both choice buttons are fully visible without scrolling, with every Cook home section present, and nothing renders above them except the one-line greeting.
+3. Every C0–C8 state that needs no LLM (loading, empty, error, offline) is reachable in tests. More ideas is disabled and says "coming soon".
+4. The frontend still has no nutrition, unit or cost arithmetic.
+
+**Tests (Vitest).** Stream reducer (`results` replace the list; partial); answers → request (only toggled-off items sent); cards render server strings only; Cook home order (the two buttons first; Meal prep opens the plan flow); More ideas disabled with "coming soon"; favorites queue replay; cooking-mode navigation.
 
 #### 2b.5 Meal prep: engine (backend)
 
@@ -2157,6 +2266,20 @@ Also: the service worker cache is `v2` with the new pages in its shell; `ApiErro
 4. Overlap-aware accept.
 5. Calendar-week frequency caps across plans.
 6. Gap generation for `POST /cook/meal-prep` uses the ideas pass from 2b.3b (`recipe_ideas/1`, `idea_revision/1`; F20). `POST /plans` keeps `candidate_generation/1`.
+7. **How do you want to cook? (H5, FLOW_SPEC C1b).** Four cook styles in the answers, each mapped to the plan request:
+   - **One big cook day:** one cook day you pick, with its own hands-on minutes (up to 600, well above the usual per-day minutes); every batch is cooked that day.
+   - **A few sessions:** the cook days you pick, each with its minutes, like the cook-day settings.
+   - **Same dish, many portions:** one recipe scaled to any number of portions, cooked on the day you pick. For this request the weekly 5-portion cap (Q14) doesn't apply (F22).
+   - **Mix it up:** today's behavior (your cook days and the variety rule).
+8. **Fridge and freezer, per day:** portions eaten within the fridge window stay in the fridge; later portions go to the freezer, with a plain instruction to thaw in the fridge the night before. The plan states this per day (API display lines on each day and meal).
+9. **Freezes well:** recipes already carry `freezer_friendly` (set on every seed and required on every LLM recipe since Phase 0/1); it is shown as "Freezes well".
+   - The seed values are reviewed by hand per H5: rice dishes and curry gravies yes; yogurt sauces and fresh salads no, or yes with a note to freeze the base and add the fresh part later (for example 1a: freeze the chicken and rice; make the yogurt sauce and salad fresh).
+   - Ideas carry it as a field (`RecipeIdea.freezer_friendly`), and the idea checks fail an idea without it.
+   - Portions past the fridge window may only use recipes that freeze well (the existing planner rule, now also checked by the validator per portion).
+   - Where the freeze note lives (a nullable `recipe_version` column in a migration, or seed data only) is settled at the start of 2b.5; I'll flag it before adding a column.
+10. **Big cook day time:** code estimates the total hands-on time of every batch cooked that day and checks it against the minutes you set for that day (solver limit and validator). A day that can't fit reports the time fix ("Allow 150 min").
+11. **Prep order:** each cook day gets a simple prep order where the recipes allow it, built by code from the batches' step sections and durations: what to start first (oven, rice, simmering, chilling), and what to cook while those run. A day with one batch, or with only hands-on steps, shows no order.
+12. **Plan view data (H4, FLOW_SPEC C6):** the plan summary gains one `prep_notes` row ("3 to freeze · 4 may spoil") with its items, instead of a freeze and spoil block; each freeze-on-shopping-day step is also listed on the shopping day itself; days with nothing to cook keep the `cook_note` "Nothing to cook, eating prepped meals" (2b.1).
 
 **Acceptance criteria**
 1. "5 lunches from today, cooking today" gives one batch today, freezes the portions past the fridge window, and makes 0 LLM calls with the seed library.
@@ -2171,8 +2294,14 @@ Also: the service worker cache is `v2` with the new pages in its shell; `ApiErro
 7. Accepting an overlapping plan returns 409 without `replace_overlapping` and supersedes it with the flag.
 8. Stages arrive in order: constraints, candidates, (generating), solving, pricing, validating.
 9. An uncovered slot makes one ideas call whose 5–8 ideas all reach the solver. A plan that uses an idea passes the validator, and its numbers are unchanged after that recipe's steps are written on first open.
+10. **One big cook day, a whole week:** lunch and dinner for 7 days cooked on one day puts every batch on that day; their hands-on total is within that day's minutes (and too few minutes gives an infeasible plan with the time fix); every portion past the fridge window comes from the freezer, uses a freezes-well recipe, and its day says to thaw it in the fridge the night before.
+11. **Same dish, many portions:** one dish for 8 portions is one batch of one recipe at 8 portions (above the 5-portion cap); the portions within the fridge window stay in the fridge and the rest are frozen; a recipe that doesn't freeze well can't fill the portions past the window.
+12. **A few sessions** cooks only on the chosen days, each within its own minutes; **Mix it up** gives the same plan as today's behavior for the same request.
+13. **Plan view data:** the prep notes row's counts match its items; each freeze step also appears on the shopping day; every day without a batch has the nothing-to-cook note.
+14. **Prep order:** on a day with an oven batch and a stovetop batch, the oven batch starts first and the stovetop one is listed to cook while the oven runs; a day with one batch has no order.
+15. **Freezes well:** every seed has its reviewed value; an idea without the field fails the idea checks.
 
-**Tests.** `test_meal_prep_ideas.py` (one ideas call per uncovered slot, ideas in the solver, numbers unchanged after steps), `test_answers_to_request.py`, `test_household.py` (solver, validator, grocery), `test_protein_reward.py` (tile vs no tile; `test_reward_capped_at_1_5x_target`: the 1.5× plan beats the costlier 2× all-chicken plan, the term's per-day bound, below-cap monotonicity, weekly and strict modes), `test_could_buy_only.py`, `test_calendar_week_caps.py`, `test_accept_overlap.py`, a stage-order stream test. K6 holds: small instances, no wall-clock dependence.
+**Tests.** `test_meal_prep_ideas.py` (one ideas call per uncovered slot, ideas in the solver, numbers unchanged after steps), `test_answers_to_request.py`, `test_household.py` (solver, validator, grocery), `test_protein_reward.py` (tile vs no tile; `test_reward_capped_at_1_5x_target`: the 1.5× plan beats the costlier 2× all-chicken plan, the term's per-day bound, below-cap monotonicity, weekly and strict modes), `test_could_buy_only.py`, `test_calendar_week_caps.py`, `test_accept_overlap.py`, a stage-order stream test. For H4 and H5: `test_cook_styles.py` (all four options, including a whole week on one big cook day and one dish for 8 portions), `test_fridge_freezer_days.py` (the per-day split and thaw lines), `test_freezes_well.py` (seed values, the idea field, the past-window rule in solver and validator), `test_big_day_time.py`, `test_prep_order.py`, `test_prep_notes.py`. K6 holds: small instances, no wall-clock dependence (the whole-week test uses a small seed pool so it solves to optimality).
 
 #### 2b.6 Swap (backend)
 
@@ -2211,14 +2340,23 @@ Also: the service worker cache is `v2` with the new pages in its shell; `ApiErro
    - the Recipes | Shopping list toggle;
    - Use this plan with the overlap sheet;
    - fix buttons on an infeasible plan.
-4. The Cook home Today card links to C6; the old plan and day screens are retired.
-5. A plan batch whose recipe is an idea opens C8 with the steps state built in 2b.4.
+4. The Cook home Today card links to C6; the old plan and day screens are retired, and Cook home's **Meal prep** button opens C1 instead of the old plan flow.
+5. A plan batch whose recipe is an idea opens C8 with the steps state built in 2b.3b.
+6. **How do you want to cook? (H5, C1b):** four tiles, One big cook day (day chips and a minutes stepper that goes well above the usual per-day minutes), A few sessions (day chips with minutes per day), Same dish, many portions (one recipe, any number of portions) and Mix it up.
+7. **The new plan view (H4, C6):**
+   - it starts with Today;
+   - freeze and spoil warnings never appear as a block above the days: they collapse into one tappable **Prep notes** row ("3 to freeze · 4 may spoil") that opens a sheet with the items, and each freeze step also shows on the shopping day itself;
+   - days with nothing to cook show "Nothing to cook, eating prepped meals";
+   - each day says which portions come from the fridge and which from the freezer, with "thaw in the fridge the night before";
+   - a cook day shows its prep order when there is one.
 
 **Acceptance criteria**
 1. The meal-prep flow works end to end; swap and undo work from the UI.
 2. Every C6 state is reachable in tests; 375 px.
+3. All four cook options work end to end from the UI, including a whole week cooked on one day and one dish for 8 portions.
+4. The plan view has no freeze or spoil block above the days, only the one Prep notes row.
 
-**Tests (Vitest).** Day order with Today first; swap optimistic states and undo; the overlap confirm; diagnostics → fix buttons; toggle memory.
+**Tests (Vitest).** Day order with Today first; swap optimistic states and undo; the overlap confirm; diagnostics → fix buttons; toggle memory. For H4 and H5: the four cook options → request (big day with minutes above the usual maximum, sessions, same dish for 8 portions, mix); the Prep notes row (collapsed, its text from the API, opens the sheet); freeze steps on the shopping day; the fridge/freezer and thaw lines per day; the prep order.
 
 #### 2b.8 What should I buy?, and phase wrap-up
 
@@ -2503,7 +2641,7 @@ No other dependencies are planned. Auth uses the stdlib, and the solver uses HiG
 5. **PRD §10:** "not a static substitution table". **CLAUDE.md rule 7:** cache per ingredient. → Cache culinary candidates only; inventory, price and nutrition ranking is recomputed live.
 6. **CLAUDE.md outline** puts strict/weekly modes in Phase 4. → **Approved:** the solver supports both from Phase 1; Phase 4 adds the toggle UX and rebalancing.
 7. **CLAUDE.md phase outline vs Phase 2b (flagged 2026-10-10; resolved: CLAUDE.md updated with your OK the same day).** CLAUDE.md listed favorites under Phase 3, had no Phase 2b, and says "build exactly ONE phase per session". This plan, following your brief, moves favorites to 2b and runs 2b as nine one-session build steps (eight at first; 2b.3 was split into 2b.3a and 2b.3b on 2026-10-10, E17), each ending with the phase-end steps (tests shown, commit, fresh-clone check, summary, stop). The CLAUDE.md wording now in place:
-   - add "Phase 2b: Cook-first flow (4 tabs, Cook flow, favorites and save for later, onboarding, swap, grocery advice). Built in nine steps (2b.1, 2b.2, 2b.3a, 2b.3b, 2b.4–2b.8), one step per session; each step ends like a phase.";
+   - add "Phase 2b: Cook-first flow (4 tabs, Cook flow, favorites and save for later, onboarding, swap, grocery advice). Built in nine steps, one step per session, in the order 2b.1, 2b.2, 2b.3a, 2b.4, 2b.3b, 2b.5–2b.8; each step ends like a phase." (the order changed at your request on 2026-10-10, H3);
    - change Phase 3's line to "Feedback loop (ratings, recipe versioning, preference profile, Cook Again)".
 
 ---
@@ -2637,6 +2775,17 @@ No other dependencies are planned. Auth uses the stdlib, and the solver uses HiG
 | E16 | Protein cap with no target | Approved: with a protein target of 0, the High protein tile rewards protein up to 1.5 × the 100 g default (FLOW_SPEC §13.3). |
 | E17 | Review of two-stage generation | F19 and F20 approved as written. Changes:<br>1. **F21 tightened:** the background ideas batch starts only after your first More ideas tap in a search. The first tap waits normally; later taps are instant when the held batch is ready. A search never starts one. The per-flow and per-day estimates are updated (FLOW_SPEC §15.2, §7.6).<br>2. **Reasoning effort:** ideas, steps and idea-revision calls use the lowest effort the configured model supports, if it has the setting (`LLM_REASONING_EFFORT`, `low` for `openai/gpt-oss-*`). The 2b.3b live test records tokens with it.<br>3. **Overhead check:** the 2b.3b live test checks whether the unexplained ≈ 3.5K prompt tokens shrink with the smaller ideas schema (ideas messages with and without the schema, against the full and steps schemas). The finding goes in FLOW_SPEC §15.1.<br>4. **Step split:** 2b.3 becomes 2b.3a (ranking and cards; no LLM calls) and 2b.3b (ideas, steps, background batch, rate-limit waits, live test). Phase 2b now has nine steps; CLAUDE.md's phase outline is updated to match. |
 
+**Step 2b.2 approval (2026-10-10).** You approved 2b.2, then:
+
+| # | Topic | Decision |
+|---|---|---|
+| H1 | 2b.2 | Approved, including D54–D64. |
+| H2 | Footer fix (first) | The fixed Continue button overlapped content on question screens (it covered the hands-on minutes stepper on "When do you cook?"). Bottom padding equal to the footer's height on every question screen, with a test or layout check. Done before 2b.3a (2b.2 approval note, §9). |
+| H3 | Build order | To feel the new flow sooner: **2b.3a now, then 2b.4** (the meal-now screens) with seed and saved recipes only, **then 2b.3b** (LLM ideas, steps, background batch), then 2b.5–2b.8. Where a screen would show LLM ideas, More ideas is shown disabled with "coming soon" until 2b.3b. 2b.4 includes Cook home's two big buttons; Meal prep opens the existing plan flow until 2b.7. BUILD_PLAN and CLAUDE.md updated. Consequence (mine): the screen work that needs ideas (New badges, countdown wait states, the held `prefetched` list, the C8 steps state) moves from 2b.4 into 2b.3b. |
+| H4 | New plan view (2b.5, 2b.7) | It starts with Today. Freeze and spoil warnings never appear as a block above the days; they collapse into one tappable "Prep notes" row (e.g. "3 to freeze · 4 may spoil"), and freeze steps also appear on the shopping day itself. Days with nothing to cook use "Nothing to cook, eating prepped meals". FLOW_SPEC C6. |
+| H5 | "How do you want to cook?" (2b.5, 2b.7) | A meal-prep step with four options: **One big cook day** (pick the day and that day's hands-on minutes, which can go well above the usual; everything is cooked that day); **A few sessions** (pick cook days, like the cook-day settings); **Same dish, many portions** (one recipe scaled to any number of portions; overrides the 5-portions-per-recipe weekly cap, F22); **Mix it up** (today's variety behavior). Rules: portions within the fridge window stay in the fridge, later ones go to the freezer with a plain thaw-in-the-fridge-the-night-before instruction, stated per day; a "freezes well" flag on recipes (seeds set by hand: rice dishes and curry gravies yes, yogurt sauces and fresh salads no or with a freeze-the-base note; ideas include it and the validator checks it), and portions past the fridge window only use recipes that freeze well; a big cook day's total hands-on time is estimated and checked against that day's time; the cook day shows a simple prep order where the recipes allow it. The 2b.5 and 2b.7 criteria and tests cover all four options, including a whole week cooked on one day and one dish for 8 portions. FLOW_SPEC C1b, C6, §16 F22. |
+| H6 | Pre-deploy | The login rate limit must key on the real client address (X-Forwarded-For read only from the trusted proxy), so devices and visitors don't share one lockout counter. Added to the pre-deploy list (§12.4). |
+
 ### 12.2 Remaining questions (from applying your answers)
 
 - **Phase 2b questions:** all answered (FLOW_SPEC §18). None open.
@@ -2656,6 +2805,12 @@ No other dependencies are planned. Auth uses the stdlib, and the solver uses HiG
 - **A1. FoodSafety.gov chart: done** (L6). Transcribed from your saved PDF on 2026-10-08.
 - **A2. Label values: done** (L1). Only the protein powder price is still pending.
 - **A3. Cloud provider (before Phase 2).** At the end of Phase 1 I'll bring a short comparison (cost, managed Postgres, HTTPS, cold starts) for you to choose from.
+
+### 12.4 Pre-deploy list (fix before the first cloud deploy)
+
+Started 2026-10-10 (H6). Each item is done before `docs/deploy.md` is followed for real.
+
+- **PD1. Login rate limit keyed on the real client address.** Today `client_address()` (`api/routes/auth.py`) trusts `X-Real-IP` / `X-Forwarded-For` whenever it runs on Vercel and otherwise uses the socket's peer, which behind the Next dev proxy is the proxy itself, so every device shares one lockout counter. Fix: read `X-Forwarded-For` only when the request comes from the trusted proxy (a configured proxy address or Vercel's own header), take the client entry that proxy appended, and fall back to the peer address otherwise. Test: two clients behind the proxy get separate counters, and a client can't pick its own key by sending the header directly.
 
 ---
 

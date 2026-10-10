@@ -10,6 +10,8 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.problems import ProblemError
 from app.auth.passwords import PasswordHashError
+from app.cook.search import SearchNotFoundError
+from app.cook.single_meal import CookThisError
 from app.domain.quantities import QuantityParseError
 from app.domain.scaling import ScalingError
 from app.domain.units import InvalidQuantityError, UnitError
@@ -35,7 +37,14 @@ def problem(status: int, title: str, detail: str, **extra: Any) -> JSONResponse:
     return JSONResponse(jsonable_encoder(body), status_code=status, media_type=PROBLEM_JSON)
 
 
-NOT_FOUND = (IngredientNotFoundError, PlanNotFoundError, RunNotFoundError, RecipeNotFoundError, CookingError)
+NOT_FOUND = (
+    IngredientNotFoundError,
+    PlanNotFoundError,
+    RunNotFoundError,
+    RecipeNotFoundError,
+    CookingError,
+    SearchNotFoundError,
+)
 
 
 def install_error_handlers(app: FastAPI) -> None:
@@ -49,7 +58,15 @@ def install_error_handlers(app: FastAPI) -> None:
         return problem(exc.status_code, "HTTP error", str(exc.detail))
 
     calc_errors = (UnitError, InvalidQuantityError, QuantityParseError, ScalingError, CalculationError)
-    rejected = (SettingsError, InventoryError, ProductError, SuggestionError, ConstraintError, GroceryError)
+    rejected = (
+        SettingsError,
+        InventoryError,
+        ProductError,
+        SuggestionError,
+        ConstraintError,
+        GroceryError,
+        CookThisError,
+    )
 
     @app.exception_handler(ValueError)
     async def _domain(request: Request, exc: ValueError) -> JSONResponse:

@@ -6,6 +6,7 @@ from typing import Literal
 from pydantic import BaseModel
 
 from app.schemas.api import NutritionOut, StoreCostOut
+from app.schemas.cards import CostLineOut, MissingLineOut, SearchContextOut
 
 
 class RenderedLineOut(BaseModel):
@@ -62,6 +63,9 @@ class RecipeVersionOut(BaseModel):
     # roast | snack | other (the app shows its icon)
     is_favorite: bool
     is_saved: bool
+    steps_ready: bool = True  # False for an idea whose steps are written on first open (step 2b.3b)
+    # with ?search=<id>: that search's coverage and substitute lines for this recipe (step 2b.3a)
+    search_context: SearchContextOut | None = None
 
 
 class RecipeVersionSummaryOut(BaseModel):
@@ -84,7 +88,8 @@ class RecipeOut(BaseModel):
 
 
 class SavedRecipeOut(BaseModel):
-    """A Saved-list card (C7). Every number is a display string from code, per portion."""
+    """A Saved-list card (C7). Every number is a display string from code, per portion, at your household's
+    portions (as the recipe page shows them); coverage is against your current pantry (step 2b.3a)."""
 
     recipe_id: int
     version_id: int
@@ -93,6 +98,10 @@ class SavedRecipeOut(BaseModel):
     badges: list[Literal["favorite", "saved", "new", "draft"]]
     steps_ready: bool
     portions: int  # your household size
+    portion_size: str  # your portion size (the recipe page's portion_size for the same numbers)
     portions_display: str  # "1 portion" / "for 2 people"
     numbers: list[str]  # "540 kcal", "41 g protein", "35 min", "$2.10 a portion est."
+    uses: list[str]  # your items it uses
+    could_buy: list[CostLineOut]  # always empty here (no could-buy items outside a search)
+    missing: list[MissingLineOut]  # with a code-suggested substitute, or a price
     saved_at: datetime

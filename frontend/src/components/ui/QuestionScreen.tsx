@@ -1,6 +1,22 @@
-import type { ReactNode } from "react";
+import { useLayoutEffect, useRef, type ReactNode, type RefObject } from "react";
 
 import styles from "./QuestionScreen.module.css";
+
+/** Keeps `--footer-height` on the screen equal to the fixed footer's real height, so the screen's bottom padding
+ * always clears it: with a secondary button, a footer note, the safe area or larger iOS text. */
+function useReserveFooterSpace(screen: RefObject<HTMLDivElement | null>, footer: RefObject<HTMLDivElement | null>) {
+  useLayoutEffect(() => {
+    const screenEl = screen.current;
+    const footerEl = footer.current;
+    if (!screenEl || !footerEl) return;
+    const apply = () => screenEl.style.setProperty("--footer-height", `${Math.ceil(footerEl.getBoundingClientRect().height)}px`);
+    apply();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(apply);
+    observer.observe(footerEl);
+    return () => observer.disconnect();
+  }, [screen, footer]);
+}
 
 /** One question per screen (FLOW_SPEC §5.1): back arrow, progress dots, Skip only if optional, the question,
  * a one-line why, one large control (onboarding may pair two), and a fixed bottom button. */
@@ -34,8 +50,11 @@ export function QuestionScreen({
   reasons?: readonly string[];
   children: ReactNode;
 }) {
+  const screenRef = useRef<HTMLDivElement>(null);
+  const footerRef = useRef<HTMLDivElement>(null);
+  useReserveFooterSpace(screenRef, footerRef);
   return (
-    <div className={styles.screen}>
+    <div className={styles.screen} ref={screenRef} data-testid="question-screen">
       <div className={styles.top}>
         {onBack ? (
           <button type="button" className={styles.back} onClick={onBack} aria-label="Back">
@@ -71,7 +90,7 @@ export function QuestionScreen({
           ))}
         </ul>
       )}
-      <div className={styles.footer}>
+      <div className={styles.footer} ref={footerRef} data-testid="question-footer">
         <div className={styles.footerInner}>
           {secondary}
           <button type="button" className={`btn btn-primary btn-block ${styles.primary}`} onClick={onPrimary} disabled={primaryDisabled || busy}>

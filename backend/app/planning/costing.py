@@ -58,11 +58,14 @@ def _batch_quantities(
 
 
 def portion_split(
-    batches: Sequence[RoundedBatch], meals: Sequence[RoundedMeal], batch_cents: Sequence[int]
+    batches: Sequence[RoundedBatch],
+    meals: Sequence[RoundedMeal],
+    batch_cents: Sequence[int],
+    household_size: int = 1,
 ) -> tuple[tuple[MealCost, ...], int]:
     """Each batch's cost over its portions by largest remainder: its meals (in plan order) first, then the
-    extra portions frozen for later weeks. Returns the meal costs (in plan order) and the frozen extras'
-    total."""
+    extra portions frozen for later weeks. A meal is `household_size` portions (everyone eats together).
+    Returns the meal costs (in plan order) and the frozen extras' total."""
     meals_of: dict[int, list[int]] = defaultdict(list)
     for m, meal in enumerate(meals):
         meals_of[meal.batch_index].append(m)
@@ -70,8 +73,11 @@ def portion_split(
     frozen = 0
     for n, batch in enumerate(batches):
         members = meals_of[n]
-        extras = max(batch.portions - len(members), 0)
-        parts = split_largest_remainder(batch_cents[n], [Decimal(1)] * (len(members) + extras))
+        eaten = len(members) * household_size
+        extras = max(batch.portions - eaten, 0)
+        parts = split_largest_remainder(
+            batch_cents[n], [Decimal(household_size)] * len(members) + [Decimal(1)] * extras
+        )
         for m, cents in zip(members, parts, strict=False):
             meal_cents[m] = cents
         frozen += sum(parts[len(members) :])
@@ -128,7 +134,7 @@ def cost_summary(
             )
             if fate == "at_risk":
                 waste += left_cents
-    meal_costs, frozen = portion_split(batches, meals, batch_cents)
+    meal_costs, frozen = portion_split(batches, meals, batch_cents, c.household_size)
     taken = {lot_id for lot_id, _ in grocery.inventory_takes}
     for plan in ingredients.values():
         if plan.always_have:  # plans don't track Always-have lots

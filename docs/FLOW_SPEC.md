@@ -9,6 +9,10 @@ the cards, then steps the first time you open a recipe. After your first More id
 batch makes later taps usually instant (§13.5, §14, §15; changes F19–F21, approved, with F21 tightened to start
 only after that first tap). The target-0 fallback for the protein cap (§13.3) is approved. Built in steps 2b.3a
 (ranking and cards) and 2b.3b (ideas, steps, background batch).
+**Notes from the 2b.2 approval (2026-10-10, BUILD_PLAN H3–H5), to build in 2b.5 and 2b.7:** the meal-prep "How do
+you want to cook?" step with four options (C1b), the per-day fridge and freezer rules and the "freezes well" flag
+(C1b, C6), and the new plan view with its one Prep notes row (C6); change F22 (§16). The build order is now 2b.3a →
+2b.4 → 2b.3b, so until 2b.3b More ideas shows disabled with "coming soon" (C5).
 **Sources:** your redesign brief (2026-10-10), `CLAUDE.md` (wins on conflict), `docs/PRD.md` (new "Primary user flow"
 section), `docs/BUILD_PLAN.md` (Phase 2b build steps, §9).
 
@@ -389,7 +393,7 @@ below them.
 | Tap | Does |
 |---|---|
 | A meal now | Starts the meal-now questions at C2 Goals, pre-filled from your last meal-now answers |
-| Meal prep | Starts at C1 How much, pre-filled from your last meal-prep answers |
+| Meal prep | Starts at C1 How much, pre-filled from your last meal-prep answers (until step 2b.7 it opens the existing plan flow, BUILD_PLAN H3) |
 | Same as last time | Sends those exact answers again with today's pantry and goes straight to results (instantly if nothing changed, §15.3) |
 | Today card | Opens C6 for the current plan, scrolled to today |
 | A saved card | Opens C8 for that recipe, scaled to your household |
@@ -415,15 +419,34 @@ open from cache. Error loading home: the choice cards still work; the other sect
 "By portions" is a shortcut: N portions of one meal means that meal on N consecutive days from the start day. Both
 shapes become the same plan request (§13.3).
 
-### C1b When are you cooking? (meal prep)
+### C1b How do you want to cook? (meal prep)
 
-- **Tiles:** **Today, all at once** (one cook session today) or **On my cook days** (your schedule, e.g. Mon, Wed,
-  Thu, Sat, Sun).
-- **Today, all at once** shows a minutes stepper, pre-filled from today's schedule, or from your longest cook day if
-  today isn't one.
+*Replaced 2026-10-10 at the 2b.2 approval (BUILD_PLAN H5); built in 2b.5 (engine) and 2b.7 (screen). It replaces
+the earlier two tiles, "Today, all at once" and "On my cook days". The route keeps `step=when`.*
+
+**Four tiles, one choice:**
+
+| Tile | Controls | What the plan does |
+|---|---|---|
+| **One big cook day** | Day chips (Today, Tomorrow, a date) and a **hands-on minutes** stepper for that day, pre-filled from that day's schedule (or your longest cook day). It goes well above the usual per-day minutes (up to 600, 15 min steps) | Everything is cooked that day |
+| **A few sessions** | Day chips for the cook days, each with its minutes, pre-filled from your cook-day settings | Batches only on those days, each within its own minutes |
+| **Same dish, many portions** | The day to cook (as above). The portion count comes from C1 | One recipe scaled to every portion. For this request the weekly 5-portions-per-recipe cap doesn't apply (§16 F22) |
+| **Mix it up** | None | Today's behavior: your cook days and the variety rule |
+
 - **Why line:** "Cooked food keeps 3 days in the fridge, so anything past that goes in the freezer."
-- Meals beyond the fridge window come from the freezer, so only freezer-friendly recipes can fill them (existing
-  planner rule). If none can, the plan says so (C6 states).
+- **Fridge and freezer:** portions eaten within the fridge window (`leftover_fridge_days`, 3) stay in the fridge.
+  Later portions go to the freezer, with a plain instruction on the day before: "Thaw tomorrow's lunch in the fridge
+  tonight." The plan states this for each day (C6).
+- **Freezes well:** every recipe carries this flag (`freezer_friendly`, shown as "Freezes well"). Seed recipes are
+  set by hand: rice dishes and curry gravies yes; yogurt sauces and fresh salads no, or yes with a note to freeze the
+  base and add the fresh part later (for example: freeze the chicken and rice; make the yogurt sauce and salad
+  fresh). LLM ideas include it as a field, and the idea checks fail an idea without it. **Portions past the fridge
+  window may only use recipes that freeze well.** If none can fill them, the plan says so (C6 states).
+- **Time on a big cook day:** code estimates the total hands-on time of every batch cooked that day and checks it
+  against the minutes you set. If it doesn't fit, the plan is infeasible with a time fix ("Allow 150 min").
+- **Prep order:** the cook day shows a simple order where the recipes allow it, built by code from the batches'
+  step sections and durations: what to start first (the oven, rice, anything simmering or chilling), then what to
+  cook while those run. One batch, or batches with only hands-on steps, show no order.
 
 ### C2 What are you in the mood for? (both modes)
 
@@ -489,6 +512,8 @@ The Building steps from 5.4.
   ingredients exactly like a saved recipe's; only the steps wait until you open one (C8).
 - **Cards:** the top 12 recipe cards in rank order (5.3); **Show more** loads the rest.
 - **More ideas** at the bottom:
+  - **Until step 2b.3b** (built after 2b.4, BUILD_PLAN H3) it is shown disabled with "coming soon", and the cards
+    come from seed and saved recipes only.
   - **The first tap in a search waits normally.** It makes one ideas call, with the "Writing new ideas…" strip. A
     short wait shows the countdown strip; a longer one shows "Ready in 0:45" on the button, counting down to a
     normal button. It never errors.
@@ -521,13 +546,22 @@ The Building steps from 5.4.
 - **Header:** "5 lunches · Wed 14 – Sun 18 · High protein · Simple", then a totals line from the API:
   "Groceries $24.10 + $62.50 stock-up" (pending fix: always shown separately) and "35 min hands-on today".
 - **Segmented toggle:** **Recipes | Shopping list**.
-- **Recipes view** (default):
-  - **Cook sessions** at the top: "Today: Chicken over rice, 5 portions (3 fridge, 2 freezer) · 35 min hands-on ·
-    about 50 min start to finish" with a recipe card.
+- **Prep notes** (changed 2026-10-10, BUILD_PLAN H4): freeze and spoil warnings **never appear as a block above the
+  days**. They collapse into one tappable row under the header, its text from the API: "Prep notes: 3 to freeze · 4
+  may spoil". Tapping it opens a sheet with each item (what to freeze on the shopping day, what may spoil before it is
+  used). No row when there is nothing to note.
+- **Recipes view** (default). **It starts with Today** (H4):
   - **Days, Today first,** then the following days. Days before today fold into "Earlier in this plan".
   - **Day header:** "Today · Wed 14" + "1,780 kcal · 112 g protein · $8.40" (the cost of the food eaten that day).
-  - **Day note:** "Cook: Chicken over rice (5 portions)" on a cook day, or "Nothing to cook, eating prepped meals"
-    (pending fix; replaces "Cook day · 0 min hands-on").
+  - **Cook session, inside its day:** "Cook: Chicken over rice, 5 portions (3 fridge, 2 freezer) · 35 min hands-on ·
+    about 50 min start to finish" with a recipe card, and the **prep order** when there is one (C1b): "1. Start the
+    rice · 2. Sheet-pan chicken in the oven · 3. Make the curry while both cook".
+  - **Day note:** "Cook: Chicken over rice (5 portions)" on a cook day, or **"Nothing to cook, eating prepped
+    meals"** on a day with nothing to cook (replaces "Cook day · 0 min hands-on").
+  - **Shopping day:** its freeze steps are listed on that day too ("Freeze 1 pack of chicken thighs today"), not
+    only in Prep notes.
+  - **Fridge and freezer per day:** each meal row says where its portion is ("from the fridge", "from the
+    freezer"), and the day before a freezer meal says "Thaw tomorrow's lunch in the fridge tonight" (C1b).
   - **Meal row:** icon · meal label · name · "520 kcal · 38 g protein" · badges ("from the freezer: thaw Fri night",
     "Draft") · **⇄ Swap** (44 px).
 - **Shopping list view:** the plan's grocery list exactly as on the Grocery tab (store groups, stock-up section,
@@ -821,8 +855,11 @@ class PrepAmount(_Strict):
     day_count: int | None = Field(default=None, ge=1, le=14)
     slots: list[MealSlot] = []
     extra_to_freeze: int = Field(default=0, ge=0, le=20)
-    cooking: Literal["today", "cook_days"] = "today"
-    cook_minutes_today: int | None = Field(default=None, ge=0, le=600)
+    # C1b "How do you want to cook?" (H5, replaces cooking: "today" | "cook_days"):
+    cook_style: Literal["big_day", "sessions", "same_dish", "mix"] = "mix"
+    cook_day: Literal["today", "tomorrow"] | date = "today"         # big_day, same_dish
+    cook_minutes: int | None = Field(default=None, ge=0, le=600)    # big_day: that day's hands-on minutes
+    sessions: list[CookSession] = []                                 # sessions: (day, minutes) per cook day
 
 class CookAnswers(_Strict):
     schema_version: Literal[1] = 1
@@ -1186,6 +1223,10 @@ idea in a batch passes. It sends at most 3 failed ideas with their errors, so th
    - **missing**: shown with a deterministic substitute (an accepted pair, else a pantry item with the same role and
      category, allowed and not disliked; amounts keep protein grams for proteins, mass for vegetables, kcal for
      carbs), else its price.
+   - *As built in 2b.3a (BUILD_PLAN D66–D68):* "same role" means your recipes use the item in that role;
+     seasoning, garnish and "other" lines get no pantry substitute; each item stands in for one line at most.
+     A line you have some of is **short**: it shows as "(some)" with a top-up purchase and counts half toward
+     pantry fit. With an empty pantry, the gap rule's good match is any recipe that passes the filters.
 5. **Score** = a weighted sum of components normalized across the eligible pool (initial weights, tuned with golden
    tests in step 2b.3a):
 
@@ -1203,7 +1244,9 @@ idea in a batch passes. It sends at most 3 failed ideas with their errors, so th
    | kcal per portion beyond ±15% of the meal's target | −0.004 per kcal (as in D2) |
 
    **Never favored** (pork components): goal, pantry, use-up and cost terms are zero, plus the −0.05 tie-break, so
-   they rank only on neutral grounds (§7.4).
+   they rank only on neutral grounds (§7.4). *As built (BUILD_PLAN D65):* bonuses are zero, and the penalty terms
+   (missing, could buy, the Cheap cost term) take the pool's worst value, since a zero penalty would be an
+   advantage.
 6. **Sort** by score, then fewer missing items, then version id. Cards carry the components as "why" chips.
 
 **Gap rule for new ideas:**
@@ -1401,7 +1444,13 @@ written, and F21 with the background batch starting only after the first More id
 | F21 | More ideas is one LLM call when you tap it (`more_ideas: true` in `CookAnswers`) | **Tightened as approved:** the first More ideas tap in a search makes one ideas call and waits normally. Only after it does the stream write the next batch in the background, held and shown by the next tap (E18); each later tap starts the following batch. A search itself never starts one, so Q8 still holds. `more_ideas` leaves `CookAnswers` | Later More ideas taps are usually instant, and you pay for background batches only once you've asked for more |
 
 Unchanged on purpose: the variety rule (Q14: at most 5 portions of one recipe a week for meals, never twice a day).
-A user-editable variety cap stays deferred (your carried decision).
+A user-editable variety cap stays deferred (your carried decision). The one exception is F22 below.
+
+**Added at the 2b.2 approval (2026-10-10, BUILD_PLAN H5):**
+
+| # | Earlier decision | Change | Why |
+|---|---|---|---|
+| F22 | Q14: at most 5 portions of one recipe a week for meals | **Same dish, many portions** (C1b) overrides the 5-portion cap for that request: one recipe scaled to any number of portions. Every other request keeps Q14 | You asked for one dish for many portions (e.g. 8) |
 
 ---
 

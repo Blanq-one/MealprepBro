@@ -594,6 +594,274 @@
     "title": "CapTarget",
     "type": "string"
    },
+   "CookAnswers-Input": {
+    "additionalProperties": false,
+    "description": "Your answers to the Cook questions, stored exactly as sent (cook_search.answers).",
+    "properties": {
+     "allow_llm": {
+      "default": true,
+      "title": "Allow Llm",
+      "type": "boolean"
+     },
+     "budget_cents": {
+      "anyOf": [
+       {
+        "minimum": 0.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Budget Cents"
+     },
+     "extras": {
+      "items": {
+       "$ref": "#/components/schemas/ExtraItem-Input"
+      },
+      "title": "Extras",
+      "type": "array"
+     },
+     "goals": {
+      "items": {
+       "$ref": "#/components/schemas/GoalTile"
+      },
+      "title": "Goals",
+      "type": "array"
+     },
+     "mode": {
+      "enum": [
+       "now",
+       "prep"
+      ],
+      "title": "Mode",
+      "type": "string"
+     },
+     "mood": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/RecipeMood"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "pantry": {
+      "items": {
+       "$ref": "#/components/schemas/PantryToggle"
+      },
+      "title": "Pantry",
+      "type": "array"
+     },
+     "people": {
+      "anyOf": [
+       {
+        "maximum": 8.0,
+        "minimum": 1.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "People"
+     },
+     "prep": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/PrepAmount"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+     },
+     "shopping": {
+      "anyOf": [
+       {
+        "enum": [
+         "use_what_i_have",
+         "make_a_list"
+        ],
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Shopping"
+     },
+     "slot": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/MealSlot"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "time_limit_minutes": {
+      "anyOf": [
+       {
+        "maximum": 240.0,
+        "minimum": 5.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Time Limit Minutes"
+     }
+    },
+    "required": [
+     "mode"
+    ],
+    "title": "CookAnswers",
+    "type": "object"
+   },
+   "CookAnswers-Output": {
+    "additionalProperties": false,
+    "description": "Your answers to the Cook questions, stored exactly as sent (cook_search.answers).",
+    "properties": {
+     "allow_llm": {
+      "default": true,
+      "title": "Allow Llm",
+      "type": "boolean"
+     },
+     "budget_cents": {
+      "anyOf": [
+       {
+        "minimum": 0.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Budget Cents"
+     },
+     "extras": {
+      "items": {
+       "$ref": "#/components/schemas/ExtraItem-Output"
+      },
+      "title": "Extras",
+      "type": "array"
+     },
+     "goals": {
+      "items": {
+       "$ref": "#/components/schemas/GoalTile"
+      },
+      "title": "Goals",
+      "type": "array"
+     },
+     "mode": {
+      "enum": [
+       "now",
+       "prep"
+      ],
+      "title": "Mode",
+      "type": "string"
+     },
+     "mood": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/RecipeMood"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "pantry": {
+      "items": {
+       "$ref": "#/components/schemas/PantryToggle"
+      },
+      "title": "Pantry",
+      "type": "array"
+     },
+     "people": {
+      "anyOf": [
+       {
+        "maximum": 8.0,
+        "minimum": 1.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "People"
+     },
+     "prep": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/PrepAmount"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+     },
+     "shopping": {
+      "anyOf": [
+       {
+        "enum": [
+         "use_what_i_have",
+         "make_a_list"
+        ],
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Shopping"
+     },
+     "slot": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/MealSlot"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "time_limit_minutes": {
+      "anyOf": [
+       {
+        "maximum": 240.0,
+        "minimum": 5.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Time Limit Minutes"
+     }
+    },
+    "required": [
+     "mode"
+    ],
+    "title": "CookAnswers",
+    "type": "object"
+   },
    "CookDaySetting": {
     "additionalProperties": false,
     "properties": {
@@ -621,6 +889,490 @@
      "mood"
     ],
     "title": "CookDaySetting",
+    "type": "object"
+   },
+   "CookHomeOut": {
+    "description": "GET /cook/home (E1): last answers per mode, the Today card, and the Saved previews.",
+    "properties": {
+     "favorites": {
+      "items": {
+       "$ref": "#/components/schemas/SavedPreviewOut"
+      },
+      "title": "Favorites",
+      "type": "array"
+     },
+     "favorites_count": {
+      "title": "Favorites Count",
+      "type": "integer"
+     },
+     "last": {
+      "items": {
+       "$ref": "#/components/schemas/LastSearchOut"
+      },
+      "title": "Last",
+      "type": "array"
+     },
+     "later": {
+      "items": {
+       "$ref": "#/components/schemas/SavedPreviewOut"
+      },
+      "title": "Later",
+      "type": "array"
+     },
+     "later_count": {
+      "title": "Later Count",
+      "type": "integer"
+     },
+     "today": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/TodayOut"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "required": [
+     "last",
+     "today",
+     "favorites",
+     "favorites_count",
+     "later",
+     "later_count"
+    ],
+    "title": "CookHomeOut",
+    "type": "object"
+   },
+   "CookMealIn": {
+    "additionalProperties": false,
+    "description": "POST /cook/meals: cook one recipe now, as a one-meal plan for today.",
+    "properties": {
+     "portions": {
+      "anyOf": [
+       {
+        "maximum": 8.0,
+        "minimum": 1.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Portions"
+     },
+     "search_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Search Id"
+     },
+     "slot": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/MealSlot"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "version_id": {
+      "title": "Version Id",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "version_id"
+    ],
+    "title": "CookMealIn",
+    "type": "object"
+   },
+   "CookMealOut": {
+    "properties": {
+     "batch_id": {
+      "title": "Batch Id",
+      "type": "integer"
+     },
+     "buy_first": {
+      "title": "Buy First",
+      "type": "boolean"
+     },
+     "created": {
+      "title": "Created",
+      "type": "boolean"
+     },
+     "grocery_list_id": {
+      "title": "Grocery List Id",
+      "type": "integer"
+     },
+     "plan": {
+      "$ref": "#/components/schemas/PlanSummaryOut"
+     },
+     "plan_id": {
+      "title": "Plan Id",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "plan_id",
+     "batch_id",
+     "grocery_list_id",
+     "buy_first",
+     "created",
+     "plan"
+    ],
+    "title": "CookMealOut",
+    "type": "object"
+   },
+   "CookSearchOut": {
+    "description": "GET /cook/searches/{id}: a stored search, to reopen its results.",
+    "properties": {
+     "answers": {
+      "$ref": "#/components/schemas/CookAnswers-Output"
+     },
+     "empty_filter": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Empty Filter"
+     },
+     "empty_reason": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Empty Reason"
+     },
+     "good_matches": {
+      "title": "Good Matches",
+      "type": "integer"
+     },
+     "header": {
+      "title": "Header",
+      "type": "string"
+     },
+     "ideas_needed": {
+      "title": "Ideas Needed",
+      "type": "boolean"
+     },
+     "meal_plan_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Meal Plan Id"
+     },
+     "mode": {
+      "title": "Mode",
+      "type": "string"
+     },
+     "search_id": {
+      "title": "Search Id",
+      "type": "integer"
+     },
+     "status": {
+      "title": "Status",
+      "type": "string"
+     },
+     "suggestions": {
+      "items": {
+       "$ref": "#/components/schemas/app__schemas__cook__SuggestionOut"
+      },
+      "title": "Suggestions",
+      "type": "array"
+     }
+    },
+    "required": [
+     "search_id",
+     "mode",
+     "status",
+     "answers",
+     "header",
+     "suggestions",
+     "good_matches",
+     "ideas_needed",
+     "empty_reason",
+     "empty_filter",
+     "meal_plan_id"
+    ],
+    "title": "CookSearchOut",
+    "type": "object"
+   },
+   "CookSession": {
+    "additionalProperties": false,
+    "description": "One cook day of \"A few sessions\" (C1b, used from step 2b.5).",
+    "properties": {
+     "day": {
+      "format": "date",
+      "title": "Day",
+      "type": "string"
+     },
+     "minutes": {
+      "maximum": 600.0,
+      "minimum": 0.0,
+      "title": "Minutes",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "day",
+     "minutes"
+    ],
+    "title": "CookSession",
+    "type": "object"
+   },
+   "CookStreamEvent": {
+    "description": "One line of POST /cook/meal-now (application/x-ndjson): `started` (search and run ids), `progress`\nlines and a `heartbeat` every few seconds, `results` (the full ranked list, replacing the last one), then\none `result`. Step 2b.3b adds new ideas and `prefetched` (More ideas only).",
+    "properties": {
+     "cached": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cached"
+     },
+     "elapsed_s": {
+      "title": "Elapsed S",
+      "type": "number"
+     },
+     "empty_filter": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Empty Filter"
+     },
+     "empty_reason": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Empty Reason"
+     },
+     "event": {
+      "enum": [
+       "started",
+       "progress",
+       "heartbeat",
+       "results",
+       "prefetched",
+       "result"
+      ],
+      "title": "Event",
+      "type": "string"
+     },
+     "good_matches": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Good Matches"
+     },
+     "header": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Header"
+     },
+     "ideas_needed": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Ideas Needed"
+     },
+     "llm_call_count": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Llm Call Count"
+     },
+     "message": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Message"
+     },
+     "new_version_ids": {
+      "items": {
+       "type": "integer"
+      },
+      "title": "New Version Ids",
+      "type": "array"
+     },
+     "notes": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Notes",
+      "type": "array"
+     },
+     "pad": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Pad"
+     },
+     "problem": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/ProblemOut"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "retry_after_s": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Retry After S"
+     },
+     "run_id": {
+      "title": "Run Id",
+      "type": "integer"
+     },
+     "search_id": {
+      "title": "Search Id",
+      "type": "integer"
+     },
+     "stage": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Stage"
+     },
+     "status": {
+      "anyOf": [
+       {
+        "enum": [
+         "succeeded",
+         "partial",
+         "failed"
+        ],
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Status"
+     },
+     "suggestions": {
+      "anyOf": [
+       {
+        "items": {
+         "$ref": "#/components/schemas/app__schemas__cook__SuggestionOut"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Suggestions"
+     },
+     "total_tokens": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Total Tokens"
+     },
+     "wait_s": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Wait S"
+     }
+    },
+    "required": [
+     "event",
+     "search_id",
+     "run_id",
+     "elapsed_s"
+    ],
+    "title": "CookStreamEvent",
     "type": "object"
    },
    "CookedIn": {
@@ -679,6 +1431,64 @@
      "open_packages"
     ],
     "title": "CookedOut",
+    "type": "object"
+   },
+   "CostLineOut": {
+    "description": "Something to buy for this meal: whole packages at the first of your stores that prices it.",
+    "properties": {
+     "cost_cents": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cost Cents"
+     },
+     "cost_display": {
+      "title": "Cost Display",
+      "type": "string"
+     },
+     "display": {
+      "title": "Display",
+      "type": "string"
+     },
+     "ingredient_id": {
+      "title": "Ingredient Id",
+      "type": "integer"
+     },
+     "is_estimate": {
+      "title": "Is Estimate",
+      "type": "boolean"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "store": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Store"
+     }
+    },
+    "required": [
+     "ingredient_id",
+     "name",
+     "cost_cents",
+     "cost_display",
+     "store",
+     "is_estimate",
+     "display"
+    ],
+    "title": "CostLineOut",
     "type": "object"
    },
    "CostsOut": {
@@ -1059,6 +1869,114 @@
     "title": "Equipment",
     "type": "string"
    },
+   "ExtraItem-Input": {
+    "additionalProperties": false,
+    "description": "Something added on \"What do you have?\": in your kitchen (have) or happy to pick up (could buy).",
+    "properties": {
+     "ingredient_id": {
+      "title": "Ingredient Id",
+      "type": "integer"
+     },
+     "quantity": {
+      "anyOf": [
+       {
+        "exclusiveMinimum": 0.0,
+        "type": "number"
+       },
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Quantity"
+     },
+     "save_to_pantry": {
+      "default": false,
+      "title": "Save To Pantry",
+      "type": "boolean"
+     },
+     "status": {
+      "enum": [
+       "have",
+       "could_buy"
+      ],
+      "title": "Status",
+      "type": "string"
+     },
+     "unit": {
+      "anyOf": [
+       {
+        "maxLength": 20,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Unit"
+     }
+    },
+    "required": [
+     "ingredient_id",
+     "status"
+    ],
+    "title": "ExtraItem",
+    "type": "object"
+   },
+   "ExtraItem-Output": {
+    "additionalProperties": false,
+    "description": "Something added on \"What do you have?\": in your kitchen (have) or happy to pick up (could buy).",
+    "properties": {
+     "ingredient_id": {
+      "title": "Ingredient Id",
+      "type": "integer"
+     },
+     "quantity": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Quantity"
+     },
+     "save_to_pantry": {
+      "default": false,
+      "title": "Save To Pantry",
+      "type": "boolean"
+     },
+     "status": {
+      "enum": [
+       "have",
+       "could_buy"
+      ],
+      "title": "Status",
+      "type": "string"
+     },
+     "unit": {
+      "anyOf": [
+       {
+        "maxLength": 20,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Unit"
+     }
+    },
+    "required": [
+     "ingredient_id",
+     "status"
+    ],
+    "title": "ExtraItem",
+    "type": "object"
+   },
    "FieldErrorOut": {
     "properties": {
      "loc": {
@@ -1307,6 +2225,18 @@
     ],
     "title": "GenerationRunOut",
     "type": "object"
+   },
+   "GoalTile": {
+    "enum": [
+     "high_protein",
+     "high_carb",
+     "iron_rich",
+     "low_calorie",
+     "cheap",
+     "quick"
+    ],
+    "title": "GoalTile",
+    "type": "string"
    },
    "GroceryCompleteIn": {
     "additionalProperties": false,
@@ -2431,6 +3361,40 @@
     "title": "InventoryLotPatch",
     "type": "object"
    },
+   "LastSearchOut": {
+    "properties": {
+     "answers": {
+      "additionalProperties": true,
+      "title": "Answers",
+      "type": "object"
+     },
+     "mode": {
+      "enum": [
+       "now",
+       "prep",
+       "grocery"
+      ],
+      "title": "Mode",
+      "type": "string"
+     },
+     "search_id": {
+      "title": "Search Id",
+      "type": "integer"
+     },
+     "summary": {
+      "title": "Summary",
+      "type": "string"
+     }
+    },
+    "required": [
+     "mode",
+     "search_id",
+     "summary",
+     "answers"
+    ],
+    "title": "LastSearchOut",
+    "type": "object"
+   },
    "LeftoverOut": {
     "properties": {
      "amount": {
@@ -2467,6 +3431,44 @@
      "fate"
     ],
     "title": "LeftoverOut",
+    "type": "object"
+   },
+   "LineContextOut": {
+    "description": "What a recipe line means for the search it was opened from (C8).",
+    "properties": {
+     "ingredient_id": {
+      "title": "Ingredient Id",
+      "type": "integer"
+     },
+     "note": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Note"
+     },
+     "status": {
+      "enum": [
+       "have",
+       "short",
+       "could_buy",
+       "missing",
+       "owned"
+      ],
+      "title": "Status",
+      "type": "string"
+     }
+    },
+    "required": [
+     "ingredient_id",
+     "status",
+     "note"
+    ],
+    "title": "LineContextOut",
     "type": "object"
    },
    "LoginIn": {
@@ -2592,6 +3594,60 @@
     ],
     "title": "MealSlot",
     "type": "string"
+   },
+   "MissingLineOut": {
+    "properties": {
+     "buy": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/CostLineOut"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "display": {
+      "title": "Display",
+      "type": "string"
+     },
+     "ingredient_id": {
+      "title": "Ingredient Id",
+      "type": "integer"
+     },
+     "kind": {
+      "enum": [
+       "missing",
+       "top_up"
+      ],
+      "title": "Kind",
+      "type": "string"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "substitute": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/SubstituteOut"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "required": [
+     "ingredient_id",
+     "name",
+     "kind",
+     "substitute",
+     "buy",
+     "display"
+    ],
+    "title": "MissingLineOut",
+    "type": "object"
    },
    "NewIngredientIn": {
     "additionalProperties": false,
@@ -2773,6 +3829,26 @@
     ],
     "title": "NutritionPriority",
     "type": "string"
+   },
+   "PantryToggle": {
+    "additionalProperties": false,
+    "description": "A pantry item turned off for this search (\"not for this search\"). Only items turned off need\nsending.",
+    "properties": {
+     "include": {
+      "title": "Include",
+      "type": "boolean"
+     },
+     "ingredient_id": {
+      "title": "Ingredient Id",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "ingredient_id",
+     "include"
+    ],
+    "title": "PantryToggle",
+    "type": "object"
    },
    "ParseIn": {
     "additionalProperties": false,
@@ -3619,6 +4695,140 @@
     "title": "PreferenceOut",
     "type": "object"
    },
+   "PrepAmount": {
+    "additionalProperties": false,
+    "description": "Meal prep's \"how much\" and \"how do you want to cook?\" (C1, C1b). Planned here, used from step 2b.5.",
+    "properties": {
+     "cook_day": {
+      "anyOf": [
+       {
+        "enum": [
+         "today",
+         "tomorrow"
+        ],
+        "type": "string"
+       },
+       {
+        "format": "date",
+        "type": "string"
+       }
+      ],
+      "default": "today",
+      "title": "Cook Day"
+     },
+     "cook_minutes": {
+      "anyOf": [
+       {
+        "maximum": 600.0,
+        "minimum": 0.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cook Minutes"
+     },
+     "cook_style": {
+      "default": "mix",
+      "enum": [
+       "big_day",
+       "sessions",
+       "same_dish",
+       "mix"
+      ],
+      "title": "Cook Style",
+      "type": "string"
+     },
+     "day_count": {
+      "anyOf": [
+       {
+        "maximum": 14.0,
+        "minimum": 1.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Day Count"
+     },
+     "extra_to_freeze": {
+      "default": 0,
+      "maximum": 20.0,
+      "minimum": 0.0,
+      "title": "Extra To Freeze",
+      "type": "integer"
+     },
+     "portions": {
+      "anyOf": [
+       {
+        "maximum": 20.0,
+        "minimum": 1.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Portions"
+     },
+     "sessions": {
+      "items": {
+       "$ref": "#/components/schemas/CookSession"
+      },
+      "title": "Sessions",
+      "type": "array"
+     },
+     "shape": {
+      "enum": [
+       "portions",
+       "days"
+      ],
+      "title": "Shape",
+      "type": "string"
+     },
+     "slot": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/MealSlot"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "slots": {
+      "items": {
+       "$ref": "#/components/schemas/MealSlot"
+      },
+      "title": "Slots",
+      "type": "array"
+     },
+     "start": {
+      "anyOf": [
+       {
+        "enum": [
+         "today",
+         "tomorrow"
+        ],
+        "type": "string"
+       },
+       {
+        "format": "date",
+        "type": "string"
+       }
+      ],
+      "default": "today",
+      "title": "Start"
+     }
+    },
+    "required": [
+     "shape"
+    ],
+    "title": "PrepAmount",
+    "type": "object"
+   },
    "PriceBasis": {
     "enum": [
      "per_package",
@@ -4439,12 +5649,27 @@
       "title": "Recipe Id",
       "type": "integer"
      },
+     "search_context": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/SearchContextOut"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
      "steps": {
       "items": {
        "$ref": "#/components/schemas/RenderedStepOut"
       },
       "title": "Steps",
       "type": "array"
+     },
+     "steps_ready": {
+      "default": true,
+      "title": "Steps Ready",
+      "type": "boolean"
      },
      "time_note": {
       "title": "Time Note",
@@ -4657,8 +5882,36 @@
     "title": "SavedList",
     "type": "string"
    },
+   "SavedPreviewOut": {
+    "properties": {
+     "dish_category": {
+      "title": "Dish Category",
+      "type": "string"
+     },
+     "recipe_id": {
+      "title": "Recipe Id",
+      "type": "integer"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     },
+     "version_id": {
+      "title": "Version Id",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "recipe_id",
+     "version_id",
+     "title",
+     "dish_category"
+    ],
+    "title": "SavedPreviewOut",
+    "type": "object"
+   },
    "SavedRecipeOut": {
-    "description": "A Saved-list card (C7). Every number is a display string from code, per portion.",
+    "description": "A Saved-list card (C7). Every number is a display string from code, per portion, at your household's\nportions (as the recipe page shows them); coverage is against your current pantry (step 2b.3a).",
     "properties": {
      "badges": {
       "items": {
@@ -4673,9 +5926,23 @@
       "title": "Badges",
       "type": "array"
      },
+     "could_buy": {
+      "items": {
+       "$ref": "#/components/schemas/CostLineOut"
+      },
+      "title": "Could Buy",
+      "type": "array"
+     },
      "dish_category": {
       "title": "Dish Category",
       "type": "string"
+     },
+     "missing": {
+      "items": {
+       "$ref": "#/components/schemas/MissingLineOut"
+      },
+      "title": "Missing",
+      "type": "array"
      },
      "numbers": {
       "items": {
@@ -4683,6 +5950,10 @@
       },
       "title": "Numbers",
       "type": "array"
+     },
+     "portion_size": {
+      "title": "Portion Size",
+      "type": "string"
      },
      "portions": {
       "title": "Portions",
@@ -4709,6 +5980,13 @@
       "title": "Title",
       "type": "string"
      },
+     "uses": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Uses",
+      "type": "array"
+     },
      "version_id": {
       "title": "Version Id",
       "type": "integer"
@@ -4722,11 +6000,80 @@
      "badges",
      "steps_ready",
      "portions",
+     "portion_size",
      "portions_display",
      "numbers",
+     "uses",
+     "could_buy",
+     "missing",
      "saved_at"
     ],
     "title": "SavedRecipeOut",
+    "type": "object"
+   },
+   "SearchContextOut": {
+    "description": "GET /recipe-versions/{id}?search=: the coverage and substitute lines from that search.",
+    "properties": {
+     "could_buy": {
+      "items": {
+       "$ref": "#/components/schemas/CostLineOut"
+      },
+      "title": "Could Buy",
+      "type": "array"
+     },
+     "lines": {
+      "items": {
+       "$ref": "#/components/schemas/LineContextOut"
+      },
+      "title": "Lines",
+      "type": "array"
+     },
+     "missing": {
+      "items": {
+       "$ref": "#/components/schemas/MissingLineOut"
+      },
+      "title": "Missing",
+      "type": "array"
+     },
+     "note": {
+      "title": "Note",
+      "type": "string"
+     },
+     "portion_size": {
+      "$ref": "#/components/schemas/PortionSize"
+     },
+     "portions": {
+      "title": "Portions",
+      "type": "integer"
+     },
+     "portions_display": {
+      "title": "Portions Display",
+      "type": "string"
+     },
+     "search_id": {
+      "title": "Search Id",
+      "type": "integer"
+     },
+     "uses": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Uses",
+      "type": "array"
+     }
+    },
+    "required": [
+     "search_id",
+     "portions",
+     "portion_size",
+     "portions_display",
+     "uses",
+     "could_buy",
+     "missing",
+     "lines",
+     "note"
+    ],
+    "title": "SearchContextOut",
     "type": "object"
    },
    "SeedRecipeOut": {
@@ -5110,6 +6457,45 @@
     "title": "StoreTotalOut",
     "type": "object"
    },
+   "SubstituteOut": {
+    "properties": {
+     "amount_display": {
+      "title": "Amount Display",
+      "type": "string"
+     },
+     "ingredient_id": {
+      "title": "Ingredient Id",
+      "type": "integer"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "note": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Note"
+     },
+     "you_have": {
+      "title": "You Have",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "ingredient_id",
+     "name",
+     "amount_display",
+     "you_have"
+    ],
+    "title": "SubstituteOut",
+    "type": "object"
+   },
    "SummaryLineOut": {
     "properties": {
      "key": {
@@ -5131,6 +6517,128 @@
      "value"
     ],
     "title": "SummaryLineOut",
+    "type": "object"
+   },
+   "TodayMealOut": {
+    "properties": {
+     "cook_batch_id": {
+      "title": "Cook Batch Id",
+      "type": "integer"
+     },
+     "dish_category": {
+      "title": "Dish Category",
+      "type": "string"
+     },
+     "from_freezer": {
+      "title": "From Freezer",
+      "type": "boolean"
+     },
+     "kcal": {
+      "title": "Kcal",
+      "type": "integer"
+     },
+     "recipe_version_id": {
+      "title": "Recipe Version Id",
+      "type": "integer"
+     },
+     "slot": {
+      "$ref": "#/components/schemas/MealSlot"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     }
+    },
+    "required": [
+     "slot",
+     "title",
+     "dish_category",
+     "kcal",
+     "from_freezer",
+     "cook_batch_id",
+     "recipe_version_id"
+    ],
+    "title": "TodayMealOut",
+    "type": "object"
+   },
+   "TodayOut": {
+    "properties": {
+     "cook_note": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cook Note"
+     },
+     "day": {
+      "anyOf": [
+       {
+        "format": "date",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Day"
+     },
+     "hands_on_display": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Hands On Display"
+     },
+     "meals": {
+      "items": {
+       "$ref": "#/components/schemas/TodayMealOut"
+      },
+      "title": "Meals",
+      "type": "array"
+     },
+     "message": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Message"
+     },
+     "plan_id": {
+      "title": "Plan Id",
+      "type": "integer"
+     },
+     "state": {
+      "enum": [
+       "today",
+       "starts_later",
+       "ended"
+      ],
+      "title": "State",
+      "type": "string"
+     }
+    },
+    "required": [
+     "plan_id",
+     "state",
+     "message",
+     "day",
+     "meals",
+     "cook_note",
+     "hands_on_display"
+    ],
+    "title": "TodayOut",
     "type": "object"
    },
    "UnitKind": {
@@ -5484,6 +6992,118 @@
     "title": "PriceOut",
     "type": "object"
    },
+   "app__schemas__cook__SuggestionOut": {
+    "description": "One recipe card (FLOW_SPEC \u00a75.3). Every number is code-computed, at the card's portions.",
+    "properties": {
+     "badges": {
+      "items": {
+       "enum": [
+        "favorite",
+        "saved",
+        "new",
+        "draft"
+       ],
+       "type": "string"
+      },
+      "title": "Badges",
+      "type": "array"
+     },
+     "could_buy": {
+      "items": {
+       "$ref": "#/components/schemas/CostLineOut"
+      },
+      "title": "Could Buy",
+      "type": "array"
+     },
+     "dish_category": {
+      "title": "Dish Category",
+      "type": "string"
+     },
+     "good_match": {
+      "title": "Good Match",
+      "type": "boolean"
+     },
+     "missing": {
+      "items": {
+       "$ref": "#/components/schemas/MissingLineOut"
+      },
+      "title": "Missing",
+      "type": "array"
+     },
+     "numbers": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Numbers",
+      "type": "array"
+     },
+     "portion_size": {
+      "$ref": "#/components/schemas/PortionSize"
+     },
+     "portions": {
+      "title": "Portions",
+      "type": "integer"
+     },
+     "portions_display": {
+      "title": "Portions Display",
+      "type": "string"
+     },
+     "recipe_id": {
+      "title": "Recipe Id",
+      "type": "integer"
+     },
+     "score": {
+      "title": "Score",
+      "type": "string"
+     },
+     "steps_ready": {
+      "title": "Steps Ready",
+      "type": "boolean"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     },
+     "uses": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Uses",
+      "type": "array"
+     },
+     "version_id": {
+      "title": "Version Id",
+      "type": "integer"
+     },
+     "why": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Why",
+      "type": "array"
+     }
+    },
+    "required": [
+     "version_id",
+     "recipe_id",
+     "title",
+     "dish_category",
+     "badges",
+     "steps_ready",
+     "portions",
+     "portion_size",
+     "portions_display",
+     "numbers",
+     "uses",
+     "could_buy",
+     "missing",
+     "why",
+     "score",
+     "good_match"
+    ],
+    "title": "SuggestionOut",
+    "type": "object"
+   },
    "app__schemas__inventory__SuggestionOut": {
     "properties": {
      "ingredient_id": {
@@ -5782,6 +7402,156 @@
     "summary": "Mark Cooked",
     "tags": [
      "cooking"
+    ]
+   }
+  },
+  "/api/v1/cook/home": {
+   "get": {
+    "description": "The Cook home: \"Same as last time\" per mode, the Today card from your current plan, Saved previews.",
+    "operationId": "home_api_v1_cook_home_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CookHomeOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Home",
+    "tags": [
+     "cook"
+    ]
+   }
+  },
+  "/api/v1/cook/meal-now": {
+   "post": {
+    "description": "A meal now: ranked recipe cards for one meal, inside this request. The response is a stream of JSON\nlines (`CookStreamEvent`): `started` (search and run ids), `progress`, `results` (the full ranked list),\n`heartbeat` lines while it works, and one `result`. An identical repeat returns the stored result.",
+    "operationId": "meal_now_api_v1_cook_meal_now_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CookAnswers-Input"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CookStreamEvent"
+        }
+       },
+       "application/x-ndjson": {}
+      },
+      "description": "NDJSON event lines"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Meal Now",
+    "tags": [
+     "cook"
+    ]
+   }
+  },
+  "/api/v1/cook/meals": {
+   "post": {
+    "description": "Cook this: saves the recipe at N portions as a one-meal plan for today (never your current plan),\nwith its grocery list for anything to buy first. Tapping it again for the same search returns that plan\n(200).",
+    "operationId": "cook_this_api_v1_cook_meals_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CookMealIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CookMealOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Cook This",
+    "tags": [
+     "cook"
+    ]
+   }
+  },
+  "/api/v1/cook/searches/{search_id}": {
+   "get": {
+    "description": "A stored search, to reopen its results.",
+    "operationId": "get_search_api_v1_cook_searches__search_id__get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "search_id",
+      "required": true,
+      "schema": {
+       "title": "Search Id",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CookSearchOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Get Search",
+    "tags": [
+     "cook"
     ]
    }
   },
@@ -6870,7 +8640,7 @@
   },
   "/api/v1/recipe-versions/{version_id}": {
    "get": {
-    "description": "A recipe version scaled to any number of portions: practical quantities, code-computed nutrition\nand cost, and the food-safety lines the app injects.",
+    "description": "A recipe version scaled to any number of portions: practical quantities, code-computed nutrition\nand cost, and the food-safety lines the app injects. With `search`, that search's pantry coverage and\nsubstitute lines for this recipe (the numbers stay those of the recipe as written).",
     "operationId": "get_version_api_v1_recipe_versions__version_id__get",
     "parameters": [
      {
@@ -6915,6 +8685,24 @@
        ],
        "title": "Portion Size"
       }
+     },
+     {
+      "description": "a meal-now search: its coverage lines for this recipe",
+      "in": "query",
+      "name": "search",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "integer"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "a meal-now search: its coverage lines for this recipe",
+       "title": "Search"
+      }
      }
     ],
     "responses": {
@@ -6947,7 +8735,7 @@
   },
   "/api/v1/recipes/saved": {
    "get": {
-    "description": "Your \u2665 favorites or \ud83d\udd16 saved-for-later recipes as cards, most recently saved first.",
+    "description": "Your \u2665 favorites or \ud83d\udd16 saved-for-later recipes as cards, most recently saved first, at your household's\nportions, with pantry coverage against your current pantry.",
     "operationId": "list_saved_api_v1_recipes_saved_get",
     "parameters": [
      {

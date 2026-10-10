@@ -17,8 +17,12 @@ from app.db.models import (
 )
 from app.planning.plan_validator import ValidationReport
 from app.planning.rounded import RoundedPlan
+from app.services.errors import ConflictError
 
 _Q3 = Decimal("0.001")
+
+
+SINGLE = "single"  # meal_plan.kind of a one-meal plan (Cook this, Phase 2b)
 
 
 class PlanNotFoundError(LookupError):
@@ -145,6 +149,8 @@ def accept_plan(session: Session, user_id: int, plan_id: int) -> MealPlan:
     plan = session.get(MealPlan, plan_id)
     if plan is None or plan.user_id != user_id:
         raise PlanNotFoundError(f"plan {plan_id} not found")
+    if plan.kind == SINGLE:
+        raise ConflictError("a one-meal plan (Cook this) can't become your current plan")
     if plan.status == "active":
         return plan
     previous = session.scalars(

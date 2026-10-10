@@ -4,8 +4,11 @@ from fastapi import APIRouter, Query, Response
 
 from app.api.deps import CurrentUser, DbSession
 from app.api.presenters import costs_out, nutrition_out
+from app.cook import search as search_service
+from app.cook.saved import saved_cards
 from app.domain.enums import PortionSize, RecipeOrigin
 from app.schemas.api import SeedRecipeOut
+from app.schemas.cards import SearchContextOut
 from app.schemas.recipes import (
     RecipeOut,
     RecipeVersionOut,
@@ -51,7 +54,9 @@ def list_seed_recipes(session: DbSession, user: CurrentUser) -> list[SeedRecipeO
     return out
 
 
-def version_out(session: DbSession, view: VersionView) -> RecipeVersionOut:
+def version_out(
+    session: DbSession, view: VersionView, search_context: SearchContextOut | None = None
+) -> RecipeVersionOut:
     v, r, rendered, calc = view.version, view.recipe, view.rendered, view.calculation
     marks = favorites.marks(session, r.user_id, [r.id])
     return RecipeVersionOut(
@@ -106,6 +111,8 @@ def version_out(session: DbSession, view: VersionView) -> RecipeVersionOut:
         dish_category=dish_categories(session, [v.id])[v.id].value,
         is_favorite=r.id in marks.favorites,
         is_saved=r.id in marks.saved,
+        steps_ready=v.steps_status is None,
+        search_context=search_context,
     )
 
 
@@ -115,22 +122,9 @@ def list_saved(
     user: CurrentUser,
     list_: Annotated[favorites.SavedList, Query(alias="list")] = favorites.SavedList.FAVORITES,
 ) -> list[SavedRecipeOut]:
-    """Your ♥ favorites or 🔖 saved-for-later recipes as cards, most recently saved first."""
-    return [
-        SavedRecipeOut(
-            recipe_id=c.recipe.id,
-            version_id=c.version.id,
-            title=c.version.title,
-            dish_category=c.dish_category.value,
-            badges=list(c.badges),
-            steps_ready=c.version.steps_status is None,
-            portions=c.portions,
-            portions_display=c.portions_display,
-            numbers=list(c.numbers),
-            saved_at=c.saved_at,
-        )
-        for c in favorites.saved_cards(session, user.id, list_)
-    ]
+    """Your ♥ favorites or 🔖 saved-for-later recipes as cards, most recently saved first, at your household's
+    portions, with pantry coverage against your current pantry."""
+    return saved_cards(session, user, list_, search_service.local_now(user))
 
 
 def _mark(session: DbSession, user_id: int, recipe_id: int, which: favorites.SavedList, on: bool) -> Response:
@@ -188,11 +182,19 @@ def get_recipe(recipe_id: int, session: DbSession, user: CurrentUser) -> RecipeO
 @versions_router.get("/{version_id}", response_model=RecipeVersionOut)
 def get_version(
     version_id: int,
+    *,
     session: DbSession,
     user: CurrentUser,
     portions: Annotated[int | None, Query(ge=1, le=40)] = None,
     portion_size: Annotated[PortionSize | None, Query()] = None,
+    search: Annotated[
+        int | None, Query(description="a meal-now search: its coverage lines for this recipe")
+    ] = None,
 ) -> RecipeVersionOut:
     """A recipe version scaled to any number of portions: practical quantities, code-computed nutrition
-    and cost, and the food-safety lines the app injects."""
-    return version_out(session, version_view(session, user.id, version_id, portions, portion_size))
+    and cost, and the food-safety lines the app injects. With `search`, that search's pantry coverage and
+    substitute lines for this recipe (the numbers stay those of the recipe as written)."""
+    context = (
+        search_service.search_context(session, user.id, search, version_id) if search is not None else None
+    )
+    return version_out(session, version_view(session, user.id, version_id, portions, portion_size), context)

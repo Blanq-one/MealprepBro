@@ -1,6 +1,8 @@
 .screen {
-  /* room for the fixed button (56 px + note) above the safe area */
-  padding-bottom: calc(var(--primary-height) + 64px + var(--safe-bottom));
+  /* Room for the fixed footer, so nothing is ever hidden behind it: --footer-height is the footer's measured
+     height (QuestionScreen.tsx, kept current as it resizes); the fallback covers the first paint. */
+  padding-bottom: calc(var(--footer-height, calc(var(--primary-height) + 64px + var(--safe-bottom))) + var(--footer-gap));
+  --footer-gap: 16px;
 }
 
 .top {

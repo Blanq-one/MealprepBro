@@ -6,6 +6,7 @@ from app.api.errors import install_error_handlers
 from app.api.routes import (
     auth,
     calculations,
+    cook,
     cook_batches,
     grocery,
     health,
@@ -35,6 +36,7 @@ PROTECTED: tuple[APIRouter, ...] = (
     plans.router,
     grocery.router,
     cook_batches.router,
+    cook.router,
 )
 
 

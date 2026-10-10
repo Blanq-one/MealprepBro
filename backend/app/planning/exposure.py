@@ -35,7 +35,7 @@ FEATURE_NUTRIENTS = ("energy_kcal", "protein_g", "carbohydrate_g", "fat_g", "fib
 Q4 = Decimal("0.0001")
 
 
-def _source(
+def source_of(
     origin: str, recipe_id: int, version_id: int, favorites: frozenset[int], new: frozenset[int]
 ) -> str:
     if version_id in new:
@@ -146,7 +146,7 @@ def log_exposures(
                 generation_run_id=run_id,
                 meal_plan_id=plan_id,
                 recipe_version_id=candidate.version_id,
-                source=_source(
+                source=source_of(
                     candidate.origin,
                     candidate.recipe_id,
                     candidate.version_id,
@@ -169,7 +169,7 @@ def log_exposures(
                 generation_run_id=run_id,
                 meal_plan_id=plan_id,
                 recipe_version_id=excluded.version_id,
-                source=_source(
+                source=source_of(
                     origin, recipe_id, excluded.version_id, c.favorite_recipe_ids, new_version_ids
                 ),
                 eligible_slots=sorted(s.value for s in excluded.meal_slots),

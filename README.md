@@ -142,6 +142,12 @@ Phase 2b (cook-first flow, `docs/FLOW_SPEC.md`):
   planned" and summary lines; nothing saved), `GET /api/v1/settings/always-have` (the Always-have list, common
   staples first), `GET/POST /api/v1/stores`
 - `PUT/DELETE /api/v1/recipes/{id}/favorite` and `/saved`, `GET /api/v1/recipes/saved?list=favorites|later`
+  (cards at your household's portions, with pantry coverage)
+- `POST /api/v1/cook/meal-now` (a meal now: ranked cards from seed and saved recipes, streamed as
+  `application/x-ndjson`; an identical repeat returns the stored result), `GET /api/v1/cook/searches/{id}`,
+  `POST /api/v1/cook/meals` (Cook this: a one-meal plan for today, never your current plan),
+  `GET /api/v1/cook/home` (Same as last time, the Today card, Saved previews),
+  `GET /api/v1/recipe-versions/{id}?search={id}` (that search's coverage and substitute lines)
 - `GET /api/v1/inventory/quick-picks` carries `amount_options` and `custom_units`; `POST /api/v1/inventory/bulk`
   takes an `amount_option` key or a `custom_amount` + `custom_unit`
 

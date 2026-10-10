@@ -124,6 +124,90 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/cook/home": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Home
+         * @description The Cook home: "Same as last time" per mode, the Today card from your current plan, Saved previews.
+         */
+        get: operations["home_api_v1_cook_home_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cook/meal-now": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Meal Now
+         * @description A meal now: ranked recipe cards for one meal, inside this request. The response is a stream of JSON
+         *     lines (`CookStreamEvent`): `started` (search and run ids), `progress`, `results` (the full ranked list),
+         *     `heartbeat` lines while it works, and one `result`. An identical repeat returns the stored result.
+         */
+        post: operations["meal_now_api_v1_cook_meal_now_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cook/meals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cook This
+         * @description Cook this: saves the recipe at N portions as a one-meal plan for today (never your current plan),
+         *     with its grocery list for anything to buy first. Tapping it again for the same search returns that plan
+         *     (200).
+         */
+        post: operations["cook_this_api_v1_cook_meals_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cook/searches/{search_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Search
+         * @description A stored search, to reopen its results.
+         */
+        get: operations["get_search_api_v1_cook_searches__search_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/generation-runs/{run_id}": {
         parameters: {
             query?: never;
@@ -512,7 +596,8 @@ export interface paths {
         /**
          * Get Version
          * @description A recipe version scaled to any number of portions: practical quantities, code-computed nutrition
-         *     and cost, and the food-safety lines the app injects.
+         *     and cost, and the food-safety lines the app injects. With `search`, that search's pantry coverage and
+         *     substitute lines for this recipe (the numbers stay those of the recipe as written).
          */
         get: operations["get_version_api_v1_recipe_versions__version_id__get"];
         put?: never;
@@ -532,7 +617,8 @@ export interface paths {
         };
         /**
          * List Saved
-         * @description Your ♥ favorites or 🔖 saved-for-later recipes as cards, most recently saved first.
+         * @description Your ♥ favorites or 🔖 saved-for-later recipes as cards, most recently saved first, at your household's
+         *     portions, with pantry coverage against your current pantry.
          */
         get: operations["list_saved_api_v1_recipes_saved_get"];
         put?: never;
@@ -962,6 +1048,84 @@ export interface components {
          * @enum {string}
          */
         CapTarget: "ingredient" | "tag";
+        /**
+         * CookAnswers
+         * @description Your answers to the Cook questions, stored exactly as sent (cook_search.answers).
+         */
+        "CookAnswers-Input": {
+            /**
+             * Allow Llm
+             * @default true
+             */
+            allow_llm: boolean;
+            /** Budget Cents */
+            budget_cents?: number | null;
+            /** Extras */
+            extras?: components["schemas"]["ExtraItem-Input"][];
+            /** Goals */
+            goals?: components["schemas"]["GoalTile"][];
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "now" | "prep";
+            mood?: components["schemas"]["RecipeMood"] | null;
+            /** Pantry */
+            pantry?: components["schemas"]["PantryToggle"][];
+            /** People */
+            people?: number | null;
+            prep?: components["schemas"]["PrepAmount"] | null;
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            /** Shopping */
+            shopping?: ("use_what_i_have" | "make_a_list") | null;
+            slot?: components["schemas"]["MealSlot"] | null;
+            /** Time Limit Minutes */
+            time_limit_minutes?: number | null;
+        };
+        /**
+         * CookAnswers
+         * @description Your answers to the Cook questions, stored exactly as sent (cook_search.answers).
+         */
+        "CookAnswers-Output": {
+            /**
+             * Allow Llm
+             * @default true
+             */
+            allow_llm: boolean;
+            /** Budget Cents */
+            budget_cents?: number | null;
+            /** Extras */
+            extras?: components["schemas"]["ExtraItem-Output"][];
+            /** Goals */
+            goals?: components["schemas"]["GoalTile"][];
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "now" | "prep";
+            mood?: components["schemas"]["RecipeMood"] | null;
+            /** Pantry */
+            pantry?: components["schemas"]["PantryToggle"][];
+            /** People */
+            people?: number | null;
+            prep?: components["schemas"]["PrepAmount"] | null;
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            /** Shopping */
+            shopping?: ("use_what_i_have" | "make_a_list") | null;
+            slot?: components["schemas"]["MealSlot"] | null;
+            /** Time Limit Minutes */
+            time_limit_minutes?: number | null;
+        };
         /** CookDaySetting */
         CookDaySetting: {
             /** Cook Minutes */
@@ -970,6 +1134,144 @@ export interface components {
             is_cook_day: boolean;
             mood: components["schemas"]["RecipeMood"];
             weekday: components["schemas"]["Weekday"];
+        };
+        /**
+         * CookHomeOut
+         * @description GET /cook/home (E1): last answers per mode, the Today card, and the Saved previews.
+         */
+        CookHomeOut: {
+            /** Favorites */
+            favorites: components["schemas"]["SavedPreviewOut"][];
+            /** Favorites Count */
+            favorites_count: number;
+            /** Last */
+            last: components["schemas"]["LastSearchOut"][];
+            /** Later */
+            later: components["schemas"]["SavedPreviewOut"][];
+            /** Later Count */
+            later_count: number;
+            today: components["schemas"]["TodayOut"] | null;
+        };
+        /**
+         * CookMealIn
+         * @description POST /cook/meals: cook one recipe now, as a one-meal plan for today.
+         */
+        CookMealIn: {
+            /** Portions */
+            portions?: number | null;
+            /** Search Id */
+            search_id?: number | null;
+            slot?: components["schemas"]["MealSlot"] | null;
+            /** Version Id */
+            version_id: number;
+        };
+        /** CookMealOut */
+        CookMealOut: {
+            /** Batch Id */
+            batch_id: number;
+            /** Buy First */
+            buy_first: boolean;
+            /** Created */
+            created: boolean;
+            /** Grocery List Id */
+            grocery_list_id: number;
+            plan: components["schemas"]["PlanSummaryOut"];
+            /** Plan Id */
+            plan_id: number;
+        };
+        /**
+         * CookSearchOut
+         * @description GET /cook/searches/{id}: a stored search, to reopen its results.
+         */
+        CookSearchOut: {
+            answers: components["schemas"]["CookAnswers-Output"];
+            /** Empty Filter */
+            empty_filter: string | null;
+            /** Empty Reason */
+            empty_reason: string | null;
+            /** Good Matches */
+            good_matches: number;
+            /** Header */
+            header: string;
+            /** Ideas Needed */
+            ideas_needed: boolean;
+            /** Meal Plan Id */
+            meal_plan_id: number | null;
+            /** Mode */
+            mode: string;
+            /** Search Id */
+            search_id: number;
+            /** Status */
+            status: string;
+            /** Suggestions */
+            suggestions: components["schemas"]["app__schemas__cook__SuggestionOut"][];
+        };
+        /**
+         * CookSession
+         * @description One cook day of "A few sessions" (C1b, used from step 2b.5).
+         */
+        CookSession: {
+            /**
+             * Day
+             * Format: date
+             */
+            day: string;
+            /** Minutes */
+            minutes: number;
+        };
+        /**
+         * CookStreamEvent
+         * @description One line of POST /cook/meal-now (application/x-ndjson): `started` (search and run ids), `progress`
+         *     lines and a `heartbeat` every few seconds, `results` (the full ranked list, replacing the last one), then
+         *     one `result`. Step 2b.3b adds new ideas and `prefetched` (More ideas only).
+         */
+        CookStreamEvent: {
+            /** Cached */
+            cached?: boolean | null;
+            /** Elapsed S */
+            elapsed_s: number;
+            /** Empty Filter */
+            empty_filter?: string | null;
+            /** Empty Reason */
+            empty_reason?: string | null;
+            /**
+             * Event
+             * @enum {string}
+             */
+            event: "started" | "progress" | "heartbeat" | "results" | "prefetched" | "result";
+            /** Good Matches */
+            good_matches?: number | null;
+            /** Header */
+            header?: string | null;
+            /** Ideas Needed */
+            ideas_needed?: boolean | null;
+            /** Llm Call Count */
+            llm_call_count?: number | null;
+            /** Message */
+            message?: string | null;
+            /** New Version Ids */
+            new_version_ids?: number[];
+            /** Notes */
+            notes?: string[];
+            /** Pad */
+            pad?: string | null;
+            problem?: components["schemas"]["ProblemOut"] | null;
+            /** Retry After S */
+            retry_after_s?: number | null;
+            /** Run Id */
+            run_id: number;
+            /** Search Id */
+            search_id: number;
+            /** Stage */
+            stage?: string | null;
+            /** Status */
+            status?: ("succeeded" | "partial" | "failed") | null;
+            /** Suggestions */
+            suggestions?: components["schemas"]["app__schemas__cook__SuggestionOut"][] | null;
+            /** Total Tokens */
+            total_tokens?: number | null;
+            /** Wait S */
+            wait_s?: number | null;
         };
         /** CookedIn */
         CookedIn: {
@@ -988,6 +1290,26 @@ export interface components {
             status: string;
             /** Title */
             title: string;
+        };
+        /**
+         * CostLineOut
+         * @description Something to buy for this meal: whole packages at the first of your stores that prices it.
+         */
+        CostLineOut: {
+            /** Cost Cents */
+            cost_cents: number | null;
+            /** Cost Display */
+            cost_display: string;
+            /** Display */
+            display: string;
+            /** Ingredient Id */
+            ingredient_id: number;
+            /** Is Estimate */
+            is_estimate: boolean;
+            /** Name */
+            name: string;
+            /** Store */
+            store: string | null;
         };
         /**
          * CostsOut
@@ -1130,6 +1452,50 @@ export interface components {
          * @enum {string}
          */
         Equipment: "stovetop" | "oven" | "air_fryer" | "microwave" | "rice_cooker" | "pressure_cooker" | "slow_cooker" | "blender" | "food_processor" | "grill";
+        /**
+         * ExtraItem
+         * @description Something added on "What do you have?": in your kitchen (have) or happy to pick up (could buy).
+         */
+        "ExtraItem-Input": {
+            /** Ingredient Id */
+            ingredient_id: number;
+            /** Quantity */
+            quantity?: number | string | null;
+            /**
+             * Save To Pantry
+             * @default false
+             */
+            save_to_pantry: boolean;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "have" | "could_buy";
+            /** Unit */
+            unit?: string | null;
+        };
+        /**
+         * ExtraItem
+         * @description Something added on "What do you have?": in your kitchen (have) or happy to pick up (could buy).
+         */
+        "ExtraItem-Output": {
+            /** Ingredient Id */
+            ingredient_id: number;
+            /** Quantity */
+            quantity?: string | null;
+            /**
+             * Save To Pantry
+             * @default false
+             */
+            save_to_pantry: boolean;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "have" | "could_buy";
+            /** Unit */
+            unit?: string | null;
+        };
         /** FieldErrorOut */
         FieldErrorOut: {
             /** Loc */
@@ -1209,6 +1575,11 @@ export interface components {
             /** Total Tokens */
             total_tokens: number;
         };
+        /**
+         * GoalTile
+         * @enum {string}
+         */
+        GoalTile: "high_protein" | "high_carb" | "iron_rich" | "low_calorie" | "cheap" | "quick";
         /** GroceryCompleteIn */
         GroceryCompleteIn: {
             /** Purchased On */
@@ -1547,6 +1918,22 @@ export interface components {
              */
             quantity?: number | string | null;
         };
+        /** LastSearchOut */
+        LastSearchOut: {
+            /** Answers */
+            answers: {
+                [key: string]: unknown;
+            };
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "now" | "prep" | "grocery";
+            /** Search Id */
+            search_id: number;
+            /** Summary */
+            summary: string;
+        };
         /** LeftoverOut */
         LeftoverOut: {
             /** Amount */
@@ -1562,6 +1949,21 @@ export interface components {
             ingredient_id: number;
             /** Name */
             name: string;
+        };
+        /**
+         * LineContextOut
+         * @description What a recipe line means for the search it was opened from (C8).
+         */
+        LineContextOut: {
+            /** Ingredient Id */
+            ingredient_id: number;
+            /** Note */
+            note: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "have" | "short" | "could_buy" | "missing" | "owned";
         };
         /** LoginIn */
         LoginIn: {
@@ -1606,6 +2008,22 @@ export interface components {
          * @enum {string}
          */
         MealSlot: "breakfast" | "lunch" | "dinner" | "snack" | "protein_dessert" | "drink";
+        /** MissingLineOut */
+        MissingLineOut: {
+            buy: components["schemas"]["CostLineOut"] | null;
+            /** Display */
+            display: string;
+            /** Ingredient Id */
+            ingredient_id: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "missing" | "top_up";
+            /** Name */
+            name: string;
+            substitute: components["schemas"]["SubstituteOut"] | null;
+        };
         /** NewIngredientIn */
         NewIngredientIn: {
             category: components["schemas"]["IngredientCategory"];
@@ -1663,6 +2081,17 @@ export interface components {
          * @enum {string}
          */
         NutritionPriority: "protein" | "carb" | "iron" | "balanced" | "fiber" | "lower_fat" | "satiety" | "vegetable";
+        /**
+         * PantryToggle
+         * @description A pantry item turned off for this search ("not for this search"). Only items turned off need
+         *     sending.
+         */
+        PantryToggle: {
+            /** Include */
+            include: boolean;
+            /** Ingredient Id */
+            ingredient_id: number;
+        };
         /** ParseIn */
         ParseIn: {
             /**
@@ -1956,6 +2385,49 @@ export interface components {
             reason: string | null;
         };
         /**
+         * PrepAmount
+         * @description Meal prep's "how much" and "how do you want to cook?" (C1, C1b). Planned here, used from step 2b.5.
+         */
+        PrepAmount: {
+            /**
+             * Cook Day
+             * @default today
+             */
+            cook_day: ("today" | "tomorrow") | string;
+            /** Cook Minutes */
+            cook_minutes?: number | null;
+            /**
+             * Cook Style
+             * @default mix
+             * @enum {string}
+             */
+            cook_style: "big_day" | "sessions" | "same_dish" | "mix";
+            /** Day Count */
+            day_count?: number | null;
+            /**
+             * Extra To Freeze
+             * @default 0
+             */
+            extra_to_freeze: number;
+            /** Portions */
+            portions?: number | null;
+            /** Sessions */
+            sessions?: components["schemas"]["CookSession"][];
+            /**
+             * Shape
+             * @enum {string}
+             */
+            shape: "portions" | "days";
+            slot?: components["schemas"]["MealSlot"] | null;
+            /** Slots */
+            slots?: components["schemas"]["MealSlot"][];
+            /**
+             * Start
+             * @default today
+             */
+            start: ("today" | "tomorrow") | string;
+        };
+        /**
          * PriceBasis
          * @enum {string}
          */
@@ -2242,8 +2714,14 @@ export interface components {
             portions: number;
             /** Recipe Id */
             recipe_id: number;
+            search_context?: components["schemas"]["SearchContextOut"] | null;
             /** Steps */
             steps: components["schemas"]["RenderedStepOut"][];
+            /**
+             * Steps Ready
+             * @default true
+             */
+            steps_ready: boolean;
             /** Time Note */
             time_note: string;
             /** Title */
@@ -2306,17 +2784,35 @@ export interface components {
          * @enum {string}
          */
         SavedList: "favorites" | "later";
+        /** SavedPreviewOut */
+        SavedPreviewOut: {
+            /** Dish Category */
+            dish_category: string;
+            /** Recipe Id */
+            recipe_id: number;
+            /** Title */
+            title: string;
+            /** Version Id */
+            version_id: number;
+        };
         /**
          * SavedRecipeOut
-         * @description A Saved-list card (C7). Every number is a display string from code, per portion.
+         * @description A Saved-list card (C7). Every number is a display string from code, per portion, at your household's
+         *     portions (as the recipe page shows them); coverage is against your current pantry (step 2b.3a).
          */
         SavedRecipeOut: {
             /** Badges */
             badges: ("favorite" | "saved" | "new" | "draft")[];
+            /** Could Buy */
+            could_buy: components["schemas"]["CostLineOut"][];
             /** Dish Category */
             dish_category: string;
+            /** Missing */
+            missing: components["schemas"]["MissingLineOut"][];
             /** Numbers */
             numbers: string[];
+            /** Portion Size */
+            portion_size: string;
             /** Portions */
             portions: number;
             /** Portions Display */
@@ -2332,8 +2828,33 @@ export interface components {
             steps_ready: boolean;
             /** Title */
             title: string;
+            /** Uses */
+            uses: string[];
             /** Version Id */
             version_id: number;
+        };
+        /**
+         * SearchContextOut
+         * @description GET /recipe-versions/{id}?search=: the coverage and substitute lines from that search.
+         */
+        SearchContextOut: {
+            /** Could Buy */
+            could_buy: components["schemas"]["CostLineOut"][];
+            /** Lines */
+            lines: components["schemas"]["LineContextOut"][];
+            /** Missing */
+            missing: components["schemas"]["MissingLineOut"][];
+            /** Note */
+            note: string;
+            portion_size: components["schemas"]["PortionSize"];
+            /** Portions */
+            portions: number;
+            /** Portions Display */
+            portions_display: string;
+            /** Search Id */
+            search_id: number;
+            /** Uses */
+            uses: string[];
         };
         /** SeedRecipeOut */
         SeedRecipeOut: {
@@ -2459,6 +2980,19 @@ export interface components {
             /** Store Name */
             store_name: string;
         };
+        /** SubstituteOut */
+        SubstituteOut: {
+            /** Amount Display */
+            amount_display: string;
+            /** Ingredient Id */
+            ingredient_id: number;
+            /** Name */
+            name: string;
+            /** Note */
+            note?: string | null;
+            /** You Have */
+            you_have: boolean;
+        };
         /** SummaryLineOut */
         SummaryLineOut: {
             /** Key */
@@ -2467,6 +3001,42 @@ export interface components {
             label: string;
             /** Value */
             value: string;
+        };
+        /** TodayMealOut */
+        TodayMealOut: {
+            /** Cook Batch Id */
+            cook_batch_id: number;
+            /** Dish Category */
+            dish_category: string;
+            /** From Freezer */
+            from_freezer: boolean;
+            /** Kcal */
+            kcal: number;
+            /** Recipe Version Id */
+            recipe_version_id: number;
+            slot: components["schemas"]["MealSlot"];
+            /** Title */
+            title: string;
+        };
+        /** TodayOut */
+        TodayOut: {
+            /** Cook Note */
+            cook_note: string | null;
+            /** Day */
+            day: string | null;
+            /** Hands On Display */
+            hands_on_display: string | null;
+            /** Meals */
+            meals: components["schemas"]["TodayMealOut"][];
+            /** Message */
+            message: string | null;
+            /** Plan Id */
+            plan_id: number;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "today" | "starts_later" | "ended";
         };
         /**
          * UnitKind
@@ -2619,6 +3189,43 @@ export interface components {
             store_id: number;
             /** Store Name */
             store_name: string;
+        };
+        /**
+         * SuggestionOut
+         * @description One recipe card (FLOW_SPEC §5.3). Every number is code-computed, at the card's portions.
+         */
+        app__schemas__cook__SuggestionOut: {
+            /** Badges */
+            badges: ("favorite" | "saved" | "new" | "draft")[];
+            /** Could Buy */
+            could_buy: components["schemas"]["CostLineOut"][];
+            /** Dish Category */
+            dish_category: string;
+            /** Good Match */
+            good_match: boolean;
+            /** Missing */
+            missing: components["schemas"]["MissingLineOut"][];
+            /** Numbers */
+            numbers: string[];
+            portion_size: components["schemas"]["PortionSize"];
+            /** Portions */
+            portions: number;
+            /** Portions Display */
+            portions_display: string;
+            /** Recipe Id */
+            recipe_id: number;
+            /** Score */
+            score: string;
+            /** Steps Ready */
+            steps_ready: boolean;
+            /** Title */
+            title: string;
+            /** Uses */
+            uses: string[];
+            /** Version Id */
+            version_id: number;
+            /** Why */
+            why: string[];
         };
         /** SuggestionOut */
         app__schemas__inventory__SuggestionOut: {
@@ -2817,6 +3424,124 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CookedOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    home_api_v1_cook_home_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CookHomeOut"];
+                };
+            };
+        };
+    };
+    meal_now_api_v1_cook_meal_now_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CookAnswers-Input"];
+            };
+        };
+        responses: {
+            /** @description NDJSON event lines */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CookStreamEvent"];
+                    "application/x-ndjson": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cook_this_api_v1_cook_meals_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CookMealIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CookMealOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_search_api_v1_cook_searches__search_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                search_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CookSearchOut"];
                 };
             };
             /** @description Validation Error */
@@ -3595,6 +4320,8 @@ export interface operations {
             query?: {
                 portions?: number | null;
                 portion_size?: components["schemas"]["PortionSize"] | null;
+                /** @description a meal-now search: its coverage lines for this recipe */
+                search?: number | null;
             };
             header?: never;
             path: {

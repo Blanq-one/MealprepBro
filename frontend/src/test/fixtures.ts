@@ -400,6 +400,8 @@ export function recipe(overrides: Partial<RecipeVersion> = {}): RecipeVersion {
     dish_category: "bowl",
     is_favorite: false,
     is_saved: false,
+    steps_ready: true,
+    search_context: null,
     ...overrides,
   };
 }

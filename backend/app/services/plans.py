@@ -9,7 +9,7 @@ from datetime import UTC, date, datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
@@ -34,7 +34,7 @@ from app.llm.client import LLMClient
 from app.llm.errors import LLMConfigError
 from app.planning.orchestrator import Orchestrator, PlanOutcome, ProgressListener, problem_json
 from app.planning.perishables import freeze_text
-from app.planning.persistence import PlanNotFoundError, accept_plan
+from app.planning.persistence import SINGLE, PlanNotFoundError, accept_plan
 from app.planning.problem import IngredientPlan
 from app.planning.recipe_math import nutrition_of
 from app.planning.rounded import FreezeInstruction, meal_key
@@ -475,12 +475,13 @@ def accept(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut:
 
 def current_plan_id(plans: list[MealPlan], today: date) -> int | None:
     """The plan the app opens on: the active plan for this week, else the latest active plan, else the
-    latest draft (plans newest first)."""
+    latest draft (plans newest first). A one-meal plan (Cook this) is never the current plan."""
 
     def covers(p: MealPlan) -> bool:
         days = len(p.constraints.get("days", [])) or 7
         return p.week_start <= today < p.week_start + timedelta(days=days)
 
+    plans = [p for p in plans if p.kind != SINGLE]
     active = [p for p in plans if p.status == "active"]
     for group in ([p for p in active if covers(p)], active, [p for p in plans if p.status == "draft"]):
         if group:
@@ -494,7 +495,11 @@ def list_plans(
     plans = list(
         session.scalars(
             select(MealPlan)
-            .where(MealPlan.user_id == user_id, MealPlan.status.in_(("active", "draft", "completed")))
+            .where(
+                MealPlan.user_id == user_id,
+                MealPlan.status.in_(("active", "draft", "completed")),
+                or_(MealPlan.kind.is_(None), MealPlan.kind != SINGLE),  # one-meal plans aren't listed
+            )
             .order_by(MealPlan.created_at.desc(), MealPlan.id.desc())
             .limit(limit)
         )
