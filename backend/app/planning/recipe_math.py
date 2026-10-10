@@ -53,11 +53,12 @@ def recipe_per_portion(
 def need_per_portion(
     lines: Sequence[RecipeLine], ingredients: Mapping[int, IngredientPlan], base_servings: int
 ) -> dict[int, Decimal]:
-    """What one portion (multiplier 1) uses of each non-staple ingredient, in its planning unit."""
+    """What one portion (multiplier 1) uses of each ingredient the plan has to supply (not staples or
+    Always-have items), in its planning unit."""
     need: dict[int, Decimal] = {}
     for line in counted(lines):
         plan = ingredients[line.ingredient_id]
-        if plan.staple:
+        if plan.unlimited:
             continue
         need[line.ingredient_id] = need.get(line.ingredient_id, Decimal(0)) + plan.to_planning(
             line.quantity, line.unit

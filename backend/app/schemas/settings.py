@@ -1,5 +1,5 @@
 """UserSettings: the typed model behind user_settings.settings (JSONB). Seeded in Phase 0; the settings API
-arrives in Phase 1."""
+arrives in Phase 1; version 3 in Phase 2b (migration 0005)."""
 
 from enum import StrEnum
 from typing import Literal, Self
@@ -65,7 +65,15 @@ class FrequencyCapSetting(_Strict):
 
 
 class UserSettings(_Strict):
-    schema_version: Literal[2] = 2  # 2: the budget moved to each plan request; protein target added
+    # 2: the budget moved to each plan request; protein target added. 3 (Phase 2b): household size, Always
+    # have, a default budget (a pre-fill only: each request still owns its limit), the onboarding flag.
+    schema_version: Literal[3] = 3
+    household_size: int = Field(
+        default=1, ge=1, le=8
+    )  # a meal is this many equal portions; targets are yours
+    always_have: list[str] = Field(default_factory=list)  # ingredient slugs: unlimited stock, never listed
+    default_budget_cents: int | None = Field(default=None, ge=0)  # pre-fills a plan request's budget
+    onboarding_completed: bool = False
     daily_kcal_target: int = Field(default=1800, ge=800, le=6000)
     calorie_mode: CalorieMode = CalorieMode.WEEKLY
     daily_band_kcal: int = Field(default=150, ge=0, le=1000)
@@ -120,6 +128,8 @@ class UserSettings(_Strict):
             raise ValueError("frequency cap labels must be unique")
         if len(set(self.store_order)) != len(self.store_order):
             raise ValueError("store_order has duplicates")
+        if len(set(self.always_have)) != len(self.always_have):
+            raise ValueError("always_have has duplicates")
         return self
 
     def cook_day(self, weekday: Weekday) -> CookDaySetting:
@@ -152,3 +162,36 @@ class SettingsOut(BaseModel):
     settings: UserSettings
     preferences: list[PreferenceOut]
     diet_review: list[DietReviewOut] = Field(default_factory=list)
+
+
+# ---------------- Phase 2b: preview and stores ----------------
+class FieldErrorOut(BaseModel):
+    loc: list[str | int]  # the field, e.g. ["slot_allocations"] or ["always_have", 2]
+    msg: str
+
+
+class SummaryLineOut(BaseModel):
+    key: str  # people | budget | targets | meals | cook_days | equipment | stores | food_rules | always_have
+    label: str
+    value: str
+
+
+class SettingsPreviewOut(BaseModel):
+    """POST /settings/preview: your saved settings with the sent fields replaced, checked but not saved."""
+
+    valid: bool
+    errors: list[FieldErrorOut]
+    kcal_planned_display: str | None  # "1,800 of 1,800 kcal a day planned", also while other fields are off
+    summary: list[SummaryLineOut]  # only when valid
+    settings: UserSettings | None  # what a save would store, when valid
+
+
+class StoreIn(_Strict):
+    name: str = Field(min_length=1, max_length=60)
+
+
+class StoreOut(BaseModel):
+    id: int
+    name: str
+    priority: int
+    order: int | None  # your preference order (1 = primary), None = not one of your stores yet

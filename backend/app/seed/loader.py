@@ -482,6 +482,8 @@ def _settings(
     for cap in settings.frequency_caps:
         if cap.target_type is CapTarget.INGREDIENT and cap.target not in ingredients:
             raise SeedError(f"frequency cap '{cap.label}' targets unknown ingredient '{cap.target}'")
+    if unknown := [s for s in settings.always_have if s not in ingredients]:
+        raise SeedError(f"settings: always_have names unknown ingredients: {unknown}")
     if session.get(UserSettingsRow, user.id) is None:
         session.add(
             UserSettingsRow(

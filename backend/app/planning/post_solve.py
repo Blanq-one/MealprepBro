@@ -224,7 +224,7 @@ def build_rounded_plan(
     meals = meals_from(solution, batches)
     grocery = build_grocery(problem.constraints, batches, problem.ingredients)
     totals = plan_totals(problem, batches, meals, grocery)
-    costs, leftovers = cost_summary(problem.constraints, batches, grocery, problem.ingredients)
+    costs, leftovers = cost_summary(problem.constraints, batches, grocery, problem.ingredients, meals)
     return RoundedPlan(
         constraints=problem.constraints,
         batches=tuple(batches),

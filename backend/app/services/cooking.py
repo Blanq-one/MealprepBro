@@ -4,7 +4,8 @@ cooked. Phase 3 adds actual time, cost and ratings.
 Each ingredient is taken from your lots in the usual order (open packages first, then the earliest use-by
 date). A package this opens keeps its remainder as an open-package lot: `opened_on` is the cook day and its
 use-by date is re-estimated from the food-safety chart or the item's shelf life. What inventory can't cover is
-reported, never an error (you may have bought it without recording it). Staples (salt, spices) aren't tracked.
+reported, never an error (you may have bought it without recording it). Staples (salt, spices) and the plan's
+Always-have items aren't tracked.
 """
 
 from collections import defaultdict
@@ -81,8 +82,11 @@ def _batch(session: Session, user_id: int, batch_id: int) -> tuple[PlanCookBatch
     return batch, plan
 
 
-def _needs(session: Session, batch: PlanCookBatch) -> dict[int, tuple[Decimal, str]]:
-    """The batch's practical quantities per ingredient, optional lines left out (as in the grocery list)."""
+def _needs(
+    session: Session, batch: PlanCookBatch, untracked: frozenset[int] = frozenset()
+) -> dict[int, tuple[Decimal, str]]:
+    """The batch's practical quantities per ingredient, optional lines, staples and `untracked` (Always-have)
+    ingredients left out (as in the grocery list)."""
     rows = list(
         session.scalars(select(PlanBatchIngredient).where(PlanBatchIngredient.cook_batch_id == batch.id))
     )
@@ -99,7 +103,11 @@ def _needs(session: Session, batch: PlanCookBatch) -> dict[int, tuple[Decimal, s
     totals: dict[int, Decimal] = defaultdict(Decimal)
     units: dict[int, str] = {}
     for r in rows:
-        if r.recipe_ingredient_id in optional or data[r.ingredient_id].assume_in_stock:
+        if (
+            r.recipe_ingredient_id in optional
+            or data[r.ingredient_id].assume_in_stock
+            or r.ingredient_id in untracked
+        ):
             continue
         unit = units.setdefault(r.ingredient_id, r.unit)
         totals[r.ingredient_id] += convert(r.quantity, r.unit, unit, data[r.ingredient_id].units)
@@ -109,13 +117,14 @@ def _needs(session: Session, batch: PlanCookBatch) -> dict[int, tuple[Decimal, s
 
 
 def mark_cooked(session: Session, user_id: int, batch_id: int, cooked_on: date | None = None) -> CookResult:
-    batch, _plan = _batch(session, user_id, batch_id)
+    batch, plan = _batch(session, user_id, batch_id)
     if batch.status != "planned":
         raise ConflictError(f"this batch is already {batch.status}")
     day = cooked_on or datetime.now(UTC).date()
     version = session.get(RecipeVersion, batch.recipe_version_id)
     result = CookResult(batch, version.title if version else "?")
-    needs = _needs(session, batch)
+    always_have = frozenset(plan.constraints.get("always_have_ingredient_ids", ()))
+    needs = _needs(session, batch, always_have)
     data = load_ingredients(session, needs)
     rows = {i.id: i for i in session.scalars(select(Ingredient).where(Ingredient.id.in_(needs)))}
     for ingredient_id, (need, unit) in sorted(needs.items()):

@@ -76,7 +76,7 @@ class GroceryItem:
     needed: Decimal
     inventory_used: Decimal
     to_buy: Decimal
-    kind: str  # buy | from_inventory | staple | unpriced
+    kind: str  # buy | from_inventory | staple | unpriced | always_have (never listed)
     product_id: int | None = None
     store_id: int | None = None
     observation_id: int | None = None
@@ -167,11 +167,22 @@ class FreezeInstruction:
 
 
 @dataclass(frozen=True)
+class MealCost:
+    """One meal's share of its batch's cost (Phase 2b)."""
+
+    eat_on: date
+    slot: str
+    batch_index: int
+    cents: int
+
+
+@dataclass(frozen=True)
 class CostSummary:
     """The week's money (§7.1: integer cents; each ingredient is rounded once, totals are sums).
 
     cash + from_inventory = eaten + frozen_portions + leftover. Staples ("check you have") aren't counted;
-    unpriced items make it incomplete."""
+    unpriced items make it incomplete. Phase 2b: each batch's cost (what it uses) and each meal's share of
+    it; meal costs add up to their batch (with its frozen extras), and day costs to eaten."""
 
     cash_cents: int  # spent this trip, whole packages: the grocery list total (regular + stock-up)
     eaten_cents: int  # food eaten this week, whether bought now or taken from inventory
@@ -182,10 +193,19 @@ class CostSummary:
     complete: bool
     unpriced: tuple[str, ...] = ()
     stock_up_cash_cents: int = 0  # the part of cash_cents spent on stock-up items
+    batch_cents: tuple[int, ...] = ()  # per batch, in plan order
+    meal_costs: tuple[MealCost, ...] = ()  # per meal, in plan order
 
     @property
     def regular_cash_cents(self) -> int:
         return self.cash_cents - self.stock_up_cash_cents
+
+    @property
+    def day_cents(self) -> dict[date, int]:
+        out: dict[date, int] = {}
+        for meal in self.meal_costs:
+            out[meal.eat_on] = out.get(meal.eat_on, 0) + meal.cents
+        return out
 
     def to_json(self) -> dict[str, Any]:
         return {
@@ -199,7 +219,15 @@ class CostSummary:
             "expected_waste_cents": self.expected_waste_cents,
             "complete": self.complete,
             "unpriced": list(self.unpriced),
+            "batch_cents": list(self.batch_cents),
+            "meal_cents": {meal_key(m.eat_on, m.slot): m.cents for m in self.meal_costs},
+            "day_cents": {d.isoformat(): cents for d, cents in sorted(self.day_cents.items())},
         }
+
+
+def meal_key(eat_on: date, slot: str) -> str:
+    """How a stored plan finds a meal's cost: '2026-10-12/lunch' (one meal per day and slot)."""
+    return f"{eat_on.isoformat()}/{slot}"
 
 
 @dataclass(frozen=True)

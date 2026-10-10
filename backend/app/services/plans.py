@@ -27,16 +27,18 @@ from app.db.models import (
     RecipeVersion,
     Store,
 )
+from app.domain.cost import money_display
 from app.domain.enums import MealSlot
 from app.domain.units import GRAMS_PER_UNIT, ML_PER_UNIT
 from app.llm.client import LLMClient
 from app.llm.errors import LLMConfigError
+from app.planning.inputs import ALWAYS_HAVE_SLUGS
 from app.planning.orchestrator import Orchestrator, PlanOutcome, ProgressListener, problem_json
 from app.planning.perishables import freeze_text
 from app.planning.persistence import PlanNotFoundError, accept_plan
 from app.planning.problem import IngredientPlan
 from app.planning.recipe_math import nutrition_of
-from app.planning.rounded import FreezeInstruction
+from app.planning.rounded import FreezeInstruction, meal_key
 from app.schemas.plans import (
     BatchOut,
     CostsOut,
@@ -53,6 +55,7 @@ from app.schemas.plans import (
     PlanSummaryOut,
     StoreTotalOut,
 )
+from app.services.dishes import dish_categories
 from app.services.ingredient_data import IngredientData, load_ingredients
 
 log = logging.getLogger(__name__)
@@ -65,7 +68,29 @@ class RunNotFoundError(LookupError):
 
 
 def money(cents: int) -> str:
-    return f"${cents / 100:,.2f}"
+    return money_display(cents)
+
+
+def cash_split_display(regular_cents: int, stock_up_cents: int) -> str:
+    """'$52.91 groceries + $90.43 stock-up': groceries and stock-up are always shown apart."""
+    text = f"{money(regular_cents)} groceries"
+    return f"{text} + {money(stock_up_cents)} stock-up" if stock_up_cents else text
+
+
+NOTHING_TO_COOK = "Nothing to cook, eating prepped meals"
+
+
+def cook_note(cooked: list[tuple[str, int]]) -> str:
+    """The day note: what to cook that day (title, portions), or that the day eats prepped meals."""
+    if not cooked:
+        return NOTHING_TO_COOK
+    return "Cook: " + ", ".join(f"{title} ({n} portion{'s' if n != 1 else ''})" for title, n in cooked)
+
+
+def shows_as_zero(quantity: Decimal, unit: str) -> bool:
+    """Whether amount_display would print 0 (a pinch of a spice)."""
+    step = Decimal("0.5") if unit == "count" else Decimal(1)
+    return (quantity / step).quantize(Decimal(1), ROUND_HALF_UP) == 0
 
 
 def amount_display(quantity: Decimal, unit: str) -> str:
@@ -257,6 +282,18 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
     }
     nutrition = batch_nutrition(session, [b.id for b in batches])
     batch_by_id = {b.id: b for b in batches}
+    categories = dish_categories(session, [b.recipe_version_id for b in batches])
+    costs = totals["costs"]
+    meal_cents: dict[str, int] = costs.get("meal_cents", {})
+    day_cents: dict[str, int] = costs.get("day_cents", {})
+    # stored in plan order, and batches are written in plan order (ascending ids)
+    stored_batch_cents: list[int] = costs.get("batch_cents", [])
+    in_plan_order = sorted(batches, key=lambda b: b.id)
+    batch_cents = (
+        {b.id: cents for b, cents in zip(in_plan_order, stored_batch_cents, strict=True)}
+        if len(stored_batch_cents) == len(in_plan_order)
+        else {}
+    )
     meals = list(
         session.scalars(
             select(PlanMeal).where(PlanMeal.meal_plan_id == plan.id, PlanMeal.status != "replaced")
@@ -276,6 +313,7 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
             protein = (
                 nutrition.get(b.id, {}).get("protein_g", Decimal(0)).quantize(Decimal("0.1"), ROUND_HALF_UP)
             )
+            cents = meal_cents.get(meal_key(m.eat_on, m.slot))
             meals_out.append(
                 MealOut(
                     eat_on=m.eat_on,
@@ -291,8 +329,13 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
                     note="From the freezer: move it to the fridge the night before."
                     if m.from_freezer
                     else None,
+                    dish_category=categories[v.id].value,
+                    cost_cents=cents,
+                    cost_display=money(cents) if cents is not None else None,
                 )
             )
+        cooked = [(versions[b.recipe_version_id][0].title, b.portions) for b in batches if b.cook_on == day]
+        cents_today = day_cents.get(day.isoformat())
         days_out.append(
             DayOut(
                 day=day,
@@ -305,6 +348,9 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
                 chill_minutes=totals["chill_minutes"].get(day.isoformat(), 0),
                 cook_minutes_available=spec["cook_minutes_available"],
                 meals=meals_out,
+                cook_note=cook_note(cooked),
+                cost_cents=cents_today,
+                cost_display=money(cents_today) if cents_today is not None else None,
             )
         )
     stores = {s.id: s.name for s in session.scalars(select(Store))}
@@ -318,7 +364,6 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
     n_days = len(c["days"])
     report = plan.validation_report
     unpriced = totals["unpriced"]
-    costs = totals["costs"]
     freeze = [
         FreezeInstruction(
             ingredient_id=f["ingredient_id"],
@@ -337,6 +382,7 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
         id=plan.id,
         week_start=plan.week_start,
         status=plan.status,
+        kind=plan.kind,
         calorie_mode=c["calorie_mode"],
         kcal_target_week=c["weekly_kcal_target"],
         kcal_planned_week=totals["week_kcal"],
@@ -370,6 +416,7 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
             expected_waste_display=money(costs["expected_waste_cents"]),
             complete=costs["complete"],
             unpriced=list(costs["unpriced"]),
+            cash_split_display=cash_split_display(costs["regular_cash_cents"], costs["stock_up_cash_cents"]),
         ),
         leftovers=[
             LeftoverOut(
@@ -409,6 +456,9 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
                 scale_factor=b.scale_factor,
                 planned_minutes=b.planned_minutes,
                 status=b.status,
+                dish_category=categories[b.recipe_version_id].value,
+                cost_cents=batch_cents.get(b.id),
+                cost_display=money(batch_cents[b.id]) if b.id in batch_cents else None,
             )
             for b in batches
         ],
@@ -462,6 +512,7 @@ def list_plans(
             meals_count=p.totals["meals"],
             cash_display=money(p.totals["costs"]["cash_cents"]),
             is_current=p.id == current,
+            kind=p.kind,
         )
         for p in plans
     ]
@@ -478,6 +529,8 @@ def grocery_item_out(
     kind = reason.get("kind", "buy")
     to_buy_total = Decimal(reason.get("to_buy_total", it.to_buy_quantity))
     ingredient = data.get(it.ingredient_id)
+    # a pinch of a staple would read "0 g": "check you have" shows the name only
+    pinch = kind == "staple" and shows_as_zero(it.needed_quantity, it.unit)
     return GroceryItemOut(
         id=it.id,
         ingredient_id=it.ingredient_id,
@@ -487,13 +540,15 @@ def grocery_item_out(
         store_name=stores.get(it.store_id) if it.store_id else None,
         product_id=it.product_id,
         product_name=products.get(it.product_id) if it.product_id else None,
-        needed=amount_display(it.needed_quantity, it.unit),
+        needed="" if pinch else amount_display(it.needed_quantity, it.unit),
         from_inventory=amount_display(it.inventory_used_quantity, it.unit)
         if it.inventory_used_quantity
         else None,
         to_buy=(
             f"{it.packages} × {products.get(it.product_id or 0, 'package')}"
             if it.packages
+            else ""
+            if pinch
             else amount_display(to_buy_total if kind != "buy" else it.to_buy_quantity, it.unit)
         ),
         packages=it.packages,
@@ -617,6 +672,14 @@ def grocery_view(session: Session, user_id: int, plan_id: int, group_by: str = "
         )
     )
     data = load_ingredients(session, {it.ingredient_id for it in items})
+    # never list water or Always-have items (plans saved before Phase 2b listed them as staples)
+    always_have = set(plan.constraints.get("always_have_ingredient_ids", ()))
+    items = [
+        it
+        for it in items
+        if it.ingredient_id not in always_have
+        and not (it.ingredient_id in data and data[it.ingredient_id].slug in ALWAYS_HAVE_SLUGS)
+    ]
     stores = {s.id: s.name for s in session.scalars(select(Store))}
     products = {
         p.id: p.name
@@ -665,6 +728,7 @@ def grocery_view(session: Session, user_id: int, plan_id: int, group_by: str = "
         total_display=money(totals["cost_cents"]),
         regular_cents=totals["cost_cents"] - stock_up_cents,
         stock_up_cents=stock_up_cents,
+        cash_split_display=cash_split_display(totals["cost_cents"] - stock_up_cents, stock_up_cents),
         complete=totals["cost_complete"],
         unpriced=list(totals["unpriced"]),
         split=split,

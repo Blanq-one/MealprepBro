@@ -107,7 +107,9 @@ def load_reference(
 ) -> ReferenceData:
     recipes = load_recipes(session, version_ids)
     ingredient_ids = {line.ingredient_id for r in recipes.values() for line in r.lines}
-    plans = load_ingredient_plans(session, user_id, ingredient_ids, constraints.store_ids)
+    plans = load_ingredient_plans(
+        session, user_id, ingredient_ids, constraints.store_ids, constraints.always_have_ingredient_ids
+    )
     data = load_ingredients(session, ingredient_ids)
     status = diet_status(session, user_id)
     excluded = frozenset(i for i, r in status.results.items() if r.status is not ExclusionStatus.ALLOWED)

@@ -4,6 +4,8 @@ need − inventory (open packages first, then earliest expiry) → exact package
 the store-split rule (R4): Stop & Shop unless buying some items at Price Rite saves ≥ the threshold this
 week. Stock-up items (rice, oil, protein powder) are whole packages of the cheapest pack per unit, listed
 apart. Staples (assume_in_stock) are listed as "check you have"; unknown prices are flagged, never guessed.
+Always-have items (your settings, and water) are unlimited stock you own: never bought and never listed
+(kind "always_have" is kept here only so the week's money counts what they're worth).
 Money: each line is rounded once; totals are sums of lines (§7.1).
 """
 
@@ -49,6 +51,20 @@ def build_grocery(
     takes: list[tuple[int, Decimal]] = []
     for ingredient_id in sorted(need):
         plan = ingredients[ingredient_id]
+        if plan.always_have:
+            items.append(
+                GroceryItem(
+                    ingredient_id=ingredient_id,
+                    name=plan.name,
+                    unit=plan.planning_unit,
+                    needed=need[ingredient_id],
+                    inventory_used=need[ingredient_id],
+                    to_buy=Decimal(0),
+                    kind="always_have",
+                    recipes=tuple(used_by[ingredient_id]),
+                )
+            )
+            continue
         if plan.staple:
             items.append(
                 GroceryItem(

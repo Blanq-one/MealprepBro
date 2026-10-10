@@ -1,6 +1,6 @@
 """AC 0.1: `alembic upgrade head` creates exactly the 31 tables of 0001 (0002 is data only, 0003 adds a
-column); `downgrade base` removes them; `alembic check` reports no drift. Runs in its own throwaway
-database."""
+column), plus the Phase 2 and 2b tables; `downgrade base` removes them; `alembic check` reports no drift. Runs
+in its own throwaway database. 0005 has its own tests in test_cook_flow_migration.py."""
 
 from collections.abc import Iterator
 
@@ -45,10 +45,9 @@ TABLES_0001 = {
     "grocery_list_item",
 }
 TABLES_0004 = {"plan_candidate", "login_attempt"}
+TABLES_0005 = {"recipe_favorite", "recipe_saved", "feedback_event", "cook_search"}
 LATER_PHASE_TABLES = {
     "prepared_portion",
-    "feedback_event",
-    "recipe_favorite",
     "preference_profile",
     "day_override",
     "consumption_entry",
@@ -86,13 +85,13 @@ def test_upgrade_check_downgrade(scratch_db_url):
     command.upgrade(cfg, "head")
     tables = _tables(scratch_db_url)
     assert len(TABLES_0001) == 31
-    assert tables == TABLES_0001 | TABLES_0004
+    assert tables == TABLES_0001 | TABLES_0004 | TABLES_0005
     assert not tables & LATER_PHASE_TABLES
     command.check(cfg)  # raises if the models and the migration disagree
     command.downgrade(cfg, "base")
     assert _tables(scratch_db_url) == set()
     command.upgrade(cfg, "head")  # and back up again cleanly
-    assert _tables(scratch_db_url) == TABLES_0001 | TABLES_0004
+    assert _tables(scratch_db_url) == TABLES_0001 | TABLES_0004 | TABLES_0005
 
 
 def test_0004_adds_the_exposure_log_price_client_ref_and_login_attempts(scratch_db_url):
@@ -132,7 +131,7 @@ def test_0002_moves_the_budget_out_of_settings_and_adds_the_protein_target(scrat
                 text("INSERT INTO user_settings (user_id, settings, schema_version) VALUES (:u, :s, 1)"),
                 {"u": user_id, "s": v1},
             )
-        command.upgrade(cfg, "head")
+        command.upgrade(cfg, "0002")  # 0005 moves settings on to v3 (test_cook_flow_migration.py)
         with engine.connect() as conn:
             settings, version = conn.execute(text("SELECT settings, schema_version FROM user_settings")).one()
         assert version == 2 and settings["schema_version"] == 2

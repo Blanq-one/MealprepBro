@@ -504,6 +504,8 @@ def validate_plan(plan: RoundedPlan, ref: ReferenceData) -> ValidationReport:
     grocery = build_grocery(c, plan.batches, ref.ingredients)
     available = {i: plan_.available for i, plan_ in ref.ingredients.items()}
     for item in plan.grocery.items:
+        if item.kind == "always_have":  # unlimited stock you own
+            continue
         if item.inventory_used > available.get(item.ingredient_id, Decimal(0)) + QTY_TOLERANCE:
             errors.append(
                 Issue(
@@ -569,7 +571,7 @@ def validate_plan(plan: RoundedPlan, ref: ReferenceData) -> ValidationReport:
         )
 
     # ---- money and perishables, recomputed ----
-    costs, leftovers = cost_summary(c, plan.batches, grocery, ref.ingredients)
+    costs, leftovers = cost_summary(c, plan.batches, grocery, ref.ingredients, plan.meals)
     if costs != plan.costs or leftovers != plan.leftovers:
         errors.append(Issue("TOTALS_MISMATCH", "stored costs or leftovers don't match the recomputed ones"))
     freeze = freeze_instructions(c, plan.batches, grocery, ref.ingredients)
@@ -590,6 +592,8 @@ def validate_plan(plan: RoundedPlan, ref: ReferenceData) -> ValidationReport:
             )
     used_lots = {lot_id for lot_id, _ in grocery.inventory_takes}
     for plan_ in ref.ingredients.values():
+        if plan_.always_have:  # plans don't track Always-have lots
+            continue
         for lot in plan_.lots:
             if lot.expires_on is not None and lot.expires_on <= c.week_end and lot.id not in used_lots:
                 warnings.append(

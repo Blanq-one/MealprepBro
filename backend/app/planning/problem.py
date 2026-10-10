@@ -97,6 +97,9 @@ class IngredientPlan:
     profile: NutritionProfile
     count_rounding_step: Decimal = Decimal(1)
     staple: bool = False  # assume_in_stock: never bought by the plan, listed as "check you have"
+    # Always have (settings, and water): unlimited stock you own. Never bought, never listed, its lots aren't
+    # tracked by plans; what the week uses is costed at the unit price where one is known.
+    always_have: bool = False
     stock_up: bool = False  # long-life, bought occasionally: outside a shop-mode budget, listed separately
     perishable: bool = False
     shelf_life_days_fridge: int | None = None
@@ -106,6 +109,11 @@ class IngredientPlan:
     fridge_life: FridgeLife | None = None  # raw meat, poultry, fish and eggs (FoodSafety.gov chart)
     offers: tuple[Offer, ...] = ()
     lots: tuple[InventoryLot, ...] = ()
+
+    @property
+    def unlimited(self) -> bool:
+        """The plan never buys it and never needs it from your lots: a staple or an Always-have item."""
+        return self.staple or self.always_have
 
     def to_planning(self, quantity: Decimal, unit: str) -> Decimal:
         return convert(quantity, unit, self.planning_unit, self.units)

@@ -1,6 +1,40 @@
 {
  "components": {
   "schemas": {
+   "AmountOptionOut": {
+    "properties": {
+     "display": {
+      "title": "Display",
+      "type": "string"
+     },
+     "key": {
+      "enum": [
+       "full",
+       "three_quarters",
+       "half",
+       "quarter"
+      ],
+      "title": "Key",
+      "type": "string"
+     },
+     "quantity": {
+      "title": "Quantity",
+      "type": "string"
+     },
+     "unit": {
+      "title": "Unit",
+      "type": "string"
+     }
+    },
+    "required": [
+     "key",
+     "quantity",
+     "unit",
+     "display"
+    ],
+    "title": "AmountOptionOut",
+    "type": "object"
+   },
    "ApproveIn": {
     "additionalProperties": false,
     "properties": {
@@ -197,6 +231,32 @@
       "title": "Cook On",
       "type": "string"
      },
+     "cost_cents": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cost Cents"
+     },
+     "cost_display": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cost Display"
+     },
+     "dish_category": {
+      "title": "Dish Category",
+      "type": "string"
+     },
      "id": {
       "title": "Id",
       "type": "integer"
@@ -249,7 +309,8 @@
      "portion_size",
      "portion_multiplier",
      "scale_factor",
-     "planned_minutes"
+     "planned_minutes",
+     "dish_category"
     ],
     "title": "BatchOut",
     "type": "object"
@@ -259,7 +320,7 @@
     "properties": {
      "items": {
       "items": {
-       "$ref": "#/components/schemas/InventoryLotIn"
+       "$ref": "#/components/schemas/BulkItemIn"
       },
       "maxItems": 50,
       "minItems": 1,
@@ -280,6 +341,164 @@
      "items"
     ],
     "title": "BulkIn",
+    "type": "object"
+   },
+   "BulkItemIn": {
+    "additionalProperties": false,
+    "description": "One lot to add. The amount is given one way: `quantity` + `unit` (any unit the ingredient understands),\nan `amount_option` of its quick pick (Full, \u00be, \u00bd or \u00bc of `product_id`'s package, else its usual one), or a\n`custom_amount` + `custom_unit` from the quick pick's custom units. The server converts it.",
+    "properties": {
+     "acquired_on": {
+      "anyOf": [
+       {
+        "format": "date",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Acquired On"
+     },
+     "amount_option": {
+      "anyOf": [
+       {
+        "enum": [
+         "full",
+         "three_quarters",
+         "half",
+         "quarter"
+        ],
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Amount Option"
+     },
+     "custom_amount": {
+      "anyOf": [
+       {
+        "exclusiveMinimum": 0.0,
+        "maximum": 100000.0,
+        "type": "number"
+       },
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Custom Amount"
+     },
+     "custom_unit": {
+      "anyOf": [
+       {
+        "maxLength": 20,
+        "minLength": 1,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Custom Unit"
+     },
+     "expires_on": {
+      "anyOf": [
+       {
+        "format": "date",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Expires On"
+     },
+     "expiry_is_estimate": {
+      "default": true,
+      "title": "Expiry Is Estimate",
+      "type": "boolean"
+     },
+     "ingredient_id": {
+      "title": "Ingredient Id",
+      "type": "integer"
+     },
+     "location": {
+      "$ref": "#/components/schemas/StorageLocation"
+     },
+     "notes": {
+      "anyOf": [
+       {
+        "maxLength": 300,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Notes"
+     },
+     "opened_on": {
+      "anyOf": [
+       {
+        "format": "date",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Opened On"
+     },
+     "product_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Product Id"
+     },
+     "quantity": {
+      "anyOf": [
+       {
+        "exclusiveMinimum": 0.0,
+        "type": "number"
+       },
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Quantity"
+     },
+     "unit": {
+      "anyOf": [
+       {
+        "maxLength": 20,
+        "minLength": 1,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "g, lb, cup, count, \u2026",
+      "title": "Unit"
+     }
+    },
+    "required": [
+     "ingredient_id",
+     "location"
+    ],
+    "title": "BulkItemIn",
     "type": "object"
    },
    "CalculatedLineOut": {
@@ -434,6 +653,10 @@
       "title": "Cash Display",
       "type": "string"
      },
+     "cash_split_display": {
+      "title": "Cash Split Display",
+      "type": "string"
+     },
      "complete": {
       "title": "Complete",
       "type": "boolean"
@@ -500,9 +723,38 @@
      "expected_waste_cents",
      "expected_waste_display",
      "complete",
-     "unpriced"
+     "unpriced",
+     "cash_split_display"
     ],
     "title": "CostsOut",
+    "type": "object"
+   },
+   "CustomUnitOut": {
+    "properties": {
+     "label": {
+      "title": "Label",
+      "type": "string"
+     },
+     "start": {
+      "title": "Start",
+      "type": "string"
+     },
+     "step": {
+      "title": "Step",
+      "type": "string"
+     },
+     "unit": {
+      "title": "Unit",
+      "type": "string"
+     }
+    },
+    "required": [
+     "unit",
+     "label",
+     "step",
+     "start"
+    ],
+    "title": "CustomUnitOut",
     "type": "object"
    },
    "DayOut": {
@@ -514,6 +766,32 @@
      "cook_minutes_available": {
       "title": "Cook Minutes Available",
       "type": "integer"
+     },
+     "cook_note": {
+      "title": "Cook Note",
+      "type": "string"
+     },
+     "cost_cents": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cost Cents"
+     },
+     "cost_display": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cost Display"
      },
      "day": {
       "format": "date",
@@ -562,7 +840,8 @@
      "elapsed_minutes",
      "chill_minutes",
      "cook_minutes_available",
-     "meals"
+     "meals",
+     "cook_note"
     ],
     "title": "DayOut",
     "type": "object"
@@ -740,6 +1019,34 @@
     ],
     "title": "Equipment",
     "type": "string"
+   },
+   "FieldErrorOut": {
+    "properties": {
+     "loc": {
+      "items": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "integer"
+        }
+       ]
+      },
+      "title": "Loc",
+      "type": "array"
+     },
+     "msg": {
+      "title": "Msg",
+      "type": "string"
+     }
+    },
+    "required": [
+     "loc",
+     "msg"
+    ],
+    "title": "FieldErrorOut",
+    "type": "object"
    },
    "FreezeOut": {
     "properties": {
@@ -1370,6 +1677,10 @@
    },
    "GroceryListOut": {
     "properties": {
+     "cash_split_display": {
+      "title": "Cash Split Display",
+      "type": "string"
+     },
      "checked_count": {
       "title": "Checked Count",
       "type": "integer"
@@ -1463,6 +1774,7 @@
      "total_display",
      "regular_cents",
      "stock_up_cents",
+     "cash_split_display",
      "complete",
      "unpriced",
      "split",
@@ -2140,6 +2452,32 @@
       "title": "Cook Batch Id",
       "type": "integer"
      },
+     "cost_cents": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cost Cents"
+     },
+     "cost_display": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cost Display"
+     },
+     "dish_category": {
+      "title": "Dish Category",
+      "type": "string"
+     },
      "eat_on": {
       "format": "date",
       "title": "Eat On",
@@ -2198,7 +2536,8 @@
      "kcal",
      "protein_g",
      "from_freezer",
-     "cook_batch_id"
+     "cook_batch_id",
+     "dish_category"
     ],
     "title": "MealOut",
     "type": "object"
@@ -2590,6 +2929,17 @@
       "title": "Kcal Target Week",
       "type": "integer"
      },
+     "kind": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Kind"
+     },
      "meals_count": {
       "title": "Meals Count",
       "type": "integer"
@@ -2969,6 +3319,17 @@
       "title": "Kcal Target Week",
       "type": "integer"
      },
+     "kind": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Kind"
+     },
      "leftovers": {
       "items": {
        "$ref": "#/components/schemas/LeftoverOut"
@@ -3057,6 +3418,7 @@
      "id",
      "week_start",
      "status",
+     "kind",
      "calorie_mode",
      "kcal_target_week",
      "kcal_planned_week",
@@ -3596,11 +3958,25 @@
     "type": "object"
    },
    "QuickPickOut": {
-    "description": "A one-tap add: the ingredient with its usual package (or a typical amount) and where it lives.",
+    "description": "A one-tap add: the ingredient with its usual package (or a typical amount) and where it lives.\nPhase 2b: the amount picker's options (Full first, the default) and custom units (the natural one\nfirst).",
     "properties": {
+     "amount_options": {
+      "items": {
+       "$ref": "#/components/schemas/AmountOptionOut"
+      },
+      "title": "Amount Options",
+      "type": "array"
+     },
      "category": {
       "title": "Category",
       "type": "string"
+     },
+     "custom_units": {
+      "items": {
+       "$ref": "#/components/schemas/CustomUnitOut"
+      },
+      "title": "Custom Units",
+      "type": "array"
      },
      "display": {
       "title": "Display",
@@ -3928,6 +4304,10 @@
       "title": "Description",
       "type": "string"
      },
+     "dish_category": {
+      "title": "Dish Category",
+      "type": "string"
+     },
      "equipment": {
       "items": {
        "type": "string"
@@ -3963,6 +4343,14 @@
       },
       "title": "Incomplete Reasons",
       "type": "array"
+     },
+     "is_favorite": {
+      "title": "Is Favorite",
+      "type": "boolean"
+     },
+     "is_saved": {
+      "title": "Is Saved",
+      "type": "boolean"
      },
      "labels": {
       "items": {
@@ -4069,7 +4457,10 @@
      "costs",
      "incomplete_reasons",
      "change_summary",
-     "created_at"
+     "created_at",
+     "dish_category",
+     "is_favorite",
+     "is_saved"
     ],
     "title": "RecipeVersionOut",
     "type": "object"
@@ -4217,6 +4608,86 @@
      "added_by_app"
     ],
     "title": "RenderedStepOut",
+    "type": "object"
+   },
+   "SavedList": {
+    "enum": [
+     "favorites",
+     "later"
+    ],
+    "title": "SavedList",
+    "type": "string"
+   },
+   "SavedRecipeOut": {
+    "description": "A Saved-list card (C7). Every number is a display string from code, per portion.",
+    "properties": {
+     "badges": {
+      "items": {
+       "enum": [
+        "favorite",
+        "saved",
+        "new",
+        "draft"
+       ],
+       "type": "string"
+      },
+      "title": "Badges",
+      "type": "array"
+     },
+     "dish_category": {
+      "title": "Dish Category",
+      "type": "string"
+     },
+     "numbers": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Numbers",
+      "type": "array"
+     },
+     "portions": {
+      "title": "Portions",
+      "type": "integer"
+     },
+     "portions_display": {
+      "title": "Portions Display",
+      "type": "string"
+     },
+     "recipe_id": {
+      "title": "Recipe Id",
+      "type": "integer"
+     },
+     "saved_at": {
+      "format": "date-time",
+      "title": "Saved At",
+      "type": "string"
+     },
+     "steps_ready": {
+      "title": "Steps Ready",
+      "type": "boolean"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     },
+     "version_id": {
+      "title": "Version Id",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "recipe_id",
+     "version_id",
+     "title",
+     "dish_category",
+     "badges",
+     "steps_ready",
+     "portions",
+     "portions_display",
+     "numbers",
+     "saved_at"
+    ],
+    "title": "SavedRecipeOut",
     "type": "object"
    },
    "SeedRecipeOut": {
@@ -4378,6 +4849,59 @@
     "title": "SettingsOut",
     "type": "object"
    },
+   "SettingsPreviewOut": {
+    "description": "POST /settings/preview: your saved settings with the sent fields replaced, checked but not saved.",
+    "properties": {
+     "errors": {
+      "items": {
+       "$ref": "#/components/schemas/FieldErrorOut"
+      },
+      "title": "Errors",
+      "type": "array"
+     },
+     "kcal_planned_display": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Kcal Planned Display"
+     },
+     "settings": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/UserSettings"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "summary": {
+      "items": {
+       "$ref": "#/components/schemas/SummaryLineOut"
+      },
+      "title": "Summary",
+      "type": "array"
+     },
+     "valid": {
+      "title": "Valid",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "valid",
+     "errors",
+     "kcal_planned_display",
+     "summary",
+     "settings"
+    ],
+    "title": "SettingsPreviewOut",
+    "type": "object"
+   },
    "SlotAllocationSetting": {
     "additionalProperties": false,
     "properties": {
@@ -4461,6 +4985,57 @@
     "title": "StoreCostOut",
     "type": "object"
    },
+   "StoreIn": {
+    "additionalProperties": false,
+    "properties": {
+     "name": {
+      "maxLength": 60,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+     }
+    },
+    "required": [
+     "name"
+    ],
+    "title": "StoreIn",
+    "type": "object"
+   },
+   "StoreOut": {
+    "properties": {
+     "id": {
+      "title": "Id",
+      "type": "integer"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "order": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Order"
+     },
+     "priority": {
+      "title": "Priority",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "id",
+     "name",
+     "priority",
+     "order"
+    ],
+    "title": "StoreOut",
+    "type": "object"
+   },
    "StoreTotalOut": {
     "properties": {
      "cents": {
@@ -4494,6 +5069,29 @@
      "display"
     ],
     "title": "StoreTotalOut",
+    "type": "object"
+   },
+   "SummaryLineOut": {
+    "properties": {
+     "key": {
+      "title": "Key",
+      "type": "string"
+     },
+     "label": {
+      "title": "Label",
+      "type": "string"
+     },
+     "value": {
+      "title": "Value",
+      "type": "string"
+     }
+    },
+    "required": [
+     "key",
+     "label",
+     "value"
+    ],
+    "title": "SummaryLineOut",
     "type": "object"
    },
    "UnitKind": {
@@ -4531,6 +5129,13 @@
    "UserSettings": {
     "additionalProperties": false,
     "properties": {
+     "always_have": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Always Have",
+      "type": "array"
+     },
      "calorie_mode": {
       "$ref": "#/components/schemas/CalorieMode",
       "default": "weekly"
@@ -4572,6 +5177,18 @@
       "title": "Daily Under Pct",
       "type": "number"
      },
+     "default_budget_cents": {
+      "anyOf": [
+       {
+        "minimum": 0.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Default Budget Cents"
+     },
      "default_portion_size": {
       "$ref": "#/components/schemas/PortionSize",
       "default": "normal"
@@ -4602,6 +5219,13 @@
       "$ref": "#/components/schemas/GroceryMode",
       "default": "balanced"
      },
+     "household_size": {
+      "default": 1,
+      "maximum": 8.0,
+      "minimum": 1.0,
+      "title": "Household Size",
+      "type": "integer"
+     },
      "leftover_fridge_days": {
       "default": 3,
       "title": "Leftover Fridge Days",
@@ -4610,6 +5234,11 @@
      "nutrition_priority": {
       "$ref": "#/components/schemas/NutritionPriority",
       "default": "protein"
+     },
+     "onboarding_completed": {
+      "default": false,
+      "title": "Onboarding Completed",
+      "type": "boolean"
      },
      "region_code": {
       "anyOf": [
@@ -4623,8 +5252,8 @@
       "title": "Region Code"
      },
      "schema_version": {
-      "const": 2,
-      "default": 2,
+      "const": 3,
+      "default": 3,
       "title": "Schema Version",
       "type": "integer"
      },
@@ -5533,7 +6162,7 @@
   },
   "/api/v1/inventory/bulk": {
    "post": {
-    "description": "Add several lots at once (quick add, or a confirmed note). All or nothing; beef can't be added.",
+    "description": "Add several lots at once (quick add, or a confirmed note). All or nothing; beef can't be added. Each\namount comes as quantity + unit, a quick pick's amount option, or a custom amount in one of its units.",
     "operationId": "add_many_api_v1_inventory_bulk_post",
     "requestBody": {
      "content": {
@@ -6277,6 +6906,53 @@
     ]
    }
   },
+  "/api/v1/recipes/saved": {
+   "get": {
+    "description": "Your \u2665 favorites or \ud83d\udd16 saved-for-later recipes as cards, most recently saved first.",
+    "operationId": "list_saved_api_v1_recipes_saved_get",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "list",
+      "required": false,
+      "schema": {
+       "$ref": "#/components/schemas/SavedList",
+       "default": "favorites"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/SavedRecipeOut"
+         },
+         "title": "Response List Saved Api V1 Recipes Saved Get",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "List Saved",
+    "tags": [
+     "recipes"
+    ]
+   }
+  },
   "/api/v1/recipes/seed": {
    "get": {
     "description": "The draft seed library with nutrition and cost per serving, or the reasons it's incomplete.",
@@ -6345,6 +7021,144 @@
     ]
    }
   },
+  "/api/v1/recipes/{recipe_id}/favorite": {
+   "delete": {
+    "operationId": "remove_favorite_api_v1_recipes__recipe_id__favorite_delete",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "recipe_id",
+      "required": true,
+      "schema": {
+       "title": "Recipe Id",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Remove Favorite",
+    "tags": [
+     "recipes"
+    ]
+   },
+   "put": {
+    "description": "\u2665 on: suggest this more often (a boost in rankings and plans whenever it fits). Idempotent.",
+    "operationId": "add_favorite_api_v1_recipes__recipe_id__favorite_put",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "recipe_id",
+      "required": true,
+      "schema": {
+       "title": "Recipe Id",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Add Favorite",
+    "tags": [
+     "recipes"
+    ]
+   }
+  },
+  "/api/v1/recipes/{recipe_id}/saved": {
+   "delete": {
+    "operationId": "remove_saved_api_v1_recipes__recipe_id__saved_delete",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "recipe_id",
+      "required": true,
+      "schema": {
+       "title": "Recipe Id",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Remove Saved",
+    "tags": [
+     "recipes"
+    ]
+   },
+   "put": {
+    "description": "\ud83d\udd16 on: save for later, a plain bookmark with no effect on ranking. Idempotent.",
+    "operationId": "add_saved_api_v1_recipes__recipe_id__saved_put",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "recipe_id",
+      "required": true,
+      "schema": {
+       "title": "Recipe Id",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Add Saved",
+    "tags": [
+     "recipes"
+    ]
+   }
+  },
   "/api/v1/settings": {
    "get": {
     "operationId": "get_settings_api_v1_settings_get",
@@ -6361,6 +7175,49 @@
      }
     },
     "summary": "Get Settings",
+    "tags": [
+     "settings"
+    ]
+   },
+   "patch": {
+    "description": "Change some settings and keep the rest, e.g. {\"onboarding_completed\": true} for \"Skip, use my current\nsettings\".",
+    "operationId": "patch_settings_api_v1_settings_patch",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "additionalProperties": true,
+        "description": "Only the fields to change; each one replaces your saved value (e.g. the whole cook schedule).",
+        "title": "Body",
+        "type": "object"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SettingsOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Patch Settings",
     "tags": [
      "settings"
     ]
@@ -6486,6 +7343,117 @@
      }
     },
     "summary": "Put Preference",
+    "tags": [
+     "settings"
+    ]
+   }
+  },
+  "/api/v1/settings/preview": {
+   "post": {
+    "description": "Check a settings draft without saving it: field errors, the \"kcal a day planned\" line, and (when it's\nvalid) the summary lines.",
+    "operationId": "preview_settings_api_v1_settings_preview_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "additionalProperties": true,
+        "description": "Only the fields to change; each one replaces your saved value (e.g. the whole cook schedule).",
+        "title": "Body",
+        "type": "object"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SettingsPreviewOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Preview Settings",
+    "tags": [
+     "settings"
+    ]
+   }
+  },
+  "/api/v1/stores": {
+   "get": {
+    "description": "The grocery stores you can pick, with your preference order.",
+    "operationId": "list_stores_api_v1_stores_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/StoreOut"
+         },
+         "title": "Response List Stores Api V1 Stores Get",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "List Stores",
+    "tags": [
+     "settings"
+    ]
+   },
+   "post": {
+    "description": "Add a grocery store by name (201), or get the one you already have with that name (200). Add it to\nyour store order in settings to shop there.",
+    "operationId": "add_store_api_v1_stores_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/StoreIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/StoreOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Add Store",
     "tags": [
      "settings"
     ]

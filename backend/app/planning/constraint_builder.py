@@ -36,6 +36,7 @@ class DietInputs:
     caps: tuple[ResolvedCap, ...]
     disliked_ids: frozenset[int] = frozenset()
     favorite_recipe_ids: frozenset[int] = frozenset()
+    always_have_ids: frozenset[int] = frozenset()  # settings "Always have" and water, resolved to ids
 
 
 def build_constraints(
@@ -151,6 +152,7 @@ def build_constraints(
             frequency_caps=caps,
             disliked_ingredient_ids=diet.disliked_ids - excluded,
             favorite_recipe_ids=diet.favorite_recipe_ids,
+            always_have_ingredient_ids=diet.always_have_ids,
             region_code=settings.region_code,
         )
     except ValueError as exc:

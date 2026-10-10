@@ -26,8 +26,15 @@ class PlanNotFoundError(LookupError):
 
 
 def save_plan(
-    session: Session, user_id: int, plan: RoundedPlan, report: ValidationReport, run_id: int | None
+    session: Session,
+    user_id: int,
+    plan: RoundedPlan,
+    report: ValidationReport,
+    run_id: int | None,
+    *,
+    kind: str | None = None,
 ) -> MealPlan:
+    """`kind` (Phase 2b): meal_prep | single | grocery_advice; None = a week plan from POST /plans."""
     c = plan.constraints
     validation = report.to_json()
     validation["notes"] = list(plan.notes)
@@ -54,6 +61,7 @@ def save_plan(
             "freeze": [item.to_json() for item in plan.freeze],
         },
         validation_report=validation,
+        kind=kind,
     )
     session.add(row)
     session.flush()
@@ -98,7 +106,8 @@ def save_plan(
     grocery = GroceryList(user_id=user_id, meal_plan_id=row.id, mode=c.grocery_mode.value, status="open")
     session.add(grocery)
     session.flush()
-    for position, item in enumerate(plan.grocery.items, start=1):
+    listed = [item for item in plan.grocery.items if item.kind != "always_have"]  # never listed
+    for position, item in enumerate(listed, start=1):
         session.add(
             GroceryListItem(
                 grocery_list_id=grocery.id,

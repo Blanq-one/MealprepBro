@@ -783,6 +783,7 @@ streaming of **our HTTP response** only. LLM calls stay non-streaming structured
 | E9 | `GET /recipes/saved?list=favorites\|later` | Saved lists as cards (pantry coverage added in 2b.3a) | JSON | 2b.1 |
 | E10 | `POST /grocery/advice` | What should I buy? | NDJSON | 2b.8 |
 | E11 | `POST /settings/preview` | Validate settings without saving; computed summary lines and field errors | JSON | 2b.1 |
+| E11a | `PATCH /settings` (added in 2b.1, BUILD_PLAN D44) | Change only the fields sent, e.g. just `onboarding_completed` for **Skip, use my current settings** | JSON | 2b.1 |
 | E12 | `GET` / `POST /stores` | List your stores; add a grocery store by name | JSON | 2b.1 |
 | E13 | `GET /inventory/quick-picks` (changed) | Adds `amount_options` and `custom_units` | JSON | 2b.1 |
 | E14 | `POST /inventory/bulk` (changed) | Accepts `amount_option` or `custom_amount` + `custom_unit` | JSON | 2b.1 |

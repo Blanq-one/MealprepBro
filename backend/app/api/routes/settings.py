@@ -1,13 +1,29 @@
-from fastapi import APIRouter, Response
+from typing import Annotated, Any
+
+from fastapi import APIRouter, Body, Response
+from fastapi.exceptions import RequestValidationError
+from pydantic import ValidationError
 from sqlalchemy import select
 
 from app.api.deps import CurrentUser, DbSession
 from app.db.models import Ingredient
 from app.domain.exclusions import Preference
-from app.schemas.settings import DietReviewOut, PreferenceIn, PreferenceOut, SettingsOut, UserSettings
+from app.schemas.settings import (
+    DietReviewOut,
+    FieldErrorOut,
+    PreferenceIn,
+    PreferenceOut,
+    SettingsOut,
+    SettingsPreviewOut,
+    SummaryLineOut,
+    UserSettings,
+)
 from app.services import settings as service
 
 router = APIRouter(prefix="/api/v1/settings", tags=["settings"])
+
+CHANGES_DOC = "Only the fields to change; each one replaces your saved value (e.g. the whole cook schedule)."
+SettingsChanges = Annotated[dict[str, Any], Body(description=CHANGES_DOC)]
 
 
 def _diet_review(session: DbSession, user_id: int) -> list[DietReviewOut]:
@@ -53,6 +69,32 @@ def put_settings(body: UserSettings, session: DbSession, user: CurrentUser) -> S
     service.save_settings(session, user.id, body)
     session.commit()
     return _out(session, user.id)
+
+
+@router.patch("", response_model=SettingsOut)
+def patch_settings(body: SettingsChanges, session: DbSession, user: CurrentUser) -> SettingsOut:
+    """Change some settings and keep the rest, e.g. {"onboarding_completed": true} for "Skip, use my current
+    settings"."""
+    try:
+        service.patch_settings(session, user.id, body)
+    except ValidationError as exc:
+        raise RequestValidationError(exc.errors()) from exc
+    session.commit()
+    return _out(session, user.id)
+
+
+@router.post("/preview", response_model=SettingsPreviewOut)
+def preview_settings(body: SettingsChanges, session: DbSession, user: CurrentUser) -> SettingsPreviewOut:
+    """Check a settings draft without saving it: field errors, the "kcal a day planned" line, and (when it's
+    valid) the summary lines."""
+    preview = service.preview_settings(session, user.id, body)
+    return SettingsPreviewOut(
+        valid=preview.valid,
+        errors=[FieldErrorOut(loc=list(e.loc), msg=e.msg) for e in preview.errors],
+        kcal_planned_display=preview.kcal_planned_display,
+        summary=[SummaryLineOut(key=s.key, label=s.label, value=s.value) for s in preview.summary],
+        settings=preview.settings,
+    )
 
 
 @router.put("/ingredient-preferences/{ingredient_id}", response_model=SettingsOut)

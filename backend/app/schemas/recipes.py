@@ -1,6 +1,7 @@
 """API models for recipes and rendered recipe versions (Phase 1)."""
 
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -54,6 +55,13 @@ class RecipeVersionOut(BaseModel):
     incomplete_reasons: list[str]
     change_summary: str | None
     created_at: datetime
+    # Phase 2b
+    dish_category: (
+        str  # drink | dessert | oats | eggs | wrap | sandwich | soup | curry | pasta | salad | bowl |
+    )
+    # roast | snack | other (the app shows its icon)
+    is_favorite: bool
+    is_saved: bool
 
 
 class RecipeVersionSummaryOut(BaseModel):
@@ -73,3 +81,18 @@ class RecipeOut(BaseModel):
     default_version_id: int | None
     versions: list[RecipeVersionSummaryOut]
     default_version: RecipeVersionOut | None
+
+
+class SavedRecipeOut(BaseModel):
+    """A Saved-list card (C7). Every number is a display string from code, per portion."""
+
+    recipe_id: int
+    version_id: int
+    title: str
+    dish_category: str
+    badges: list[Literal["favorite", "saved", "new", "draft"]]
+    steps_ready: bool
+    portions: int  # your household size
+    portions_display: str  # "1 portion" / "for 2 people"
+    numbers: list[str]  # "540 kcal", "41 g protein", "35 min", "$2.10 a portion est."
+    saved_at: datetime

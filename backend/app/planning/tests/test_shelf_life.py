@@ -1,5 +1,6 @@
 """Long-keeping fresh items (Phase 2 pre-work): onions, garlic, potatoes and butter keep for weeks, so what's
-left of them at the end of a plan isn't counted as waste. Hard cheeses stay held (R8), so they aren't here."""
+left of them at the end of a plan isn't counted as waste; sweet potatoes too since Phase 2b (E8). Hard cheeses
+stay held (R8), so they aren't here."""
 
 from dataclasses import replace
 from decimal import Decimal
@@ -19,6 +20,7 @@ LONG_KEEPERS = {
     "onion-red": ("pantry", 28),
     "garlic": ("pantry", 56),
     "potato-russet": ("pantry", 28),
+    "sweet-potato": ("pantry", 28),  # Phase 2b (E8)
     "butter-salted": ("fridge", 30),
     "butter-unsalted": ("fridge", 30),
 }

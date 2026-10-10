@@ -50,6 +50,8 @@ class MealPlan(Base):
     validation_report: Mapped[dict[str, Any]] = mapped_column(JSONB)
     created_at: Mapped[datetime] = created_at_column()
     accepted_at: Mapped[datetime | None]
+    # Phase 2b (0005): meal_prep | single | grocery_advice; NULL = a Phase 1–2 week plan
+    kind: Mapped[str | None] = mapped_column(Text)
 
 
 class PlanCookBatch(Base):

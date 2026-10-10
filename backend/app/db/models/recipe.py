@@ -89,6 +89,9 @@ class RecipeVersion(Base):
     generation_run_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("generation_run.id"))
     status: Mapped[str] = mapped_column(Text, server_default="active")
     created_at: Mapped[datetime] = created_at_column()
+    # Phase 2b (0005): NULL = has its steps; pending = an idea whose steps are written once, on first open
+    # (used from step 2b.3b)
+    steps_status: Mapped[str | None] = mapped_column(Text)
 
 
 class RecipeIngredient(Base):

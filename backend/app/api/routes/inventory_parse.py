@@ -8,7 +8,7 @@ from app.llm.errors import LLMConfigError, LLMError
 from app.schemas.inventory import BulkIn, InventoryLotOut, ParseIn, ParseOut, QuickPickOut
 from app.services import inventory as inventory_service
 from app.services import inventory_parse as service
-from app.services.quick_add import quick_picks
+from app.services.quick_add import quick_picks, resolve_amount
 
 router = APIRouter(prefix="/api/v1/inventory", tags=["inventory"])
 
@@ -34,13 +34,28 @@ def parse(body: ParseIn, session: DbSession, user: CurrentUser, client_factory: 
 
 @router.post("/bulk", response_model=list[InventoryLotOut], status_code=201)
 def add_many(body: BulkIn, session: DbSession, user: CurrentUser) -> list[InventoryLotOut]:
-    """Add several lots at once (quick add, or a confirmed note). All or nothing; beef can't be added."""
+    """Add several lots at once (quick add, or a confirmed note). All or nothing; beef can't be added. Each
+    amount comes as quantity + unit, a quick pick's amount option, or a custom amount in one of its units."""
     reason = "parse_add" if body.source == "parse" else "purchase"
-    lots = inventory_service.add_lots(
-        session,
-        user.id,
-        [inventory_service.LotInput(**item.model_dump(), reason=reason) for item in body.items],
-    )
+    inputs = []
+    for item in body.items:
+        if item.quantity is not None and item.unit is not None:
+            quantity, unit = item.quantity, item.unit
+        else:
+            quantity, unit = resolve_amount(
+                session,
+                user.id,
+                item.ingredient_id,
+                item.product_id,
+                option=item.amount_option,
+                custom_amount=item.custom_amount,
+                custom_unit=item.custom_unit,
+            )
+        fields = item.model_dump(
+            exclude={"quantity", "unit", "amount_option", "custom_amount", "custom_unit"}
+        )
+        inputs.append(inventory_service.LotInput(**fields, quantity=quantity, unit=unit, reason=reason))
+    lots = inventory_service.add_lots(session, user.id, inputs)
     session.commit()
     return inventory_lots_out(session, lots)
 

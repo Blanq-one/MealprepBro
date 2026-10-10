@@ -117,7 +117,10 @@ class PlanConstraints(_Frozen):
     capped_out_ingredient_ids: frozenset[int] = frozenset()  # the subset excluded by a cap set to 0
     frequency_caps: tuple[ResolvedFrequencyCap, ...] = ()  # e.g. pork components ≤ 1 meal/week
     disliked_ingredient_ids: frozenset[int] = frozenset()
-    favorite_recipe_ids: frozenset[int] = frozenset()
+    favorite_recipe_ids: frozenset[int] = frozenset()  # from recipe_favorite (Phase 2b)
+    # Phase 2b: unlimited stock you own (settings "Always have", and water): never bought or listed; food
+    # eaten is still costed at its unit price where one is known
+    always_have_ingredient_ids: frozenset[int] = frozenset()
     max_portions_per_recipe: int = Field(default=5, ge=1, le=14)  # per week, VARIETY_CAPPED_SLOTS only
     region_code: str | None = None
 
@@ -213,6 +216,7 @@ class PlanConstraints(_Frozen):
             "capped_out_ingredient_ids",
             "disliked_ingredient_ids",
             "favorite_recipe_ids",
+            "always_have_ingredient_ids",
         ):
             data[key] = sorted(data[key])
         for cap in data["frequency_caps"]:

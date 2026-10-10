@@ -2533,6 +2533,10 @@
    "safety_category": null,
    "is_perishable": true,
    "typical_location": "pantry",
+   "shelf_life": {
+    "pantry_days": 28,
+    "basis": "estimate for whole sweet potatoes in a cool, dark, dry place, set like russet potatoes (decision E8, 2026-10-10: a multi-week pantry life); no separate chart value was looked up"
+   },
    "assume_in_stock": false,
    "count_rounding_step": "0.5",
    "count_unit_weight": {

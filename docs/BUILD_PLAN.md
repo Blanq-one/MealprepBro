@@ -1,6 +1,6 @@
 # Mealbro Build Plan
 
-**Status:** v3, **approved** 2026-10-08 with the changes recorded in §12.1. Phase 0 approved. Phase 1 approved 2026-10-09 (with C1–C8 and D1–D22); a post-approval round (C9–C14, D23–D28) is done. A3 is answered in `docs/hosting.md`; the hosting decision changed at the Phase 2 kickoff to Vercel Hobby + Neon Free, $0/month (K1, §12.1). Phase 2 (PWA, deploy prep only) was approved 2026-10-10. **Phase 2b (cook-first redesign) was added and its spec approved 2026-10-10** (with changes E10–E13, §12.1): the spec is `docs/FLOW_SPEC.md` and the build steps are in §9. Building starts with step 2b.1. **Addition (2026-10-10, E15–E17):** two-stage recipe generation (ideas for the cards, steps on first open, and after the first More ideas tap a background batch for later taps) to fit Groq's 8K tokens a minute; the target-0 fallback for the protein cap; and step 2b.3 split into 2b.3a (ranking and cards) and 2b.3b (ideas, steps, background batch). All approved.
+**Status:** v3, **approved** 2026-10-08 with the changes recorded in §12.1. Phase 0 approved. Phase 1 approved 2026-10-09 (with C1–C8 and D1–D22); a post-approval round (C9–C14, D23–D28) is done. A3 is answered in `docs/hosting.md`; the hosting decision changed at the Phase 2 kickoff to Vercel Hobby + Neon Free, $0/month (K1, §12.1). Phase 2 (PWA, deploy prep only) was approved 2026-10-10. **Phase 2b (cook-first redesign) was added and its spec approved 2026-10-10** (with changes E10–E13, §12.1): the spec is `docs/FLOW_SPEC.md` and the build steps are in §9. Step 2b.1 (backend foundations) was built 2026-10-10 and awaits approval. **Addition (2026-10-10, E15–E17):** two-stage recipe generation (ideas for the cards, steps on first open, and after the first More ideas tap a background batch for later taps) to fit Groq's 8K tokens a minute; the target-0 fallback for the protein cap; and step 2b.3 split into 2b.3a (ranking and cards) and 2b.3b (ideas, steps, background batch). All approved.
 **Source documents:** `CLAUDE.md` (build rules, wins on conflict), `docs/PRD.md` (product vision; "Primary user flow" at the top), `docs/FLOW_SPEC.md` (screens and backend work for Phase 2b).
 
 This plan covers Phases 0–6, plus Phase 2b. One phase per session; Phase 2b is split into build steps, one per session (§9). A phase or step is done only when its acceptance criteria are met, its tests pass, and the test output has been shown.
@@ -19,7 +19,7 @@ This plan covers Phases 0–6, plus Phase 2b. One phase per session; Phase 2b is
 | — | Pre-Phase 1 tasks | Done | 2026-10-08 | 2026-10-08 | Package-label data (tortillas, protein powder), USDA mapping review sheet (`docs/review/usda_mappings.md`), raw/dry/as-sold rule + check (§7.8), CLAUDE.md machine-boundaries rule. Round 2: FoodSafety.gov chart transcribed (53 rows, §7.2), top-25 mappings approved, tortilla renamed, Docker rule clarified, fresh-clone check made a per-phase step. |
 | 1 | Planning brain | Approved 2026-10-09; post-approval round done | 2026-10-08 | 2026-10-09 | First pass: 645 tests, fresh-clone check passed; D1–D13 and C1–C3 approved 2026-10-09. Fix-up round (C4–C8: budget per request with inventory/shop modes, cash vs food eaten, freeze-on-shopping-day and waste, 100 g protein floor, elapsed time): 705 tests pass (the opt-in live test skips), domain coverage 99%, ruff/mypy clean, fresh-clone check passed; deviations D14–D22 in the fix-up note. Approved 2026-10-09. Post-approval round (C9–C14: powder prices, stock-up items, shelf-life fix, regular chicken packs, two-week steady-state check, A3 hosting): 721 tests pass (the opt-in live test skips), domain coverage 99%; deviations D23–D28. |
 | 2 | Mobile PWA + cloud deploy (deploy prep only, K7) | Approved 2026-10-10 | 2026-10-09 | 2026-10-09 | Pre-work K2–K6 done; PWA, auth, shopping, Mark cooked, quick add, exposure log. 800 backend tests pass (2 opt-in skipped), 78 frontend tests; not deployed (your step, `docs/deploy.md`). Deviations D29–D43 in the Phase 2 outcome note (§9). |
-| 2b | Cook-first flow redesign | Spec approved 2026-10-10; building not started | 2026-10-10 | | `docs/FLOW_SPEC.md`; PRD "Primary user flow"; 9 build steps (2b.1, 2b.2, 2b.3a, 2b.3b, 2b.4–2b.8; §9); changes F1–F21 approved (FLOW_SPEC §16); decisions E1–E17 (§12.1). Two-stage generation added the same day (E15, E17; built in 2b.3b). No code yet. |
+| 2b | Cook-first flow redesign | Step 2b.1 built 2026-10-10, awaiting approval | 2026-10-10 | | `docs/FLOW_SPEC.md`; PRD "Primary user flow"; 9 build steps (2b.1, 2b.2, 2b.3a, 2b.3b, 2b.4–2b.8; §9); changes F1–F21 approved (FLOW_SPEC §16); decisions E1–E17 (§12.1). Two-stage generation added the same day (E15, E17; built in 2b.3b). **2b.1 (backend foundations):** 898 backend tests pass (2 opt-in skipped), 78 frontend tests, ruff/mypy clean; deviations D44–D53 in the 2b.1 outcome note (§9). |
 | 3 | Feedback loop | Not started | | | Favorites moved to 2b. |
 | 4 | Daily overrides | Not started | | | |
 | 5 | Grocery intelligence | Not started | | | |
@@ -1845,6 +1845,69 @@ Every number still comes from code, and the LLM still only writes recipes.
 6. Every seed recipe gets its expected dish category.
 
 **Tests.** `test_cook_flow_migration.py`, `test_favorites.py`, `test_settings_v3.py`, `test_always_have.py`, `test_cost_split.py`, `test_quick_pick_amounts.py`, `domain/tests/test_dish_category.py`; grocery-list tests extended (water, 0 g).
+
+**2b.1 outcome (2026-10-10, awaiting approval).** Every deliverable and acceptance criterion is met.
+898 backend tests pass (2 opt-in skipped: the live Groq call and the timed solve), 78 frontend tests pass,
+ruff and mypy are clean. New tests: `db/tests/test_cook_flow_migration.py`, `services/tests/test_favorites.py`,
+`services/tests/test_settings_v3.py`, `planning/tests/test_always_have.py`, `planning/tests/test_cost_split.py`,
+`services/tests/test_quick_pick_amounts.py`, `domain/tests/test_dish_category.py` (+ `services/tests/test_dishes.py`);
+grocery-list tests extended (water, Always have, "0 g"); `domain/tests/test_cost.py` covers the largest-remainder
+split.
+
+What changed from the plan, and why:
+
+- **D44. `PATCH /settings` added.** The 2b.2 test "Skip sends only the onboarding flag" needs an endpoint that
+  takes one field. PATCH replaces only the top-level fields sent (e.g. `{"onboarding_completed": true}`), then
+  validates the whole result; PUT still takes full settings. `POST /settings/preview` takes the same partial body
+  (your saved settings with the sent fields replaced), returns field errors (Pydantic and database checks),
+  "1,800 of 1,800 kcal a day planned" (also while other fields are invalid) and, when valid, nine summary lines
+  keyed by group (people, budget, targets, meals, cook_days, equipment, stores, food_rules, always_have) for W8.
+- **D45. Dish categories: title words first.** "First match wins" is applied in two passes: the title words of
+  the whole table in order, then the structural rules in order. One pass would make every seed curry a wrap (they
+  have a tortilla line), while the spec's own card shows "🍛 Everyday chicken curry". "Chili" counts only as the
+  dish ("turkey chili", "chili con carne"), so "chili garlic noodles" is pasta. Seed results: chicken over rice →
+  bowl; air-fryer and sheet-pan chicken → roast; the three gravies → curry; both puddings → dessert; breakfast
+  wraps → wrap; overnight oats → oats.
+- **D46. How Always have works.** An Always-have item is treated like a staple by the solver (no purchase and no
+  supply constraint: inventory already costs nothing in the objective, so unlimited owned stock needs no fake
+  lot). The rounded plan keeps it as a grocery item of kind `always_have` only so the week's money counts it: it
+  is never stored on the list, never shown, and its lots aren't taken or counted as expiring waste. Food eaten
+  includes it at its cheapest current price when there is one; an unpriced one is simply not counted (it doesn't
+  make the cost incomplete). Mark cooked doesn't deduct it. A beef item can't be Always have (422). Water is always
+  Always have (`planning/inputs.py`), and lists saved before this step hide water too.
+- **D47. The cost split, and where it's stored.** Each ingredient's used cents (as before) are split across the
+  batches by quantity, then each batch's cost over its portions (its meals in plan order first, then the frozen
+  extras), both by largest remainder. Food eaten and frozen portions now come from this split: unchanged for
+  weeks without frozen extras; with them a cent can move between the two, and the balance still holds to the cent.
+  `meal_plan.totals.costs` gains `batch_cents`, `meal_cents` (keyed "date/slot") and `day_cents`; plans saved before
+  this step show no per-meal cost (null). Batches carry their cost too (what the meal costs add up to).
+- **D48. Saved lists (E9) before pantry coverage.** Cards are most recently saved first, with the dish category,
+  badges (favorite, saved, draft), `steps_ready` (always true until 2b.3b) and per-portion numbers of the recipe as
+  written: kcal, protein, total minutes, and the cost at the first store in your order with a complete price ("est."
+  when estimated). Coverage against your pantry arrives in 2b.3a as planned.
+- **D49. Toggle details.** A ♥ or 🔖 change uses `INSERT … ON CONFLICT DO NOTHING` / `DELETE … RETURNING`, so a
+  repeated or concurrent request logs one event at most. The event's `recipe_version_id` is the recipe's default
+  version at that moment; its payload is an empty typed model (`BookmarkPayload`, version 1).
+- **D50. Stores.** `GET /stores` lists grocery stores only, with your order (the "Other" source is never a tile);
+  `POST /stores` trims the name, returns the existing store for the same name in any case (200, reactivated if it
+  was inactive), refuses the "Other" source, and doesn't add the store to your order (settings do).
+- **D51. Amount options.** Mass and volume options are exact fractions of the package; a pack of pieces rounds to
+  whole pieces (half-up, at least one); a single piece keeps the fraction ("¼ head"); an option equal to a bigger
+  one is dropped (a 2-pack has Full and ½ only). Displays are US first ("½ · 1.5 lb (680 g)", ounces under a pound,
+  cups from ¼ cup, else tbsp), grams or ml only with `units: metric`. Custom units: lb, oz, g for mass; cups, fl oz,
+  ml for volume; pieces for count items, plus lb, oz, g when the piece weight is known; each with a step and the
+  full amount as the start. Bulk add takes exactly one of quantity + unit, `amount_option`, or `custom_amount` +
+  `custom_unit`, and refuses a unit the pick doesn't offer.
+- **D52. Sweet potatoes cite your decision, not a chart.** 28 days in the pantry (like russet potatoes), with the
+  basis "set like russet potatoes (decision E8)". D38's items cite outside sources; I didn't look one up for this
+  step.
+- **D53. The timed AC 1.12 test keeps the 12 s limit.** With the production limit now 30 s (E7), the opt-in perf
+  test (< 15 s) runs with the Phase 1 limit it was written for. The deadline test now expects 30.
+
+Also: the OpenAPI schema and the generated frontend types were regenerated; the frontend test fixtures gained the
+new required fields (no UI changes, 2b.2 builds the screens). `save_plan` takes a `kind` for later steps;
+`POST /plans` still saves `kind = NULL`. `cook_search` and `recipe_version.steps_status` exist but are unused until
+2b.3a and 2b.3b.
 
 #### 2b.2 Look, shell, onboarding, Settings, Pantry (frontend)
 

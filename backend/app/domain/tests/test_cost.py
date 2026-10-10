@@ -1,15 +1,19 @@
 from decimal import Decimal
 
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
 
 from app.domain.cost import (
     CostLine,
     consumed_cost,
     line_cost_exact,
     loose_cost,
+    money_display,
     package_cost,
     per_portion_cents,
     round_cents,
+    split_largest_remainder,
     total_cents,
     unit_price,
 )
@@ -86,3 +90,40 @@ def test_invalid_inputs():
         package_cost(-1, 100)
     with pytest.raises(ValueError):
         per_portion_cents(100, 0)
+
+
+# ---------------- Phase 2b: splitting a rounded amount into parts ----------------
+def test_largest_remainder_split_adds_up_and_gives_spare_cents_to_the_biggest_remainders():
+    assert split_largest_remainder(100, [Decimal(1)] * 3) == [34, 33, 33]  # ties: the earlier part
+    assert split_largest_remainder(10, [Decimal(1), Decimal(2), Decimal(7)]) == [1, 2, 7]
+    assert split_largest_remainder(11, [Decimal(1), Decimal(1), Decimal(2)]) == [3, 3, 5]
+    assert split_largest_remainder(5, [Decimal("0.4"), Decimal("0.35"), Decimal("0.25")]) == [2, 2, 1]
+    assert split_largest_remainder(0, [Decimal(3), Decimal(1)]) == [0, 0]
+    assert split_largest_remainder(7, [Decimal(0), Decimal(0)]) == [4, 3]  # no weights: even
+
+
+def test_largest_remainder_split_rejects_bad_input():
+    with pytest.raises(ValueError):
+        split_largest_remainder(-1, [Decimal(1)])
+    with pytest.raises(ValueError):
+        split_largest_remainder(5, [])
+    with pytest.raises(ValueError):
+        split_largest_remainder(5, [Decimal(1), Decimal(-1)])
+    assert split_largest_remainder(0, []) == []
+
+
+@given(
+    st.integers(min_value=0, max_value=1_000_000),
+    st.lists(st.decimals(min_value=0, max_value=10_000, places=3), min_size=1, max_size=30),
+)
+def test_largest_remainder_parts_always_sum_to_the_total(total, weights):
+    parts = split_largest_remainder(total, weights)
+    assert sum(parts) == total and len(parts) == len(weights) and min(parts) >= 0
+    weight_sum = sum(weights, Decimal(0))
+    if weight_sum > 0:
+        for part, w in zip(parts, weights, strict=True):
+            assert abs(Decimal(part) - Decimal(total) * w / weight_sum) < 1  # within a cent of its share
+
+
+def test_money_display():
+    assert money_display(123450) == "$1,234.50" and money_display(5) == "$0.05"

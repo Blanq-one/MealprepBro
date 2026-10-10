@@ -123,7 +123,11 @@ def _offers(
 
 
 def load_ingredient_plans(
-    session: Session, user_id: int, ingredient_ids: Iterable[int], store_ids: Iterable[int]
+    session: Session,
+    user_id: int,
+    ingredient_ids: Iterable[int],
+    store_ids: Iterable[int],
+    always_have_ids: frozenset[int] = frozenset(),
 ) -> dict[int, IngredientPlan]:
     """Ingredient data, offers at the given stores and active inventory lots, all in one planning unit per
     ingredient. Used by the problem loader and, separately, by the plan validator's own reload."""
@@ -172,6 +176,7 @@ def load_ingredient_plans(
             profile=d.profile,
             count_rounding_step=d.count_rounding_step,
             staple=d.assume_in_stock,
+            always_have=i in always_have_ids,
             stock_up=d.stock_up,
             perishable=d.is_perishable,
             shelf_life_days_fridge=d.shelf_life_days_fridge,
@@ -198,7 +203,7 @@ def build_problem(session: Session, user_id: int, constraints: PlanConstraints) 
     pairs = candidate_versions(session, user_id)
     lines = version_lines(session, [v.id for _, v in pairs])
     ingredient_ids = {line.ingredient_id for ls in lines.values() for line in ls}
-    plans = load_ingredient_plans(session, user_id, ingredient_ids, c.store_ids)
+    plans = load_ingredient_plans(session, user_id, ingredient_ids, c.store_ids, c.always_have_ingredient_ids)
     data = load_ingredients(session, ingredient_ids)
     store_names = {s.id: s.name for s in active_stores(session) if s.id in c.store_ids}
     never_favored_ids = frozenset(
@@ -247,7 +252,7 @@ def build_problem(session: Session, user_id: int, constraints: PlanConstraints) 
             codes.append("time")
         for line in counted:
             plan = plans[line.ingredient_id]
-            if plan.staple or plan.offers:
+            if plan.unlimited or plan.offers:
                 continue
             if c.limit_covers(plan.stock_up) and plan.available <= 0:
                 unpriced.append(plan.name)

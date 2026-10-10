@@ -6,9 +6,11 @@ from app.api.deps import CurrentUser, DbSession
 from app.api.presenters import inventory_lots_out
 from app.api.routes.recipes import version_out
 from app.domain.enums import MealSlot
+from app.planning.rounded import meal_key
 from app.schemas.plans import BatchDetailOut, BatchLineOut, CookedIn, CookedOut, DeductionOut, MealOut
 from app.services import cooking as service
-from app.services.plans import amount_display, batch_nutrition
+from app.services.dishes import dish_categories
+from app.services.plans import amount_display, batch_nutrition, money
 
 router = APIRouter(prefix="/api/v1/cook-batches", tags=["cooking"])
 
@@ -19,6 +21,8 @@ def get_batch(batch_id: int, session: DbSession, user: CurrentUser) -> BatchDeta
     view = service.batch_view(session, user.id, batch_id)
     b, v = view.batch, view.version
     protein = batch_nutrition(session, [b.id]).get(b.id, {}).get("protein_g")
+    category = dish_categories(session, [v.version.id])[v.version.id].value
+    meal_cents: dict[str, int] = view.plan.totals.get("costs", {}).get("meal_cents", {})
     return BatchDetailOut(
         id=b.id,
         plan_id=view.plan.id,
@@ -41,6 +45,9 @@ def get_batch(batch_id: int, session: DbSession, user: CurrentUser) -> BatchDeta
                 from_freezer=m.from_freezer,
                 cook_batch_id=b.id,
                 note="From the freezer: move it to the fridge the night before." if m.from_freezer else None,
+                dish_category=category,
+                cost_cents=(cents := meal_cents.get(meal_key(m.eat_on, m.slot))),
+                cost_display=money(cents) if cents is not None else None,
             )
             for m in view.meals
         ],

@@ -1,5 +1,7 @@
 """Money math. Integer cents everywhere; Decimal only as an intermediate; ROUND_HALF_UP once per line
-(or once per batch for consumed cost); totals are sums of rounded lines (BUILD_PLAN §7.1)."""
+(or once per batch for consumed cost); totals are sums of rounded lines (BUILD_PLAN §7.1). Splitting a
+rounded amount into parts (a batch's cost into its portions) uses largest remainders, so the parts add up to
+the whole exactly."""
 
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
@@ -78,3 +80,32 @@ def per_portion_cents(total: int, portions: int) -> int:
     if portions < 1:
         raise ValueError("portions must be at least 1")
     return round_cents(Decimal(total) / Decimal(portions))
+
+
+def split_largest_remainder(total: int, weights: Sequence[Decimal]) -> list[int]:
+    """Split `total` cents in proportion to `weights` so the parts add up to `total` exactly: each part gets
+    the whole cents of its exact share, and the cents left over go one each to the largest remainders (ties:
+    the earlier part). All-zero weights split evenly."""
+    if total < 0:
+        raise ValueError("total must not be negative")
+    if not weights:
+        if total:
+            raise ValueError("can't split a non-zero total into no parts")
+        return []
+    if any(w < 0 for w in weights):
+        raise ValueError("weights must not be negative")
+    weight_sum = sum(weights, Decimal(0))
+    shares = list(weights) if weight_sum > 0 else [Decimal(1)] * len(weights)
+    share_sum = weight_sum if weight_sum > 0 else Decimal(len(weights))
+    exact = [Decimal(total) * w / share_sum for w in shares]
+    parts = [int(e) for e in exact]  # floor: every share is non-negative
+    left = total - sum(parts)
+    order = sorted(range(len(exact)), key=lambda i: (-(exact[i] - parts[i]), i))
+    for i in order[:left]:
+        parts[i] += 1
+    return parts
+
+
+def money_display(cents: int) -> str:
+    """'$1,234.50'."""
+    return f"${cents / 100:,.2f}"

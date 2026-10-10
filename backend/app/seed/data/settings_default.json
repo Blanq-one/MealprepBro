@@ -1,5 +1,9 @@
 {
- "schema_version": 2,
+ "schema_version": 3,
+ "household_size": 1,
+ "always_have": [],
+ "default_budget_cents": null,
+ "onboarding_completed": false,
  "daily_kcal_target": 1800,
  "calorie_mode": "weekly",
  "daily_band_kcal": 150,

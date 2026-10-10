@@ -16,6 +16,7 @@ from app.api.routes import (
     products,
     recipes,
     settings,
+    stores,
 )
 from app.auth.dependencies import check_origin, require_session
 from app.config import get_settings
@@ -27,6 +28,7 @@ PROTECTED: tuple[APIRouter, ...] = (
     recipes.router,
     recipes.versions_router,
     settings.router,
+    stores.router,
     inventory_parse.router,  # before inventory: /inventory/parse and /inventory/bulk aren't lot ids
     inventory.router,
     products.router,

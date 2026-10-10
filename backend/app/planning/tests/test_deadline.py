@@ -115,7 +115,8 @@ def test_the_solver_time_limit_never_outlasts_the_budget(seeded_db, monkeypatch)
 
     monkeypatch.setattr(orch, "solve", spy)
     out = run(seeded_db, None, FakeClock(), PlanRequest(week_start=WEEK, days=DAYS, allow_llm=False))
-    assert out.status == "succeeded" and set(limits) == {12}  # plenty of time: SOLVER_TIME_LIMIT_SECONDS
+    # plenty of time: SOLVER_TIME_LIMIT_SECONDS (default 30 since Phase 2b, E7)
+    assert out.status == "succeeded" and set(limits) == {30}
     limits.clear()
     clock = FakeClock()
     out = run(

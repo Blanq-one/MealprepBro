@@ -193,7 +193,7 @@ def freeze_instructions(
             bought[item.ingredient_id] += item.bought
     out: list[FreezeInstruction] = []
     for ingredient_id, plan in sorted(ingredients.items()):
-        if plan.fridge_life is None or not plan.fridge_life.freeze_raw or plan.staple:
+        if plan.fridge_life is None or not plan.fridge_life.freeze_raw or plan.unlimited:
             continue
         out += _ingredient_freezes(
             c, plan, uses.get(ingredient_id, []), taken, bought.get(ingredient_id, Decimal(0))

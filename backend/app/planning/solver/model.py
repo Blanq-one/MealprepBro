@@ -475,7 +475,7 @@ def build_model(
                 need_terms[ingredient_id].append((_f(per_portion * b.size_multiplier), b))
     for ingredient_id in sorted(need_terms):
         plan = problem.ingredients[ingredient_id]
-        if plan.staple:
+        if plan.unlimited:
             continue
         need = pulp.lpSum(coef * scaled_portions(b) for coef, b in need_terms[ingredient_id])
         max_need = sum(coef * BIG_PORTIONS * hi for coef, _ in need_terms[ingredient_id])

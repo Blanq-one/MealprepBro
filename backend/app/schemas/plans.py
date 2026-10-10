@@ -120,6 +120,10 @@ class MealOut(BaseModel):
     from_freezer: bool
     cook_batch_id: int
     note: str | None = None
+    # Phase 2b
+    dish_category: str  # the app shows its icon
+    cost_cents: int | None = None  # this meal's share of its batch's cost; None for plans made before 2b
+    cost_display: str | None = None
 
 
 class DayOut(BaseModel):
@@ -133,6 +137,10 @@ class DayOut(BaseModel):
     chill_minutes: int  # the longest fridge wait of a no-cook recipe cooked that day (0 = none)
     cook_minutes_available: int
     meals: list[MealOut]
+    # Phase 2b
+    cook_note: str  # "Cook: Chicken over rice (5 portions)" or "Nothing to cook, eating prepped meals"
+    cost_cents: int | None = None  # food eaten that day (its meals); None for plans made before 2b
+    cost_display: str | None = None
 
 
 class BatchOut(BaseModel):
@@ -147,6 +155,10 @@ class BatchOut(BaseModel):
     scale_factor: Decimal
     planned_minutes: int
     status: str = "planned"  # planned | cooked | skipped | cancelled
+    # Phase 2b
+    dish_category: str
+    cost_cents: int | None = None  # what the batch uses (its meals plus frozen extras); None before 2b
+    cost_display: str | None = None
 
 
 class StoreTotalOut(BaseModel):
@@ -173,6 +185,7 @@ class CostsOut(BaseModel):
     expected_waste_display: str
     complete: bool
     unpriced: list[str]
+    cash_split_display: str  # "$52.91 groceries + $90.43 stock-up" (Phase 2b)
 
 
 class LeftoverOut(BaseModel):
@@ -201,6 +214,7 @@ class PlanSummaryOut(BaseModel):
     id: int
     week_start: date
     status: str
+    kind: str | None  # meal_prep | single | grocery_advice; None = a week plan (Phase 1–2, POST /plans)
     calorie_mode: str
     kcal_target_week: int
     kcal_planned_week: int
@@ -239,6 +253,7 @@ class PlanListItemOut(BaseModel):
     meals_count: int
     cash_display: str
     is_current: bool
+    kind: str | None = None  # Phase 2b, as on PlanSummaryOut
 
 
 class GroceryItemOut(BaseModel):
@@ -292,6 +307,7 @@ class GroceryListOut(BaseModel):
     total_display: str
     regular_cents: int
     stock_up_cents: int
+    cash_split_display: str  # "$52.91 groceries + $90.43 stock-up" (Phase 2b)
     complete: bool
     unpriced: list[str]
     split: bool

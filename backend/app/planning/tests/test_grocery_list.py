@@ -1,14 +1,22 @@
 """The grocery list from the rounded plan (deliverable 16)."""
 
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 
+from sqlalchemy import select
+
+from app.db.models import GroceryList, GroceryListItem, Ingredient
 from app.domain.enums import MealSlot
 from app.planning.grocery_list import build_grocery
+from app.planning.orchestrator import Orchestrator
 from app.planning.problem import InventoryLot
 from app.planning.rounding import round_batch
 from app.planning.solver.model import SolvedBatch
+from app.schemas.plans import PlanRequest
+from app.services.plans import grocery_view, shows_as_zero
+from app.services.settings import current_user
 from app.testing import factories as f
+from app.testing.llm import FakeClock, make_settings
 
 MON = f.MONDAY
 D = MealSlot.DINNER
@@ -133,3 +141,50 @@ def test_expected_remainder_is_shown_on_the_last_buy_line():
     assert chicken.remainder == 3 * LB - 1180
     (rice,) = items(plan, "rice")
     assert rice.remainder == 2268 - 300
+
+
+# ---------------- Phase 2b: water, Always have, and "0 g" (step 2b.1) ----------------
+def test_water_and_always_have_items_are_never_listed():
+    p, _ = setup()
+    ing = dict(p.ingredients)
+    ing[6] = f.ingredient(6, "water", unit="ml", staple=True, always_have=True, per_100g={"energy_kcal": 0})
+    ing[4] = f.ingredient(4, "salt", staple=True, always_have=True, per_100g={"energy_kcal": 0})
+    soup = f.recipe(3, "Soup", [D], [f.line(1, 400), f.line(6, 900, "ml"), f.line(4, 4)], ing, base=4)
+    p2 = f.problem(p.constraints, [soup], ing)
+    plan = build_grocery(p2.constraints, [round_batch(p2, SolvedBatch(3, MON, NORMAL, Decimal(1), 4))], ing)
+    listed = [i for i in plan.items if i.kind != "always_have"]  # what the list shows (and stores)
+    assert {i.name for i in listed} == {"chicken"}
+    assert not [i for i in plan.items if i.kind == "staple"]  # not even "check you have"
+
+
+def test_a_pinch_shows_as_zero_so_the_list_shows_the_name_only():
+    assert shows_as_zero(Decimal("0.3"), "g") and shows_as_zero(Decimal("0.49"), "ml")
+    assert not shows_as_zero(Decimal("0.5"), "g")  # displays as 1 g
+    assert shows_as_zero(Decimal("0.2"), "count") and not shows_as_zero(Decimal("0.25"), "count")
+
+
+def test_check_you_have_shows_a_pinch_by_name_only(seeded_db):
+    user = current_user(seeded_db)
+    o = Orchestrator(seeded_db, user.id, llm_client=None, settings=make_settings(), clock=FakeClock())
+    out = o.run(PlanRequest(week_start=date(2026, 10, 12), days=3, allow_llm=False))
+    assert out.status == "succeeded", out.error
+    glist = seeded_db.scalars(select(GroceryList).where(GroceryList.meal_plan_id == out.plan_id)).one()
+    cayenne = seeded_db.scalars(select(Ingredient.id).where(Ingredient.slug == "cayenne")).one()
+    seeded_db.add(
+        GroceryListItem(
+            grocery_list_id=glist.id,
+            position=999,
+            ingredient_id=cayenne,
+            needed_quantity=Decimal("0.3"),
+            inventory_used_quantity=Decimal(0),
+            to_buy_quantity=Decimal(0),
+            unit="g",
+            reason={"kind": "staple", "note": "check you have", "to_buy_total": "0.300"},
+        )
+    )
+    seeded_db.flush()
+    view = grocery_view(seeded_db, user.id, out.plan_id)
+    (pinch,) = [i for g in view.groups for i in g.items if i.ingredient_id == cayenne]
+    assert (pinch.needed, pinch.to_buy, pinch.kind) == ("", "", "staple")  # never "0 g"
+    staples = [i for g in view.groups if g.kind == "staple" for i in g.items if i.ingredient_id != cayenne]
+    assert all(i.to_buy for i in staples)  # a real amount still shows

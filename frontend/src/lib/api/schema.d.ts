@@ -283,7 +283,8 @@ export interface paths {
         put?: never;
         /**
          * Add Many
-         * @description Add several lots at once (quick add, or a confirmed note). All or nothing; beef can't be added.
+         * @description Add several lots at once (quick add, or a confirmed note). All or nothing; beef can't be added. Each
+         *     amount comes as quantity + unit, a quick pick's amount option, or a custom amount in one of its units.
          */
         post: operations["add_many_api_v1_inventory_bulk_post"];
         delete?: never;
@@ -522,6 +523,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/recipes/saved": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Saved
+         * @description Your ♥ favorites or 🔖 saved-for-later recipes as cards, most recently saved first.
+         */
+        get: operations["list_saved_api_v1_recipes_saved_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/recipes/seed": {
         parameters: {
             query?: never;
@@ -559,6 +580,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/recipes/{recipe_id}/favorite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Add Favorite
+         * @description ♥ on: suggest this more often (a boost in rankings and plans whenever it fits). Idempotent.
+         */
+        put: operations["add_favorite_api_v1_recipes__recipe_id__favorite_put"];
+        post?: never;
+        /** Remove Favorite */
+        delete: operations["remove_favorite_api_v1_recipes__recipe_id__favorite_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/recipes/{recipe_id}/saved": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Add Saved
+         * @description 🔖 on: save for later, a plain bookmark with no effect on ranking. Idempotent.
+         */
+        put: operations["add_saved_api_v1_recipes__recipe_id__saved_put"];
+        post?: never;
+        /** Remove Saved */
+        delete: operations["remove_saved_api_v1_recipes__recipe_id__saved_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/settings": {
         parameters: {
             query?: never;
@@ -574,7 +637,12 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Patch Settings
+         * @description Change some settings and keep the rest, e.g. {"onboarding_completed": true} for "Skip, use my current
+         *     settings".
+         */
+        patch: operations["patch_settings_api_v1_settings_patch"];
         trace?: never;
     };
     "/api/v1/settings/ingredient-preferences/{ingredient_id}": {
@@ -593,6 +661,52 @@ export interface paths {
         post?: never;
         /** Delete Preference */
         delete: operations["delete_preference_api_v1_settings_ingredient_preferences__ingredient_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview Settings
+         * @description Check a settings draft without saving it: field errors, the "kcal a day planned" line, and (when it's
+         *     valid) the summary lines.
+         */
+        post: operations["preview_settings_api_v1_settings_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stores": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Stores
+         * @description The grocery stores you can pick, with your preference order.
+         */
+        get: operations["list_stores_api_v1_stores_get"];
+        put?: never;
+        /**
+         * Add Store
+         * @description Add a grocery store by name (201), or get the one you already have with that name (200). Add it to
+         *     your store order in settings to shop there.
+         */
+        post: operations["add_store_api_v1_stores_post"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -619,6 +733,20 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AmountOptionOut */
+        AmountOptionOut: {
+            /** Display */
+            display: string;
+            /**
+             * Key
+             * @enum {string}
+             */
+            key: "full" | "three_quarters" | "half" | "quarter";
+            /** Quantity */
+            quantity: string;
+            /** Unit */
+            unit: string;
+        };
         /** ApproveIn */
         ApproveIn: {
             /** Alias Of */
@@ -690,6 +818,12 @@ export interface components {
              * Format: date
              */
             cook_on: string;
+            /** Cost Cents */
+            cost_cents?: number | null;
+            /** Cost Display */
+            cost_display?: string | null;
+            /** Dish Category */
+            dish_category: string;
             /** Id */
             id: number;
             /** Planned Minutes */
@@ -717,13 +851,52 @@ export interface components {
         /** BulkIn */
         BulkIn: {
             /** Items */
-            items: components["schemas"]["InventoryLotIn"][];
+            items: components["schemas"]["BulkItemIn"][];
             /**
              * Source
              * @default quick_add
              * @enum {string}
              */
             source: "quick_add" | "parse";
+        };
+        /**
+         * BulkItemIn
+         * @description One lot to add. The amount is given one way: `quantity` + `unit` (any unit the ingredient understands),
+         *     an `amount_option` of its quick pick (Full, ¾, ½ or ¼ of `product_id`'s package, else its usual one), or a
+         *     `custom_amount` + `custom_unit` from the quick pick's custom units. The server converts it.
+         */
+        BulkItemIn: {
+            /** Acquired On */
+            acquired_on?: string | null;
+            /** Amount Option */
+            amount_option?: ("full" | "three_quarters" | "half" | "quarter") | null;
+            /** Custom Amount */
+            custom_amount?: number | string | null;
+            /** Custom Unit */
+            custom_unit?: string | null;
+            /** Expires On */
+            expires_on?: string | null;
+            /**
+             * Expiry Is Estimate
+             * @default true
+             */
+            expiry_is_estimate: boolean;
+            /** Ingredient Id */
+            ingredient_id: number;
+            location: components["schemas"]["StorageLocation"];
+            /** Notes */
+            notes?: string | null;
+            /** Opened On */
+            opened_on?: string | null;
+            /** Product Id */
+            product_id?: number | null;
+            /** Quantity */
+            quantity?: number | string | null;
+            /**
+             * Unit
+             * @description g, lb, cup, count, …
+             */
+            unit?: string | null;
         };
         /** CalculatedLineOut */
         CalculatedLineOut: {
@@ -786,6 +959,8 @@ export interface components {
             cash_cents: number;
             /** Cash Display */
             cash_display: string;
+            /** Cash Split Display */
+            cash_split_display: string;
             /** Complete */
             complete: boolean;
             /** Eaten Cents */
@@ -811,12 +986,29 @@ export interface components {
             /** Unpriced */
             unpriced: string[];
         };
+        /** CustomUnitOut */
+        CustomUnitOut: {
+            /** Label */
+            label: string;
+            /** Start */
+            start: string;
+            /** Step */
+            step: string;
+            /** Unit */
+            unit: string;
+        };
         /** DayOut */
         DayOut: {
             /** Chill Minutes */
             chill_minutes: number;
             /** Cook Minutes Available */
             cook_minutes_available: number;
+            /** Cook Note */
+            cook_note: string;
+            /** Cost Cents */
+            cost_cents?: number | null;
+            /** Cost Display */
+            cost_display?: string | null;
             /**
              * Day
              * Format: date
@@ -899,6 +1091,13 @@ export interface components {
          * @enum {string}
          */
         Equipment: "stovetop" | "oven" | "air_fryer" | "microwave" | "rice_cooker" | "pressure_cooker" | "slow_cooker" | "blender" | "food_processor" | "grill";
+        /** FieldErrorOut */
+        FieldErrorOut: {
+            /** Loc */
+            loc: (string | number)[];
+            /** Msg */
+            msg: string;
+        };
         /** FreezeOut */
         FreezeOut: {
             /** Amount */
@@ -1093,6 +1292,8 @@ export interface components {
         };
         /** GroceryListOut */
         GroceryListOut: {
+            /** Cash Split Display */
+            cash_split_display: string;
             /** Checked Count */
             checked_count: number;
             /** Complete */
@@ -1332,6 +1533,12 @@ export interface components {
         MealOut: {
             /** Cook Batch Id */
             cook_batch_id: number;
+            /** Cost Cents */
+            cost_cents?: number | null;
+            /** Cost Display */
+            cost_display?: string | null;
+            /** Dish Category */
+            dish_category: string;
             /**
              * Eat On
              * Format: date
@@ -1484,6 +1691,8 @@ export interface components {
             kcal_planned_week: number;
             /** Kcal Target Week */
             kcal_target_week: number;
+            /** Kind */
+            kind?: string | null;
             /** Meals Count */
             meals_count: number;
             planning_mode: components["schemas"]["PlanningMode"];
@@ -1620,6 +1829,8 @@ export interface components {
             kcal_planned_week: number;
             /** Kcal Target Week */
             kcal_target_week: number;
+            /** Kind */
+            kind: string | null;
             /** Leftovers */
             leftovers: components["schemas"]["LeftoverOut"][];
             /** Meals Count */
@@ -1841,10 +2052,16 @@ export interface components {
         /**
          * QuickPickOut
          * @description A one-tap add: the ingredient with its usual package (or a typical amount) and where it lives.
+         *     Phase 2b: the amount picker's options (Full first, the default) and custom units (the natural one
+         *     first).
          */
         QuickPickOut: {
+            /** Amount Options */
+            amount_options?: components["schemas"]["AmountOptionOut"][];
             /** Category */
             category: string;
+            /** Custom Units */
+            custom_units?: components["schemas"]["CustomUnitOut"][];
             /** Display */
             display: string;
             /** Ingredient Id */
@@ -1951,6 +2168,8 @@ export interface components {
             cuisine: string | null;
             /** Description */
             description: string;
+            /** Dish Category */
+            dish_category: string;
             /** Equipment */
             equipment: string[];
             /** Flavor Tags */
@@ -1961,6 +2180,10 @@ export interface components {
             heme_note: string | null;
             /** Incomplete Reasons */
             incomplete_reasons: string[];
+            /** Is Favorite */
+            is_favorite: boolean;
+            /** Is Saved */
+            is_saved: boolean;
             /** Labels */
             labels: string[];
             /** Lines */
@@ -2039,6 +2262,40 @@ export interface components {
             /** Text */
             text: string;
         };
+        /**
+         * SavedList
+         * @enum {string}
+         */
+        SavedList: "favorites" | "later";
+        /**
+         * SavedRecipeOut
+         * @description A Saved-list card (C7). Every number is a display string from code, per portion.
+         */
+        SavedRecipeOut: {
+            /** Badges */
+            badges: ("favorite" | "saved" | "new" | "draft")[];
+            /** Dish Category */
+            dish_category: string;
+            /** Numbers */
+            numbers: string[];
+            /** Portions */
+            portions: number;
+            /** Portions Display */
+            portions_display: string;
+            /** Recipe Id */
+            recipe_id: number;
+            /**
+             * Saved At
+             * Format: date-time
+             */
+            saved_at: string;
+            /** Steps Ready */
+            steps_ready: boolean;
+            /** Title */
+            title: string;
+            /** Version Id */
+            version_id: number;
+        };
         /** SeedRecipeOut */
         SeedRecipeOut: {
             /** Active Minutes */
@@ -2091,6 +2348,21 @@ export interface components {
             preferences: components["schemas"]["PreferenceOut"][];
             settings: components["schemas"]["UserSettings"];
         };
+        /**
+         * SettingsPreviewOut
+         * @description POST /settings/preview: your saved settings with the sent fields replaced, checked but not saved.
+         */
+        SettingsPreviewOut: {
+            /** Errors */
+            errors: components["schemas"]["FieldErrorOut"][];
+            /** Kcal Planned Display */
+            kcal_planned_display: string | null;
+            settings: components["schemas"]["UserSettings"] | null;
+            /** Summary */
+            summary: components["schemas"]["SummaryLineOut"][];
+            /** Valid */
+            valid: boolean;
+        };
         /** SlotAllocationSetting */
         SlotAllocationSetting: {
             /** Kcal */
@@ -2121,6 +2393,22 @@ export interface components {
             /** Uses Estimates */
             uses_estimates: boolean;
         };
+        /** StoreIn */
+        StoreIn: {
+            /** Name */
+            name: string;
+        };
+        /** StoreOut */
+        StoreOut: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Order */
+            order: number | null;
+            /** Priority */
+            priority: number;
+        };
         /** StoreTotalOut */
         StoreTotalOut: {
             /** Cents */
@@ -2131,6 +2419,15 @@ export interface components {
             store_id: number | null;
             /** Store Name */
             store_name: string;
+        };
+        /** SummaryLineOut */
+        SummaryLineOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Value */
+            value: string;
         };
         /**
          * UnitKind
@@ -2148,6 +2445,8 @@ export interface components {
         };
         /** UserSettings */
         UserSettings: {
+            /** Always Have */
+            always_have?: string[];
             /** @default weekly */
             calorie_mode: components["schemas"]["CalorieMode"];
             /** Cook Schedule */
@@ -2172,6 +2471,8 @@ export interface components {
              * @default 5
              */
             daily_under_pct: number;
+            /** Default Budget Cents */
+            default_budget_cents?: number | null;
             /** @default normal */
             default_portion_size: components["schemas"]["PortionSize"];
             /** Equipment */
@@ -2183,20 +2484,30 @@ export interface components {
             /** @default balanced */
             grocery_mode: components["schemas"]["GroceryMode"];
             /**
+             * Household Size
+             * @default 1
+             */
+            household_size: number;
+            /**
              * Leftover Fridge Days
              * @default 3
              */
             leftover_fridge_days: number;
             /** @default protein */
             nutrition_priority: components["schemas"]["NutritionPriority"];
+            /**
+             * Onboarding Completed
+             * @default false
+             */
+            onboarding_completed: boolean;
             /** Region Code */
             region_code?: string | null;
             /**
              * Schema Version
-             * @default 2
+             * @default 3
              * @constant
              */
-            schema_version: 2;
+            schema_version: 3;
             secondary_priority?: components["schemas"]["NutritionPriority"] | null;
             /** Slot Allocations */
             slot_allocations: components["schemas"]["SlotAllocationSetting"][];
@@ -3274,6 +3585,37 @@ export interface operations {
             };
         };
     };
+    list_saved_api_v1_recipes_saved_get: {
+        parameters: {
+            query?: {
+                list?: components["schemas"]["SavedList"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedRecipeOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_seed_recipes_api_v1_recipes_seed_get: {
         parameters: {
             query?: never;
@@ -3325,6 +3667,122 @@ export interface operations {
             };
         };
     };
+    add_favorite_api_v1_recipes__recipe_id__favorite_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recipe_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_favorite_api_v1_recipes__recipe_id__favorite_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recipe_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_saved_api_v1_recipes__recipe_id__saved_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recipe_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_saved_api_v1_recipes__recipe_id__saved_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recipe_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_settings_api_v1_settings_get: {
         parameters: {
             query?: never;
@@ -3355,6 +3813,41 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["UserSettings"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettingsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_settings_api_v1_settings_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
             };
         };
         responses: {
@@ -3430,6 +3923,94 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_settings_api_v1_settings_preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettingsPreviewOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_stores_api_v1_stores_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreOut"][];
+                };
+            };
+        };
+    };
+    add_store_api_v1_stores_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreOut"];
+                };
             };
             /** @description Validation Error */
             422: {
