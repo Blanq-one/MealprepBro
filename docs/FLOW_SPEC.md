@@ -4,6 +4,9 @@
 my current settings"), a capped protein reward, the Cook home order, and friendly rate-limit waits. All flagged changes
 (§16) are approved, and the questions (§18) are answered with the defaults. No code has been written yet; building
 starts with step 2b.1.
+**Addition (2026-10-10):** recipes are generated in two stages to fit Groq's 8K tokens a minute: an ideas pass for
+the cards, then steps the first time you open a recipe, plus a background batch so More ideas is usually instant
+(§13.5, §14, §15; changes F19–F21). The target-0 fallback for the protein cap (§13.3) is approved.
 **Sources:** your redesign brief (2026-10-10), `CLAUDE.md` (wins on conflict), `docs/PRD.md` (new "Primary user flow"
 section), `docs/BUILD_PLAN.md` (Phase 2b build steps, §9).
 
@@ -81,8 +84,11 @@ These are unchanged from `CLAUDE.md` and the build plan. The redesign moves scre
   converts or prices (Phase 2 AC 7). Where a screen needs a live total (for example calories per meal adding up to the
   day), it asks the API (`POST /settings/preview`, §13.1).
 - **The LLM writes only creative text** (recipe ideas, steps, names). It never produces a number that is shown or
-  used. Generated recipes go through the existing recipe validator, prose filter (§7.3 of the build plan), food-safety
-  injection and code-computed nutrition before anyone sees them.
+  used. Generated recipes arrive in two passes (§13.5), and each is checked before anyone sees it:
+  - an **idea** (name, ingredients and amounts, method, equipment, rough time) is resolved and checked, gets
+    code-computed nutrition and cost, and passes the prose filter (§7.3 of the build plan) before it becomes a card;
+  - its **steps**, written the first time you open it, pass the step checks, the prose filter and food-safety
+    injection before they are shown.
 - **Diet rules hold in every flow:** beef and beef-derived items are excluded; possibly-beef items stay held until
   you allow them; pork components are capped (default 1 meal a week) and never favored by nutrition, price or pantry
   scoring; trace pork is unlimited.
@@ -159,6 +165,7 @@ never a number that didn't come from the API.
 | Why a question is asked | "I'll scale every recipe to match." | "This helps us optimize your experience." |
 | Building | "Balancing calories across the days…" | "Crunching the perfect healthy plan!" |
 | Per-minute rate limit | "The recipe service needs a short breather. Writing your ideas in 0:23…" | "Error 429: rate limited." |
+| Steps for a new idea | "Writing the steps for this one…" | "Generating instructions…" |
 | Empty saved list | "Nothing saved yet. Tap ♥ on a recipe you'd make again." | — |
 | LLM unavailable (not a rate-limit wait) | "I couldn't write new ideas just now. Here are your saved ones." | "Something went wrong." |
 | Nothing fits | "Nothing fits 20 minutes with what you have. Allow 30 minutes, or let me write something new?" | "No results." |
@@ -322,7 +329,7 @@ the server, and its result appears under "Same as last time".
 | **Error** | Pottle (oops), the problem's title in plain words, one sentence of detail, **Try again**, and a "Details" expander with the server's problem text and run id. |
 | **Offline** | A slim banner ("You're offline · showing what was saved at 3:42 pm"). Cached screens open read-only. Check-offs, price entries, ♥ and 🔖 are queued and replayed once (existing queue, `client_ref`). Anything that needs the server (searching, planning, swapping, saving settings) is disabled with "Needs a connection". |
 | **Session expired** | Goes to Login, then back to the same step with the answers kept. |
-| **Rate-limit wait** | Never an error. When an LLM call would go over Groq's per-minute limit (a 429 reply, or the pacer predicting one from the rate-limit headers, e.g. More ideas tapped twice quickly), Pottle shows the working state with "The recipe service needs a short breather" and a countdown from `wait_s`. **Short wait** (fits within `LLM_MAX_RATE_WAIT_SECONDS`, 60 s, and the request's time budget): the request waits and carries on by itself. **Longer wait:** the request ends gracefully with what it has and a `retry_after_s`. The button that asked for it shows "Ready in 0:45", counting down, and turns back into a normal button at zero; one tap continues. Only the daily token guard shows a different message: "That's today's new-idea allowance; back tomorrow." Your saved results stay on screen throughout. |
+| **Rate-limit wait** | Never an error. When an LLM call would go over Groq's per-minute limit (a 429 reply, or the pacer predicting one from the rate-limit headers, e.g. More ideas tapped with no batch waiting, or a new idea opened right after a batch landed), Pottle shows the working state with "The recipe service needs a short breather" and a countdown from `wait_s`. **Short wait** (fits within `LLM_MAX_RATE_WAIT_SECONDS`, 60 s, and the request's time budget): the request waits and carries on by itself. **Longer wait:** the request ends gracefully with what it has and a `retry_after_s`. The button that asked for it shows "Ready in 0:45", counting down, and turns back into a normal button at zero; one tap continues. On the recipe page the countdown sits in the Steps section (C8). Only the daily token guard shows a different message: "That's today's new-idea allowance; back tomorrow." Your saved results stay on screen throughout. |
 
 ---
 
@@ -471,16 +478,23 @@ The Building steps from 5.4.
 ### C5 Results: a meal now (Step 4)
 
 - **Header:** "Dinner for 1 · High protein, Quick · Simple" with **Edit** (back to C2, answers kept).
-- **Strip while new ideas are written:** "Writing 2 new ideas…". During a rate-limit wait it becomes the friendly
+- **Strip while new ideas are written:** "Writing new ideas…". During a rate-limit wait it becomes the friendly
   wait state with a live countdown: "The recipe service needs a short breather. Writing your ideas in 0:23…" (5.5).
   When they land:
-  they slide into their ranked places with a **New** badge, and a toast says "2 new ideas added". If generation fails:
+  they slide into their ranked places with a **New** badge, and a toast says "6 new ideas added". If generation fails:
   "I couldn't write new ideas just now. These are your saved ones." Nothing else changes.
+- **New ideas are full cards at once.** Their numbers, coverage and why lines are computed from the idea's
+  ingredients exactly like a saved recipe's; only the steps wait until you open one (C8).
 - **Cards:** the top 12 recipe cards in rank order (5.3); **Show more** loads the rest.
-- **More ideas** at the bottom asks for one more generation call.
-  - While a call is running it reads "Writing…" and ignores further taps.
-  - Tapped again before Groq's per-minute allowance has room, it never errors: a short wait runs inside the request
-    with the countdown strip; a longer one shows "Ready in 0:45" on the button, counting down to a normal button.
+- **More ideas** at the bottom:
+  - **Usually instant.** In a search that wrote ideas, the server writes the next batch in the background once the
+    per-minute allowance has room (§14), and holds it. More ideas shows it at once, with New badges, and the next
+    batch starts in the background the same way. Nothing on screen shows the background work.
+  - If that batch is still being written, the button reads "Writing…", ignores further taps, and the ideas appear
+    when it lands. No second call is made.
+  - With no batch waiting (a search that wrote none, or a background batch that was skipped or failed), it makes one
+    ideas call. A short wait shows the countdown strip; a longer one shows "Ready in 0:45" on the button, counting
+    down to a normal button. It never errors.
   - When the daily guard is used up it says "That's today's new-idea allowance; back tomorrow."
 
 | Tap | Does |
@@ -488,7 +502,7 @@ The Building steps from 5.4.
 | A card | C8 recipe page in this search's context (same portions, same pantry coverage) |
 | ♥ / 🔖 on a card | Toggles favorite / save for later in place (E7, E8) |
 | Edit | Back to C2 with the answers kept |
-| More ideas | Same answers, `more_ideas: true`: one LLM call, results merged in |
+| More ideas | Shows the held background batch at once, otherwise makes one ideas call; then writes the next batch in the background (E18) |
 
 **States.**
 - **Loading:** skeleton cards.
@@ -527,7 +541,8 @@ The Building steps from 5.4.
 
 **Swap outcomes.**
 - **No other recipe fits** that meal's calories, time and the rest of the plan: a sheet says "No other lunch fits
-  Wednesday's calories and cook time" and offers **Write a new one** (one LLM call) or **Keep this one**. If that
+  Wednesday's calories and cook time" and offers **Write a new one** (one ideas call; the new recipe's steps are
+  written when you open it, and its unused ideas stay saved for the next swap) or **Keep this one**. If that
   call has to wait for the per-minute limit, the sheet shows the countdown wait state (5.5) instead of an error.
 - **After "Done shopping":** the swap plans from your pantry only. If it would need buying something, it says what
   and offers **Allow buying**, which adds those items to your list.
@@ -566,8 +581,17 @@ The existing recipe view, with these additions:
   it): 2 tbsp" (code-computed amount) and "Numbers are for the recipe as written."
 - **Steps** by section, with injected safety lines; then storage and reheating text, per-portion nutrition, heme iron
   "estimated", and cost per portion (all existing).
+- **Steps for a new idea** are written the first time anyone opens it (E19, §13.5):
+  - The header, numbers, ingredients and Before you start show at once. The Steps section shows the idea's one-line
+    method and "Writing the steps for this one…" with Pottle working, then fills in, normally within 5–15 s.
+  - If the call has to wait for the per-minute limit, the countdown wait state (5.5) shows in the Steps section.
+  - The numbers never change when the steps arrive: the steps can't add or change an ingredient, an amount, the
+    equipment or the times.
+  - From then on the steps are saved with the recipe, so every later open (any device, cooking mode, a plan) is
+    instant. Seed and saved recipes already have steps and never wait.
 - **Sticky action bar:** **Cook this** (primary) · ♥ · 🔖. For a plan batch, **Mark cooked** replaces Cook this once
-  you're in cooking mode or the batch's day has come.
+  you're in cooking mode or the batch's day has come. While an idea's steps are being written, Cook this reads
+  "Writing steps…" and becomes active when they land.
 
 | Tap | Does |
 |---|---|
@@ -578,7 +602,10 @@ The existing recipe view, with these additions:
 | ♥ / 🔖 | Toggle (E7, E8) |
 
 **States.** Loading: skeleton. Not found: "This recipe isn't available anymore." Offline: cached recipe opens; Cook
-this and Mark cooked are disabled. Mark cooked twice: "Already marked cooked on Wed 14" (the existing 409).
+this and Mark cooked are disabled; an idea without steps shows "The steps need a connection." Mark cooked twice:
+"Already marked cooked on Wed 14" (the existing 409). Steps failed after the capped attempts: "I couldn't write the
+steps just now." with **Try again** (the idea, its numbers and its place in your plan stay). Daily guard used up:
+"That's today's recipe-writing allowance; back tomorrow. Saved recipes still open."
 
 ---
 
@@ -719,13 +746,13 @@ server's message under the control.
 | C2 Goals | `NutritionPriority`, `GroceryMode`, `RecipeMood`, cook minutes, mood limits (`domain/cook_time.py`) | Goal mapping (§13.3): protein reward when its tile is on, low-calorie slot targets, Quick as a time limit |
 | C3 What do you have | Inventory lots (open packages, expiry), quick picks, `GET /ingredients?q=` search, resolver, diet status | Per-search pantry toggles, "have it" lots for this search, could-buy list, Always-have lots |
 | C3b Shopping | Planning modes (inventory / shop), `budget_cents`, `topup_cents`, stock-up rule (C10) | Could-buy items as the only allowed purchases in "use what I have" mode |
-| C4 Building (meal now) | Loader (`build_problem` pieces), recipe pool, NDJSON streaming pattern, `generation_run` | `POST /cook/meal-now`, single-meal ranking (§14), `meal_now_generation` prompt |
+| C4 Building (meal now) | Loader (`build_problem` pieces), recipe pool, NDJSON streaming pattern, `generation_run` | `POST /cook/meal-now`, single-meal ranking (§14), the ideas pass (`recipe_ideas/1` with the meal-now additions, §13.5), the background batch |
 | C4 Building (meal prep) | `POST /plans` stream, orchestrator stages, solver, rounding, absorption, validator, grocery list | `POST /cook/meal-prep`; friendly stage names and a real `pricing` stage; household multiplier; calendar-week caps |
-| C5 Results (meal now) | Recipe validator, prose filter, safety injection, resolver, version view (scaled nutrition and cost), `plan_candidate` exposure log | Ranking + coverage + deterministic substitutes; streamed merge; search cache |
+| C5 Results (meal now) | Recipe validator, prose filter, safety injection, resolver, version view (scaled nutrition and cost), `plan_candidate` exposure log | Ranking + coverage + deterministic substitutes; streamed merge; search cache; More ideas from the held batch (`POST /cook/searches/{id}/more`) |
 | C6 Results (meal prep) | `PlanSummaryOut` (days, meals, batches, costs, freeze notes), grocery list view, `accept` | Per-meal and per-day cost, `dish_category`, `cook_note`, `cash_split_display`, overlap-aware accept |
 | C6 Swap | Solver, post-solve, validator, `save_plan`, `meal_plan.supersedes_plan_id`, accept | `POST /plans/{id}/meals/{meal_id}/swap`: pinned re-solve (`planning/pins.py`), check-off carry-over, `meal_swapped` event |
 | C7 Saved lists | Version view | `GET /recipes/saved`, `PUT/DELETE /recipes/{id}/favorite` and `/saved`, `feedback_event` |
-| C8 Recipe page | `GET /recipe-versions/{id}?portions=`, `GET /cook-batches/{id}`, `POST /cook-batches/{id}/cooked`, grocery item PATCH and `complete` | `POST /cook/meals` (one-meal plan), favorite/saved flags and `dish_category` in the version response, substitute lines |
+| C8 Recipe page | `GET /recipe-versions/{id}?portions=`, `GET /cook-batches/{id}`, `POST /cook-batches/{id}/cooked`, grocery item PATCH and `complete` | `POST /cook/meals` (one-meal plan), favorite/saved flags and `dish_category` in the version response, substitute lines; steps on first open (`POST /recipe-versions/{id}/steps`, `recipe_steps/1`) |
 | G0 Grocery home | `GET /plans/{id}/grocery-list?group_by=`, `PATCH /grocery-items/{id}`, `POST /grocery-lists/{id}/complete`, offline queue | `cash_split_display`, water/0 g/Always-have fixes, open one-meal lists, "I always have this" |
 | G1–G3 What should I buy? | Orchestrator in shop mode, budget and stock-up rules, R4 store split, money-first diagnostics | `POST /grocery/advice`, reason templates (`app/cook/grocery_advice.py`) |
 | P0–P1 Pantry | Inventory CRUD, `POST /inventory/parse`, `POST /inventory/bulk`, `GET /inventory/quick-picks` | `amount_options` on quick picks; bulk add with an option key or a custom amount in the natural unit |
@@ -743,7 +770,7 @@ streaming of **our HTTP response** only. LLM calls stay non-streaming structured
 | # | Endpoint | Purpose | Kind | Step |
 |---|---|---|---|---|
 | E1 | `GET /cook/home` | Cook home data: last answers per mode with summary lines, the Today card, saved previews | JSON | 2b.3 |
-| E2 | `POST /cook/meal-now` | Ranked suggestions: saved and seed first, generated ideas merged in as they pass validation | NDJSON | 2b.3 |
+| E2 | `POST /cook/meal-now` | Ranked suggestions: saved and seed first, then (gap rule) one ideas call's ideas merged in as they pass the checks; then the background batch, held for More ideas (§14) | NDJSON | 2b.3 |
 | E3 | `POST /cook/meals` | Cook this: saves one recipe at N portions as a one-meal plan for today (with its could-buy grocery list); returns the batch id | JSON | 2b.3 |
 | E4 | `POST /cook/meal-prep` | A meal-prep plan from Cook answers (wraps the orchestrator) | NDJSON | 2b.5 |
 | E5 | `POST /plans/{plan_id}/meals/{meal_id}/swap` | Replace one meal; the rest of the plan stays fixed | NDJSON | 2b.6 |
@@ -758,7 +785,9 @@ streaming of **our HTTP response** only. LLM calls stay non-streaming structured
 | E14 | `POST /inventory/bulk` (changed) | Accepts `amount_option` or `custom_amount` + `custom_unit` | JSON | 2b.1 |
 | E15 | `GET /plans/{id}` (changed) | Adds `kind`, per-meal and per-day cost, `dish_category`, `cook_note`, `cash_split_display` | JSON | 2b.1 |
 | E16 | `GET /plans/{id}/grocery-list` (changed) | Water, 0 g and Always-have fixes; `cash_split_display` | JSON | 2b.1 |
-| E17 | `GET /recipe-versions/{id}` (changed) | Adds `dish_category`, `is_favorite`, `is_saved`; with `search=<id>`, the coverage and substitute lines from that search | JSON | 2b.1 / 2b.3 |
+| E17 | `GET /recipe-versions/{id}` (changed) | Adds `dish_category`, `is_favorite`, `is_saved`; with `search=<id>`, the coverage and substitute lines from that search; from 2b.3 `steps_ready` (false for an idea whose steps aren't written yet) | JSON | 2b.1 / 2b.3 |
+| E18 | `POST /cook/searches/{search_id}/more` | More ideas: shows the held background batch at once (and logs those exposures), or makes one ideas call when none is held; then writes the next background batch | NDJSON | 2b.3 |
+| E19 | `POST /recipe-versions/{version_id}/steps` | Writes an idea's steps on first open and saves them with the recipe (F19). Returns at once when they exist; a second request for the same recipe waits for the call already running instead of making another | NDJSON | 2b.3 |
 
 `POST /plans` stays as it is for the CLI and for compatibility.
 
@@ -804,12 +833,12 @@ class CookAnswers(_Strict):
     prep: PrepAmount | None = None
     shopping: Literal["use_what_i_have", "make_a_list"] | None = None    # prep
     budget_cents: int | None = Field(default=None, ge=0)
-    allow_llm: bool = True
-    more_ideas: bool = False
+    allow_llm: bool = True            # More ideas is its own endpoint (E18), so it isn't part of the answers
 
 class SuggestionOut(BaseModel):       # one recipe card; every number is code-computed
     version_id: int; recipe_id: int; title: str; dish_category: str
     badges: list[Literal["favorite", "saved", "new", "draft"]]
+    steps_ready: bool                 # False for an idea whose steps are written on first open
     portions: int; portions_display: str
     numbers: list[str]                # "540 kcal", "41 g protein", "35 min", "$2.10 a portion" (+ goal extras)
     uses: list[str]                   # your items
@@ -818,17 +847,29 @@ class SuggestionOut(BaseModel):       # one recipe card; every number is code-co
     why: list[str]                    # templated from the score components
     score: Decimal                    # kept for the exposure log and debugging
 
-class CookStreamEvent(BaseModel):
-    event: Literal["started", "progress", "heartbeat", "results", "result"]
+class CookStreamEvent(BaseModel):       # E2 and E18
+    event: Literal["started", "progress", "heartbeat", "results", "prefetched", "result"]
     search_id: int; run_id: int; elapsed_s: float
     stage: str | None = None; message: str | None = None
-    suggestions: list[SuggestionOut] | None = None   # "results": the full re-ranked list, replacing the last one
+    suggestions: list[SuggestionOut] | None = None   # "results": the full re-ranked list, replacing the last one;
+                                                     # "prefetched": the list as it will look after More ideas,
+                                                     # held by the app until you tap (never shown before)
     new_version_ids: list[int] = []
     status: Literal["succeeded", "partial", "failed"] | None = None   # "result" only
     wait_s: int | None = None          # "progress" with stage "waiting": seconds until the call can go (countdown)
     retry_after_s: int | None = None   # "result" with status "partial" after a wait too long for this request
     notes: list[str] = []; problem: ProblemOut | None = None
     llm_call_count: int | None = None; total_tokens: int | None = None
+
+class StepsStreamEvent(BaseModel):     # E19
+    event: Literal["started", "progress", "heartbeat", "result"]
+    version_id: int; run_id: int | None; elapsed_s: float
+    stage: Literal["writing_steps", "waiting", "checking"] | None = None
+    wait_s: int | None = None          # stage "waiting": the countdown
+    status: Literal["succeeded", "waiting", "failed"] | None = None   # "result": waiting = try at retry_after_s
+    retry_after_s: int | None = None
+    version: RecipeVersionOut | None = None   # "result" when succeeded: the recipe page payload, with its steps
+    problem: ProblemOut | None = None
 
 class SwapIn(_Strict):
     exclude_version_ids: list[int] = []   # recipes already swapped away for this meal
@@ -853,11 +894,15 @@ go within the wait limit.
 
 **Rate-limit waits (all LLM paths).**
 - **Before each call,** the pacer (`llm/pacing.py`) compares the call's estimated tokens with the per-minute
-  allowance left, read from Groq's `x-ratelimit-*` headers.
+  allowance left, read from Groq's `x-ratelimit-*` headers. The estimate is calibrated from logged calls of the same
+  purpose (§15.1).
 - **If it doesn't fit** (or Groq replies 429), the call waits, and the stream sends `progress` with stage `waiting` and
   `wait_s`.
 - **A wait longer than `LLM_MAX_RATE_WAIT_SECONDS` or the request's time budget** ends the request gracefully: status
-  `partial`, with everything already found and `retry_after_s`.
+  `partial` (`waiting` for a steps request), with everything already found and `retry_after_s`.
+- **Calls you're waiting on come first.** The background batch (§14) never starts while a steps call for you is
+  running or waiting. When it can't start within the wait limit and the time budget, it is skipped silently: the
+  search still ends `succeeded`, and More ideas makes its own call later.
 - **Problem errors** are reserved for real failures (bad configuration, repeated invalid output, transport failures
   after retries). A rate limit is never one.
 
@@ -877,7 +922,7 @@ go within the wait limit.
 | Mood | filter: recipe mood ≤ chosen; + exact match | `DaySpec.mood` for the cook days |
 | No goals | your Settings priority | your Settings priority and grocery mode |
 
-**The capped protein reward** (approved 2026-10-10):
+**The capped protein reward** (approved 2026-10-10, including the fallback for a target of 0):
 - **In the MILP,** per day d, a reward variable `y_d` gets `y_d ≤ protein_d` (your portion) and
   `y_d ≤ 1.5 × daily_protein_target_g`. The objective adds `w_protein × y_d` only while the High protein tile is on.
   Maximizing a capped linear term keeps it exact, with no new integer variables.
@@ -893,6 +938,9 @@ go within the wait limit.
 - **Favorites are real.** `favorite_recipe_ids` is filled from `recipe_favorite` (today it is always empty). The
   solver's existing favorite bonus (preference weight 0.3 per portion) and the exposure log's `source = favorite`
   start working. **Saved for later has no effect on scores.**
+- **Ideas without steps are full candidates.** An idea has everything the ranking and the solver read (ingredient
+  lines, so nutrition and cost; times, equipment, mood, freezer-friendly), so it ranks and plans exactly like a saved
+  recipe. Only cooking needs its steps (C8).
 - **Pantry toggles:** a toggled-off ingredient's lots are left out of this request's problem.
 - **"Have it" extras** become lots for this request only: meal now assumes enough for one recipe; meal prep uses the
   amount you picked. With **Save to pantry** they are written as real lots (with an `inventory_event`) first.
@@ -954,13 +1002,24 @@ cook_search                                     -- new: last-answers memory, res
   cache_key text NN           -- answers + resolved dates + pantry snapshot + settings + recipe pool + prices
   generation_run_id bigint NULL FK→generation_run
   meal_plan_id bigint NULL FK→meal_plan        -- prep/grocery: its plan; now: the one-meal plan once you cook
-  results jsonb NULL          -- meal now: the ranked snapshot (version ids, scores, components, card lines)
+  results jsonb NULL          -- meal now: the ranked snapshot (version ids, scores, components, card lines),
+                              -- plus the held background batch (version ids, shown yet or not)
   status text NN              -- running | done | failed
   created_at timestamptz NN
   IX (user_id, mode, created_at DESC) · IX (user_id, cache_key)
 
 ALTER meal_plan ADD kind text NULL              -- meal_prep | single | grocery_advice; NULL = Phase 1–2 week plans
+
+ALTER recipe_version ADD steps_status text NULL -- NULL = has its steps (every seed, Phase 1 and user version);
+                                                -- pending = an idea whose steps are written on first open (F19)
 ```
+
+- **Ideas are recipe versions** (`created_by = llm`, `prompt_version = recipe_ideas/1`) with their ingredient lines
+  and no `recipe_step` rows. The idea's one-line method is stored in `description`, so no other column is needed.
+- **Write-once steps (F19):** an idea's steps are inserted exactly once, in the same transaction that sets
+  `steps_status` from `pending` to NULL. Nothing else on the version changes, then or later; `content_hash` stays
+  the idea's (title, lines, servings), so deduplication works before and after. Every other version stays immutable
+  exactly as before.
 
 - **`plan_candidate`:** no column change. Meal-now searches write rows with `selected = false`; Cook this sets
   `selected = true` and `portions_selected`, and links `meal_plan_id` to the one-meal plan (§16 F9).
@@ -976,13 +1035,52 @@ ALTER meal_plan ADD kind text NULL              -- meal_prep | single | grocery_
 - **Seed data:** sweet potatoes get a multi-week pantry shelf life like russet potatoes (28 days, cited the same way
   as D38). No migration.
 - **No other schema changes.** The deterministic substitute suggestions read `ingredient_substitution` (accepted
-  pairs) and store nothing. Dish categories are computed.
+  pairs) and store nothing. Dish categories and prompt short names (§13.5) are computed.
 
-### 13.5 Prompts
+### 13.5 Prompts: generation in two passes
 
-- **`meal_now_generation/1`** (new). The same system rules and `GeneratedRecipe` schema as today. The user part asks
-  for 2 recipes for one meal, mood, time limit, equipment and `base_servings` 2 (code scales to your household). It
-  has:
+Every 2b flow that writes recipes (meal now, meal prep, swap's "Write a new one", grocery advice with generation on)
+does it in two passes. Each call then fits well inside Groq's 8K tokens a minute, and steps are written only for
+recipes you open (§15). `POST /plans` (CLI and compatibility) keeps the Phase 1 prompts, `candidate_generation/1`
+and `recipe_revision/1`, unchanged (F20).
+
+**Pass 1: ideas (`recipe_ideas/1`, new).** One call returns 5–8 ideas; code picks the count so the call fits (§15.1).
+The output models sit next to `GeneratedRecipe` in `app/schemas/llm_recipe.py`:
+
+```python
+class IdeaIngredient(_Strict):
+    name: str                         # a short name from INGREDIENTS, exactly as listed
+    quantity: float                   # raw, dry or as-sold, for base_servings (build plan §7.8)
+    unit: LLMUnit
+    role: IngredientRole
+
+class RecipeIdea(_Strict):            # creative content only, like GeneratedRecipe, and no steps
+    title: str                        # 3–80 characters
+    method: str                       # ≤ 140: "Sear the chicken, simmer with tomato and spices, fold in spinach"
+    meal_slots: list[MealSlot]        # 1–3
+    mood: RecipeMood
+    base_servings: int
+    active_minutes: int; total_minutes: int
+    equipment: list[Equipment]
+    freezer_friendly: bool
+    ingredients: list[IdeaIngredient] # 2–20: everything the cooking will use, water, salt and oil included
+
+class RecipeIdeaBatch(_Strict):
+    ideas: list[RecipeIdea]           # 1–8
+```
+
+- **Compared with `GeneratedRecipe`:** no steps, description, cuisine or flavor tags, and ingredient lines without
+  preparation, component or optional. The transport schema is 1,835 characters instead of 3,324.
+- **System rules:** today's rules without the step rules (doneness checks, prep and portioning steps, appliance
+  temperatures), plus "list every ingredient the cooking will use, including water, salt and oil".
+- **Checks:** everything the recipe validator does except the step checks: names, units and the as-sold rule;
+  exclusions, held items and caps; equipment and mood; time limits; complete nutrition; the prose filter on the title
+  and method.
+- **What happens to a passing idea:** it is saved as a recipe version with `steps_status = pending` (§13.4) and gets
+  code-computed nutrition and cost. It is then ranked (meal now) or offered to the solver (meal prep, swap, grocery
+  advice) like any saved recipe.
+- **A failing idea** is dropped, with its reasons logged.
+- **Meal now** adds these lines to the request (as approved):
   - **must use:** up to 6 of your items, open packages and soonest-expiring first, then proteins;
   - **may buy:** your could-buy items;
   - **goal hints** as ingredient directions ("favor protein-rich ingredients such as eggs, chicken, Greek yogurt,
@@ -990,10 +1088,48 @@ ALTER meal_plan ADD kind text NULL              -- meal_prep | single | grocery_
   - **avoid** the titles already on screen;
   - a **narrowed vocabulary:** your items, could-buys, Always-have and assume-in-stock staples, plus up to 30 common
     allowed ingredients your stores price (by how often your recipes use them). The never-use list is unchanged.
-    This cuts the prompt by roughly the length of the full ingredient list (§15).
-- **`recipe_revision/1`** is reused unchanged. In meal now it runs only when a batch yields **no** valid recipe, to
-  keep the wait short.
-- Meal prep, swap ("Write a new one") and grocery advice use the existing `candidate_generation/1`.
+- **Meal prep, swap and grocery advice** send the slot, mood, minutes, equipment, the lots to use up and the titles
+  to avoid, with the full allowed vocabulary (as `candidate_generation/1` does today).
+
+**Short names (compact prompts).** Every prompt names an ingredient by its **short name**, never by a product
+description:
+- **The rule:** the canonical name up to its first comma or parenthesis, when that text is an alias of the same
+  ingredient; otherwise the full canonical name.
+- **Examples:** "chicken thigh, boneless skinless" becomes "chicken thigh", and "flour tortilla (Price Rite, 37 g)"
+  becomes "flour tortilla". "milk, whole" and "milk, skim" keep their full names, because "milk" alone isn't an alias
+  of either.
+- **Measured on today's seed data:** 42 of the 51 names with a descriptor get shorter, and the full list drops from
+  2,840 to 2,399 characters. No two ingredients share a short name.
+- **How it maps back:** a short name is an alias, so the resolver maps it back exactly. It is computed in code
+  (`domain/prompt_names.py`), with no data change.
+
+**Pass 2: steps (`recipe_steps/1`, new).** The first time you open an idea (E19), one call writes its steps:
+
+```python
+class RecipeSteps(_Strict):
+    steps: list[LLMStep]              # 3–30; LLMStep unchanged (section, text, duration, appliance temp, doneness)
+```
+
+- **The prompt** carries only the saved idea: title, method, mood, servings, minutes, equipment, and its ingredient
+  lines in short names with the stored amounts. It adds the step rules. There is no vocabulary and no never-use list,
+  because the ingredients are fixed.
+- **Checks:** idea + steps are validated as one `GeneratedRecipe`, so the existing step checks run unchanged:
+  - prep and portioning steps are present;
+  - each section's equipment is in the idea's equipment;
+  - oven and air-fryer steps state a temperature;
+  - every ingredient a step uses is on the list, and doneness checks resolve;
+  - the prose filter passes; then the food-safety lines are injected.
+- **A failure** retries with the errors (rule 5, `LLM_MAX_ATTEMPTS`, short replies only, as since Phase 1).
+- **The card's numbers never change,** because the steps can't add or change an ingredient, an amount, the
+  equipment or the times.
+- **Passing steps are saved with the recipe once** (F19). A second open, another device, Cook this and cooking mode
+  make 0 calls. Seed recipes, Phase 1 recipes and anything saved with steps never call it.
+- **One call per recipe at a time:** a second request for the same idea waits for the first one's result.
+
+**Revisions (`idea_revision/1`, new).** It replaces `recipe_revision/1` in the 2b flows, and runs only when **no**
+idea in a batch passes. It sends at most 3 failed ideas with their errors, so the call stays short.
+
+**Background batch (meal now).** See the gap rule (§14).
 
 ### 13.6 Progress stages
 
@@ -1004,12 +1140,17 @@ ALTER meal_plan ADD kind text NULL              -- meal_prep | single | grocery_
 | Balancing calories across the days | `solving`, `re-solving` | Meal prep, swap, grocery advice |
 | Pricing your groceries | **`pricing`** (new): practical rounding, package absorption, packages, store choice, costs | Emitted after the solve, before `build_rounded_plan` |
 | Double-checking every number | `validating` | Moves after `pricing` (today it is emitted before rounding) |
+| *(nothing shown)* | `prefetching` (meal now) | The background batch (§14), after the `results`; More ideas reads "Writing…" while it runs |
+| Steps section on C8 | `writing_steps`, `waiting`, `checking` (E19) | "Writing the steps for this one…"; `waiting` shows the countdown |
 
 ### 13.7 Logging for the future ranker
 
 - **Exposures:** meal-now searches log every offered and filtered recipe in `plan_candidate` under a `generation_run`
   with purpose `meal_now`. Swaps log under `swap` and grocery advice under `grocery_advice`. Failed runs log nothing
   (D42 unchanged).
+- **The background batch** is logged as exposures only when More ideas shows it (it was never offered before). Its
+  ideas are saved and join the pool either way.
+- **Steps calls** run under a `generation_run` with purpose `recipe_steps`. They change no exposure.
 - **Events:** ♥ and 🔖 toggles and swaps go to `feedback_event` from day one. They can't be backfilled, which is the
   same reason exposure logging moved to Phase 2.
 
@@ -1055,8 +1196,26 @@ ALTER meal_plan ADD kind text NULL              -- meal_prep | single | grocery_
 **Gap rule for new ideas:**
 - A **good match** passes the filters and, if your pantry isn't empty, uses at least one of your items as its protein
   or carb with at most 2 missing items that have no substitute.
-- With fewer than 3 good matches (or when you tap **More ideas**), one generation call writes 2 recipes.
-- They pass the recipe validator, are saved, scored by the same function, and streamed into the list.
+- With fewer than 3 good matches, one **ideas call** writes 5–8 ideas (§13.5). The ones that pass the checks are
+  saved, scored by the same function and streamed into the list as soon as the call returns. Their steps are written
+  later, when you open one.
+- With 3 or more good matches, nothing is written, in the foreground or the background (Q8 holds). More ideas there
+  makes the first ideas call, and then the background batch below.
+
+**The background batch** (so More ideas is usually instant):
+- **When:** in a search that wrote ideas, the stream stays open after the results and writes the next batch once the
+  per-minute allowance has room. That is typically 50–60 s after the first call (§15.1); the request's 180 s budget
+  covers it.
+- **Held, not shown:** the batch goes through the same checks and is saved, then sent as a `prefetched` event that the
+  app keeps until you tap More ideas (E18). That request shows it, logs those exposures, and writes the following
+  batch the same way.
+- **It yields:**
+  - it never starts while a steps call for you is running or waiting, because opening a recipe comes first;
+  - it is skipped, silently, when it can't start within `LLM_MAX_RATE_WAIT_SECONDS` and the time budget, or when it
+    would leave less than `LLM_PREFETCH_DAILY_RESERVE` (30,000 tokens) of the daily guard for calls you ask for.
+- **Nothing is wasted:** an unshown batch's ideas stay in the pool for later searches, meal prep and swaps.
+- **If you leave the screen** before it lands, a call already running may be cut off with the request. Ideas already
+  saved stay saved.
 
 **Why not the solver.**
 - **Nothing is coupled.** One meal shares no packages, fridge windows, cook days or weekly totals with other choices,
@@ -1076,27 +1235,81 @@ day and week calories, the protein floor and the budget interact.
 
 ## 15. LLM budget: calls, tokens and caching
 
-### 15.1 Limits we work inside (build plan §7.6)
+### 15.1 Limits, and what one call costs
 
-Groq free tier for the strict-output models: **8K tokens a minute**, 200K tokens a day (the app's own guard,
-`LLM_DAILY_TOKEN_BUDGET`, stops at 150K), 30 requests a minute, 1K a day. The Phase 1 live run measured a 2-recipe
-candidate batch at **≈ 5.9K prompt + ≈ 1.8K completion ≈ 7.7K tokens**, so about **one generation call a minute**.
+**Limits** (build plan §7.6). Groq's free tier for the strict-output models allows:
+- **8K tokens a minute**;
+- 200K tokens a day (the app's own guard, `LLM_DAILY_TOKEN_BUDGET`, stops at 150K);
+- 30 requests a minute and 1K a day.
 
-### 15.2 Estimates
+Groq also seems to check each request's prompt **plus its maximum completion** against the minute's limit: the
+Phase 1 HTTP 413 was for 11.4K "requested" tokens. So every call keeps its prompt estimate + `max_completion_tokens`
+at or under 95% of the limit read from the headers, with a per-purpose maximum completion. The 2b.3 live test
+confirms this.
 
-| Flow | Typical calls | Typical tokens | Worst case (capped) |
+**Why two stages.** One Phase 1 call wrote 2 complete recipes for ≈ 7.7K tokens, about a whole minute's allowance.
+An idea is about a third of a full recipe's output, because it has no steps. So one call now brings 5–8 options, and
+steps are written only for the recipes you open.
+
+**What a call costs.** The Phase 1 live run measured a 2-recipe batch at **≈ 5.9K prompt + ≈ 1.8K completion**.
+- **What we send:** by character count, the text explains only about 2.4K of that prompt. Measured today: system
+  rules 1,649 characters, response schema 3,324, ingredient list 2,840, and the request about 600.
+- **The rest, ≈ 3.5K,** is how Groq frames the request. Splitting it needs a live call, so the table gives two
+  cases:
+  - **Cautious** (used for planning): that ≈ 3.5K is a fixed cost on every call.
+  - **If it scales:** it grows with what we send, so the prompt is ≈ 2.45 × our text.
+
+| Call | Prompt, cautious (if it scales) | Completion | **Total, cautious** | Total, if it scales |
+|---|---|---|---|---|
+| Phase 1 batch: 2 full recipes (measured) | 5.9K | 1.8K | **7.7K** | 7.7K |
+| Ideas, meal now: 6 ideas, ≈ 70 short names (≈ 900 characters instead of 2,840) | ≈ 5.0K (3.8K) | ≈ 1.8K (≈ 0.3K an idea) | **≈ 6.8K** | ≈ 5.6K |
+| Ideas, meal prep / swap / grocery advice: 6 ideas, every allowed short name | ≈ 5.3K (4.5K) | ≈ 1.8K | **≈ 7.1K** | ≈ 6.3K |
+| Steps for one recipe | ≈ 4.2K (1.7K) | ≈ 0.6K | **≈ 4.8K** | ≈ 2.3K |
+| Idea revision (only when no idea in a batch passes) | ≈ 5.5K (4.6K) | ≈ 0.9K | **≈ 6.4K** | ≈ 5.5K |
+
+- **Ideas per call:** code picks the largest count from 8 down to 5 for which the prompt estimate + count × 330 + 300
+  (reasoning) fits in 95% of the minute's limit. That gives 6 in the cautious case and 8 if it scales. The table's
+  totals are for 6 ideas; 8 add ≈ 0.6K. If even 5 don't fit, no call is made, and 2b.3 stops and tells you.
+- **Calibrated estimates:** the pacer and the daily guard estimate a call from its characters
+  (`CHARS_PER_TOKEN = 4`), which would undercount the measured prompt about 2.5 times. From 2b.3 they scale that by
+  the median ratio of real to estimated prompt tokens over the last 20 logged calls of the same purpose (2.5 until
+  five are logged), so predicted waits match Groq's.
+- **Timing:** a call with ≈ 1.8K of completion took 10–20 s in Phase 1. Groq refills the minute's allowance
+  continuously (Phase 1's retry-after times were 7–39 s). So right after an ideas call, a steps call waits about
+  15–30 s (cautious) or 5–15 s (if it scales), and the next ideas call (the background batch) about 50–60 s.
+
+### 15.2 Estimates per flow
+
+| Flow | Calls | Tokens, cautious (if it scales) | Worst case (capped) |
 |---|---|---|---|
-| **A meal now** | **0–1.** 0 when at least 3 saved or seed recipes are good matches; 1 otherwise, or when you tap More ideas | ≈ 6–7K per call (≈ 4.5–5K prompt with the narrowed vocabulary + ≈ 1.8K completion; to be measured in 2b.3's live test) | 2 calls (one batch + one revision, only if the batch had no valid recipe) ≈ 14K |
-| **Meal prep** (5 lunches, or lunch + dinner Mon–Fri) | **0** with today's library: 6 lunch/dinner seeds cover a slot for up to 5 days each (variety rule) | 0 | One batch per uncovered meal slot (≈ 7.7K) plus targeted rounds after an infeasible solve. The 180 s request budget and 8K/min allow about **3 calls**, ≈ 23K |
-| **Swap one meal** | **0** (other saved recipes fit) | 0 | 1 targeted batch, only after you tap **Write a new one**, plus at most 1 revision: ≈ 8–15K |
+| **A meal now: the cards** | **0** when at least 3 saved or seed recipes are good matches (cards in under a second). Otherwise **1** ideas call; its 5–8 cards land 10–20 s after the saved ones | 0, or ≈ 6.8K (5.6K) | 1 ideas call + 1 idea revision ≈ 13K (11K); the revision about a minute later |
+| **A meal now: background batch** | **+1** ideas call, only in a search that wrote ideas, once the minute has room; nothing on screen | ≈ 6.8K (5.6K) | Skipped when it can't fit; never more than one at a time |
+| **More ideas** | **0** before the cards when the background batch is ready (instant), then +1 background batch. Otherwise 1 ideas call | ≈ 6.8K (5.6K) per tap | As the cards row |
+| **Opening a new idea** | **1** steps call, the first time only. **0** for seed and saved recipes and every later open | ≈ 4.8K (2.3K) | 3 attempts (rule 5) ≈ 14K (7K) |
+| **Meal prep** (5 lunches, or lunch + dinner Mon–Fri) | **0** with today's library: 6 lunch/dinner seeds cover a slot for up to 5 days each (variety rule) | 0 | One ideas call per uncovered meal slot, ≈ 7.1K (6.3K), each bringing 5–8 options instead of 2–3. Plus targeted rounds after an infeasible solve: the 180 s budget and 8K/min allow about **3 calls**, ≈ 21K (19K). Steps only for the new recipes you open, ≈ 4.8K (2.3K) each |
+| **Swap one meal** | **0** (other saved recipes fit) | 0 | **Write a new one:** 1 ideas call + at most 1 revision, ≈ 7.1–13.5K (6.3–11.8K). Then the swapped-in recipe's steps when you open it, ≈ 4.8K (2.3K). The call's other ideas join the pool, so the next swap of that meal usually needs no call |
 | **What should I buy?** | **0** (generation is off by default) | 0 | As meal prep, if you turn on "include new recipes" |
 | **Same as last time, reopening results** | **0** | 0 | 0 when nothing changed; otherwise as the flow |
-| NL quick add (unchanged) | 1 per parse | ≈ 1–2K | 3 attempts |
+| NL quick add (unchanged) | 1 per parse | ≈ 1–2K of text; up to ≈ 4–5K if the cautious overhead holds | 3 attempts |
 
-**A heavy day:** 5 meal-now searches that each generate, 1 meal prep with one gap, and 2 swaps ≈ 5 × 6.5K + 7.7K ≈
-40K tokens, about a quarter of the daily guard. **A second call within the same minute** (e.g. More ideas tapped
-twice quickly) gets the friendly countdown wait (5.5), never an error. Requests per minute and per day never bind
-first.
+**Days.**
+- **A typical day:** one meal-now search that writes ideas, its background batch, and one new idea opened:
+  ≈ 18.4K (13.5K), about 12% (9%) of the daily guard. Meal prep from the saved pool adds 0.
+- **A heavy day** (the same day the earlier estimate used: 5 meal-now searches that each write ideas, 1 meal prep
+  with one uncovered slot, 2 swaps from the pool), now also opening one new idea per search and both new meal-prep
+  recipes:
+  - 5 × (6.8 + 6.8 + 4.8) + 7.1 + 2 × 4.8 ≈ **109K (78K)**, about 73% (52%) of the guard.
+  - The earlier estimate for that day was ≈ 40K, but it brought 2 recipes per search. This one brings 10–16 per
+    search, half of them held for More ideas.
+  - The background batches are 34K (28K) of the 109K (78K).
+- **The extras go first:** background batches stop when less than 30K of the daily guard would remain, so calls you
+  ask for keep the rest. When the guard can't afford a call you asked for, flows fall back to saved recipes with a
+  note (§15.3, item 8).
+- **The pool grows fast:** each search that writes ideas adds 10–16 saved recipes, so later searches more often find
+  3 good matches and make no call at all.
+- **Per minute:** every single call fits under 8K. A second call in the same minute (More ideas with no batch
+  waiting, or a new idea opened right after a batch) gets the friendly countdown wait (5.5), never an error.
+  Requests per minute and per day never bind first.
 
 ### 15.3 What is cached or reused
 
@@ -1106,20 +1319,23 @@ first.
    version + price version. A repeat with nothing changed (Same as last time, reopening results, coming back to the
    tab) returns the stored result with 0 calls and no re-solve.
 3. **The gap rule:** meal now generates only when the saved pool is thin; meal prep only for uncovered meal slots
-   (existing `gap_analysis`).
-4. **Substitutes** are deterministic in 2b (accepted pairs + pantry items with the same role), so 0 calls. Phase 3's
+   (existing `gap_analysis`). Each call now brings 5–8 ideas instead of 2–3 recipes.
+4. **Steps are cached with the recipe** (written once, F19). Seed, Phase 1 and saved recipes never need a steps call,
+   a recipe's second open makes none, and ideas you never open never cost one.
+5. **Substitutes** are deterministic in 2b (accepted pairs + pantry items with the same role), so 0 calls. Phase 3's
    LLM substitution engine keeps its per-ingredient cache.
-5. **Swaps** remember the recipes already swapped away for that meal, so repeated taps cycle through saved options
-   instead of asking the LLM.
-6. **Grocery advice** has LLM off by default and plans from the saved pool.
-7. **The daily token guard:** when it can't afford another call, flows fall back to saved recipes with a note, never
-   an error.
+6. **Swaps** remember the recipes already swapped away for that meal, so repeated taps cycle through saved options
+   instead of asking the LLM. The unused ideas from a "Write a new one" call are among them.
+7. **Grocery advice** has LLM off by default and plans from the saved pool.
+8. **The daily token guard:** when it can't afford another call, flows fall back to saved recipes with a note, never
+   an error. The background batch keeps a 30K reserve (§14), so it stops before calls you ask for do.
 
 ---
 
-## 16. Changes to earlier decisions (all approved 2026-10-10)
+## 16. Changes to earlier decisions (F1–F18 approved 2026-10-10; F19–F21 added the same day)
 
-You approved all 18 changes on 2026-10-10, with the protein reward in F3 capped at 1.5 × the daily target.
+You approved all 18 changes on 2026-10-10, with the protein reward in F3 capped at 1.5 × the daily target. F19–F21
+come from the two-stage generation you asked for later that day (table below this one).
 
 | # | Earlier decision | Change | Why |
 |---|---|---|---|
@@ -1141,6 +1357,14 @@ You approved all 18 changes on 2026-10-10, with the protein reward in F3 capped 
 | F16 | Later migrations named 0003–0006 | Renumbered: 2b `0005`, Phase 3 `0006`, Phase 4 `0007`, Phase 5 `0008`, Phase 6 `0009` | 0004 is already used |
 | F17 | Settings v2 | Settings **v3** (data migration): household size, Always have, default budget, onboarding flag | Above |
 | F18 | `CLAUDE.md` phase outline lists favorites in Phase 3 and has no Phase 2b | **Updated 2026-10-10** with your OK, using the wording in BUILD_PLAN §11 item 7 | CLAUDE.md is yours and wins on conflict |
+
+**Added with two-stage generation (2026-10-10):**
+
+| # | Earlier decision | Change | Why |
+|---|---|---|---|
+| F19 | Recipe versions are immutable once written (build plan §2 item 10, §4.4) | An idea is saved as a version **without steps** (`steps_status = pending`) and gets its steps **exactly once**, on first open. Nothing else on it ever changes, and every other version stays immutable. A user edit still creates a new version (CLAUDE.md) | Steps only for recipes you open, "cached with the recipe" |
+| F20 | Meal prep, swap and grocery advice write recipes with `candidate_generation/1` (2–3 complete recipes a call), revised with `recipe_revision/1` (§13.5 as first approved) | They use the ideas pass (`recipe_ideas/1`, 5–8 a call), `idea_revision/1`, and steps on first open. `POST /plans` (CLI and compatibility) keeps the Phase 1 prompts and complete recipes unchanged | More options per call under 8K a minute, and one generation path for the new flows |
+| F21 | More ideas is one LLM call when you tap it (`more_ideas: true` in `CookAnswers`) | The next batch is written in the background in the same stream, held, and shown by More ideas (E18); `more_ideas` leaves `CookAnswers`. It runs only in searches that already wrote ideas, so Q8 still holds | More ideas is usually instant |
 
 Unchanged on purpose: the variety rule (Q14: at most 5 portions of one recipe a week for meals, never twice a day).
 A user-editable variety cap stays deferred (your carried decision).
@@ -1171,6 +1395,6 @@ You accepted the defaults for all ten.
 | Q5 | **What should I buy?** builds a meal plan behind the list, and **Use this list** also sets that plan? | **Yes** |
 | Q6 | The **pork cap week** is Monday–Sunday in your timezone, across all plans and single meals? | **Yes** |
 | Q7 | The **mascot**? | **Pottle**, the small clay pot |
-| Q8 | **Meal now** writes new ideas automatically only when fewer than 3 saved recipes fit well (plus More ideas)? | **Yes** |
+| Q8 | **Meal now** writes new ideas automatically only when fewer than 3 saved recipes fit well (plus More ideas)? | **Yes.** The background batch (F21) keeps this: it runs only in searches that already wrote ideas |
 | Q9 | **Phase 2 approval?** | **Approved 2026-10-10** |
 | Q10 | **CLAUDE.md** phase outline update? | **Yes**; applied with the BUILD_PLAN §11 item 7 wording |
