@@ -469,7 +469,9 @@ the earlier two tiles, "Today, all at once" and "On my cook days". The route kee
   more") and can't be toggled here.
 - **Add something:** a search field (typed entry, autocomplete from the ingredient list) and quick-add chips (your
   usual items). Each added item gets a segmented **Have it / Could buy**:
-  - **Have it** means it's in your kitchen. For meal now no amount is needed (code assumes enough for one recipe);
+  - **Have it** means it's in your kitchen. Since step 2b.4 the add flow (P2) asks how much, with the same package
+    sizes and Not sure (the usual size) as Pantry; an item with no sizes needs no amount (enough for one recipe).
+    Before 2b.4: for meal now no amount is needed (code assumes enough for one recipe);
     for meal prep the amount picker opens (default: one usual package). A **Save to pantry** switch (off by default)
     also adds it to your inventory.
   - **Could buy** means you'd happily pick it up (standing in the store looking at chickpeas). Its price comes from
@@ -614,6 +616,9 @@ The existing recipe view, with these additions:
 - **Before you start** box:
   - meal now: could-buy and missing items, with prices and substitutes;
   - plan batch: the existing package notes and freeze notes.
+- **Your terms** (step 2b.4, BUILD_PLAN J6): each ingredient you have says what the recipe uses of it, "uses 8 oz,
+  about half your bag · 8 oz left after", from the same lots and order Mark cooked takes from, so the note and
+  the deduction match to the gram; the rest stays in Pantry.
 - **Ingredients** in practical quantities. A missing line shows "Don't have lemon? Bottled lime juice works (you have
   it): 2 tbsp" (code-computed amount) and "Numbers are for the recipe as written."
 - **Steps** by section, with injected safety lines; then storage and reheating text, per-portion nutrition, heme iron
@@ -708,6 +713,8 @@ parse that hits the per-minute limit shows the countdown wait state (5.5) instea
 
 ### P1 Amount picker (bottom sheet)
 
+*Replaced in the app at step 2b.4 by the add flow below (BUILD_PLAN J5, D80). The API's `amount_options` stay.*
+
 ```
 Chicken thighs: how much?
 [ Full ] [ ¾ ] [ ½ ] [ ¼ ] [ Custom ]
@@ -724,6 +731,26 @@ Where:   [ Fridge ] [ Freezer ] [ Pantry ]
 - **Where** is pre-filled from the item's usual location.
 - **States:** adding (spinner on Add), error (message under the control; the sheet stays open), offline (disabled:
   inventory changes aren't in the offline queue).
+
+### P2 The add flow (step 2b.4, BUILD_PLAN J4–J5)
+
+Adding an item to Pantry (a typed name or a quick pick) or to "What do you have?" opens one sheet, its steps
+from `GET /ingredients/{id}/add-options`:
+
+1. **Which version?** Only for a held item that comes in versions (pepperoni, salami, chicken bouillon): the
+   question, "Check the label" guidance and each version with what it means ("Off your list: it contains
+   beef", "Allowed; counts toward your pork limit", "Allowed", "Stays held until you check the label"). Each
+   allowed version is its own ingredient; the add then continues for it. Choosing one never allows the held item.
+2. **Which kind?** Only for a food with more than one form (fresh, frozen, canned, dried), each its own
+   ingredient (nutrition and shelf life differ: frozen florets keep for months).
+3. **Have it / Could buy** ("What do you have?" only).
+4. **How much?** The form's common US package sizes as buttons (estimates, from the seed catalog), **Custom**
+   (stepper and unit, the server converts) and **Not sure** (the default: the most common size, with the lot
+   marked as an estimate). Pantry shows an "est. amount" badge and **Correct amount** on such a lot.
+5. **Where** (Pantry, or "Save to pantry"), pre-filled from the form's usual place.
+
+A held lot that comes in versions shows **Which version?** in Pantry and in "What do you have?"; it becomes a
+lot of that version (`POST /inventory/{id}/version`).
 
 ---
 
@@ -1227,6 +1254,11 @@ idea in a batch passes. It sends at most 3 failed ideas with their errors, so th
      seasoning, garnish and "other" lines get no pantry substitute; each item stands in for one line at most.
      A line you have some of is **short**: it shows as "(some)" with a top-up purchase and counts half toward
      pantry fit. With an empty pantry, the gap rule's good match is any recipe that passes the filters.
+   - *Changed at the 2b.3a approval (BUILD_PLAN J2, built in 2b.4):* a vegetable or herb is swapped only for
+     another member of its **culinary group** (onions and scallions, leafy cooking greens, sturdy green vegetables,
+     sweet peppers…; seed data `pantry_catalog.json`, listed in `docs/review/pantry_catalog.md`), whatever role the
+     line plays; one in no group, or alone in its group, gets no substitute. A yellow onion never becomes spinach.
+     Accepted pairs still apply first.
 5. **Score** = a weighted sum of components normalized across the eligible pool (initial weights, tuned with golden
    tests in step 2b.3a):
 

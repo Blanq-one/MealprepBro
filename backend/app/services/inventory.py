@@ -36,6 +36,8 @@ class LotInput:
     notes: str | None = None
     reason: str = "purchase"  # purchase | manual_adjust | parse_add
     grocery_list_item_id: int | None = None  # set by "Done shopping"
+    quantity_is_estimate: bool | None = None  # "Not sure" (step 2b.4, J5): the usual package size
+    container: str | None = None  # the package preset's container ("bag")
 
 
 def _event(
@@ -90,6 +92,8 @@ def add_lot(session: Session, user_id: int, data: LotInput) -> InventoryItem:
         expiry_is_estimate=data.expiry_is_estimate,
         status="active",
         notes=data.notes,
+        quantity_is_estimate=data.quantity_is_estimate,
+        container=data.container,
     )
     session.add(item)
     session.flush()
@@ -140,7 +144,34 @@ def set_quantity(
         _event(session, item, delta, "manual_adjust", note)
         if quantity == 0:
             item.status = "depleted"
+    item.quantity_is_estimate = False  # you counted it: no longer the "Not sure" estimate
     session.flush()
+    return item
+
+
+def correct_amount(
+    session: Session,
+    user_id: int,
+    item_id: int,
+    quantity: Decimal,
+    unit: str,
+    *,
+    container: str | None = None,
+) -> InventoryItem:
+    """Correct a lot to an amount in any unit its ingredient understands (a package preset, or a custom amount
+    from Pantry's "est." correction, step 2b.4): converted to the lot's base unit, then set_quantity."""
+    item = _lot(session, user_id, item_id)
+    units = load_ingredients(session, [item.ingredient_id])[item.ingredient_id].units
+    try:
+        base = to_base(quantity, normalize_unit(unit, units.named_units), units)
+    except (UnitError, ValueError) as exc:
+        raise InventoryError(f"{exc}") from exc
+    if base.unit.value != item.unit:
+        raise InventoryError(f"this lot is counted in {item.unit}, not {base.unit.value}")
+    item = set_quantity(session, user_id, item_id, base.amount.quantize(Decimal("0.001")))
+    if container is not None:
+        item.container = container
+        session.flush()
     return item
 
 
@@ -213,3 +244,39 @@ def add_lots(session: Session, user_id: int, items: list[LotInput]) -> list[Inve
     if refused:
         raise InventoryError(f"excluded, so not added: {', '.join(refused)}")
     return [add_lot(session, user_id, item) for item in items]
+
+
+def relabel_lot(
+    session: Session, user_id: int, item_id: int, ingredient_id: int, label: str
+) -> InventoryItem:
+    """A held item's lot is the version on its label (step 2b.4, J4): the old lot is emptied (one
+    manual_adjust event) and a new lot of the version takes over its amount, place and dates. The generic item
+    stays held; nothing about it is allowed by this."""
+    item = _lot(session, user_id, item_id)
+    if item.status != "active":
+        raise InventoryError("only active lots can be relabeled")
+    quantity = item.quantity
+    new = InventoryItem(
+        user_id=user_id,
+        ingredient_id=ingredient_id,
+        product_id=None,
+        quantity=quantity,
+        unit=item.unit,
+        location=item.location,
+        acquired_on=item.acquired_on,
+        opened_on=item.opened_on,
+        expires_on=item.expires_on,
+        expiry_is_estimate=item.expiry_is_estimate,
+        status="active",
+        notes=item.notes,
+        quantity_is_estimate=item.quantity_is_estimate,
+        container=item.container,
+    )
+    session.add(new)
+    session.flush()
+    _event(session, item, -quantity, "manual_adjust", f"relabeled as {label}")
+    item.quantity = Decimal(0)
+    item.status = "depleted"
+    _event(session, new, quantity, "manual_adjust", f"relabeled from lot {item.id}")
+    session.flush()
+    return new

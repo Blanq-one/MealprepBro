@@ -1,0 +1,38 @@
+/* Sticky above the tab bar, so Cook this is always one tap away. */
+.bar {
+  position: sticky;
+  bottom: calc(var(--nav-height) + var(--safe-bottom) + 8px);
+  z-index: 5;
+  margin: 16px 0;
+  padding: 10px;
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 14%);
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cook {
+  flex: 1;
+  min-height: var(--primary-height);
+}
+
+.toggle {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border: 0;
+  border-radius: var(--radius-button);
+  background: var(--surface-2);
+  color: var(--accent-ink);
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.toggle[aria-pressed="true"] {
+  background: var(--accent-soft);
+}

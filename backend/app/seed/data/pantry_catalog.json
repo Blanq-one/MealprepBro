@@ -1,0 +1,5396 @@
+{
+ "schema_version": 1,
+ "presets_are_estimates": true,
+ "culinary_groups": [
+  {
+   "key": "onions",
+   "label": "Onions and scallions",
+   "members": [
+    "onion-yellow",
+    "onion-red",
+    "green-onion"
+   ]
+  },
+  {
+   "key": "garlic",
+   "label": "Garlic",
+   "members": [
+    "garlic"
+   ]
+  },
+  {
+   "key": "ginger",
+   "label": "Fresh ginger",
+   "members": [
+    "ginger"
+   ]
+  },
+  {
+   "key": "cooking_greens",
+   "label": "Leafy cooking greens",
+   "members": [
+    "spinach",
+    "spinach-frozen",
+    "kale"
+   ]
+  },
+  {
+   "key": "salad_greens",
+   "label": "Salad greens",
+   "members": [
+    "romaine",
+    "iceberg"
+   ]
+  },
+  {
+   "key": "cabbage",
+   "label": "Cabbage",
+   "members": [
+    "cabbage-green"
+   ]
+  },
+  {
+   "key": "sturdy",
+   "label": "Sturdy green vegetables",
+   "members": [
+    "broccoli",
+    "broccoli-frozen",
+    "cauliflower",
+    "cauliflower-frozen",
+    "green-beans",
+    "green-beans-frozen",
+    "brussels-sprouts",
+    "asparagus"
+   ]
+  },
+  {
+   "key": "canned_green_beans",
+   "label": "Canned green beans",
+   "members": [
+    "green-beans-canned"
+   ]
+  },
+  {
+   "key": "sweet_peppers",
+   "label": "Sweet peppers",
+   "members": [
+    "bell-pepper",
+    "bell-pepper-green"
+   ]
+  },
+  {
+   "key": "hot_peppers",
+   "label": "Hot peppers",
+   "members": [
+    "jalapeno"
+   ]
+  },
+  {
+   "key": "soft_summer",
+   "label": "Zucchini and eggplant",
+   "members": [
+    "zucchini",
+    "eggplant"
+   ]
+  },
+  {
+   "key": "okra",
+   "label": "Okra",
+   "members": [
+    "okra"
+   ]
+  },
+  {
+   "key": "mushrooms",
+   "label": "Mushrooms",
+   "members": [
+    "mushrooms-white"
+   ]
+  },
+  {
+   "key": "fresh_tomatoes",
+   "label": "Fresh tomatoes",
+   "members": [
+    "tomato"
+   ]
+  },
+  {
+   "key": "cooked_tomatoes",
+   "label": "Canned tomatoes and sauce",
+   "members": [
+    "tomatoes-canned",
+    "tomato-sauce"
+   ]
+  },
+  {
+   "key": "tomato_paste",
+   "label": "Tomato paste",
+   "members": [
+    "tomato-paste"
+   ]
+  },
+  {
+   "key": "starchy_roots",
+   "label": "Potatoes and sweet potatoes",
+   "members": [
+    "potato-russet",
+    "sweet-potato"
+   ]
+  },
+  {
+   "key": "carrots",
+   "label": "Carrots",
+   "members": [
+    "carrot"
+   ]
+  },
+  {
+   "key": "celery",
+   "label": "Celery",
+   "members": [
+    "celery"
+   ]
+  },
+  {
+   "key": "cucumber",
+   "label": "Cucumber",
+   "members": [
+    "cucumber"
+   ]
+  },
+  {
+   "key": "peas_corn",
+   "label": "Peas and corn",
+   "members": [
+    "peas-frozen",
+    "corn-frozen",
+    "corn-canned"
+   ]
+  },
+  {
+   "key": "soft_herbs",
+   "label": "Soft herbs",
+   "members": [
+    "cilantro",
+    "parsley"
+   ]
+  },
+  {
+   "key": "mint",
+   "label": "Mint",
+   "members": [
+    "mint"
+   ]
+  },
+  {
+   "key": "dried_herbs",
+   "label": "Dried herbs",
+   "members": [
+    "oregano",
+    "basil-dried",
+    "thyme-dried"
+   ]
+  },
+  {
+   "key": "bay",
+   "label": "Bay leaf",
+   "members": [
+    "bay-leaf"
+   ]
+  }
+ ],
+ "foods": [
+  {
+   "key": "cauliflower",
+   "label": "Cauliflower",
+   "forms": [
+    {
+     "form": "fresh",
+     "label": "Fresh head",
+     "ingredient": "cauliflower"
+    },
+    {
+     "form": "frozen",
+     "label": "Frozen florets",
+     "ingredient": "cauliflower-frozen"
+    }
+   ]
+  },
+  {
+   "key": "broccoli",
+   "label": "Broccoli",
+   "forms": [
+    {
+     "form": "fresh",
+     "label": "Fresh",
+     "ingredient": "broccoli"
+    },
+    {
+     "form": "frozen",
+     "label": "Frozen",
+     "ingredient": "broccoli-frozen"
+    }
+   ]
+  },
+  {
+   "key": "green_beans",
+   "label": "Green beans",
+   "forms": [
+    {
+     "form": "fresh",
+     "label": "Fresh",
+     "ingredient": "green-beans"
+    },
+    {
+     "form": "frozen",
+     "label": "Frozen",
+     "ingredient": "green-beans-frozen"
+    },
+    {
+     "form": "canned",
+     "label": "Canned",
+     "ingredient": "green-beans-canned"
+    }
+   ]
+  },
+  {
+   "key": "spinach",
+   "label": "Spinach",
+   "forms": [
+    {
+     "form": "fresh",
+     "label": "Fresh",
+     "ingredient": "spinach"
+    },
+    {
+     "form": "frozen",
+     "label": "Frozen",
+     "ingredient": "spinach-frozen"
+    }
+   ]
+  },
+  {
+   "key": "corn",
+   "label": "Corn",
+   "forms": [
+    {
+     "form": "frozen",
+     "label": "Frozen",
+     "ingredient": "corn-frozen"
+    },
+    {
+     "form": "canned",
+     "label": "Canned",
+     "ingredient": "corn-canned"
+    }
+   ]
+  },
+  {
+   "key": "tomatoes",
+   "label": "Tomatoes",
+   "forms": [
+    {
+     "form": "fresh",
+     "label": "Fresh",
+     "ingredient": "tomato"
+    },
+    {
+     "form": "canned",
+     "label": "Canned",
+     "ingredient": "tomatoes-canned"
+    }
+   ]
+  },
+  {
+   "key": "chickpeas",
+   "label": "Chickpeas",
+   "forms": [
+    {
+     "form": "canned",
+     "label": "Canned",
+     "ingredient": "chickpeas-canned"
+    },
+    {
+     "form": "dried",
+     "label": "Dried",
+     "ingredient": "chickpeas-dried"
+    }
+   ]
+  },
+  {
+   "key": "black_beans",
+   "label": "Black beans",
+   "forms": [
+    {
+     "form": "canned",
+     "label": "Canned",
+     "ingredient": "black-beans-canned"
+    },
+    {
+     "form": "dried",
+     "label": "Dried",
+     "ingredient": "black-beans-dried"
+    }
+   ]
+  },
+  {
+   "key": "kidney_beans",
+   "label": "Kidney beans",
+   "forms": [
+    {
+     "form": "canned",
+     "label": "Canned",
+     "ingredient": "kidney-beans-canned"
+    },
+    {
+     "form": "dried",
+     "label": "Dried",
+     "ingredient": "kidney-beans-dried"
+    }
+   ]
+  },
+  {
+   "key": "strawberries",
+   "label": "Strawberries",
+   "forms": [
+    {
+     "form": "fresh",
+     "label": "Fresh",
+     "ingredient": "strawberries"
+    },
+    {
+     "form": "frozen",
+     "label": "Frozen",
+     "ingredient": "strawberries-frozen"
+    }
+   ]
+  },
+  {
+   "key": "blueberries",
+   "label": "Blueberries",
+   "forms": [
+    {
+     "form": "fresh",
+     "label": "Fresh",
+     "ingredient": "blueberries"
+    },
+    {
+     "form": "frozen",
+     "label": "Frozen",
+     "ingredient": "blueberries-frozen"
+    }
+   ]
+  }
+ ],
+ "versions": [
+  {
+   "generic": "pepperoni",
+   "question": "Which pepperoni is it?",
+   "guidance": "Check the label: read the ingredients list. Pork and beef (or beef fat) means it's off your list. Pork only counts toward your pork limit. Turkey or chicken with no pork or beef is fine. If the label doesn't say, choose Not sure.",
+   "choices": [
+    {
+     "key": "pork_beef",
+     "label": "Pork and beef",
+     "ingredient": "pepperoni-pork-beef",
+     "nutrition_estimated": false
+    },
+    {
+     "key": "pork",
+     "label": "Pork only",
+     "ingredient": "pepperoni-pork",
+     "nutrition_estimated": true
+    },
+    {
+     "key": "turkey",
+     "label": "Turkey",
+     "ingredient": "pepperoni-turkey",
+     "nutrition_estimated": false
+    },
+    {
+     "key": "chicken",
+     "label": "Chicken",
+     "ingredient": "pepperoni-chicken",
+     "nutrition_estimated": true
+    },
+    {
+     "key": "not_sure",
+     "label": "Not sure",
+     "ingredient": null,
+     "nutrition_estimated": false
+    }
+   ]
+  },
+  {
+   "generic": "salami",
+   "question": "Which salami is it?",
+   "guidance": "Check the label: read the ingredients list. Pork and beef (or beef fat) means it's off your list. Pork only counts toward your pork limit. Turkey or chicken with no pork or beef is fine. If the label doesn't say, choose Not sure.",
+   "choices": [
+    {
+     "key": "pork_beef",
+     "label": "Pork and beef",
+     "ingredient": "salami-pork-beef",
+     "nutrition_estimated": false
+    },
+    {
+     "key": "pork",
+     "label": "Pork only",
+     "ingredient": "salami-pork",
+     "nutrition_estimated": false
+    },
+    {
+     "key": "turkey",
+     "label": "Turkey",
+     "ingredient": "salami-turkey",
+     "nutrition_estimated": false
+    },
+    {
+     "key": "chicken",
+     "label": "Chicken",
+     "ingredient": "salami-chicken",
+     "nutrition_estimated": true
+    },
+    {
+     "key": "not_sure",
+     "label": "Not sure",
+     "ingredient": null,
+     "nutrition_estimated": false
+    }
+   ]
+  },
+  {
+   "generic": "chicken-bouillon-cube",
+   "question": "Which chicken bouillon is it (cubes or powder)?",
+   "guidance": "Check the label: look for beef, beef fat, beef extract or tallow in the ingredients. If none is listed, it's fine. If the label is unclear or missing, choose Not sure.",
+   "choices": [
+    {
+     "key": "no_beef",
+     "label": "Chicken, no beef listed",
+     "ingredient": "chicken-bouillon-no-beef",
+     "nutrition_estimated": false
+    },
+    {
+     "key": "with_beef",
+     "label": "Contains beef or beef fat",
+     "ingredient": "chicken-bouillon-beef",
+     "nutrition_estimated": false
+    },
+    {
+     "key": "not_sure",
+     "label": "Not sure",
+     "ingredient": null,
+     "nutrition_estimated": false
+    }
+   ]
+  }
+ ],
+ "presets": [
+  {
+   "ingredient": "chicken-thigh-boneless-skinless",
+   "options": [
+    {
+     "key": "1lb",
+     "label": "1 lb pack",
+     "amount": "1",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    },
+    {
+     "key": "1_5lb",
+     "label": "1.5 lb pack",
+     "amount": "1.5",
+     "unit": "lb",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "3lb",
+     "label": "3 lb pack",
+     "amount": "3",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "chicken-breast-boneless-skinless",
+   "options": [
+    {
+     "key": "1lb",
+     "label": "1 lb pack",
+     "amount": "1",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    },
+    {
+     "key": "1_5lb",
+     "label": "1.5 lb pack",
+     "amount": "1.5",
+     "unit": "lb",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "3lb",
+     "label": "3 lb pack",
+     "amount": "3",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "ground-chicken",
+   "options": [
+    {
+     "key": "1lb",
+     "label": "1 lb pack",
+     "amount": "1",
+     "unit": "lb",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "2lb",
+     "label": "2 lb pack",
+     "amount": "2",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    },
+    {
+     "key": "3lb",
+     "label": "3 lb pack",
+     "amount": "3",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "ground-turkey-93",
+   "options": [
+    {
+     "key": "1lb",
+     "label": "1 lb pack",
+     "amount": "1",
+     "unit": "lb",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "2lb",
+     "label": "2 lb pack",
+     "amount": "2",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    },
+    {
+     "key": "3lb",
+     "label": "3 lb pack",
+     "amount": "3",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "turkey-breast",
+   "options": [
+    {
+     "key": "1_5lb",
+     "label": "1.5 lb roast",
+     "amount": "1.5",
+     "unit": "lb",
+     "container": "roast",
+     "default": false
+    },
+    {
+     "key": "2_5lb",
+     "label": "2.5 lb roast",
+     "amount": "2.5",
+     "unit": "lb",
+     "container": "roast",
+     "default": true
+    },
+    {
+     "key": "4lb",
+     "label": "4 lb roast",
+     "amount": "4",
+     "unit": "lb",
+     "container": "roast",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "chicken-sausage",
+   "options": [
+    {
+     "key": "12oz",
+     "label": "12 oz pack (4 links)",
+     "amount": "12",
+     "unit": "oz",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "16oz",
+     "label": "1 lb pack",
+     "amount": "1",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "salmon",
+   "options": [
+    {
+     "key": "half_lb",
+     "label": "1/2 lb",
+     "amount": "0.5",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    },
+    {
+     "key": "1lb",
+     "label": "1 lb",
+     "amount": "1",
+     "unit": "lb",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "2lb",
+     "label": "2 lb bag",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "tilapia",
+   "options": [
+    {
+     "key": "half_lb",
+     "label": "1/2 lb",
+     "amount": "0.5",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    },
+    {
+     "key": "1lb",
+     "label": "1 lb",
+     "amount": "1",
+     "unit": "lb",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "2lb",
+     "label": "2 lb bag",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "cod",
+   "options": [
+    {
+     "key": "half_lb",
+     "label": "1/2 lb",
+     "amount": "0.5",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    },
+    {
+     "key": "1lb",
+     "label": "1 lb",
+     "amount": "1",
+     "unit": "lb",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "2lb",
+     "label": "2 lb bag",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "tuna-canned",
+   "options": [
+    {
+     "key": "can5",
+     "label": "5 oz can",
+     "amount": "1",
+     "unit": "can",
+     "container": "can",
+     "default": true
+    },
+    {
+     "key": "cans4",
+     "label": "4-pack of 5 oz cans",
+     "amount": "4",
+     "unit": "can",
+     "container": "can",
+     "default": false
+    },
+    {
+     "key": "can12",
+     "label": "12 oz can",
+     "amount": "12",
+     "unit": "oz",
+     "container": "can",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "shrimp",
+   "options": [
+    {
+     "key": "1lb",
+     "label": "1 lb bag",
+     "amount": "1",
+     "unit": "lb",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "2lb",
+     "label": "2 lb bag",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "half_lb",
+     "label": "1/2 lb",
+     "amount": "0.5",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "egg-large",
+   "options": [
+    {
+     "key": "n6",
+     "label": "6 eggs",
+     "amount": "6",
+     "unit": "count",
+     "container": "carton",
+     "default": false
+    },
+    {
+     "key": "n12",
+     "label": "12 eggs",
+     "amount": "12",
+     "unit": "count",
+     "container": "carton",
+     "default": true
+    },
+    {
+     "key": "n18",
+     "label": "18 eggs",
+     "amount": "18",
+     "unit": "count",
+     "container": "carton",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "egg-white",
+   "options": [
+    {
+     "key": "n6",
+     "label": "6 egg whites",
+     "amount": "6",
+     "unit": "count",
+     "container": "carton",
+     "default": false
+    },
+    {
+     "key": "n12",
+     "label": "12 egg whites",
+     "amount": "12",
+     "unit": "count",
+     "container": "carton",
+     "default": true
+    }
+   ]
+  },
+  {
+   "ingredient": "bacon",
+   "options": [
+    {
+     "key": "12oz",
+     "label": "12 oz pack",
+     "amount": "12",
+     "unit": "oz",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "16oz",
+     "label": "1 lb pack",
+     "amount": "1",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "ham-deli",
+   "options": [
+    {
+     "key": "8oz",
+     "label": "8 oz pack",
+     "amount": "8",
+     "unit": "oz",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "16oz",
+     "label": "1 lb",
+     "amount": "1",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "pork-sausage-italian",
+   "options": [
+    {
+     "key": "16oz",
+     "label": "1 lb pack (5 links)",
+     "amount": "1",
+     "unit": "lb",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "19oz",
+     "label": "19 oz pack",
+     "amount": "19",
+     "unit": "oz",
+     "container": "pack",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "pepperoni",
+   "options": [
+    {
+     "key": "6oz",
+     "label": "6 oz pack",
+     "amount": "6",
+     "unit": "oz",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "8oz",
+     "label": "8 oz pack",
+     "amount": "8",
+     "unit": "oz",
+     "container": "pack",
+     "default": false
+    },
+    {
+     "key": "16oz",
+     "label": "1 lb pack",
+     "amount": "1",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "pepperoni-pork",
+   "options": [
+    {
+     "key": "6oz",
+     "label": "6 oz pack",
+     "amount": "6",
+     "unit": "oz",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "8oz",
+     "label": "8 oz pack",
+     "amount": "8",
+     "unit": "oz",
+     "container": "pack",
+     "default": false
+    },
+    {
+     "key": "16oz",
+     "label": "1 lb pack",
+     "amount": "1",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "pepperoni-turkey",
+   "options": [
+    {
+     "key": "6oz",
+     "label": "6 oz pack",
+     "amount": "6",
+     "unit": "oz",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "8oz",
+     "label": "8 oz pack",
+     "amount": "8",
+     "unit": "oz",
+     "container": "pack",
+     "default": false
+    },
+    {
+     "key": "16oz",
+     "label": "1 lb pack",
+     "amount": "1",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "pepperoni-chicken",
+   "options": [
+    {
+     "key": "6oz",
+     "label": "6 oz pack",
+     "amount": "6",
+     "unit": "oz",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "8oz",
+     "label": "8 oz pack",
+     "amount": "8",
+     "unit": "oz",
+     "container": "pack",
+     "default": false
+    },
+    {
+     "key": "16oz",
+     "label": "1 lb pack",
+     "amount": "1",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "pepperoni-pork-beef",
+   "options": [
+    {
+     "key": "6oz",
+     "label": "6 oz pack",
+     "amount": "6",
+     "unit": "oz",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "8oz",
+     "label": "8 oz pack",
+     "amount": "8",
+     "unit": "oz",
+     "container": "pack",
+     "default": false
+    },
+    {
+     "key": "16oz",
+     "label": "1 lb pack",
+     "amount": "1",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "salami",
+   "options": [
+    {
+     "key": "4oz",
+     "label": "4 oz pack",
+     "amount": "4",
+     "unit": "oz",
+     "container": "pack",
+     "default": false
+    },
+    {
+     "key": "8oz",
+     "label": "8 oz pack",
+     "amount": "8",
+     "unit": "oz",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "16oz",
+     "label": "1 lb chub",
+     "amount": "1",
+     "unit": "lb",
+     "container": "chub",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "salami-pork",
+   "options": [
+    {
+     "key": "4oz",
+     "label": "4 oz pack",
+     "amount": "4",
+     "unit": "oz",
+     "container": "pack",
+     "default": false
+    },
+    {
+     "key": "8oz",
+     "label": "8 oz pack",
+     "amount": "8",
+     "unit": "oz",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "16oz",
+     "label": "1 lb chub",
+     "amount": "1",
+     "unit": "lb",
+     "container": "chub",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "salami-turkey",
+   "options": [
+    {
+     "key": "4oz",
+     "label": "4 oz pack",
+     "amount": "4",
+     "unit": "oz",
+     "container": "pack",
+     "default": false
+    },
+    {
+     "key": "8oz",
+     "label": "8 oz pack",
+     "amount": "8",
+     "unit": "oz",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "16oz",
+     "label": "1 lb chub",
+     "amount": "1",
+     "unit": "lb",
+     "container": "chub",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "salami-chicken",
+   "options": [
+    {
+     "key": "4oz",
+     "label": "4 oz pack",
+     "amount": "4",
+     "unit": "oz",
+     "container": "pack",
+     "default": false
+    },
+    {
+     "key": "8oz",
+     "label": "8 oz pack",
+     "amount": "8",
+     "unit": "oz",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "16oz",
+     "label": "1 lb chub",
+     "amount": "1",
+     "unit": "lb",
+     "container": "chub",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "salami-pork-beef",
+   "options": [
+    {
+     "key": "4oz",
+     "label": "4 oz pack",
+     "amount": "4",
+     "unit": "oz",
+     "container": "pack",
+     "default": false
+    },
+    {
+     "key": "8oz",
+     "label": "8 oz pack",
+     "amount": "8",
+     "unit": "oz",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "16oz",
+     "label": "1 lb chub",
+     "amount": "1",
+     "unit": "lb",
+     "container": "chub",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "pork-chop-boneless",
+   "options": [
+    {
+     "key": "1lb",
+     "label": "1 lb pack",
+     "amount": "1",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    },
+    {
+     "key": "1_5lb",
+     "label": "1.5 lb pack",
+     "amount": "1.5",
+     "unit": "lb",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "3lb",
+     "label": "3 lb pack",
+     "amount": "3",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "pork-tenderloin",
+   "options": [
+    {
+     "key": "single",
+     "label": "1 tenderloin (about 1.25 lb)",
+     "amount": "1.25",
+     "unit": "lb",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "twin",
+     "label": "twin pack (2.5 lb)",
+     "amount": "2.5",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "ground-pork",
+   "options": [
+    {
+     "key": "1lb",
+     "label": "1 lb pack",
+     "amount": "1",
+     "unit": "lb",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "2lb",
+     "label": "2 lb pack",
+     "amount": "2",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    },
+    {
+     "key": "3lb",
+     "label": "3 lb pack",
+     "amount": "3",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "lard",
+   "options": [
+    {
+     "key": "1lb",
+     "label": "1 lb tub",
+     "amount": "16",
+     "unit": "fl_oz",
+     "container": "tub",
+     "default": true
+    }
+   ]
+  },
+  {
+   "ingredient": "gelatin-pork",
+   "options": [
+    {
+     "key": "box",
+     "label": "1 oz box (4 envelopes)",
+     "amount": "4",
+     "unit": "envelope",
+     "container": "box",
+     "default": true
+    }
+   ]
+  },
+  {
+   "ingredient": "refried-beans-traditional",
+   "options": [
+    {
+     "key": "can",
+     "label": "16 oz can",
+     "amount": "16",
+     "unit": "oz",
+     "container": "can",
+     "default": true
+    },
+    {
+     "key": "cans2",
+     "label": "2 cans",
+     "amount": "32",
+     "unit": "oz",
+     "container": "can",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "gelatin-unflavored",
+   "options": [
+    {
+     "key": "box",
+     "label": "1 oz box (4 envelopes)",
+     "amount": "4",
+     "unit": "envelope",
+     "container": "box",
+     "default": true
+    }
+   ]
+  },
+  {
+   "ingredient": "marshmallows",
+   "options": [
+    {
+     "key": "10oz",
+     "label": "10 oz bag",
+     "amount": "10",
+     "unit": "oz",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "16oz",
+     "label": "16 oz bag",
+     "amount": "16",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "chicken-bouillon-cube",
+   "options": [
+    {
+     "key": "n8",
+     "label": "8-cube box",
+     "amount": "8",
+     "unit": "count",
+     "container": "box",
+     "default": true
+    },
+    {
+     "key": "n25",
+     "label": "25-cube jar",
+     "amount": "25",
+     "unit": "count",
+     "container": "jar",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "chicken-bouillon-no-beef",
+   "options": [
+    {
+     "key": "n8",
+     "label": "8-cube box",
+     "amount": "8",
+     "unit": "count",
+     "container": "box",
+     "default": true
+    },
+    {
+     "key": "n25",
+     "label": "25-cube jar",
+     "amount": "25",
+     "unit": "count",
+     "container": "jar",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "chicken-bouillon-beef",
+   "options": [
+    {
+     "key": "n8",
+     "label": "8-cube box",
+     "amount": "8",
+     "unit": "count",
+     "container": "box",
+     "default": true
+    },
+    {
+     "key": "n25",
+     "label": "25-cube jar",
+     "amount": "25",
+     "unit": "count",
+     "container": "jar",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "cheddar",
+   "options": [
+    {
+     "key": "8oz",
+     "label": "8 oz block",
+     "amount": "8",
+     "unit": "oz",
+     "container": "block",
+     "default": true
+    },
+    {
+     "key": "16oz",
+     "label": "1 lb block",
+     "amount": "1",
+     "unit": "lb",
+     "container": "block",
+     "default": false
+    },
+    {
+     "key": "shredded",
+     "label": "8 oz bag, shredded",
+     "amount": "8",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "mozzarella-part-skim",
+   "options": [
+    {
+     "key": "8oz",
+     "label": "8 oz block",
+     "amount": "8",
+     "unit": "oz",
+     "container": "block",
+     "default": true
+    },
+    {
+     "key": "16oz",
+     "label": "1 lb block",
+     "amount": "1",
+     "unit": "lb",
+     "container": "block",
+     "default": false
+    },
+    {
+     "key": "shredded",
+     "label": "8 oz bag, shredded",
+     "amount": "8",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "parmesan",
+   "options": [
+    {
+     "key": "5oz",
+     "label": "5 oz wedge",
+     "amount": "5",
+     "unit": "oz",
+     "container": "wedge",
+     "default": true
+    },
+    {
+     "key": "8oz",
+     "label": "8 oz tub, grated",
+     "amount": "8",
+     "unit": "oz",
+     "container": "tub",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "feta",
+   "options": [
+    {
+     "key": "4oz",
+     "label": "4 oz crumbles",
+     "amount": "4",
+     "unit": "oz",
+     "container": "tub",
+     "default": false
+    },
+    {
+     "key": "6oz",
+     "label": "6 oz crumbles",
+     "amount": "6",
+     "unit": "oz",
+     "container": "tub",
+     "default": true
+    },
+    {
+     "key": "8oz",
+     "label": "8 oz block",
+     "amount": "8",
+     "unit": "oz",
+     "container": "block",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "cottage-cheese-2",
+   "options": [
+    {
+     "key": "16oz",
+     "label": "16 oz tub",
+     "amount": "16",
+     "unit": "oz",
+     "container": "tub",
+     "default": true
+    },
+    {
+     "key": "24oz",
+     "label": "24 oz tub",
+     "amount": "24",
+     "unit": "oz",
+     "container": "tub",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "milk-2",
+   "options": [
+    {
+     "key": "half_gallon",
+     "label": "half gallon",
+     "amount": "64",
+     "unit": "fl_oz",
+     "container": "jug",
+     "default": true
+    },
+    {
+     "key": "gallon",
+     "label": "1 gallon",
+     "amount": "128",
+     "unit": "fl_oz",
+     "container": "jug",
+     "default": false
+    },
+    {
+     "key": "quart",
+     "label": "1 quart",
+     "amount": "32",
+     "unit": "fl_oz",
+     "container": "carton",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "milk-whole",
+   "options": [
+    {
+     "key": "half_gallon",
+     "label": "half gallon",
+     "amount": "64",
+     "unit": "fl_oz",
+     "container": "jug",
+     "default": true
+    },
+    {
+     "key": "gallon",
+     "label": "1 gallon",
+     "amount": "128",
+     "unit": "fl_oz",
+     "container": "jug",
+     "default": false
+    },
+    {
+     "key": "quart",
+     "label": "1 quart",
+     "amount": "32",
+     "unit": "fl_oz",
+     "container": "carton",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "milk-skim",
+   "options": [
+    {
+     "key": "half_gallon",
+     "label": "half gallon",
+     "amount": "64",
+     "unit": "fl_oz",
+     "container": "jug",
+     "default": true
+    },
+    {
+     "key": "gallon",
+     "label": "1 gallon",
+     "amount": "128",
+     "unit": "fl_oz",
+     "container": "jug",
+     "default": false
+    },
+    {
+     "key": "quart",
+     "label": "1 quart",
+     "amount": "32",
+     "unit": "fl_oz",
+     "container": "carton",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "greek-yogurt-nonfat",
+   "options": [
+    {
+     "key": "32oz",
+     "label": "32 oz tub",
+     "amount": "32",
+     "unit": "oz",
+     "container": "tub",
+     "default": true
+    },
+    {
+     "key": "cup",
+     "label": "5.3 oz cup",
+     "amount": "5.3",
+     "unit": "oz",
+     "container": "cup",
+     "default": false
+    },
+    {
+     "key": "cups4",
+     "label": "4-pack of 5.3 oz cups",
+     "amount": "21.2",
+     "unit": "oz",
+     "container": "pack",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "greek-yogurt-whole",
+   "options": [
+    {
+     "key": "32oz",
+     "label": "32 oz tub",
+     "amount": "32",
+     "unit": "oz",
+     "container": "tub",
+     "default": true
+    },
+    {
+     "key": "cup",
+     "label": "5.3 oz cup",
+     "amount": "5.3",
+     "unit": "oz",
+     "container": "cup",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "yogurt-plain-whole",
+   "options": [
+    {
+     "key": "32oz",
+     "label": "32 oz tub",
+     "amount": "32",
+     "unit": "oz",
+     "container": "tub",
+     "default": true
+    },
+    {
+     "key": "cup",
+     "label": "6 oz cup",
+     "amount": "6",
+     "unit": "oz",
+     "container": "cup",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "butter-salted",
+   "options": [
+    {
+     "key": "1lb",
+     "label": "1 lb (4 sticks)",
+     "amount": "4",
+     "unit": "stick",
+     "container": "box",
+     "default": true
+    },
+    {
+     "key": "half",
+     "label": "1/2 lb (2 sticks)",
+     "amount": "2",
+     "unit": "stick",
+     "container": "box",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "butter-unsalted",
+   "options": [
+    {
+     "key": "1lb",
+     "label": "1 lb (4 sticks)",
+     "amount": "4",
+     "unit": "stick",
+     "container": "box",
+     "default": true
+    },
+    {
+     "key": "half",
+     "label": "1/2 lb (2 sticks)",
+     "amount": "2",
+     "unit": "stick",
+     "container": "box",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "ghee",
+   "options": [
+    {
+     "key": "jar",
+     "label": "8 fl oz jar",
+     "amount": "8",
+     "unit": "fl_oz",
+     "container": "jar",
+     "default": true
+    },
+    {
+     "key": "big",
+     "label": "16 fl oz jar",
+     "amount": "16",
+     "unit": "fl_oz",
+     "container": "jar",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "heavy-cream",
+   "options": [
+    {
+     "key": "pint",
+     "label": "1 pint",
+     "amount": "16",
+     "unit": "fl_oz",
+     "container": "carton",
+     "default": true
+    },
+    {
+     "key": "half_pint",
+     "label": "1/2 pint",
+     "amount": "8",
+     "unit": "fl_oz",
+     "container": "carton",
+     "default": false
+    },
+    {
+     "key": "quart",
+     "label": "1 quart",
+     "amount": "32",
+     "unit": "fl_oz",
+     "container": "carton",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "rice-long-grain-white",
+   "options": [
+    {
+     "key": "2lb",
+     "label": "2 lb bag",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "5lb",
+     "label": "5 lb bag",
+     "amount": "5",
+     "unit": "lb",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "10lb",
+     "label": "10 lb bag",
+     "amount": "10",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "20lb",
+     "label": "20 lb bag",
+     "amount": "20",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "rice-brown",
+   "options": [
+    {
+     "key": "2lb",
+     "label": "2 lb bag",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "5lb",
+     "label": "5 lb bag",
+     "amount": "5",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "rolled-oats",
+   "options": [
+    {
+     "key": "18oz",
+     "label": "18 oz canister",
+     "amount": "18",
+     "unit": "oz",
+     "container": "canister",
+     "default": true
+    },
+    {
+     "key": "42oz",
+     "label": "42 oz canister",
+     "amount": "42",
+     "unit": "oz",
+     "container": "canister",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "flour-all-purpose",
+   "options": [
+    {
+     "key": "2lb",
+     "label": "2 lb bag",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "5lb",
+     "label": "5 lb bag",
+     "amount": "5",
+     "unit": "lb",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "10lb",
+     "label": "10 lb bag",
+     "amount": "10",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "flour-whole-wheat",
+   "options": [
+    {
+     "key": "2lb",
+     "label": "2 lb bag",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "5lb",
+     "label": "5 lb bag",
+     "amount": "5",
+     "unit": "lb",
+     "container": "bag",
+     "default": true
+    }
+   ]
+  },
+  {
+   "ingredient": "chapati",
+   "options": [
+    {
+     "key": "n10",
+     "label": "10 chapatis",
+     "amount": "10",
+     "unit": "count",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "n20",
+     "label": "20 chapatis",
+     "amount": "20",
+     "unit": "count",
+     "container": "pack",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "flour-tortilla-small",
+   "options": [
+    {
+     "key": "n10",
+     "label": "10 tortillas",
+     "amount": "10",
+     "unit": "count",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "n20",
+     "label": "20 tortillas",
+     "amount": "20",
+     "unit": "count",
+     "container": "bag",
+     "default": true
+    }
+   ]
+  },
+  {
+   "ingredient": "corn-tortilla",
+   "options": [
+    {
+     "key": "n12",
+     "label": "12 tortillas",
+     "amount": "12",
+     "unit": "count",
+     "container": "pack",
+     "default": false
+    },
+    {
+     "key": "n30",
+     "label": "30 tortillas",
+     "amount": "30",
+     "unit": "count",
+     "container": "pack",
+     "default": true
+    }
+   ]
+  },
+  {
+   "ingredient": "bread-whole-wheat",
+   "options": [
+    {
+     "key": "loaf",
+     "label": "1 loaf (about 20 slices)",
+     "amount": "20",
+     "unit": "count",
+     "container": "loaf",
+     "default": true
+    },
+    {
+     "key": "half",
+     "label": "half a loaf",
+     "amount": "10",
+     "unit": "count",
+     "container": "loaf",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "pita",
+   "options": [
+    {
+     "key": "n6",
+     "label": "6 pitas",
+     "amount": "6",
+     "unit": "count",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "n12",
+     "label": "12 pitas",
+     "amount": "12",
+     "unit": "count",
+     "container": "pack",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "pasta-dry",
+   "options": [
+    {
+     "key": "1lb",
+     "label": "1 lb box",
+     "amount": "1",
+     "unit": "lb",
+     "container": "box",
+     "default": true
+    },
+    {
+     "key": "2lb",
+     "label": "2 lb bag",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "12oz",
+     "label": "12 oz box",
+     "amount": "12",
+     "unit": "oz",
+     "container": "box",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "quinoa",
+   "options": [
+    {
+     "key": "12oz",
+     "label": "12 oz bag",
+     "amount": "12",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "1lb",
+     "label": "1 lb bag",
+     "amount": "1",
+     "unit": "lb",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "2lb",
+     "label": "2 lb bag",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "couscous",
+   "options": [
+    {
+     "key": "10oz",
+     "label": "10 oz box",
+     "amount": "10",
+     "unit": "oz",
+     "container": "box",
+     "default": true
+    },
+    {
+     "key": "1lb",
+     "label": "1 lb bag",
+     "amount": "1",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "cornstarch",
+   "options": [
+    {
+     "key": "16oz",
+     "label": "16 oz box",
+     "amount": "16",
+     "unit": "oz",
+     "container": "box",
+     "default": true
+    }
+   ]
+  },
+  {
+   "ingredient": "chickpeas-canned",
+   "options": [
+    {
+     "key": "can",
+     "label": "1 can (15 oz)",
+     "amount": "1",
+     "unit": "can",
+     "container": "can",
+     "default": true
+    },
+    {
+     "key": "cans2",
+     "label": "2 cans",
+     "amount": "2",
+     "unit": "can",
+     "container": "can",
+     "default": false
+    },
+    {
+     "key": "cans4",
+     "label": "4 cans",
+     "amount": "4",
+     "unit": "can",
+     "container": "can",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "black-beans-canned",
+   "options": [
+    {
+     "key": "can",
+     "label": "1 can (15 oz, about 9 oz drained)",
+     "amount": "9",
+     "unit": "oz",
+     "container": "can",
+     "default": true
+    },
+    {
+     "key": "cans2",
+     "label": "2 cans",
+     "amount": "18",
+     "unit": "oz",
+     "container": "can",
+     "default": false
+    },
+    {
+     "key": "cans4",
+     "label": "4 cans",
+     "amount": "36",
+     "unit": "oz",
+     "container": "can",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "kidney-beans-canned",
+   "options": [
+    {
+     "key": "can",
+     "label": "1 can (15 oz)",
+     "amount": "1",
+     "unit": "can",
+     "container": "can",
+     "default": true
+    },
+    {
+     "key": "cans2",
+     "label": "2 cans",
+     "amount": "2",
+     "unit": "can",
+     "container": "can",
+     "default": false
+    },
+    {
+     "key": "cans4",
+     "label": "4 cans",
+     "amount": "4",
+     "unit": "can",
+     "container": "can",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "chickpeas-dried",
+   "options": [
+    {
+     "key": "16oz",
+     "label": "1 lb bag",
+     "amount": "1",
+     "unit": "lb",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "2lb",
+     "label": "2 lb bag",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "4lb",
+     "label": "4 lb bag",
+     "amount": "4",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "black-beans-dried",
+   "options": [
+    {
+     "key": "16oz",
+     "label": "1 lb bag",
+     "amount": "1",
+     "unit": "lb",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "2lb",
+     "label": "2 lb bag",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "4lb",
+     "label": "4 lb bag",
+     "amount": "4",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "kidney-beans-dried",
+   "options": [
+    {
+     "key": "16oz",
+     "label": "1 lb bag",
+     "amount": "1",
+     "unit": "lb",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "2lb",
+     "label": "2 lb bag",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "4lb",
+     "label": "4 lb bag",
+     "amount": "4",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "lentils-brown",
+   "options": [
+    {
+     "key": "16oz",
+     "label": "1 lb bag",
+     "amount": "1",
+     "unit": "lb",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "2lb",
+     "label": "2 lb bag",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "4lb",
+     "label": "4 lb bag",
+     "amount": "4",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "lentils-red",
+   "options": [
+    {
+     "key": "16oz",
+     "label": "1 lb bag",
+     "amount": "1",
+     "unit": "lb",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "2lb",
+     "label": "2 lb bag",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "4lb",
+     "label": "4 lb bag",
+     "amount": "4",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "tofu-firm",
+   "options": [
+    {
+     "key": "14oz",
+     "label": "14 oz block",
+     "amount": "14",
+     "unit": "oz",
+     "container": "block",
+     "default": true
+    },
+    {
+     "key": "16oz",
+     "label": "16 oz block",
+     "amount": "16",
+     "unit": "oz",
+     "container": "block",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "edamame",
+   "options": [
+    {
+     "key": "10oz",
+     "label": "10 oz bag",
+     "amount": "10",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "12oz",
+     "label": "12 oz bag",
+     "amount": "12",
+     "unit": "oz",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "16oz",
+     "label": "16 oz bag",
+     "amount": "16",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "peanut-butter",
+   "options": [
+    {
+     "key": "16oz",
+     "label": "16 oz jar",
+     "amount": "16",
+     "unit": "oz",
+     "container": "jar",
+     "default": true
+    },
+    {
+     "key": "28oz",
+     "label": "28 oz jar",
+     "amount": "28",
+     "unit": "oz",
+     "container": "jar",
+     "default": false
+    },
+    {
+     "key": "40oz",
+     "label": "40 oz jar",
+     "amount": "40",
+     "unit": "oz",
+     "container": "jar",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "onion-yellow",
+   "options": [
+    {
+     "key": "one",
+     "label": "1 onion",
+     "amount": "1",
+     "unit": "count",
+     "container": null,
+     "default": false
+    },
+    {
+     "key": "2lb",
+     "label": "2 lb bag",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "3lb",
+     "label": "3 lb bag",
+     "amount": "3",
+     "unit": "lb",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "5lb",
+     "label": "5 lb bag",
+     "amount": "5",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "onion-red",
+   "options": [
+    {
+     "key": "one",
+     "label": "1 onion",
+     "amount": "1",
+     "unit": "count",
+     "container": null,
+     "default": true
+    },
+    {
+     "key": "three",
+     "label": "3 onions",
+     "amount": "3",
+     "unit": "count",
+     "container": null,
+     "default": false
+    },
+    {
+     "key": "2lb",
+     "label": "2 lb bag",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "green-onion",
+   "options": [
+    {
+     "key": "bunch",
+     "label": "1 bunch (about 6)",
+     "amount": "6",
+     "unit": "count",
+     "container": "bunch",
+     "default": true
+    },
+    {
+     "key": "bunch2",
+     "label": "2 bunches",
+     "amount": "12",
+     "unit": "count",
+     "container": "bunch",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "garlic",
+   "options": [
+    {
+     "key": "head",
+     "label": "1 head (about 10 cloves)",
+     "amount": "10",
+     "unit": "clove",
+     "container": "head",
+     "default": true
+    },
+    {
+     "key": "sleeve",
+     "label": "3-head sleeve",
+     "amount": "30",
+     "unit": "clove",
+     "container": "sleeve",
+     "default": false
+    },
+    {
+     "key": "bulbs5",
+     "label": "5 heads",
+     "amount": "50",
+     "unit": "clove",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "ginger",
+   "options": [
+    {
+     "key": "2oz",
+     "label": "small piece (2 oz)",
+     "amount": "2",
+     "unit": "oz",
+     "container": "piece",
+     "default": false
+    },
+    {
+     "key": "4oz",
+     "label": "4 oz piece",
+     "amount": "4",
+     "unit": "oz",
+     "container": "piece",
+     "default": true
+    },
+    {
+     "key": "8oz",
+     "label": "1/2 lb",
+     "amount": "8",
+     "unit": "oz",
+     "container": "piece",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "tomato",
+   "options": [
+    {
+     "key": "one",
+     "label": "1 tomato",
+     "amount": "1",
+     "unit": "count",
+     "container": null,
+     "default": false
+    },
+    {
+     "key": "three",
+     "label": "3 tomatoes",
+     "amount": "3",
+     "unit": "count",
+     "container": null,
+     "default": true
+    },
+    {
+     "key": "six",
+     "label": "6 tomatoes",
+     "amount": "6",
+     "unit": "count",
+     "container": null,
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "tomatoes-canned",
+   "options": [
+    {
+     "key": "can",
+     "label": "14.5 oz can",
+     "amount": "14",
+     "unit": "fl_oz",
+     "container": "can",
+     "default": true
+    },
+    {
+     "key": "big",
+     "label": "28 oz can",
+     "amount": "27",
+     "unit": "fl_oz",
+     "container": "can",
+     "default": false
+    },
+    {
+     "key": "cans2",
+     "label": "2 cans (14.5 oz)",
+     "amount": "28",
+     "unit": "fl_oz",
+     "container": "can",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "tomato-paste",
+   "options": [
+    {
+     "key": "can",
+     "label": "6 oz can",
+     "amount": "1",
+     "unit": "can",
+     "container": "can",
+     "default": true
+    },
+    {
+     "key": "cans2",
+     "label": "2 cans",
+     "amount": "2",
+     "unit": "can",
+     "container": "can",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "tomato-sauce",
+   "options": [
+    {
+     "key": "8oz",
+     "label": "8 oz can",
+     "amount": "8",
+     "unit": "fl_oz",
+     "container": "can",
+     "default": true
+    },
+    {
+     "key": "15oz",
+     "label": "15 oz can",
+     "amount": "15",
+     "unit": "fl_oz",
+     "container": "can",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "spinach",
+   "options": [
+    {
+     "key": "5oz",
+     "label": "5 oz clamshell",
+     "amount": "5",
+     "unit": "oz",
+     "container": "clamshell",
+     "default": true
+    },
+    {
+     "key": "10oz",
+     "label": "10 oz bag",
+     "amount": "10",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "16oz",
+     "label": "16 oz clamshell",
+     "amount": "16",
+     "unit": "oz",
+     "container": "clamshell",
+     "default": false
+    },
+    {
+     "key": "bunch",
+     "label": "1 bunch",
+     "amount": "1",
+     "unit": "bunch",
+     "container": "bunch",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "spinach-frozen",
+   "options": [
+    {
+     "key": "10oz",
+     "label": "10 oz box",
+     "amount": "10",
+     "unit": "oz",
+     "container": "box",
+     "default": true
+    },
+    {
+     "key": "16oz",
+     "label": "16 oz bag",
+     "amount": "16",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "broccoli",
+   "options": [
+    {
+     "key": "12oz",
+     "label": "12 oz bag of florets",
+     "amount": "12",
+     "unit": "oz",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "1lb",
+     "label": "1 lb of crowns",
+     "amount": "1",
+     "unit": "lb",
+     "container": "bunch",
+     "default": false
+    },
+    {
+     "key": "2lb",
+     "label": "2 lb",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "broccoli-frozen",
+   "options": [
+    {
+     "key": "10oz",
+     "label": "10 oz bag",
+     "amount": "10",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "12oz",
+     "label": "12 oz bag",
+     "amount": "12",
+     "unit": "oz",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "16oz",
+     "label": "16 oz bag",
+     "amount": "16",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "cauliflower",
+   "options": [
+    {
+     "key": "small",
+     "label": "small head (about 1.5 lb)",
+     "amount": "1.5",
+     "unit": "lb",
+     "container": "head",
+     "default": false
+    },
+    {
+     "key": "medium",
+     "label": "medium head (about 2 lb)",
+     "amount": "2",
+     "unit": "lb",
+     "container": "head",
+     "default": true
+    },
+    {
+     "key": "large",
+     "label": "large head (about 3 lb)",
+     "amount": "3",
+     "unit": "lb",
+     "container": "head",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "cauliflower-frozen",
+   "options": [
+    {
+     "key": "10oz",
+     "label": "10 oz bag",
+     "amount": "10",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "12oz",
+     "label": "12 oz bag",
+     "amount": "12",
+     "unit": "oz",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "16oz",
+     "label": "16 oz bag",
+     "amount": "16",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "bell-pepper",
+   "options": [
+    {
+     "key": "n1",
+     "label": "1 pepper",
+     "amount": "1",
+     "unit": "count",
+     "container": null,
+     "default": false
+    },
+    {
+     "key": "n3",
+     "label": "3 peppers",
+     "amount": "3",
+     "unit": "count",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "n6",
+     "label": "6 peppers",
+     "amount": "6",
+     "unit": "count",
+     "container": "pack",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "bell-pepper-green",
+   "options": [
+    {
+     "key": "n1",
+     "label": "1 pepper",
+     "amount": "1",
+     "unit": "count",
+     "container": null,
+     "default": true
+    },
+    {
+     "key": "n3",
+     "label": "3 peppers",
+     "amount": "3",
+     "unit": "count",
+     "container": "pack",
+     "default": false
+    },
+    {
+     "key": "n6",
+     "label": "6 peppers",
+     "amount": "6",
+     "unit": "count",
+     "container": "pack",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "carrot",
+   "options": [
+    {
+     "key": "1lb",
+     "label": "1 lb bag",
+     "amount": "1",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "2lb",
+     "label": "2 lb bag",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "one",
+     "label": "1 carrot",
+     "amount": "1",
+     "unit": "count",
+     "container": null,
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "celery",
+   "options": [
+    {
+     "key": "bunch",
+     "label": "1 bunch (about 1.5 lb)",
+     "amount": "1.5",
+     "unit": "lb",
+     "container": "bunch",
+     "default": true
+    },
+    {
+     "key": "hearts",
+     "label": "1 lb of hearts",
+     "amount": "1",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "cucumber",
+   "options": [
+    {
+     "key": "n1",
+     "label": "1 cucumber",
+     "amount": "1",
+     "unit": "count",
+     "container": null,
+     "default": true
+    },
+    {
+     "key": "n3",
+     "label": "3 cucumbers",
+     "amount": "3",
+     "unit": "count",
+     "container": null,
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "zucchini",
+   "options": [
+    {
+     "key": "n1",
+     "label": "1 zucchini",
+     "amount": "1",
+     "unit": "count",
+     "container": null,
+     "default": false
+    },
+    {
+     "key": "n2",
+     "label": "2 zucchini",
+     "amount": "2",
+     "unit": "count",
+     "container": null,
+     "default": true
+    },
+    {
+     "key": "n3",
+     "label": "3 zucchini",
+     "amount": "3",
+     "unit": "count",
+     "container": null,
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "mushrooms-white",
+   "options": [
+    {
+     "key": "8oz",
+     "label": "8 oz pack",
+     "amount": "8",
+     "unit": "oz",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "16oz",
+     "label": "16 oz pack",
+     "amount": "16",
+     "unit": "oz",
+     "container": "pack",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "cabbage-green",
+   "options": [
+    {
+     "key": "small",
+     "label": "small head (about 2 lb)",
+     "amount": "2",
+     "unit": "lb",
+     "container": "head",
+     "default": false
+    },
+    {
+     "key": "medium",
+     "label": "medium head (about 3 lb)",
+     "amount": "3",
+     "unit": "lb",
+     "container": "head",
+     "default": true
+    },
+    {
+     "key": "shredded",
+     "label": "14 oz bag, shredded",
+     "amount": "14",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "kale",
+   "options": [
+    {
+     "key": "bunch",
+     "label": "1 bunch (about 8 oz)",
+     "amount": "8",
+     "unit": "oz",
+     "container": "bunch",
+     "default": true
+    },
+    {
+     "key": "10oz",
+     "label": "10 oz bag",
+     "amount": "10",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "16oz",
+     "label": "16 oz bag",
+     "amount": "16",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "romaine",
+   "options": [
+    {
+     "key": "head",
+     "label": "1 head",
+     "amount": "1",
+     "unit": "head",
+     "container": "head",
+     "default": true
+    },
+    {
+     "key": "hearts",
+     "label": "3 hearts (about 22 oz)",
+     "amount": "22",
+     "unit": "oz",
+     "container": "pack",
+     "default": false
+    },
+    {
+     "key": "chopped",
+     "label": "10 oz bag, chopped",
+     "amount": "10",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "iceberg",
+   "options": [
+    {
+     "key": "head",
+     "label": "1 head",
+     "amount": "1",
+     "unit": "head",
+     "container": "head",
+     "default": true
+    },
+    {
+     "key": "chopped",
+     "label": "12 oz bag, chopped",
+     "amount": "12",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "potato-russet",
+   "options": [
+    {
+     "key": "one",
+     "label": "1 potato",
+     "amount": "1",
+     "unit": "count",
+     "container": null,
+     "default": false
+    },
+    {
+     "key": "5lb",
+     "label": "5 lb bag",
+     "amount": "5",
+     "unit": "lb",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "10lb",
+     "label": "10 lb bag",
+     "amount": "10",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "sweet-potato",
+   "options": [
+    {
+     "key": "one",
+     "label": "1 sweet potato",
+     "amount": "1",
+     "unit": "count",
+     "container": null,
+     "default": false
+    },
+    {
+     "key": "three",
+     "label": "3 sweet potatoes",
+     "amount": "3",
+     "unit": "count",
+     "container": null,
+     "default": true
+    },
+    {
+     "key": "3lb",
+     "label": "3 lb bag",
+     "amount": "3",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "green-beans",
+   "options": [
+    {
+     "key": "12oz",
+     "label": "12 oz bag",
+     "amount": "12",
+     "unit": "oz",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "1lb",
+     "label": "1 lb",
+     "amount": "1",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "2lb",
+     "label": "2 lb bag",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "green-beans-frozen",
+   "options": [
+    {
+     "key": "12oz",
+     "label": "12 oz bag",
+     "amount": "12",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "16oz",
+     "label": "16 oz bag",
+     "amount": "16",
+     "unit": "oz",
+     "container": "bag",
+     "default": true
+    }
+   ]
+  },
+  {
+   "ingredient": "green-beans-canned",
+   "options": [
+    {
+     "key": "can",
+     "label": "14.5 oz can (about 8 oz drained)",
+     "amount": "8",
+     "unit": "oz",
+     "container": "can",
+     "default": true
+    },
+    {
+     "key": "cans2",
+     "label": "2 cans",
+     "amount": "16",
+     "unit": "oz",
+     "container": "can",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "peas-frozen",
+   "options": [
+    {
+     "key": "12oz",
+     "label": "12 oz bag",
+     "amount": "12",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "16oz",
+     "label": "16 oz bag",
+     "amount": "16",
+     "unit": "oz",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "32oz",
+     "label": "32 oz bag",
+     "amount": "32",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "corn-frozen",
+   "options": [
+    {
+     "key": "12oz",
+     "label": "12 oz bag",
+     "amount": "12",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "16oz",
+     "label": "16 oz bag",
+     "amount": "16",
+     "unit": "oz",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "32oz",
+     "label": "32 oz bag",
+     "amount": "32",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "corn-canned",
+   "options": [
+    {
+     "key": "can",
+     "label": "15.25 oz can (about 9 oz drained)",
+     "amount": "9",
+     "unit": "oz",
+     "container": "can",
+     "default": true
+    },
+    {
+     "key": "cans2",
+     "label": "2 cans",
+     "amount": "18",
+     "unit": "oz",
+     "container": "can",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "jalapeno",
+   "options": [
+    {
+     "key": "n1",
+     "label": "1 jalapeño",
+     "amount": "1",
+     "unit": "count",
+     "container": null,
+     "default": false
+    },
+    {
+     "key": "n3",
+     "label": "3 jalapeños",
+     "amount": "3",
+     "unit": "count",
+     "container": null,
+     "default": true
+    },
+    {
+     "key": "n6",
+     "label": "6 jalapeños",
+     "amount": "6",
+     "unit": "count",
+     "container": null,
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "cilantro",
+   "options": [
+    {
+     "key": "bunch",
+     "label": "1 bunch (about 2 oz)",
+     "amount": "2",
+     "unit": "oz",
+     "container": "bunch",
+     "default": true
+    },
+    {
+     "key": "bunch2",
+     "label": "2 bunches",
+     "amount": "4",
+     "unit": "oz",
+     "container": "bunch",
+     "default": false
+    },
+    {
+     "key": "clamshell",
+     "label": "0.75 oz clamshell",
+     "amount": "0.75",
+     "unit": "oz",
+     "container": "clamshell",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "parsley",
+   "options": [
+    {
+     "key": "bunch",
+     "label": "1 bunch (about 2 oz)",
+     "amount": "2",
+     "unit": "oz",
+     "container": "bunch",
+     "default": true
+    },
+    {
+     "key": "bunch2",
+     "label": "2 bunches",
+     "amount": "4",
+     "unit": "oz",
+     "container": "bunch",
+     "default": false
+    },
+    {
+     "key": "clamshell",
+     "label": "0.75 oz clamshell",
+     "amount": "0.75",
+     "unit": "oz",
+     "container": "clamshell",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "mint",
+   "options": [
+    {
+     "key": "clamshell",
+     "label": "0.75 oz clamshell",
+     "amount": "0.75",
+     "unit": "oz",
+     "container": "clamshell",
+     "default": true
+    },
+    {
+     "key": "bunch",
+     "label": "1 bunch (about 2 oz)",
+     "amount": "2",
+     "unit": "oz",
+     "container": "bunch",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "eggplant",
+   "options": [
+    {
+     "key": "n1",
+     "label": "1 eggplant",
+     "amount": "1",
+     "unit": "count",
+     "container": null,
+     "default": true
+    },
+    {
+     "key": "n2",
+     "label": "2 eggplants",
+     "amount": "2",
+     "unit": "count",
+     "container": null,
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "okra",
+   "options": [
+    {
+     "key": "8oz",
+     "label": "8 oz",
+     "amount": "8",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "1lb",
+     "label": "1 lb",
+     "amount": "1",
+     "unit": "lb",
+     "container": "bag",
+     "default": true
+    }
+   ]
+  },
+  {
+   "ingredient": "asparagus",
+   "options": [
+    {
+     "key": "1lb",
+     "label": "1 lb bunch",
+     "amount": "1",
+     "unit": "lb",
+     "container": "bunch",
+     "default": true
+    },
+    {
+     "key": "2lb",
+     "label": "2 lb",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bunch",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "brussels-sprouts",
+   "options": [
+    {
+     "key": "12oz",
+     "label": "12 oz bag",
+     "amount": "12",
+     "unit": "oz",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "1lb",
+     "label": "1 lb",
+     "amount": "1",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "2lb",
+     "label": "2 lb bag",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "banana",
+   "options": [
+    {
+     "key": "n1",
+     "label": "1 banana",
+     "amount": "1",
+     "unit": "count",
+     "container": null,
+     "default": false
+    },
+    {
+     "key": "n3",
+     "label": "3 bananas",
+     "amount": "3",
+     "unit": "count",
+     "container": "bunch",
+     "default": false
+    },
+    {
+     "key": "n6",
+     "label": "6 bananas",
+     "amount": "6",
+     "unit": "count",
+     "container": "bunch",
+     "default": true
+    }
+   ]
+  },
+  {
+   "ingredient": "apple",
+   "options": [
+    {
+     "key": "one",
+     "label": "1 apple",
+     "amount": "1",
+     "unit": "count",
+     "container": null,
+     "default": false
+    },
+    {
+     "key": "3lb",
+     "label": "3 lb bag (about 6)",
+     "amount": "3",
+     "unit": "lb",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "five",
+     "label": "5 apples",
+     "amount": "5",
+     "unit": "count",
+     "container": null,
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "orange",
+   "options": [
+    {
+     "key": "one",
+     "label": "1 orange",
+     "amount": "1",
+     "unit": "count",
+     "container": null,
+     "default": false
+    },
+    {
+     "key": "4lb",
+     "label": "4 lb bag (about 8)",
+     "amount": "4",
+     "unit": "lb",
+     "container": "bag",
+     "default": true
+    }
+   ]
+  },
+  {
+   "ingredient": "strawberries",
+   "options": [
+    {
+     "key": "1lb",
+     "label": "1 lb clamshell",
+     "amount": "1",
+     "unit": "lb",
+     "container": "clamshell",
+     "default": true
+    },
+    {
+     "key": "2lb",
+     "label": "2 lb clamshell",
+     "amount": "2",
+     "unit": "lb",
+     "container": "clamshell",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "blueberries",
+   "options": [
+    {
+     "key": "6oz",
+     "label": "6 oz clamshell",
+     "amount": "6",
+     "unit": "oz",
+     "container": "clamshell",
+     "default": false
+    },
+    {
+     "key": "pint",
+     "label": "1 pint (about 11 oz)",
+     "amount": "11",
+     "unit": "oz",
+     "container": "clamshell",
+     "default": true
+    },
+    {
+     "key": "18oz",
+     "label": "18 oz clamshell",
+     "amount": "18",
+     "unit": "oz",
+     "container": "clamshell",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "strawberries-frozen",
+   "options": [
+    {
+     "key": "16oz",
+     "label": "16 oz bag",
+     "amount": "16",
+     "unit": "oz",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "32oz",
+     "label": "32 oz bag",
+     "amount": "32",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "blueberries-frozen",
+   "options": [
+    {
+     "key": "16oz",
+     "label": "16 oz bag",
+     "amount": "16",
+     "unit": "oz",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "32oz",
+     "label": "32 oz bag",
+     "amount": "32",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "mango",
+   "options": [
+    {
+     "key": "n1",
+     "label": "1 mango",
+     "amount": "1",
+     "unit": "count",
+     "container": null,
+     "default": true
+    },
+    {
+     "key": "n3",
+     "label": "3 mangoes",
+     "amount": "3",
+     "unit": "count",
+     "container": null,
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "grapes",
+   "options": [
+    {
+     "key": "1lb",
+     "label": "1 lb",
+     "amount": "1",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "2lb",
+     "label": "2 lb bag",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "3lb",
+     "label": "3 lb clamshell",
+     "amount": "3",
+     "unit": "lb",
+     "container": "clamshell",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "lemon-juice",
+   "options": [
+    {
+     "key": "15oz",
+     "label": "15 fl oz bottle",
+     "amount": "15",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": true
+    },
+    {
+     "key": "32oz",
+     "label": "32 fl oz bottle",
+     "amount": "32",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": false
+    },
+    {
+     "key": "squeeze",
+     "label": "4.5 fl oz squeeze lemon",
+     "amount": "4.5",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "lime-juice",
+   "options": [
+    {
+     "key": "15oz",
+     "label": "15 fl oz bottle",
+     "amount": "15",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": true
+    },
+    {
+     "key": "squeeze",
+     "label": "4.5 fl oz squeeze lime",
+     "amount": "4.5",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "lemon",
+   "options": [
+    {
+     "key": "n1",
+     "label": "1 lemon",
+     "amount": "1",
+     "unit": "count",
+     "container": null,
+     "default": true
+    },
+    {
+     "key": "n3",
+     "label": "3 lemons",
+     "amount": "3",
+     "unit": "count",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "n6",
+     "label": "6 lemons",
+     "amount": "6",
+     "unit": "count",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "raisins",
+   "options": [
+    {
+     "key": "12oz",
+     "label": "12 oz box",
+     "amount": "12",
+     "unit": "oz",
+     "container": "box",
+     "default": true
+    },
+    {
+     "key": "20oz",
+     "label": "20 oz canister",
+     "amount": "20",
+     "unit": "oz",
+     "container": "canister",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "dates-medjool",
+   "options": [
+    {
+     "key": "8oz",
+     "label": "8 oz (about 10)",
+     "amount": "10",
+     "unit": "count",
+     "container": "box",
+     "default": false
+    },
+    {
+     "key": "1lb",
+     "label": "1 lb box (about 20)",
+     "amount": "20",
+     "unit": "count",
+     "container": "box",
+     "default": true
+    }
+   ]
+  },
+  {
+   "ingredient": "avocado",
+   "options": [
+    {
+     "key": "n1",
+     "label": "1 avocado",
+     "amount": "1",
+     "unit": "count",
+     "container": null,
+     "default": false
+    },
+    {
+     "key": "n4",
+     "label": "4 avocados",
+     "amount": "4",
+     "unit": "count",
+     "container": "bag",
+     "default": true
+    }
+   ]
+  },
+  {
+   "ingredient": "olive-oil",
+   "options": [
+    {
+     "key": "500ml",
+     "label": "16.9 fl oz bottle (500 ml)",
+     "amount": "16.9",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": true
+    },
+    {
+     "key": "750ml",
+     "label": "25.4 fl oz bottle (750 ml)",
+     "amount": "25.4",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": false
+    },
+    {
+     "key": "1l",
+     "label": "33.8 fl oz bottle (1 L)",
+     "amount": "33.8",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "vegetable-oil",
+   "options": [
+    {
+     "key": "48oz",
+     "label": "48 fl oz bottle",
+     "amount": "48",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": true
+    },
+    {
+     "key": "gallon",
+     "label": "1 gallon jug",
+     "amount": "128",
+     "unit": "fl_oz",
+     "container": "jug",
+     "default": false
+    },
+    {
+     "key": "24oz",
+     "label": "24 fl oz bottle",
+     "amount": "24",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "coconut-oil",
+   "options": [
+    {
+     "key": "14oz",
+     "label": "14 fl oz jar",
+     "amount": "14",
+     "unit": "fl_oz",
+     "container": "jar",
+     "default": true
+    },
+    {
+     "key": "30oz",
+     "label": "30 fl oz jar",
+     "amount": "30",
+     "unit": "fl_oz",
+     "container": "jar",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "sesame-oil",
+   "options": [
+    {
+     "key": "5oz",
+     "label": "5 fl oz bottle",
+     "amount": "5",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": true
+    },
+    {
+     "key": "15oz",
+     "label": "15 fl oz bottle",
+     "amount": "15",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "almonds",
+   "options": [
+    {
+     "key": "8oz",
+     "label": "8 oz bag",
+     "amount": "8",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "16oz",
+     "label": "1 lb bag",
+     "amount": "1",
+     "unit": "lb",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "2lb",
+     "label": "2 lb bag",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "cashews",
+   "options": [
+    {
+     "key": "8oz",
+     "label": "8 oz bag",
+     "amount": "8",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "16oz",
+     "label": "1 lb bag",
+     "amount": "1",
+     "unit": "lb",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "2lb",
+     "label": "2 lb bag",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "peanuts",
+   "options": [
+    {
+     "key": "8oz",
+     "label": "8 oz bag",
+     "amount": "8",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "16oz",
+     "label": "1 lb bag",
+     "amount": "1",
+     "unit": "lb",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "2lb",
+     "label": "2 lb bag",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "walnuts",
+   "options": [
+    {
+     "key": "6oz",
+     "label": "6 oz bag",
+     "amount": "6",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "16oz",
+     "label": "1 lb bag",
+     "amount": "1",
+     "unit": "lb",
+     "container": "bag",
+     "default": true
+    }
+   ]
+  },
+  {
+   "ingredient": "chia-seeds",
+   "options": [
+    {
+     "key": "12oz",
+     "label": "12 oz bag",
+     "amount": "12",
+     "unit": "oz",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "2lb",
+     "label": "2 lb bag",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "flaxseed",
+   "options": [
+    {
+     "key": "16oz",
+     "label": "16 oz bag",
+     "amount": "16",
+     "unit": "oz",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "2lb",
+     "label": "2 lb bag",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "sesame-seeds",
+   "options": [
+    {
+     "key": "2oz",
+     "label": "2 oz jar",
+     "amount": "2",
+     "unit": "oz",
+     "container": "jar",
+     "default": true
+    },
+    {
+     "key": "8oz",
+     "label": "8 oz bag",
+     "amount": "8",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "sunflower-seeds",
+   "options": [
+    {
+     "key": "5oz",
+     "label": "5.25 oz bag",
+     "amount": "5.25",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "16oz",
+     "label": "1 lb bag",
+     "amount": "1",
+     "unit": "lb",
+     "container": "bag",
+     "default": true
+    }
+   ]
+  },
+  {
+   "ingredient": "tahini",
+   "options": [
+    {
+     "key": "16oz",
+     "label": "16 oz jar",
+     "amount": "16",
+     "unit": "oz",
+     "container": "jar",
+     "default": true
+    }
+   ]
+  },
+  {
+   "ingredient": "salt",
+   "options": [
+    {
+     "key": "26oz",
+     "label": "26 oz canister",
+     "amount": "26",
+     "unit": "oz",
+     "container": "canister",
+     "default": true
+    },
+    {
+     "key": "3lb",
+     "label": "3 lb box",
+     "amount": "3",
+     "unit": "lb",
+     "container": "box",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "black-pepper",
+   "options": [
+    {
+     "key": "2oz",
+     "label": "2 oz jar",
+     "amount": "2",
+     "unit": "oz",
+     "container": "jar",
+     "default": true
+    },
+    {
+     "key": "4oz",
+     "label": "4 oz jar",
+     "amount": "4",
+     "unit": "oz",
+     "container": "jar",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "cumin-ground",
+   "options": [
+    {
+     "key": "2oz",
+     "label": "2 oz jar",
+     "amount": "2",
+     "unit": "oz",
+     "container": "jar",
+     "default": true
+    },
+    {
+     "key": "4oz",
+     "label": "4 oz jar",
+     "amount": "4",
+     "unit": "oz",
+     "container": "jar",
+     "default": false
+    },
+    {
+     "key": "7oz",
+     "label": "7 oz bag",
+     "amount": "7",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "cumin-seeds",
+   "options": [
+    {
+     "key": "2oz",
+     "label": "2 oz jar",
+     "amount": "2",
+     "unit": "oz",
+     "container": "jar",
+     "default": true
+    },
+    {
+     "key": "4oz",
+     "label": "4 oz jar",
+     "amount": "4",
+     "unit": "oz",
+     "container": "jar",
+     "default": false
+    },
+    {
+     "key": "7oz",
+     "label": "7 oz bag",
+     "amount": "7",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "coriander-ground",
+   "options": [
+    {
+     "key": "2oz",
+     "label": "2 oz jar",
+     "amount": "2",
+     "unit": "oz",
+     "container": "jar",
+     "default": true
+    },
+    {
+     "key": "4oz",
+     "label": "4 oz jar",
+     "amount": "4",
+     "unit": "oz",
+     "container": "jar",
+     "default": false
+    },
+    {
+     "key": "7oz",
+     "label": "7 oz bag",
+     "amount": "7",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "paprika",
+   "options": [
+    {
+     "key": "2oz",
+     "label": "2 oz jar",
+     "amount": "2",
+     "unit": "oz",
+     "container": "jar",
+     "default": true
+    },
+    {
+     "key": "4oz",
+     "label": "4 oz jar",
+     "amount": "4",
+     "unit": "oz",
+     "container": "jar",
+     "default": false
+    },
+    {
+     "key": "7oz",
+     "label": "7 oz bag",
+     "amount": "7",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "smoked-paprika",
+   "options": [
+    {
+     "key": "2oz",
+     "label": "2 oz jar",
+     "amount": "2",
+     "unit": "oz",
+     "container": "jar",
+     "default": true
+    },
+    {
+     "key": "4oz",
+     "label": "4 oz jar",
+     "amount": "4",
+     "unit": "oz",
+     "container": "jar",
+     "default": false
+    },
+    {
+     "key": "7oz",
+     "label": "7 oz bag",
+     "amount": "7",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "turmeric",
+   "options": [
+    {
+     "key": "2oz",
+     "label": "2 oz jar",
+     "amount": "2",
+     "unit": "oz",
+     "container": "jar",
+     "default": true
+    },
+    {
+     "key": "4oz",
+     "label": "4 oz jar",
+     "amount": "4",
+     "unit": "oz",
+     "container": "jar",
+     "default": false
+    },
+    {
+     "key": "7oz",
+     "label": "7 oz bag",
+     "amount": "7",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "chili-powder",
+   "options": [
+    {
+     "key": "2oz",
+     "label": "2 oz jar",
+     "amount": "2",
+     "unit": "oz",
+     "container": "jar",
+     "default": true
+    },
+    {
+     "key": "4oz",
+     "label": "4 oz jar",
+     "amount": "4",
+     "unit": "oz",
+     "container": "jar",
+     "default": false
+    },
+    {
+     "key": "7oz",
+     "label": "7 oz bag",
+     "amount": "7",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "cayenne",
+   "options": [
+    {
+     "key": "2oz",
+     "label": "2 oz jar",
+     "amount": "2",
+     "unit": "oz",
+     "container": "jar",
+     "default": true
+    },
+    {
+     "key": "4oz",
+     "label": "4 oz jar",
+     "amount": "4",
+     "unit": "oz",
+     "container": "jar",
+     "default": false
+    },
+    {
+     "key": "7oz",
+     "label": "7 oz bag",
+     "amount": "7",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "red-pepper-flakes",
+   "options": [
+    {
+     "key": "2oz",
+     "label": "2 oz jar",
+     "amount": "2",
+     "unit": "oz",
+     "container": "jar",
+     "default": true
+    },
+    {
+     "key": "4oz",
+     "label": "4 oz jar",
+     "amount": "4",
+     "unit": "oz",
+     "container": "jar",
+     "default": false
+    },
+    {
+     "key": "7oz",
+     "label": "7 oz bag",
+     "amount": "7",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "garlic-powder",
+   "options": [
+    {
+     "key": "2oz",
+     "label": "2 oz jar",
+     "amount": "2",
+     "unit": "oz",
+     "container": "jar",
+     "default": true
+    },
+    {
+     "key": "4oz",
+     "label": "4 oz jar",
+     "amount": "4",
+     "unit": "oz",
+     "container": "jar",
+     "default": false
+    },
+    {
+     "key": "7oz",
+     "label": "7 oz bag",
+     "amount": "7",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "onion-powder",
+   "options": [
+    {
+     "key": "2oz",
+     "label": "2 oz jar",
+     "amount": "2",
+     "unit": "oz",
+     "container": "jar",
+     "default": true
+    },
+    {
+     "key": "4oz",
+     "label": "4 oz jar",
+     "amount": "4",
+     "unit": "oz",
+     "container": "jar",
+     "default": false
+    },
+    {
+     "key": "7oz",
+     "label": "7 oz bag",
+     "amount": "7",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "oregano",
+   "options": [
+    {
+     "key": "1oz",
+     "label": "1 oz jar",
+     "amount": "1",
+     "unit": "oz",
+     "container": "jar",
+     "default": true
+    },
+    {
+     "key": "2oz",
+     "label": "2 oz jar",
+     "amount": "2",
+     "unit": "oz",
+     "container": "jar",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "basil-dried",
+   "options": [
+    {
+     "key": "1oz",
+     "label": "1 oz jar",
+     "amount": "1",
+     "unit": "oz",
+     "container": "jar",
+     "default": true
+    }
+   ]
+  },
+  {
+   "ingredient": "thyme-dried",
+   "options": [
+    {
+     "key": "1oz",
+     "label": "1 oz jar",
+     "amount": "1",
+     "unit": "oz",
+     "container": "jar",
+     "default": true
+    }
+   ]
+  },
+  {
+   "ingredient": "cinnamon",
+   "options": [
+    {
+     "key": "2oz",
+     "label": "2 oz jar",
+     "amount": "2",
+     "unit": "oz",
+     "container": "jar",
+     "default": true
+    },
+    {
+     "key": "4oz",
+     "label": "4 oz jar",
+     "amount": "4",
+     "unit": "oz",
+     "container": "jar",
+     "default": false
+    },
+    {
+     "key": "7oz",
+     "label": "7 oz bag",
+     "amount": "7",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "ginger-ground",
+   "options": [
+    {
+     "key": "2oz",
+     "label": "2 oz jar",
+     "amount": "2",
+     "unit": "oz",
+     "container": "jar",
+     "default": true
+    },
+    {
+     "key": "4oz",
+     "label": "4 oz jar",
+     "amount": "4",
+     "unit": "oz",
+     "container": "jar",
+     "default": false
+    },
+    {
+     "key": "7oz",
+     "label": "7 oz bag",
+     "amount": "7",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "bay-leaf",
+   "options": [
+    {
+     "key": "small",
+     "label": "0.1 oz jar",
+     "amount": "0.1",
+     "unit": "oz",
+     "container": "jar",
+     "default": true
+    },
+    {
+     "key": "bag",
+     "label": "0.5 oz bag",
+     "amount": "0.5",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "cardamom",
+   "options": [
+    {
+     "key": "2oz",
+     "label": "2 oz jar",
+     "amount": "2",
+     "unit": "oz",
+     "container": "jar",
+     "default": true
+    },
+    {
+     "key": "4oz",
+     "label": "4 oz jar",
+     "amount": "4",
+     "unit": "oz",
+     "container": "jar",
+     "default": false
+    },
+    {
+     "key": "7oz",
+     "label": "7 oz bag",
+     "amount": "7",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "cloves",
+   "options": [
+    {
+     "key": "2oz",
+     "label": "2 oz jar",
+     "amount": "2",
+     "unit": "oz",
+     "container": "jar",
+     "default": true
+    },
+    {
+     "key": "4oz",
+     "label": "4 oz jar",
+     "amount": "4",
+     "unit": "oz",
+     "container": "jar",
+     "default": false
+    },
+    {
+     "key": "7oz",
+     "label": "7 oz bag",
+     "amount": "7",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "mustard-seeds",
+   "options": [
+    {
+     "key": "2oz",
+     "label": "2 oz jar",
+     "amount": "2",
+     "unit": "oz",
+     "container": "jar",
+     "default": true
+    },
+    {
+     "key": "4oz",
+     "label": "4 oz jar",
+     "amount": "4",
+     "unit": "oz",
+     "container": "jar",
+     "default": false
+    },
+    {
+     "key": "7oz",
+     "label": "7 oz bag",
+     "amount": "7",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "fenugreek",
+   "options": [
+    {
+     "key": "2oz",
+     "label": "2 oz jar",
+     "amount": "2",
+     "unit": "oz",
+     "container": "jar",
+     "default": true
+    },
+    {
+     "key": "4oz",
+     "label": "4 oz jar",
+     "amount": "4",
+     "unit": "oz",
+     "container": "jar",
+     "default": false
+    },
+    {
+     "key": "7oz",
+     "label": "7 oz bag",
+     "amount": "7",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "curry-powder",
+   "options": [
+    {
+     "key": "2oz",
+     "label": "2 oz jar",
+     "amount": "2",
+     "unit": "oz",
+     "container": "jar",
+     "default": true
+    },
+    {
+     "key": "4oz",
+     "label": "4 oz jar",
+     "amount": "4",
+     "unit": "oz",
+     "container": "jar",
+     "default": false
+    },
+    {
+     "key": "7oz",
+     "label": "7 oz bag",
+     "amount": "7",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "garam-masala",
+   "options": [
+    {
+     "key": "2oz",
+     "label": "2 oz jar",
+     "amount": "2",
+     "unit": "oz",
+     "container": "jar",
+     "default": true
+    },
+    {
+     "key": "4oz",
+     "label": "4 oz jar",
+     "amount": "4",
+     "unit": "oz",
+     "container": "jar",
+     "default": false
+    },
+    {
+     "key": "7oz",
+     "label": "7 oz bag",
+     "amount": "7",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "fennel-seeds",
+   "options": [
+    {
+     "key": "2oz",
+     "label": "2 oz jar",
+     "amount": "2",
+     "unit": "oz",
+     "container": "jar",
+     "default": true
+    },
+    {
+     "key": "4oz",
+     "label": "4 oz jar",
+     "amount": "4",
+     "unit": "oz",
+     "container": "jar",
+     "default": false
+    },
+    {
+     "key": "7oz",
+     "label": "7 oz bag",
+     "amount": "7",
+     "unit": "oz",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "baking-powder",
+   "options": [
+    {
+     "key": "8oz",
+     "label": "8.1 oz can",
+     "amount": "8.1",
+     "unit": "oz",
+     "container": "can",
+     "default": true
+    }
+   ]
+  },
+  {
+   "ingredient": "baking-soda",
+   "options": [
+    {
+     "key": "1lb",
+     "label": "1 lb box",
+     "amount": "1",
+     "unit": "lb",
+     "container": "box",
+     "default": true
+    }
+   ]
+  },
+  {
+   "ingredient": "chicken-broth-low-sodium",
+   "options": [
+    {
+     "key": "carton",
+     "label": "32 fl oz carton",
+     "amount": "32",
+     "unit": "fl_oz",
+     "container": "carton",
+     "default": true
+    },
+    {
+     "key": "can",
+     "label": "14.5 oz can",
+     "amount": "14.5",
+     "unit": "fl_oz",
+     "container": "can",
+     "default": false
+    },
+    {
+     "key": "carton2",
+     "label": "2 cartons (64 fl oz)",
+     "amount": "64",
+     "unit": "fl_oz",
+     "container": "carton",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "chicken-broth",
+   "options": [
+    {
+     "key": "carton",
+     "label": "32 fl oz carton",
+     "amount": "32",
+     "unit": "fl_oz",
+     "container": "carton",
+     "default": true
+    },
+    {
+     "key": "can",
+     "label": "14.5 oz can",
+     "amount": "14.5",
+     "unit": "fl_oz",
+     "container": "can",
+     "default": false
+    },
+    {
+     "key": "carton2",
+     "label": "2 cartons (64 fl oz)",
+     "amount": "64",
+     "unit": "fl_oz",
+     "container": "carton",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "vegetable-broth",
+   "options": [
+    {
+     "key": "carton",
+     "label": "32 fl oz carton",
+     "amount": "32",
+     "unit": "fl_oz",
+     "container": "carton",
+     "default": true
+    },
+    {
+     "key": "can",
+     "label": "14.5 oz can",
+     "amount": "14.5",
+     "unit": "fl_oz",
+     "container": "can",
+     "default": false
+    },
+    {
+     "key": "carton2",
+     "label": "2 cartons (64 fl oz)",
+     "amount": "64",
+     "unit": "fl_oz",
+     "container": "carton",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "soy-sauce",
+   "options": [
+    {
+     "key": "10oz",
+     "label": "10 fl oz bottle",
+     "amount": "10",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": true
+    },
+    {
+     "key": "15oz",
+     "label": "15 fl oz bottle",
+     "amount": "15",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "hot-sauce",
+   "options": [
+    {
+     "key": "5oz",
+     "label": "5 fl oz bottle",
+     "amount": "5",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": true
+    },
+    {
+     "key": "12oz",
+     "label": "12 fl oz bottle",
+     "amount": "12",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "sriracha",
+   "options": [
+    {
+     "key": "17oz",
+     "label": "17 oz bottle",
+     "amount": "15",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": true
+    },
+    {
+     "key": "9oz",
+     "label": "9 oz bottle",
+     "amount": "8",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "ketchup",
+   "options": [
+    {
+     "key": "20oz",
+     "label": "20 oz bottle",
+     "amount": "17",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": true
+    },
+    {
+     "key": "32oz",
+     "label": "32 oz bottle",
+     "amount": "27",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "mustard-yellow",
+   "options": [
+    {
+     "key": "8oz",
+     "label": "8 oz bottle",
+     "amount": "8",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": true
+    },
+    {
+     "key": "14oz",
+     "label": "14 oz bottle",
+     "amount": "13",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "mayonnaise",
+   "options": [
+    {
+     "key": "30oz",
+     "label": "30 fl oz jar",
+     "amount": "30",
+     "unit": "fl_oz",
+     "container": "jar",
+     "default": true
+    },
+    {
+     "key": "15oz",
+     "label": "15 fl oz jar",
+     "amount": "15",
+     "unit": "fl_oz",
+     "container": "jar",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "honey",
+   "options": [
+    {
+     "key": "12oz",
+     "label": "12 oz bottle",
+     "amount": "8",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": true
+    },
+    {
+     "key": "32oz",
+     "label": "32 oz jar",
+     "amount": "22",
+     "unit": "fl_oz",
+     "container": "jar",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "maple-syrup",
+   "options": [
+    {
+     "key": "12oz",
+     "label": "12.5 fl oz bottle",
+     "amount": "12.5",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": true
+    },
+    {
+     "key": "32oz",
+     "label": "32 fl oz jug",
+     "amount": "32",
+     "unit": "fl_oz",
+     "container": "jug",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "sugar",
+   "options": [
+    {
+     "key": "2lb",
+     "label": "2 lb bag",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    },
+    {
+     "key": "4lb",
+     "label": "4 lb bag",
+     "amount": "4",
+     "unit": "lb",
+     "container": "bag",
+     "default": true
+    },
+    {
+     "key": "10lb",
+     "label": "10 lb bag",
+     "amount": "10",
+     "unit": "lb",
+     "container": "bag",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "brown-sugar",
+   "options": [
+    {
+     "key": "2lb",
+     "label": "2 lb bag",
+     "amount": "2",
+     "unit": "lb",
+     "container": "bag",
+     "default": true
+    }
+   ]
+  },
+  {
+   "ingredient": "vinegar-white",
+   "options": [
+    {
+     "key": "32oz",
+     "label": "32 fl oz bottle",
+     "amount": "32",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": true
+    },
+    {
+     "key": "gallon",
+     "label": "1 gallon jug",
+     "amount": "128",
+     "unit": "fl_oz",
+     "container": "jug",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "vinegar-cider",
+   "options": [
+    {
+     "key": "32oz",
+     "label": "32 fl oz bottle",
+     "amount": "32",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": true
+    },
+    {
+     "key": "16oz",
+     "label": "16 fl oz bottle",
+     "amount": "16",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "salsa",
+   "options": [
+    {
+     "key": "16oz",
+     "label": "16 oz jar",
+     "amount": "16",
+     "unit": "fl_oz",
+     "container": "jar",
+     "default": true
+    },
+    {
+     "key": "24oz",
+     "label": "24 oz jar",
+     "amount": "24",
+     "unit": "fl_oz",
+     "container": "jar",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "coconut-milk",
+   "options": [
+    {
+     "key": "can",
+     "label": "13.5 fl oz can",
+     "amount": "13.5",
+     "unit": "fl_oz",
+     "container": "can",
+     "default": true
+    },
+    {
+     "key": "cans2",
+     "label": "2 cans",
+     "amount": "27",
+     "unit": "fl_oz",
+     "container": "can",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "worcestershire",
+   "options": [
+    {
+     "key": "small",
+     "label": "10 fl oz bottle",
+     "amount": "10",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": true
+    },
+    {
+     "key": "large",
+     "label": "20 fl oz bottle",
+     "amount": "20",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "vanilla-extract",
+   "options": [
+    {
+     "key": "2oz",
+     "label": "2 fl oz bottle",
+     "amount": "2",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": true
+    },
+    {
+     "key": "4oz",
+     "label": "4 fl oz bottle",
+     "amount": "4",
+     "unit": "fl_oz",
+     "container": "bottle",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "cocoa-powder",
+   "options": [
+    {
+     "key": "8oz",
+     "label": "8 oz canister",
+     "amount": "8",
+     "unit": "oz",
+     "container": "canister",
+     "default": true
+    }
+   ]
+  },
+  {
+   "ingredient": "protein-powder-double-chocolate",
+   "options": [
+    {
+     "key": "5lb",
+     "label": "5 lb tub",
+     "amount": "5",
+     "unit": "lb",
+     "container": "tub",
+     "default": true
+    },
+    {
+     "key": "small",
+     "label": "1.5 lb tub (22 scoops)",
+     "amount": "22",
+     "unit": "scoop",
+     "container": "tub",
+     "default": false
+    }
+   ]
+  }
+ ]
+}

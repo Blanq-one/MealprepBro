@@ -3,7 +3,11 @@
 In order:
   1. an accepted pair (ingredient_substitution, e.g. chapati → flour tortilla) whose substitute you have,
      with the pair's own quantity rule;
-  2. else something you have with the same role and category, allowed and not disliked. "Same role" means
+  2. else, for a vegetable or herb, something you have from the same culinary group (J2: onions and
+     scallions, leafy cooking greens, sturdy green vegetables, …; app/seed/data/pantry_catalog.json): yellow
+     onion can become red onion, never spinach. A vegetable in no group (or alone in its group) gets none.
+  3. else, for anything else, something you have with the same role and category, allowed and not disliked.
+     "Same role" means
      your recipes use it in that role (spinach is a vegetable in them, never a sauce), so tomato paste
      never becomes spinach. Seasonings, garnishes and "other" lines (broth, water) get no pantry
      substitute: they carry the flavor or the structure. The amount keeps the line's protein grams for a
@@ -54,6 +58,7 @@ class Have:
     opened: bool = False
     expires_on: date | None = None
     roles: frozenset[str] = frozenset()  # the roles your recipes use it in
+    group: str | None = None  # its culinary group (vegetables and herbs, J2)
 
 
 @dataclass(frozen=True)
@@ -74,6 +79,12 @@ class MissingLine:
     count: Decimal | None  # the amount when the line is counted (pieces), else None
     protein_g: Decimal
     kcal: Decimal
+    group: str | None = None  # its culinary group (vegetables and herbs, J2)
+
+    @property
+    def grouped(self) -> bool:
+        """Vegetables and herbs swap only inside their culinary group (J2)."""
+        return self.group is not None or self.category == "vegetable"
 
 
 @dataclass(frozen=True)
@@ -177,16 +188,16 @@ def find_substitute(
             continue
         if (found := _pair_substitute(line, pair, by_id[pair.to_id], units)) is not None:
             return found
-    if line.role not in PANTRY_ROLES:
+    if not line.grouped and line.role not in PANTRY_ROLES:
         return None
     rule = ROLE_RULES.get(line.role, SAME_MASS)
     for have in sorted(by_id.values(), key=_order):
-        if (
-            have.ingredient_id == line.ingredient_id
-            or have.ingredient_id in recipe_ingredient_ids
-            or have.category != line.category
-            or line.role not in have.roles
-        ):
+        if have.ingredient_id == line.ingredient_id or have.ingredient_id in recipe_ingredient_ids:
+            continue
+        if line.grouped:
+            if line.group is None or have.group != line.group:  # the group decides, whatever the role
+                continue
+        elif have.category != line.category or line.role not in have.roles:
             continue
         grams = _grams_for(line, have, rule)
         if (

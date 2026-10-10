@@ -1,8 +1,11 @@
 import type { ReactNode } from "react";
 
 import type { RecipeVersion, Step } from "@/lib/api/types";
+import { dishIcon } from "@/lib/format/icons";
 import { minutesLabel } from "@/lib/format/labels";
 import { formatCents } from "@/lib/format/money";
+
+import { Emoji } from "./ui/Emoji";
 
 import styles from "./RecipeView.module.css";
 
@@ -13,6 +16,8 @@ export type RecipeLine = {
   preparation: string | null;
   optional: boolean;
   note?: string | null;
+  /** A longer line under it: what it uses of what you have, or a substitute (server text). */
+  detail?: string | null;
 };
 
 const SECTION_LABELS: Record<string, string> = {
@@ -49,11 +54,14 @@ export function RecipeView({
   recipe,
   lines,
   notes = [],
+  portionsLine,
   children,
 }: {
   recipe: RecipeVersion;
   lines?: RecipeLine[];
   notes?: string[];
+  /** The API's portions line ("for 2 people") in place of the recipe's portions count. */
+  portionsLine?: string | null;
   children?: ReactNode;
 }) {
   const shown: RecipeLine[] =
@@ -67,16 +75,20 @@ export function RecipeView({
     }));
   const nutrition = recipe.per_portion;
   const heme = nutrition.heme_iron;
+  const icon = dishIcon(recipe.dish_category);
   return (
     <article className={styles.recipe}>
       <header>
         <div className="row" style={{ flexWrap: "wrap" }}>
+          <Emoji symbol={icon.emoji} label={icon.label} className={styles.icon} />
           <h1>{recipe.title}</h1>
           {recipe.badge === "draft" && <span className="badge badge-warn">Draft: adjust me</span>}
+          {recipe.is_favorite && <span className="badge badge-accent">Favorite</span>}
+          {recipe.is_saved && <span className="badge badge-accent">Saved</span>}
         </div>
         {recipe.description && <p className="muted">{recipe.description}</p>}
         <p className="small muted">
-          {recipe.portions} portions ({recipe.portion_size.replace(/_/g, " ")}) · {minutesLabel(recipe.active_minutes)}{" "}
+          {portionsLine ?? `${recipe.portions} portions`} ({recipe.portion_size.replace(/_/g, " ")}) · {minutesLabel(recipe.active_minutes)}{" "}
           hands-on, {minutesLabel(recipe.total_minutes)} total{recipe.time_note ? ` (${recipe.time_note})` : ""}
         </p>
         {recipe.labels.length > 0 && (
@@ -110,6 +122,7 @@ export function RecipeView({
                 {line.optional && <span className="muted"> (optional)</span>}
               </span>
               {line.note && <span className="badge"> {line.note}</span>}
+              {line.detail && <span className={styles.detail}>{line.detail}</span>}
             </li>
           ))}
         </ul>

@@ -2,8 +2,10 @@ from fastapi import APIRouter, Query
 
 from app.api.deps import CurrentUser, DbSession
 from app.api.presenters import inventory_lots_out
-from app.schemas.inventory import DiscardIn, InventoryLotIn, InventoryLotOut, InventoryLotPatch
+from app.db.models import InventoryItem
+from app.schemas.inventory import DiscardIn, InventoryLotIn, InventoryLotOut, InventoryLotPatch, VersionIn
 from app.services import inventory as service
+from app.services.pantry_add import resolve_preset, version_label
 
 router = APIRouter(prefix="/api/v1/inventory", tags=["inventory"])
 
@@ -38,8 +40,28 @@ def patch_lot(
         expires_on=body.expires_on,
         notes=body.notes,
     )
-    if body.quantity is not None:
+    if body.preset is not None:  # Pantry's "est." correction: a package size (step 2b.4)
+        preset = resolve_preset(session, item.ingredient_id, body.preset)
+        item = service.correct_amount(
+            session, user.id, item_id, preset.quantity, preset.unit, container=preset.container
+        )
+    elif body.quantity is not None and body.unit is not None:
+        item = service.correct_amount(session, user.id, item_id, body.quantity, body.unit)
+    elif body.quantity is not None:
         item = service.set_quantity(session, user.id, item_id, body.quantity)
+    session.commit()
+    return _out(session, [item])[0]
+
+
+@router.post("/{item_id}/version", response_model=InventoryLotOut)
+def set_version(item_id: int, body: VersionIn, session: DbSession, user: CurrentUser) -> InventoryLotOut:
+    """This lot of a held item is the version on its label (step 2b.4, J4): a new lot of that version takes
+    its amount, place and dates. The generic held item stays held."""
+    lot = session.get(InventoryItem, item_id)
+    if lot is None or lot.user_id != user.id:
+        raise service.InventoryError(f"inventory item {item_id} not found")
+    label = version_label(session, lot.ingredient_id, body.ingredient_id)
+    item = service.relabel_lot(session, user.id, item_id, body.ingredient_id, label)
     session.commit()
     return _out(session, [item])[0]
 

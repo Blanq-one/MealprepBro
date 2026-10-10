@@ -25,6 +25,7 @@ from app.db.models import (
     CookSearch,
     GroceryList,
     GroceryListItem,
+    InventoryItem,
     PlanCandidate,
     PlanCookBatch,
     Recipe,
@@ -107,6 +108,7 @@ def constraints_for_meal(
     diet: DietInputs,
     stores: tuple[int, ...],
     *,
+    off_lot_ids: frozenset[int] = frozenset(),
     today: date,
     slot: MealSlot,
     portions: int,
@@ -179,6 +181,7 @@ def constraints_for_meal(
         favorite_recipe_ids=diet.favorite_recipe_ids,
         always_have_ingredient_ids=diet.always_have_ids | have,
         lots_off_ingredient_ids=off - have,
+        lots_off_lot_ids=off_lot_ids,
         household_size=portions,
         region_code=settings.region_code,
     )
@@ -272,10 +275,22 @@ def cook_meal(
     for label, members in used_up(diet.caps, used).items():
         if ingredient_ids & members:
             raise CookThisError(f"{label}: this week's allowance is already used")
+    off = {t.ingredient_id for t in answers.pantry if not t.include} if answers else set()
+    have = {e.ingredient_id for e in answers.extras if e.status == "have"} if answers else set()
+    off_lots = frozenset(
+        session.scalars(
+            select(InventoryItem.id).where(
+                InventoryItem.user_id == user.id,
+                InventoryItem.ingredient_id.in_(off - have),
+                InventoryItem.status == "active",
+            )
+        )
+    )
     c = constraints_for_meal(
         settings,
         diet,
         stores,
+        off_lot_ids=off_lots,
         today=today,
         slot=slot,
         portions=portions,

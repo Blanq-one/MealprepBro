@@ -1,29 +1,42 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { plan } from "@/test/fixtures";
+import type { TodayOut } from "@/lib/api/types";
 
-import { todayInPlan, TodayView } from "./TodayCard";
+import { TodayCard } from "./TodayCard";
+
+function today(overrides: Partial<TodayOut> = {}): TodayOut {
+  return {
+    plan_id: 7,
+    state: "today",
+    message: null,
+    day: "2026-10-12",
+    meals: [{ slot: "lunch", title: "Chicken over rice", dish_category: "bowl", kcal: 560, from_freezer: false, cook_batch_id: 3, recipe_version_id: 4 }],
+    cook_note: "Cook: Chicken over rice (4 portions)",
+    hands_on_display: "45 min hands-on",
+    ...overrides,
+  };
+}
 
 describe("the Cook home Today card", () => {
   it("shows today's meals with their dish icons and what to cook today, from the API", () => {
-    render(<TodayView plan={plan()} today="2026-10-12" />);
+    render(<TodayCard today={today()} />);
     expect(screen.getByRole("img", { name: "Bowl" })).toHaveTextContent("🍚");
     expect(screen.getByText("Chicken over rice")).toBeInTheDocument();
     expect(screen.getByText("Cook: Chicken over rice (4 portions) · 45 min hands-on")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Today/ })).toHaveAttribute("href", expect.stringMatching(/day\/?\?plan=7&date=2026-10-12/));
+    expect(screen.getByRole("link", { name: /Today/ })).toHaveAttribute("href", expect.stringMatching(/^\/day\/?\?plan=7&date=2026-10-12$/));
   });
 
   it("a day with nothing to cook says so", () => {
-    render(<TodayView plan={plan()} today="2026-10-13" />);
+    render(<TodayCard today={today({ cook_note: "Nothing to cook, eating prepped meals", hands_on_display: null })} />);
     expect(screen.getByText("Nothing to cook, eating prepped meals")).toBeInTheDocument();
   });
 
   it("a plan that starts later or has ended says when", () => {
-    const { rerender } = render(<TodayView plan={plan()} today="2026-10-10" />);
+    const { rerender } = render(<TodayCard today={today({ state: "starts_later", message: "Your plan starts Monday", day: null, meals: [] })} />);
     expect(screen.getByText("Your plan starts Monday.")).toBeInTheDocument();
-    rerender(<TodayView plan={plan()} today="2026-10-20" />);
-    expect(screen.getByText("Your plan ended Tuesday.")).toBeInTheDocument();
-    expect(todayInPlan(plan(), "2026-10-12")).toEqual({ kind: "today", index: 0 });
+    rerender(<TodayCard today={today({ state: "ended", message: "Your plan ended Sunday", day: null, meals: [] })} />);
+    expect(screen.getByText("Your plan ended Sunday.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open your plan" })).toHaveAttribute("href", expect.stringMatching(/^\/plan\/?\?id=7$/));
   });
 });

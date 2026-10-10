@@ -8,9 +8,10 @@
 Every search is a cook_search row, so the latest one per mode is "Same as last time".
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from decimal import Decimal
 from typing import Any
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -21,11 +22,12 @@ from app.cook import answers as answers_mod
 from app.cook.cards import AS_WRITTEN_NOTE, line_context, portions_display, suggestion
 from app.cook.pool import Pool, cache_key, load_pool
 from app.cook.ranking import Filtered, Ranked, empty_reason, good_matches, ideas_needed, rank, top_filter
+from app.cook.your_terms import pantry_notes
 from app.db.models import AppUser, CookSearch, GenerationRun, PlanCandidate
 from app.domain.enums import PortionSize
 from app.planning.exposure import source_of
 from app.schemas.cards import LineContextOut, SearchContextOut
-from app.schemas.cook import CookAnswers, CookSearchOut, SuggestionOut
+from app.schemas.cook import CookAnswers, CookSearchOut, RecipeSuggestionOut
 from app.services.dishes import dish_categories
 from app.services.settings import load_settings
 
@@ -352,6 +354,19 @@ def get_search(session: Session, user_id: int, search_id: int) -> CookSearch:
     return search
 
 
+def card_portions(
+    session: Session, user_id: int, search_id: int, version_id: int
+) -> tuple[int, PortionSize] | None:
+    """The portions and portion size of one card in a search (the recipe page opens at them)."""
+    search = get_search(session, user_id, search_id)
+    card = next(
+        (s for s in (search.results or {}).get("suggestions", []) if s["version_id"] == version_id), None
+    )
+    if card is None:
+        return None
+    return int(card["portions"]), PortionSize(card["portion_size"])
+
+
 def search_out(session: Session, user_id: int, search_id: int) -> CookSearchOut:
     search = get_search(session, user_id, search_id)
     results = search.results or {}
@@ -361,7 +376,7 @@ def search_out(session: Session, user_id: int, search_id: int) -> CookSearchOut:
         status=search.status,
         answers=CookAnswers.model_validate(search.answers),
         header=results.get("header", ""),
-        suggestions=[SuggestionOut.model_validate(s) for s in results.get("suggestions", [])],
+        suggestions=[RecipeSuggestionOut.model_validate(s) for s in results.get("suggestions", [])],
         good_matches=int(results.get("good_matches", 0)),
         ideas_needed=bool(results.get("ideas_needed", False)),
         empty_reason=results.get("empty_reason"),
@@ -371,7 +386,11 @@ def search_out(session: Session, user_id: int, search_id: int) -> CookSearchOut:
 
 
 def search_context(
-    session: Session, user_id: int, search_id: int, version_id: int
+    session: Session,
+    user_id: int,
+    search_id: int,
+    version_id: int,
+    lines: Iterable[tuple[int, Decimal, str]] = (),
 ) -> SearchContextOut | None:
     """The coverage and substitute lines of one card in a search (GET /recipe-versions/{id}?search=); None
     when that recipe wasn't one of its cards."""
@@ -380,8 +399,17 @@ def search_context(
     card = next((s for s in results.get("suggestions", []) if s["version_id"] == version_id), None)
     if card is None:
         return None
-    s = SuggestionOut.model_validate(card)
-    lines = results.get("context", {}).get(str(version_id), [])
+    s = RecipeSuggestionOut.model_validate(card)
+    stored = [LineContextOut.model_validate(ln) for ln in results.get("context", {}).get(str(version_id), [])]
+    # what the recipe uses of what you have now, in your terms (J6); the search's turned-off items stay off
+    answers = CookAnswers.model_validate(search.answers)
+    off = frozenset(t.ingredient_id for t in answers.pantry if not t.include)
+    have = frozenset(e.ingredient_id for e in answers.extras if e.status == "have")
+    units = load_settings(session, user_id).units
+    live = pantry_notes(session, user_id, lines, skip_ingredient_ids=off | have, units=units)
+    for ln in stored:
+        if ln.status in ("have", "short") and ln.ingredient_id in live:
+            ln.note = live[ln.ingredient_id]
     return SearchContextOut(
         search_id=search.id,
         portions=s.portions,
@@ -390,6 +418,6 @@ def search_context(
         uses=s.uses,
         could_buy=s.could_buy,
         missing=s.missing,
-        lines=[LineContextOut.model_validate(ln) for ln in lines],
+        lines=stored,
         note=AS_WRITTEN_NOTE,
     )

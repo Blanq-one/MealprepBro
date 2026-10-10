@@ -203,9 +203,9 @@ def test_the_gap_rule_reports_ideas_needed_exactly_below_three_good_matches(api,
     add_stock(seeded_db, "tomato", 6, "count", location=StorageLocation.PANTRY)
     add_stock(seeded_db, "flour-tortilla-small", 20, "count", location=StorageLocation.PANTRY)
     enough = final(meal_now(api, slot="dinner"))
-    # the three gravies use your chicken and tortillas; the sheet-pan chicken too, its peppers, onion, oil and
-    # rice covered by what you have, so only the yogurt and lemon are missing
-    assert (enough["good_matches"], enough["ideas_needed"]) == (4, False)
+    # the three gravies use your chicken and tortillas, with at most two missing items (the sheet-pan chicken
+    # misses its peppers too: tomatoes aren't sweet peppers, J2)
+    assert (enough["good_matches"], enough["ideas_needed"]) == (3, False)
     assert count(seeded_db, LlmCall) == 0 and NoLLM.calls == 0
     assert all(e["llm_call_count"] == 0 and e["total_tokens"] == 0 for e in (empty, thin, enough))
 

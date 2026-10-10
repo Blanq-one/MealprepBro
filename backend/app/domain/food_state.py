@@ -57,6 +57,8 @@ _AS_SOLD_WORDS = re.compile(
     r"pre-packaged|commercially prepared|prepared)\b"
 )
 _DRY_CATEGORIES = frozenset({"grain", "legume"})  # USDA "raw" rice, lentils, beans = dry as sold
+# Deli meats are eaten as sold, even where USDA describes them as cooked ("Salami, cooked, turkey"; step 2b.4)
+_DELI_MEATS = frozenset({"salami", "bologna", "pastrami", "pepperoni", "frankfurter", "luncheon meat"})
 _RAW_DEFAULT_CATEGORIES = frozenset({"protein", "vegetable", "fruit"})
 
 
@@ -77,6 +79,9 @@ def mapping_state(description: str | None, category: str, nutrition_source: str)
     if nutrition_source == NutritionSource.PACKAGE_LABEL or description is None:
         return FoodState.AS_SOLD
     text = description.lower()
+    segments = _segments(description)
+    if segments and segments[0] in _DELI_MEATS:
+        return FoodState.AS_SOLD
     if is_cooked_description(description):
         return FoodState.COOKED
     if category == "spice" or _DRY_WORDS.search(text):

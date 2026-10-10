@@ -28,12 +28,32 @@ class InventoryLotIn(_Strict):
 
 class InventoryLotPatch(_Strict):
     quantity: Decimal | None = Field(
-        default=None, ge=0, description="counted quantity in the lot's base unit"
+        default=None, ge=0, description="counted quantity in the lot's base unit (or in `unit`)"
+    )
+    unit: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=20,
+        description="the unit of `quantity`; the server converts it",
+    )
+    preset: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=40,
+        description="a package preset key: the lot holds that amount",
     )
     location: StorageLocation | None = None
     opened_on: date | None = None
     expires_on: date | None = None
     notes: str | None = Field(default=None, max_length=300)
+
+    @model_validator(mode="after")
+    def _one_amount(self) -> Self:
+        if self.preset is not None and (self.quantity is not None or self.unit is not None):
+            raise ValueError("give the amount one way: quantity (+ unit) or preset")
+        if self.unit is not None and self.quantity is None:
+            raise ValueError("unit needs a quantity")
+        return self
 
 
 class DiscardIn(_Strict):
@@ -57,6 +77,12 @@ class InventoryLotOut(BaseModel):
     status: str
     notes: str | None
     created_at: datetime
+    # step 2b.4 (J5): added with "Not sure" (the usual package size, to correct later), and the preset's
+    # container ("bag")
+    quantity_is_estimate: bool = False
+    container: str | None = None
+    state: Literal["allowed", "capped", "held", "excluded"] = "allowed"  # its diet status now
+    has_versions: bool = False  # a held item that comes in versions: ask which one (J4)
 
 
 # ---------------- Phase 2: quick add ----------------
@@ -98,8 +124,9 @@ AmountOptionKey = Literal["full", "three_quarters", "half", "quarter"]
 
 class BulkItemIn(_Strict):
     """One lot to add. The amount is given one way: `quantity` + `unit` (any unit the ingredient understands),
-    an `amount_option` of its quick pick (Full, ¾, ½ or ¼ of `product_id`'s package, else its usual one), or a
-    `custom_amount` + `custom_unit` from the quick pick's custom units. The server converts it."""
+    an `amount_option` of its quick pick (Full, ¾, ½ or ¼ of `product_id`'s package, else its usual one), a
+    `custom_amount` + `custom_unit` from the quick pick's custom units, a package `preset` key (step 2b.4),
+    or `not_sure` (the most common package, with the lot marked as an estimate). The server converts it."""
 
     ingredient_id: int
     quantity: Decimal | None = Field(default=None, gt=0)
@@ -107,6 +134,8 @@ class BulkItemIn(_Strict):
     amount_option: AmountOptionKey | None = None
     custom_amount: Decimal | None = Field(default=None, gt=0, le=100_000)
     custom_unit: str | None = Field(default=None, min_length=1, max_length=20)
+    preset: str | None = Field(default=None, min_length=1, max_length=40)
+    not_sure: bool = False
     location: StorageLocation
     product_id: int | None = None
     acquired_on: date | None = None
@@ -121,10 +150,13 @@ class BulkItemIn(_Strict):
             self.quantity is not None or self.unit is not None,
             self.amount_option is not None,
             self.custom_amount is not None or self.custom_unit is not None,
+            self.preset is not None,
+            self.not_sure,
         ]
         if sum(given) != 1:
             raise ValueError(
-                "give the amount one way: quantity + unit, amount_option, or custom_amount + unit"
+                "give the amount one way: quantity + unit, amount_option, custom_amount + unit, preset, "
+                "or not_sure"
             )
         if given[0] and (self.quantity is None or self.unit is None):
             raise ValueError("quantity needs a unit")
@@ -167,3 +199,68 @@ class QuickPickOut(BaseModel):
     product_id: int | None
     amount_options: list[AmountOptionOut] = Field(default_factory=list)
     custom_units: list[CustomUnitOut] = Field(default_factory=list)
+
+
+# ---------------- step 2b.4: the add flow (J4 versions, J5 forms and package presets) ----------------
+DietState = Literal["allowed", "capped", "held", "excluded"]
+
+
+class PresetOut(BaseModel):
+    """A common package size (an estimate): send its `key` as `preset` to POST /inventory/bulk."""
+
+    key: str
+    label: str  # "16 oz bag"
+    quantity: Decimal  # as it will be stored (base unit)
+    unit: str
+    container: str | None  # "bag"
+    default: bool  # the most common size: what "Not sure" adds
+    is_estimate: bool
+
+
+class FormOut(BaseModel):
+    """One form of a food (fresh, frozen, canned, dried), each its own ingredient."""
+
+    form: str
+    label: str  # "Frozen florets"
+    ingredient_id: int
+    name: str
+    location: StorageLocation  # where it usually lives
+    state: DietState
+    presets: list[PresetOut]
+    custom_units: list[CustomUnitOut]
+
+
+class VersionChoiceOut(BaseModel):
+    key: str
+    label: str  # "Turkey"
+    ingredient_id: int | None  # None = Not sure: it stays the held item
+    name: str | None
+    state: DietState
+    note: str  # "Allowed; counts toward your pork limit (1 meal a week)", "Off your list: it contains beef"
+    nutrition_estimated: bool  # USDA has no exact entry for this version
+
+
+class VersionsOut(BaseModel):
+    question: str  # "Which pepperoni is it?"
+    guidance: str  # "Check the label: …"
+    choices: list[VersionChoiceOut]
+
+
+class AddOptionsOut(BaseModel):
+    """GET /ingredients/{id}/add-options: what adding this item asks. A held item that comes in versions asks
+    which version first (then ask again for the chosen version); then the form; then the amount."""
+
+    ingredient_id: int
+    name: str
+    state: DietState
+    message: str | None  # "Beef is off your list, so I won't use it." / "Pepperoni is held …"
+    versions: VersionsOut | None
+    food: str | None  # "Cauliflower" when it comes in more than one form
+    forms: list[FormOut]  # at least one; the one you searched for is `selected_form`
+    selected_form: str
+
+
+class VersionIn(_Strict):
+    """POST /inventory/{id}/version: this lot of a held item is the version on its label."""
+
+    ingredient_id: int

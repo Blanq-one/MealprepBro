@@ -55,7 +55,7 @@ def test_state_flags():
 
 def test_review_sheet_rows(seeded_db):
     rows = build_rows(seeded_db)
-    assert len(rows) == 185
+    assert len(rows) == 205  # 185, plus the 20 versions and forms of 2b.4 (J4, J5)
     kcal = [r.seed_kcal for r in rows]
     assert kcal == sorted(kcal, reverse=True)
     assert sum(r.share_pct for r in rows) == Decimal("100.0")

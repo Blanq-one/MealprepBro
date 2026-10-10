@@ -41,3 +41,16 @@
 .rule {
   margin-bottom: 12px;
 }
+
+.versions {
+  margin: 4px 0 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-tile);
+  background: var(--surface-2);
+}
+
+.versions summary {
+  min-height: 32px;
+  font-weight: 600;
+  cursor: pointer;
+}

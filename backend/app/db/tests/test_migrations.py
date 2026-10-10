@@ -166,3 +166,23 @@ def test_0003_adds_stock_up_and_store_kinds(scratch_db_url):
         assert "kind" not in store_columns and "stock_up" not in columns
     finally:
         engine.dispose()
+
+
+def test_0006_adds_the_lots_estimate_flag_and_container(scratch_db_url):
+    """Step 2b.4 (J5, J6): two nullable columns on inventory_item, added and dropped cleanly."""
+    cfg = alembic_config(scratch_db_url)
+    command.upgrade(cfg, "0005")
+    engine = create_engine(scratch_db_url)
+    try:
+
+        def columns() -> set[str]:
+            with engine.connect() as conn:
+                return {c["name"] for c in inspect(conn).get_columns("inventory_item")}
+
+        assert not columns() & {"quantity_is_estimate", "container"}
+        command.upgrade(cfg, "0006")
+        assert columns() >= {"quantity_is_estimate", "container"}
+        command.downgrade(cfg, "0005")
+        assert not columns() & {"quantity_is_estimate", "container"}
+    finally:
+        engine.dispose()

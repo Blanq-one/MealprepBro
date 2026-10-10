@@ -40,6 +40,7 @@ def query(**overrides: Any) -> MealNowQuery:
         "protein_cap_g": Decimal(1000),
         "toggled_off": frozenset(),
         "have": frozenset(),
+        "have_amounts": {},
         "could_buy": frozenset(),
         "store_order": ("Stop & Shop",),
         "goals": (),
@@ -436,3 +437,23 @@ def test_cards_for_two_people_are_two_portions_with_the_recipe_pages_numbers(api
         page = api.get(f"/api/v1/recipe-versions/{card['version_id']}", params={"portions": 2}).json()
         kcal = f"{page['per_portion']['kcal']} kcal"
         assert card["numbers"][0] == kcal
+
+
+# ---------------- culinary groups on the seed library (J2) ----------------
+def test_yellow_onion_never_becomes_spinach_on_a_card(api, seeded_db):
+    add_stock(seeded_db, "chicken-thigh-boneless-skinless", 1000)
+    add_stock(seeded_db, "spinach", 300)
+    curry = next(
+        c for c in results(meal_now(api, slot="dinner")) if c["title"] == "Everyday chicken curry gravy"
+    )
+    onion = next(m for m in curry["missing"] if m["name"] == "yellow onion")
+    assert onion["substitute"] is None and onion["buy"] is not None
+    add_stock(seeded_db, "onion-red", 2, "count", location=StorageLocation.PANTRY)
+    curry = next(
+        c for c in results(meal_now(api, slot="dinner")) if c["title"] == "Everyday chicken curry gravy"
+    )
+    onion = next(m for m in curry["missing"] if m["name"] == "yellow onion")
+    assert (
+        onion["substitute"]["name"] == "red onion"
+        and onion["display"] == "yellow onion → red onion (you have it)"
+    )

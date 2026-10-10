@@ -34,7 +34,7 @@ from app.domain.exclusions import ExclusionStatus
 from app.domain.frequency_caps import ResolvedCap
 from app.domain.nutrition import NutritionLine, line_amounts
 from app.domain.scaling import PORTION_MULTIPLIERS
-from app.domain.units import ConversionError, UnitError
+from app.domain.units import ConversionError, UnitError, to_base
 from app.planning.inputs import diet_inputs
 from app.planning.loader import candidate_versions, load_ingredient_plans, version_lines
 from app.planning.problem import IngredientPlan, RecipeLine
@@ -48,6 +48,7 @@ from app.services.calculations import (
     calculate_scaled,
     load_context,
 )
+from app.services.catalog import catalog_version, load_catalog
 from app.services.pricing import active_stores
 
 
@@ -97,6 +98,12 @@ def _stock(plans: Mapping[int, IngredientPlan], query: MealNowQuery) -> dict[int
         )
     for i in query.have:
         stock[i] = Stock(None)
+        amount = query.have_amounts.get(i)
+        extra = plans.get(i)
+        if amount is not None and extra is not None:  # a "have it" extra with its amount (J5)
+            with suppress(ConversionError, UnitError, ValueError):
+                base = to_base(amount[0], amount[1], extra.units)
+                stock[i] = Stock(extra.to_planning(base.amount, base.unit.value))
     return stock
 
 
@@ -120,6 +127,7 @@ def _haves(
     stock: Mapping[int, Stock],
     context: CalcContext,
     roles: Mapping[int, frozenset[str]],
+    groups: Mapping[int, str],
 ) -> list[Have]:
     out = []
     for i, plan in plans.items():
@@ -140,6 +148,7 @@ def _haves(
                 opened=s.opened if s is not None else False,
                 expires_on=s.earliest_expiry if s is not None else None,
                 roles=roles.get(i, frozenset()),
+                group=groups.get(i),
             )
         )
     return out
@@ -161,6 +170,7 @@ def need_lines(
     scaled: ScaledCalculation,
     plans: Mapping[int, IngredientPlan],
     context: CalcContext,
+    groups: Mapping[int, str] | None = None,
 ) -> list[NeedLine]:
     """One need per ingredient at the card's practical amounts (repeated lines added up), in recipe order."""
     grouped: dict[int, list[tuple[RecipeLine, LineResult]]] = defaultdict(list)
@@ -194,6 +204,7 @@ def need_lines(
                 kcal=kcal,
                 optional=not counted,
                 owned=plan.unlimited,
+                group=(groups or {}).get(i),
             )
         )
     return out
@@ -241,6 +252,7 @@ def load_pool(
     ids |= diet.always_have_ids
     plans = load_ingredient_plans(session, user_id, ids, order, diet.always_have_ids)
     context = load_context(session, ids)
+    catalog = load_catalog(session)
     stock = _stock(plans, query)
     excluded = frozenset(i for i, s in diet.statuses.items() if s is not ExclusionStatus.ALLOWED)
     held = frozenset(i for i, s in diet.statuses.items() if s is ExclusionStatus.HELD)
@@ -261,7 +273,7 @@ def load_pool(
         offers={i: p.offers for i, p in plans.items()},
         store_order=order,
         store_names=store_names,
-        haves=_haves(plans, stock, context, library_roles(session, user_id)),
+        haves=_haves(plans, stock, context, library_roles(session, user_id), catalog.group_of),
         pairs=accepted_pairs(session),
         unusable=excluded | diet.disliked_ids,
         units=settings.units,
@@ -285,7 +297,9 @@ def load_pool(
             context=context,
         )
         calc = scaled.calculation
-        coverage: tuple[LineCoverage, ...] = cover(need_lines(recipe_lines, scaled, plans, context), inputs)
+        coverage: tuple[LineCoverage, ...] = cover(
+            need_lines(recipe_lines, scaled, plans, context, catalog.group_of), inputs
+        )
         cost = cost_per_portion(scaled, query.store_order)
         ingredient_ids = frozenset(ln.ingredient_id for ln in recipe_lines)
         heme = calc.per_portion.heme.heme_mg if calc.per_portion.heme else Decimal(0)
@@ -327,6 +341,7 @@ def load_pool(
         "stores": list(order),
         "caps_used": dict(sorted(cap_used.items())),
         "pairs": [(p.from_id, p.to_id, json.dumps(dict(p.rule), sort_keys=True)) for p in inputs.pairs],
+        "catalog": catalog_version(),
     }
     return Pool(
         items=items,

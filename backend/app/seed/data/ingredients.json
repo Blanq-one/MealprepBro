@@ -4595,6 +4595,458 @@
    ],
    "notes": "Double chocolate whey. Nutrition from your package label: 1 scoop = 31 g, 120 kcal, 24 g protein; 22 scoops per 682 g container. Allergens: milk, soy. Prices are estimates at the 'Other' store (online or in-store, varies): 5 lb tub $62.50 (your range $60-65), 682 g tub derived from it.",
    "nutrition_reviewed_on": "2026-10-08"
+  },
+  {
+   "name": "pepperoni, pork and beef",
+   "slug": "pepperoni-pork-beef",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "heme_iron_fraction": "0.40",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "fdc_id": 2759006,
+   "aliases": [
+    "pork and beef pepperoni",
+    "beef and pork pepperoni"
+   ],
+   "diet_tags": [
+    "pork",
+    "beef"
+   ],
+   "notes": "A version of pepperoni (decision J4): pick it when the label says pork and beef. Excluded: it contains beef. USDA FDC 2759006 (Foundation 2026) has no energy/protein/fat values yet."
+  },
+  {
+   "name": "pepperoni, pork only",
+   "slug": "pepperoni-pork",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "heme_iron_fraction": "0.40",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "fdc_id": 172938,
+   "aliases": [
+    "pork pepperoni",
+    "all-pork pepperoni"
+   ],
+   "diet_tags": [
+    "pork"
+   ],
+   "notes": "A version of pepperoni (decision J4): pick it when the label says pork only. Counts toward the pork cap. Nutrition is estimated from USDA FDC 172938 (Salami, dry or hard, pork): USDA has no exact entry for this version."
+  },
+  {
+   "name": "pepperoni, turkey",
+   "slug": "pepperoni-turkey",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "heme_iron_fraction": "0.40",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "fdc_id": 174593,
+   "aliases": [
+    "turkey pepperoni"
+   ],
+   "diet_tags": [
+    "poultry"
+   ],
+   "notes": "A version of pepperoni (decision J4): pick it when the label says turkey (no pork or beef). Nutrition from USDA FDC 174593 (Hormel sliced turkey pepperoni)."
+  },
+  {
+   "name": "pepperoni, chicken",
+   "slug": "pepperoni-chicken",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "heme_iron_fraction": "0.40",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "fdc_id": 174593,
+   "aliases": [
+    "chicken pepperoni"
+   ],
+   "diet_tags": [
+    "poultry"
+   ],
+   "notes": "A version of pepperoni (decision J4): pick it when the label says chicken (no pork or beef). Nutrition is estimated from USDA FDC 174593 (sliced turkey pepperoni): USDA has no exact entry for this version."
+  },
+  {
+   "name": "salami, pork and beef",
+   "slug": "salami-pork-beef",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "heme_iron_fraction": "0.40",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "fdc_id": 174582,
+   "aliases": [
+    "pork and beef salami",
+    "beef and pork salami"
+   ],
+   "diet_tags": [
+    "pork",
+    "beef"
+   ],
+   "notes": "A version of salami (decision J4): pick it when the label says pork and beef. Excluded: it contains beef."
+  },
+  {
+   "name": "salami, pork only",
+   "slug": "salami-pork",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "heme_iron_fraction": "0.40",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "fdc_id": 172938,
+   "aliases": [
+    "pork salami",
+    "all-pork salami"
+   ],
+   "diet_tags": [
+    "pork"
+   ],
+   "notes": "A version of salami (decision J4): pick it when the label says pork only. Counts toward the pork cap. Nutrition from USDA FDC 172938 (Salami, dry or hard, pork)."
+  },
+  {
+   "name": "salami, turkey",
+   "slug": "salami-turkey",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "heme_iron_fraction": "0.40",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "fdc_id": 172937,
+   "aliases": [
+    "turkey salami"
+   ],
+   "diet_tags": [
+    "poultry"
+   ],
+   "notes": "A version of salami (decision J4): pick it when the label says turkey (no pork or beef). Nutrition from USDA FDC 172937 (Salami, cooked, turkey)."
+  },
+  {
+   "name": "salami, chicken",
+   "slug": "salami-chicken",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "heme_iron_fraction": "0.40",
+   "safety_category": null,
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "fdc_id": 172937,
+   "aliases": [
+    "chicken salami"
+   ],
+   "diet_tags": [
+    "poultry"
+   ],
+   "notes": "A version of salami (decision J4): pick it when the label says chicken (no pork or beef). Nutrition is estimated from USDA FDC 172937 (Salami, cooked, turkey): USDA has no exact entry for this version."
+  },
+  {
+   "name": "chicken bouillon, no beef listed",
+   "slug": "chicken-bouillon-no-beef",
+   "category": "condiment",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 171562,
+   "heme_iron_fraction": "0.40",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "stock_up": true,
+   "count_unit_weight": {
+    "usda_portion_id": 88992
+   },
+   "aliases": [
+    "beef-free chicken bouillon",
+    "chicken bouillon without beef"
+   ],
+   "diet_tags": [
+    "poultry"
+   ],
+   "notes": "A version of chicken bouillon (decision J4): pick it when the label says chicken and lists no beef, beef fat or beef extract. Cubes or powder; nutrition from USDA FDC 171562 (chicken broth or bouillon, dry)."
+  },
+  {
+   "name": "chicken bouillon, contains beef",
+   "slug": "chicken-bouillon-beef",
+   "category": "condiment",
+   "default_unit_kind": "count",
+   "nutrition_source": "usda",
+   "fdc_id": 171562,
+   "heme_iron_fraction": "0.40",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "stock_up": true,
+   "count_unit_weight": {
+    "usda_portion_id": 88992
+   },
+   "aliases": [
+    "chicken bouillon with beef fat",
+    "chicken bouillon with beef"
+   ],
+   "diet_tags": [
+    "poultry",
+    "beef"
+   ],
+   "notes": "A version of chicken bouillon (decision J4): pick it when the label says beef, beef fat or beef extract. Excluded: it contains beef."
+  },
+  {
+   "name": "cauliflower, frozen florets",
+   "slug": "cauliflower-frozen",
+   "category": "vegetable",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "freezer",
+   "assume_in_stock": false,
+   "shelf_life": {
+    "freezer_days": 240,
+    "basis": "estimate: about 8 months frozen for best quality, like a typical bag's best-by (decision J5)"
+   },
+   "fdc_id": 170398,
+   "aliases": [
+    "frozen cauliflower",
+    "frozen cauliflower florets"
+   ],
+   "notes": "The frozen form of cauliflower (decision J5): keeps for months in the freezer."
+  },
+  {
+   "name": "broccoli, frozen",
+   "slug": "broccoli-frozen",
+   "category": "vegetable",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "freezer",
+   "assume_in_stock": false,
+   "shelf_life": {
+    "freezer_days": 240,
+    "basis": "estimate: about 8 months frozen for best quality, like a typical bag's best-by (decision J5)"
+   },
+   "fdc_id": 169968,
+   "aliases": [
+    "frozen broccoli",
+    "frozen broccoli florets",
+    "frozen chopped broccoli"
+   ],
+   "notes": "The frozen form of broccoli (decision J5): keeps for months in the freezer."
+  },
+  {
+   "name": "green beans, frozen",
+   "slug": "green-beans-frozen",
+   "category": "vegetable",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "freezer",
+   "assume_in_stock": false,
+   "shelf_life": {
+    "freezer_days": 240,
+    "basis": "estimate: about 8 months frozen for best quality, like a typical bag's best-by (decision J5)"
+   },
+   "fdc_id": 169962,
+   "aliases": [
+    "frozen green beans",
+    "frozen string beans"
+   ],
+   "notes": "The frozen form of green beans (decision J5): keeps for months in the freezer."
+  },
+  {
+   "name": "green beans, canned, drained",
+   "slug": "green-beans-canned",
+   "category": "vegetable",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "shelf_life": {
+    "pantry_days": 730,
+    "basis": "estimate: unopened canned vegetables keep about 2 years (decision J5)"
+   },
+   "fdc_id": 169143,
+   "aliases": [
+    "canned green beans",
+    "canned string beans"
+   ],
+   "notes": "The canned form of green beans (decision J5), drained."
+  },
+  {
+   "name": "corn, canned, drained",
+   "slug": "corn-canned",
+   "category": "vegetable",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "shelf_life": {
+    "pantry_days": 730,
+    "basis": "estimate: unopened canned vegetables keep about 2 years (decision J5)"
+   },
+   "fdc_id": 169214,
+   "aliases": [
+    "canned corn",
+    "canned sweet corn",
+    "whole kernel corn"
+   ],
+   "notes": "The canned form of corn (decision J5), drained."
+  },
+  {
+   "name": "chickpeas, dried",
+   "slug": "chickpeas-dried",
+   "category": "legume",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "stock_up": true,
+   "shelf_life": {
+    "pantry_days": 365,
+    "basis": "estimate: dried beans keep a year or more in the pantry (decision J5)"
+   },
+   "fdc_id": 173756,
+   "aliases": [
+    "dried chickpeas",
+    "dry chickpeas",
+    "dried garbanzo beans"
+   ],
+   "notes": "The dried form of chickpeas (decision J5): soak and cook before use."
+  },
+  {
+   "name": "black beans, dried",
+   "slug": "black-beans-dried",
+   "category": "legume",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "stock_up": true,
+   "shelf_life": {
+    "pantry_days": 365,
+    "basis": "estimate: dried beans keep a year or more in the pantry (decision J5)"
+   },
+   "fdc_id": 173734,
+   "aliases": [
+    "dried black beans",
+    "dry black beans"
+   ],
+   "notes": "The dried form of black beans (decision J5): soak and cook before use."
+  },
+  {
+   "name": "kidney beans, dried",
+   "slug": "kidney-beans-dried",
+   "category": "legume",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "pantry",
+   "assume_in_stock": false,
+   "stock_up": true,
+   "shelf_life": {
+    "pantry_days": 365,
+    "basis": "estimate: dried beans keep a year or more in the pantry (decision J5)"
+   },
+   "fdc_id": 173744,
+   "aliases": [
+    "dried kidney beans",
+    "dry kidney beans",
+    "dried rajma"
+   ],
+   "notes": "The dried form of red kidney beans (decision J5): soak and boil hard before use."
+  },
+  {
+   "name": "strawberries, frozen",
+   "slug": "strawberries-frozen",
+   "category": "fruit",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "freezer",
+   "assume_in_stock": false,
+   "shelf_life": {
+    "freezer_days": 240,
+    "basis": "estimate: about 8 months frozen for best quality, like a typical bag's best-by (decision J5)"
+   },
+   "fdc_id": 168173,
+   "aliases": [
+    "frozen strawberries"
+   ],
+   "notes": "The frozen form of strawberries (decision J5), unsweetened."
+  },
+  {
+   "name": "blueberries, frozen",
+   "slug": "blueberries-frozen",
+   "category": "fruit",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "diet_tags": [],
+   "heme_iron_fraction": "0",
+   "safety_category": null,
+   "is_perishable": false,
+   "typical_location": "freezer",
+   "assume_in_stock": false,
+   "shelf_life": {
+    "freezer_days": 240,
+    "basis": "estimate: about 8 months frozen for best quality, like a typical bag's best-by (decision J5)"
+   },
+   "fdc_id": 173950,
+   "aliases": [
+    "frozen blueberries"
+   ],
+   "notes": "The frozen form of blueberries (decision J5), unsweetened."
   }
  ]
 }

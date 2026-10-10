@@ -9,8 +9,10 @@ import { Segmented } from "@/components/ui/Segmented";
 import { BUDGET_SCALE, MoneySlider } from "@/components/ui/Slider";
 import { Stepper } from "@/components/ui/Stepper";
 import { TileGrid } from "@/components/ui/TileGrid";
+import { VersionChoices } from "@/components/pantry/VersionChoices";
 import { ToggleRow } from "@/components/ui/ToggleRow";
 import type { CookDay, DietReview, Equipment, MealSlot, RecipeMood, SlotAllocation, Store, UserSettings } from "@/lib/api/types";
+import { setUsualVersion, usualVersions } from "@/lib/cook/usualVersions";
 import { SLOT_ICONS, SLOT_ORDER } from "@/lib/format/icons";
 import { grouped, slotLabel } from "@/lib/format/labels";
 import {
@@ -475,6 +477,32 @@ export function PorkControl({ settings, onChange }: Props) {
 
 /** Possibly-beef items: held until you allow one. A change is saved at once (an ingredient decision, not a
  * setting); offline the switches are off. */
+/** A held item that comes in versions (J4): the versions with the label guidance. Picking your usual one only
+ * pre-selects it when you add the item (on this device); it never allows the held item itself. */
+function HeldVersions({ item }: { item: DietReview }) {
+  const [usual, setUsual] = useState<string | null>(() => usualVersions()[String(item.ingredient_id)] ?? null);
+  if (!item.versions) return null;
+  return (
+    <details className={styles.versions}>
+      <summary>Comes in versions{usual ? `: you usually buy ${item.versions.choices.find((c) => c.key === usual)?.label ?? usual}` : ""}</summary>
+      <VersionChoices
+        versions={item.versions}
+        selected={usual}
+        usual={usual}
+        onPick={(choice) => {
+          const next = choice.key === usual || choice.ingredient_id === null ? null : choice.key;
+          setUsualVersion(item.ingredient_id, next);
+          setUsual(next);
+        }}
+      />
+      <p className="small muted">
+        Picking your usual version pre-selects it when you add {item.name}. It doesn&apos;t allow {item.name} itself, which
+        stays held until you allow it above.
+      </p>
+    </details>
+  );
+}
+
 export function HeldItemsControl({
   items,
   onDecide,
@@ -495,15 +523,17 @@ export function HeldItemsControl({
       <p className="small muted">These may come from beef, so they stay out until you allow them.</p>
       {items.length === 0 && <p className="small muted">Nothing is held.</p>}
       {items.map((item) => (
-        <ToggleRow
-          key={item.ingredient_id}
-          label={item.name}
-          detail={item.note ?? undefined}
-          badges={<span className={item.decision === "allowed" ? "badge badge-herb" : "badge badge-warn"}>{item.decision === "allowed" ? "Allowed" : "Held"}</span>}
-          checked={item.decision === "allowed"}
-          disabled={disabled || busyId === item.ingredient_id}
-          onChange={(allow) => onDecide(item, allow)}
-        />
+        <div key={item.ingredient_id}>
+          <ToggleRow
+            label={item.name}
+            detail={item.note ?? undefined}
+            badges={<span className={item.decision === "allowed" ? "badge badge-herb" : "badge badge-warn"}>{item.decision === "allowed" ? "Allowed" : "Held"}</span>}
+            checked={item.decision === "allowed"}
+            disabled={disabled || busyId === item.ingredient_id}
+            onChange={(allow) => onDecide(item, allow)}
+          />
+          <HeldVersions item={item} />
+        </div>
       ))}
     </section>
   );

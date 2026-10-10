@@ -111,7 +111,7 @@ class CookAnswers(_Strict):
 
 
 # ---------------- recipe cards ----------------
-class SuggestionOut(BaseModel):
+class RecipeSuggestionOut(BaseModel):
     """One recipe card (FLOW_SPEC §5.3). Every number is code-computed, at the card's portions."""
 
     version_id: int
@@ -144,7 +144,7 @@ class CookStreamEvent(BaseModel):
     elapsed_s: float
     stage: str | None = None
     message: str | None = None
-    suggestions: list[SuggestionOut] | None = None
+    suggestions: list[RecipeSuggestionOut] | None = None
     new_version_ids: list[int] = Field(default_factory=list)
     status: Literal["succeeded", "partial", "failed"] | None = None  # result only
     cached: bool | None = None  # result: an identical earlier search's result, returned as it was
@@ -170,7 +170,7 @@ class CookSearchOut(BaseModel):
     status: str
     answers: CookAnswers
     header: str
-    suggestions: list[SuggestionOut]
+    suggestions: list[RecipeSuggestionOut]
     good_matches: int
     ideas_needed: bool
     empty_reason: str | None
@@ -198,11 +198,20 @@ class CookMealOut(BaseModel):
 
 
 # ---------------- Cook home ----------------
+class LastExtraOut(BaseModel):
+    """An item you added last time, for the "From last time" chips (never pre-selected)."""
+
+    ingredient_id: int
+    name: str
+    status: Literal["have", "could_buy"]
+
+
 class LastSearchOut(BaseModel):
     mode: Literal["now", "prep", "grocery"]
     search_id: int
     summary: str  # "A meal now · Dinner for 1 · Quick (30 min) · + chickpeas (could buy)"
     answers: dict[str, Any]  # exactly as sent, to send again
+    extras: list[LastExtraOut] = Field(default_factory=list)
 
 
 class TodayMealOut(BaseModel):
@@ -241,3 +250,6 @@ class CookHomeOut(BaseModel):
     favorites_count: int
     later: list[SavedPreviewOut]
     later_count: int
+    # a saved card opens scaled to your household at your portion size (C0, step 2b.4)
+    portions: int = 1
+    portion_size: PortionSize = PortionSize.NORMAL

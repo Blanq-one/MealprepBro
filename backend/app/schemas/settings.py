@@ -18,6 +18,7 @@ from app.domain.enums import (
 from app.domain.exclusions import KNOWN_DIET_TAGS
 from app.domain.food_safety import FoodSafetyError, validate_leftover_fridge_days
 from app.domain.frequency_caps import CapTarget
+from app.schemas.inventory import VersionsOut
 
 ALWAYS_EXCLUDED_TAGS = frozenset({"beef"})  # CLAUDE.md dietary rules
 
@@ -156,6 +157,9 @@ class DietReviewOut(BaseModel):
     name: str
     note: str | None
     decision: Literal["held", "allowed"]
+    # step 2b.4 (J4): a held item that comes in versions lists them; each version is its own ingredient, and
+    # choosing one never releases this item
+    versions: VersionsOut | None = None
 
 
 class SettingsOut(BaseModel):

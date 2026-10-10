@@ -19,7 +19,10 @@ from app.schemas.api import (
 )
 from app.schemas.inventory import InventoryLotOut
 from app.services.calculations import LineResult, StoreCost
+from app.services.catalog import load_catalog
+from app.services.exclusions import diet_status
 from app.services.ingredient_data import load_ingredients
+from app.services.pantry_add import diet_state
 from app.services.plans import amount_display
 from app.services.pricing import StorePrice
 
@@ -109,6 +112,9 @@ def price_out(price: StorePrice) -> PriceOut:
 
 def inventory_lots_out(session: Session, items: Sequence[InventoryItem]) -> list[InventoryLotOut]:
     names = {i: d.name for i, d in load_ingredients(session, {it.ingredient_id for it in items}).items()}
+    user_ids = {it.user_id for it in items}
+    status = diet_status(session, next(iter(user_ids))) if len(user_ids) == 1 else None
+    versioned = set(load_catalog(session).versions_of) if items else set()
     return [
         InventoryLotOut(
             id=it.id,
@@ -126,6 +132,10 @@ def inventory_lots_out(session: Session, items: Sequence[InventoryItem]) -> list
             status=it.status,
             notes=it.notes,
             created_at=it.created_at,
+            quantity_is_estimate=bool(it.quantity_is_estimate),
+            container=it.container,
+            state=diet_state(status, it.ingredient_id) if status is not None else "allowed",
+            has_versions=it.ingredient_id in versioned,
         )
         for it in items
     ]

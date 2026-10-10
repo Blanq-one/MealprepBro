@@ -75,3 +75,11 @@ def test_explicit_dry_line_rejects_a_canned_mapping():
     assert line_state_error("chickpeas, canned", FoodState.AS_SOLD, FoodState.AS_SOLD) is None
     assert line_state_error("salt", FoodState.AS_SOLD, FoodState.DRY) is None
     assert line_state_error("chicken", FoodState.RAW, FoodState.COOKED) is not None
+
+
+def test_deli_meats_are_as_sold_even_when_usda_calls_them_cooked():
+    assert mapping_state("Salami, cooked, turkey", "protein", "usda") is FoodState.AS_SOLD
+    assert mapping_state("Bologna, turkey", "protein", "usda") is FoodState.AS_SOLD
+    assert mapping_state(
+        "Chicken, broilers or fryers, thigh, meat only, cooked, roasted", "protein", "usda"
+    ) is (FoodState.COOKED)

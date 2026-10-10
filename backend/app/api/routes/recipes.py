@@ -194,7 +194,15 @@ def get_version(
     """A recipe version scaled to any number of portions: practical quantities, code-computed nutrition
     and cost, and the food-safety lines the app injects. With `search`, that search's pantry coverage and
     substitute lines for this recipe (the numbers stay those of the recipe as written)."""
-    context = (
-        search_service.search_context(session, user.id, search, version_id) if search is not None else None
-    )
-    return version_out(session, version_view(session, user.id, version_id, portions, portion_size), context)
+    if search is not None and portions is None:  # open at the search card's portions (C8)
+        card = search_service.card_portions(session, user.id, search, version_id)
+        if card is not None:
+            portions, portion_size = card[0], portion_size or card[1]
+    view = version_view(session, user.id, version_id, portions, portion_size)
+    context = None
+    if search is not None:
+        counted = [
+            (ln.ingredient.id, ln.quantity, ln.unit) for ln in view.calculation.lines if not ln.optional
+        ]
+        context = search_service.search_context(session, user.id, search, version_id, counted)
+    return version_out(session, view, context)

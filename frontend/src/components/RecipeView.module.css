@@ -41,3 +41,15 @@
   border-top: 1px solid var(--border);
   font-size: 1rem;
 }
+
+.icon {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.detail {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: var(--text-small);
+}

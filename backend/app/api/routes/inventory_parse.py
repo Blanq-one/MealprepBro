@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 from fastapi import APIRouter
 
 from app.api.deps import CurrentUser, DbSession, LLMClientFactory
@@ -8,6 +10,8 @@ from app.llm.errors import LLMConfigError, LLMError
 from app.schemas.inventory import BulkIn, InventoryLotOut, ParseIn, ParseOut, QuickPickOut
 from app.services import inventory as inventory_service
 from app.services import inventory_parse as service
+from app.services.ingredient_data import load_ingredients
+from app.services.pantry_add import estimated_expiry, resolve_preset
 from app.services.quick_add import quick_picks, resolve_amount
 
 router = APIRouter(prefix="/api/v1/inventory", tags=["inventory"])
@@ -39,8 +43,18 @@ def add_many(body: BulkIn, session: DbSession, user: CurrentUser) -> list[Invent
     reason = "parse_add" if body.source == "parse" else "purchase"
     inputs = []
     for item in body.items:
+        extra: dict[str, object] = {}
         if item.quantity is not None and item.unit is not None:
             quantity, unit = item.quantity, item.unit
+        elif item.preset is not None or item.not_sure:
+            preset = resolve_preset(session, item.ingredient_id, item.preset)
+            quantity, unit = preset.quantity, preset.unit
+            extra = {"container": preset.container, "quantity_is_estimate": preset.is_estimate or None}
+            if item.expires_on is None:  # a use-by estimate from its shelf life where it's kept
+                data = load_ingredients(session, [item.ingredient_id]).get(item.ingredient_id)
+                if data is not None:
+                    start = item.acquired_on or datetime.now(UTC).date()
+                    extra["expires_on"] = estimated_expiry(data, item.location, start)
         else:
             quantity, unit = resolve_amount(
                 session,
@@ -52,8 +66,17 @@ def add_many(body: BulkIn, session: DbSession, user: CurrentUser) -> list[Invent
                 custom_unit=item.custom_unit,
             )
         fields = item.model_dump(
-            exclude={"quantity", "unit", "amount_option", "custom_amount", "custom_unit"}
+            exclude={
+                "quantity",
+                "unit",
+                "amount_option",
+                "custom_amount",
+                "custom_unit",
+                "preset",
+                "not_sure",
+            }
         )
+        fields.update(extra)
         inputs.append(inventory_service.LotInput(**fields, quantity=quantity, unit=unit, reason=reason))
     lots = inventory_service.add_lots(session, user.id, inputs)
     session.commit()

@@ -20,6 +20,7 @@ from app.schemas.settings import (
     UserSettings,
 )
 from app.services import settings as service
+from app.services.pantry_add import held_versions
 
 router = APIRouter(prefix="/api/v1/settings", tags=["settings"])
 
@@ -31,17 +32,21 @@ def _diet_review(session: DbSession, user_id: int) -> list[DietReviewOut]:
     allowed = {
         p.ingredient_id for p, _ in service.list_preferences(session, user_id) if p.preference == "allow"
     }
-    held = session.scalars(
-        select(Ingredient)
-        .where(Ingredient.diet_tags.contains(["possible_beef"]), Ingredient.archived_at.is_(None))
-        .order_by(Ingredient.name)
+    held = list(
+        session.scalars(
+            select(Ingredient)
+            .where(Ingredient.diet_tags.contains(["possible_beef"]), Ingredient.archived_at.is_(None))
+            .order_by(Ingredient.name)
+        )
     )
+    versions = held_versions(session, user_id, [i.id for i in held])
     return [
         DietReviewOut(
             ingredient_id=i.id,
             name=i.name,
             note=i.diet_review_note,
             decision="allowed" if i.id in allowed else "held",
+            versions=versions.get(i.id),
         )
         for i in held
     ]

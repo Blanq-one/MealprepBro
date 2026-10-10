@@ -75,7 +75,8 @@ class MealNowQuery:
     kcal_target: Decimal | None  # the meal's calories (85% with Low calorie); None = not in your settings
     protein_cap_g: Decimal  # per portion: the meal's share of 1.5 × your daily protein target
     toggled_off: frozenset[int]
-    have: frozenset[int]  # "have it" extras: enough for one recipe
+    have: frozenset[int]  # "have it" extras: enough for one recipe, unless their amount is given
+    have_amounts: dict[int, tuple[Decimal, str]]  # "have it" extras with an amount (quantity, unit), J5
     could_buy: frozenset[int]
     store_order: tuple[str, ...]
     goals: tuple[GoalTile, ...]  # as tapped (for the header)
@@ -142,6 +143,11 @@ def resolve(answers: CookAnswers, settings: UserSettings, now: datetime) -> Meal
         protein_cap_g=protein_cap_g(settings, slot),
         toggled_off=frozenset(t.ingredient_id for t in answers.pantry if not t.include),
         have=frozenset(e.ingredient_id for e in answers.extras if e.status == "have"),
+        have_amounts={
+            e.ingredient_id: (e.quantity, e.unit)
+            for e in answers.extras
+            if e.status == "have" and e.quantity is not None and e.unit is not None
+        },
         could_buy=frozenset(e.ingredient_id for e in answers.extras if e.status == "could_buy"),
         store_order=tuple(settings.store_order),
         goals=tuple(answers.goals),

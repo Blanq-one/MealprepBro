@@ -7,7 +7,15 @@ from app.api.presenters import inventory_lots_out
 from app.api.routes.recipes import version_out
 from app.domain.enums import MealSlot
 from app.planning.rounded import meal_key
-from app.schemas.plans import BatchDetailOut, BatchLineOut, CookedIn, CookedOut, DeductionOut, MealOut
+from app.schemas.plans import (
+    BatchDetailOut,
+    BatchLineOut,
+    CookedIn,
+    CookedOut,
+    DeductionOut,
+    MealOut,
+    PantryNoteOut,
+)
 from app.services import cooking as service
 from app.services.dishes import dish_categories
 from app.services.plans import amount_display, batch_nutrition, money
@@ -23,6 +31,8 @@ def get_batch(batch_id: int, session: DbSession, user: CurrentUser) -> BatchDeta
     protein = batch_nutrition(session, [b.id]).get(b.id, {}).get("protein_g")
     category = dish_categories(session, [v.version.id])[v.version.id].value
     meal_cents: dict[str, int] = view.plan.totals.get("costs", {}).get("meal_cents", {})
+    notes = service.batch_pantry_notes(session, user.id, b, view.plan) if b.status == "planned" else {}
+    names = {row.ingredient_id: name for row, name, _, _, _ in view.lines}
     return BatchDetailOut(
         id=b.id,
         plan_id=view.plan.id,
@@ -65,6 +75,9 @@ def get_batch(batch_id: int, session: DbSession, user: CurrentUser) -> BatchDeta
         package_notes=view.package_notes,
         freeze_notes=view.freeze_notes,
         recipe=version_out(session, v),
+        pantry_notes=[
+            PantryNoteOut(ingredient_id=i, name=names.get(i, "?"), note=text) for i, text in notes.items()
+        ],
     )
 
 

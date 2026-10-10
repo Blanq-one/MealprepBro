@@ -150,6 +150,15 @@ Phase 2b (cook-first flow, `docs/FLOW_SPEC.md`):
   `GET /api/v1/recipe-versions/{id}?search={id}` (that search's coverage and substitute lines)
 - `GET /api/v1/inventory/quick-picks` carries `amount_options` and `custom_units`; `POST /api/v1/inventory/bulk`
   takes an `amount_option` key or a `custom_amount` + `custom_unit`
+- Step 2b.4: `GET /api/v1/ingredients/{id}/add-options` (what adding an item asks: which version of a held item,
+  which form, and its package sizes, all estimates); `POST /api/v1/inventory/bulk` also takes a package `preset`
+  key or `not_sure` (the usual size, the lot marked as an estimate); `PATCH /api/v1/inventory/{id}` takes a
+  `preset`, or a `quantity` + `unit`, to correct an estimate (the server converts);
+  `POST /api/v1/inventory/{id}/version` (a held lot becomes the version on its label; the held item stays held);
+  `GET /api/v1/cook-batches/{id}` adds `pantry_notes` ("uses 8 oz, about half your bag · 8 oz left after", what
+  Mark cooked takes); Settings' `diet_review` items list their `versions`. The package sizes, versions, forms
+  and culinary groups are in `backend/app/seed/data/pantry_catalog.json` (written by
+  `backend/scripts/build_pantry_catalog.py`, with a review sheet in `docs/review/pantry_catalog.md`)
 
 Phase 2:
 

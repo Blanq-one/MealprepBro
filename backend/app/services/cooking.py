@@ -16,6 +16,7 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.cook.your_terms import pantry_notes
 from app.db.models import (
     GroceryList,
     GroceryListItem,
@@ -45,6 +46,7 @@ from app.services.ingredient_data import IngredientData, load_ingredients
 from app.services.inventory import consume
 from app.services.plans import amount_display
 from app.services.recipes import VersionView
+from app.services.settings import load_settings
 
 Q3 = Decimal("0.001")
 
@@ -124,6 +126,8 @@ def mark_cooked(session: Session, user_id: int, batch_id: int, cooked_on: date |
     version = session.get(RecipeVersion, batch.recipe_version_id)
     result = CookResult(batch, version.title if version else "?")
     always_have = frozenset(plan.constraints.get("always_have_ingredient_ids", ()))
+    # a one-meal plan: the lots you turned off for its search are never taken (lots bought later are fine)
+    lots_off = frozenset(plan.constraints.get("lots_off_lot_ids", ()))
     needs = _needs(session, batch, always_have)
     data = load_ingredients(session, needs)
     rows = {i.id: i for i in session.scalars(select(Ingredient).where(Ingredient.id.in_(needs)))}
@@ -136,6 +140,7 @@ def mark_cooked(session: Session, user_id: int, batch_id: int, cooked_on: date |
                     InventoryItem.ingredient_id == ingredient_id,
                     InventoryItem.status == "active",
                     InventoryItem.quantity > 0,
+                    InventoryItem.id.notin_(lots_off),
                 )
                 .order_by(InventoryItem.id)
             )
@@ -189,6 +194,19 @@ def mark_cooked(session: Session, user_id: int, batch_id: int, cooked_on: date |
     batch.status = "cooked"
     session.flush()
     return result
+
+
+def batch_pantry_notes(
+    session: Session, user_id: int, batch: PlanCookBatch, plan: MealPlan
+) -> dict[int, str]:
+    """What a planned batch uses of what you have (J6), from the same needs and lot order Mark cooked uses, so
+    each note is exactly what it will subtract."""
+    always_have = frozenset(plan.constraints.get("always_have_ingredient_ids", ()))
+    lots_off = frozenset(plan.constraints.get("lots_off_lot_ids", ()))
+    needs = _needs(session, batch, always_have)
+    units = load_settings(session, user_id).units
+    lines = [(i, quantity, unit) for i, (quantity, unit) in needs.items()]
+    return pantry_notes(session, user_id, lines, skip_lot_ids=lots_off, units=units)
 
 
 # ---------------- the batch's recipe, as planned ----------------

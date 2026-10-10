@@ -53,6 +53,7 @@ class NeedLine:
     kcal: Decimal
     optional: bool = False
     owned: bool = False
+    group: str | None = None  # its culinary group (vegetables and herbs, J2)
 
 
 @dataclass(frozen=True)
@@ -144,6 +145,7 @@ def cover_line(
             line.count,
             line.protein_g,
             line.kcal,
+            line.group,
         ),
         inputs.haves,
         inputs.pairs,

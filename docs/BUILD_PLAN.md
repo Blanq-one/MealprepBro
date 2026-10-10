@@ -1,6 +1,6 @@
 # Mealbro Build Plan
 
-**Status:** v3, **approved** 2026-10-08 with the changes recorded in §12.1. Phase 0 approved. Phase 1 approved 2026-10-09 (with C1–C8 and D1–D22); a post-approval round (C9–C14, D23–D28) is done. A3 is answered in `docs/hosting.md`; the hosting decision changed at the Phase 2 kickoff to Vercel Hobby + Neon Free, $0/month (K1, §12.1). Phase 2 (PWA, deploy prep only) was approved 2026-10-10. **Phase 2b (cook-first redesign) was added and its spec approved 2026-10-10** (with changes E10–E13, §12.1): the spec is `docs/FLOW_SPEC.md` and the build steps are in §9. Step 2b.1 (backend foundations) was built and **approved 2026-10-10, including D44–D53**; step 2b.2 (look, shell, onboarding, Settings, Pantry) started the same day. **Addition (2026-10-10, E15–E17):** two-stage recipe generation (ideas for the cards, steps on first open, and after the first More ideas tap a background batch for later taps) to fit Groq's 8K tokens a minute; the target-0 fallback for the protein cap; and step 2b.3 split into 2b.3a (ranking and cards) and 2b.3b (ideas, steps, background batch). All approved. **Step 2b.2 was approved 2026-10-10, including D54–D64** (H1–H6, §12.1): a footer fix on question screens, a new build order (**2b.3a → 2b.4 → 2b.3b**, then 2b.5–2b.8, so the meal-now flow can be used before LLM ideas exist), notes for 2b.5 and 2b.7 (the plan view's Prep notes row; a "How do you want to cook?" step with four options) and a pre-deploy item (§12.4). Step 2b.3a (ranking and cards) was built the same day and awaits approval (D65–D76).
+**Status:** v3, **approved** 2026-10-08 with the changes recorded in §12.1. Phase 0 approved. Phase 1 approved 2026-10-09 (with C1–C8 and D1–D22); a post-approval round (C9–C14, D23–D28) is done. A3 is answered in `docs/hosting.md`; the hosting decision changed at the Phase 2 kickoff to Vercel Hobby + Neon Free, $0/month (K1, §12.1). Phase 2 (PWA, deploy prep only) was approved 2026-10-10. **Phase 2b (cook-first redesign) was added and its spec approved 2026-10-10** (with changes E10–E13, §12.1): the spec is `docs/FLOW_SPEC.md` and the build steps are in §9. Step 2b.1 (backend foundations) was built and **approved 2026-10-10, including D44–D53**; step 2b.2 (look, shell, onboarding, Settings, Pantry) started the same day. **Addition (2026-10-10, E15–E17):** two-stage recipe generation (ideas for the cards, steps on first open, and after the first More ideas tap a background batch for later taps) to fit Groq's 8K tokens a minute; the target-0 fallback for the protein cap; and step 2b.3 split into 2b.3a (ranking and cards) and 2b.3b (ideas, steps, background batch). All approved. **Step 2b.2 was approved 2026-10-10, including D54–D64** (H1–H6, §12.1): a footer fix on question screens, a new build order (**2b.3a → 2b.4 → 2b.3b**, then 2b.5–2b.8, so the meal-now flow can be used before LLM ideas exist), notes for 2b.5 and 2b.7 (the plan view's Prep notes row; a "How do you want to cook?" step with four options) and a pre-deploy item (§12.4). Step 2b.3a (ranking and cards) was built the same day and **approved, including D65–D76** (J1–J6, §12.1: culinary groups for vegetable swaps, a Mark cooked fix, and three additions to 2b.4). Step 2b.4 (the meal-now screens, with J2–J6) was built the same day and awaits approval (D77–D88).
 **Source documents:** `CLAUDE.md` (build rules, wins on conflict), `docs/PRD.md` (product vision; "Primary user flow" at the top), `docs/FLOW_SPEC.md` (screens and backend work for Phase 2b).
 
 This plan covers Phases 0–6, plus Phase 2b. One phase per session; Phase 2b is split into build steps, one per session (§9). A phase or step is done only when its acceptance criteria are met, its tests pass, and the test output has been shown.
@@ -19,7 +19,7 @@ This plan covers Phases 0–6, plus Phase 2b. One phase per session; Phase 2b is
 | — | Pre-Phase 1 tasks | Done | 2026-10-08 | 2026-10-08 | Package-label data (tortillas, protein powder), USDA mapping review sheet (`docs/review/usda_mappings.md`), raw/dry/as-sold rule + check (§7.8), CLAUDE.md machine-boundaries rule. Round 2: FoodSafety.gov chart transcribed (53 rows, §7.2), top-25 mappings approved, tortilla renamed, Docker rule clarified, fresh-clone check made a per-phase step. |
 | 1 | Planning brain | Approved 2026-10-09; post-approval round done | 2026-10-08 | 2026-10-09 | First pass: 645 tests, fresh-clone check passed; D1–D13 and C1–C3 approved 2026-10-09. Fix-up round (C4–C8: budget per request with inventory/shop modes, cash vs food eaten, freeze-on-shopping-day and waste, 100 g protein floor, elapsed time): 705 tests pass (the opt-in live test skips), domain coverage 99%, ruff/mypy clean, fresh-clone check passed; deviations D14–D22 in the fix-up note. Approved 2026-10-09. Post-approval round (C9–C14: powder prices, stock-up items, shelf-life fix, regular chicken packs, two-week steady-state check, A3 hosting): 721 tests pass (the opt-in live test skips), domain coverage 99%; deviations D23–D28. |
 | 2 | Mobile PWA + cloud deploy (deploy prep only, K7) | Approved 2026-10-10 | 2026-10-09 | 2026-10-09 | Pre-work K2–K6 done; PWA, auth, shopping, Mark cooked, quick add, exposure log. 800 backend tests pass (2 opt-in skipped), 78 frontend tests; not deployed (your step, `docs/deploy.md`). Deviations D29–D43 in the Phase 2 outcome note (§9). |
-| 2b | Cook-first flow redesign | 2b.1 approved 2026-10-10 (D44–D53); 2b.2 approved 2026-10-10 (D54–D64, H1–H6); 2b.3a built 2026-10-10, awaiting approval | 2026-10-10 | | `docs/FLOW_SPEC.md`; PRD "Primary user flow"; 9 build steps, built in the order 2b.1, 2b.2, 2b.3a, **2b.4, 2b.3b**, 2b.5–2b.8 (H3; §9); changes F1–F21 approved (FLOW_SPEC §16); decisions E1–E17 (§12.1). Two-stage generation added the same day (E15, E17; built in 2b.3b). **2b.1 (backend foundations):** 898 backend tests pass (2 opt-in skipped), 78 frontend tests, ruff/mypy clean; deviations D44–D53 in the 2b.1 outcome note (§9). **2b.2 (look, shell, onboarding, Settings, Pantry):** 180 frontend tests (78 before), 899 backend tests pass (2 opt-in skipped), type checks clean, static export builds; AA contrast tested, 375 px not yet checked on a device; deviations D54–D64 in the 2b.2 outcome note (§9). Footer fix H2 done before 2b.3a. **2b.3a (ranking and cards, no LLM calls):** 964 backend tests pass (2 opt-in skipped), 187 frontend tests, ruff, mypy and type check clean; deviations D65–D76 in the 2b.3a outcome note (§9). |
+| 2b | Cook-first flow redesign | 2b.1 approved 2026-10-10 (D44–D53); 2b.2 approved 2026-10-10 (D54–D64, H1–H6); 2b.3a approved 2026-10-10 (D65–D76, J1–J6); 2b.4 built 2026-10-10 (D77–D88), awaiting approval | 2026-10-10 | | `docs/FLOW_SPEC.md`; PRD "Primary user flow"; 9 build steps, built in the order 2b.1, 2b.2, 2b.3a, **2b.4, 2b.3b**, 2b.5–2b.8 (H3; §9); changes F1–F21 approved (FLOW_SPEC §16); decisions E1–E17 (§12.1). Two-stage generation added the same day (E15, E17; built in 2b.3b). **2b.1 (backend foundations):** 898 backend tests pass (2 opt-in skipped), 78 frontend tests, ruff/mypy clean; deviations D44–D53 in the 2b.1 outcome note (§9). **2b.2 (look, shell, onboarding, Settings, Pantry):** 180 frontend tests (78 before), 899 backend tests pass (2 opt-in skipped), type checks clean, static export builds; AA contrast tested, 375 px not yet checked on a device; deviations D54–D64 in the 2b.2 outcome note (§9). Footer fix H2 done before 2b.3a. **2b.3a (ranking and cards, no LLM calls):** 964 backend tests pass (2 opt-in skipped), 187 frontend tests, ruff, mypy and type check clean; deviations D65–D76 in the 2b.3a outcome note (§9). **2b.4 (A meal now: screens, with J2–J6):** 992 backend tests pass (2 opt-in skipped), 236 frontend tests, ruff, mypy and type check clean, static export builds; migration `0006_pantry_presets`; deviations D77–D88 in the 2b.4 outcome note (§9). |
 | 3 | Feedback loop | Not started | | | Favorites moved to 2b. |
 | 4 | Daily overrides | Not started | | | |
 | 5 | Grocery intelligence | Not started | | | |
@@ -81,10 +81,11 @@ Mealbro/
 │   │   ├── 0002_settings_v2_budget_per_request.py · 0003_stock_up_and_other_store.py  # P1 (data, column)
 │   │   ├── 0004_pwa_and_exposure_log.py  # P2 (planned as 0002)
 │   │   ├── 0005_cook_flow.py          # P2b: favorites, saved, feedback_event, cook_search, meal_plan.kind, settings v3
-│   │   ├── 0006_feedback_loop.py      # P3 (planned as 0003)
-│   │   ├── 0007_daily_overrides.py    # P4 (planned as 0004)
-│   │   ├── 0008_grocery_intelligence.py  # P5 (planned as 0005)
-│   │   └── 0009_ranker.py             # P6 (planned as 0006)
+│   │   ├── 0006_pantry_presets.py     # P2b (2b.4, J5): inventory_item.quantity_is_estimate, container
+│   │   ├── 0007_feedback_loop.py      # P3 (planned as 0003)
+│   │   ├── 0008_daily_overrides.py    # P4 (planned as 0004)
+│   │   ├── 0009_grocery_intelligence.py  # P5 (planned as 0005)
+│   │   └── 0010_ranker.py             # P6 (planned as 0006)
 │   └── app/
 │       ├── main.py · config.py · cli.py
 │       ├── db/                        # P0: base (naming convention), session, types, models/
@@ -171,10 +172,11 @@ Mealbro/
 | `0003_stock_up_and_other_store` | 1 (post-approval) | — | `ingredient.stock_up`, `store.kind` (C10, D23) |
 | `0004_pwa_and_exposure_log` (planned as 0002) | 2 | plan_candidate (exposure log; starts with real use, can't be backfilled), login_attempt (rate limiting across serverless instances) | `price_observation.client_ref` (offline idempotency) |
 | `0005_cook_flow` | 2b | recipe_favorite and feedback_event (both pulled forward from P3, unchanged), recipe_saved, cook_search | `meal_plan.kind`; data: settings v3 |
-| `0006_feedback_loop` (planned as 0003) | 3 | prepared_portion, preference_profile | `plan_meal.prepared_portion_id`, `inventory_event.prepared_portion_id` + CHECK |
-| `0007_daily_overrides` (planned as 0004) | 4 | day_override, consumption_entry | — |
-| `0008_grocery_intelligence` (planned as 0005) | 5 | region, ingredient_seasonality, cart_session | `price_observation.cart_session_id` |
-| `0009_ranker` (planned as 0006) | 6 | ranker_model | — |
+| `0006_pantry_presets` | 2b (2b.4, J5) | — | `inventory_item.quantity_is_estimate`, `inventory_item.container` |
+| `0007_feedback_loop` (planned as 0003) | 3 | prepared_portion, preference_profile | `plan_meal.prepared_portion_id`, `inventory_event.prepared_portion_id` + CHECK |
+| `0008_daily_overrides` (planned as 0004) | 4 | day_override, consumption_entry | — |
+| `0009_grocery_intelligence` (planned as 0005) | 5 | region, ingredient_seasonality, cart_session | `price_observation.cart_session_id` |
+| `0010_ranker` (planned as 0006) | 6 | ranker_model | — |
 
 ### 4.2a Table audit for `0001_initial` (2026-10-08)
 
@@ -720,7 +722,11 @@ ALTER recipe_version ADD steps_status text NULL -- NULL = has its steps; pending
                                                 -- first open, exactly once (FLOW_SPEC §13.4, F19; used from 2b.3b)
 -- data: UserSettings v3 (household_size 1, always_have [], default_budget_cents null, onboarding_completed false)
 
--- 0006_feedback_loop (Phase 3; planned as 0003) --------------------------------------
+-- 0006_pantry_presets (Phase 2b, step 2b.4, J5) ---------------------------------------
+ALTER inventory_item ADD quantity_is_estimate bool NULL  -- "Not sure": the usual package size, to correct later
+ALTER inventory_item ADD container text NULL             -- the preset's package ("bag", "head") for "your bag"
+
+-- 0007_feedback_loop (Phase 3; planned as 0003) --------------------------------------
 prepared_portion                                -- cooked leftovers / frozen meal-prep portions
   id, user_id FK→app_user, recipe_version_id FK→recipe_version, cook_batch_id NULL FK→plan_cook_batch,
   portions smallint NN CHECK ≥ 0, portion_size text NN, location text NN (fridge | freezer),
@@ -733,21 +739,21 @@ ALTER plan_meal       ADD prepared_portion_id bigint NULL FK→prepared_portion
 ALTER inventory_event ADD prepared_portion_id bigint NULL FK→prepared_portion
 ALTER inventory_event ADD CHECK (inventory_item_id IS NOT NULL OR prepared_portion_id IS NOT NULL)
 
--- 0007_daily_overrides (Phase 4; planned as 0004) ------------------------------------
+-- 0008_daily_overrides (Phase 4; planned as 0004) ------------------------------------
 day_override        (id, meal_plan_id FK, day date NN, cook_minutes smallint NULL, mood text NULL,
                      slots text[] NN, reason text NULL, generation_run_id NULL FK, created_at)
 consumption_entry   (id, user_id FK, consumed_on date NN, slot text NULL, plan_meal_id NULL FK, description text NN,
                      kcal integer NN CHECK ≥ 0, protein_g numeric(8,2) NULL, source text NN (planned_meal | manual | parsed),
                      is_estimate bool NN, parsed_items jsonb NULL, created_at)
 
--- 0008_grocery_intelligence (Phase 5; planned as 0005) -------------------------------
+-- 0009_grocery_intelligence (Phase 5; planned as 0005) -------------------------------
 region                 (code text PK, name text NN)
 ingredient_seasonality (ingredient_id FK, region_code text FK→region.code, month smallint CHECK 1–12,
                         availability text NN (peak | available), source text NN, PK (ingredient_id, region_code, month))
 cart_session           (id, user_id FK, store_id NN FK→store, started_at, ended_at NULL, status text NN)
 ALTER price_observation ADD cart_session_id bigint NULL FK→cart_session
 
--- 0009_ranker (Phase 6; planned as 0006) ---------------------------------------------
+-- 0010_ranker (Phase 6; planned as 0006) ---------------------------------------------
 ranker_model (id, version integer NN UNIQUE, algorithm text NN, trained_at timestamptz NN, train_window jsonb NN,
               n_examples integer NN, feature_spec jsonb NN, weights jsonb NN, metrics jsonb NN,
               is_active bool NN DEFAULT false, created_at)   UQ partial (is_active) WHERE is_active
@@ -2051,7 +2057,9 @@ Also: the service worker cache is `v2` with the new pages in its shell; `ApiErro
 - `test_meal_now_stream.py`: event order, cache hit and miss, gap-rule outcome, 0 LLM calls.
 - `test_cook_home.py`, `test_single_meal_plan.py`, `test_exposure_meal_now.py`.
 
-**2b.3a outcome (2026-10-10, awaiting approval).** Every deliverable is built and every acceptance criterion is
+**Approved 2026-10-10, including D65–D76 (J1).** Changes at approval, done at the start of the 2b.4 session: vegetable swaps only inside culinary groups (J2), and Mark cooked on a one-meal plan never takes from items you turned off (J3); see the 2b.4 outcome.
+
+**2b.3a outcome (2026-10-10).** Every deliverable is built and every acceptance criterion is
 met. Backend: 964 tests pass (899 before; 2 opt-in skipped: the live Groq call and the timed solve), ruff and mypy clean. Frontend: 187 Vitest tests pass (180 before; the 7 new ones are the H2 footer
 fix), type check clean; the frontend types were regenerated from the new OpenAPI schema. No migration, no seed
 change, no new dependency. New code: `app/cook/` (`answers`, `coverage`, `substitutes`, `ranking`, `caps`, `pool`,
@@ -2241,6 +2249,16 @@ versions to offer and `load_ingredient_plans` the lots to skip. Nothing changed 
    - Mark cooked.
 6. ♥ and 🔖 optimistic and queued offline.
 
+7. **Versions of held items (J4).** When you add, toggle or plan with a held item that comes in versions, the app asks which version, with "Check the label" guidance:
+   - pepperoni and salami: pork + beef (excluded), pork only (allowed, counts toward the pork cap), turkey (allowed, no pork cap), chicken (allowed, no pork cap), not sure (stays held);
+   - chicken bouillon (cubes or powder): chicken, no beef listed (allowed); contains beef or beef fat (excluded); not sure (stays held).
+   Each allowed version is its own ingredient with its own tags and nutrition (estimated where USDA has no exact entry, and flagged). Choosing a version never releases the generic held item. Settings shows the same choices under held items.
+8. **Forms and amount presets (J5)** when adding an item to Pantry or to "What do you have?":
+   - step 1, the form (fresh, frozen, canned, dried, or the forms that ingredient has), each mapped to its own ingredient entry (nutrition and shelf life differ);
+   - step 2, the amount: common package sizes for that form as tap buttons, plus Custom, plus **Not sure** (the most common size, with the lot marked as estimated so you can correct it from Pantry);
+   - package presets live in seed data per ingredient and form, realistic US sizes, flagged as estimates.
+9. **Recipe amounts in your terms (J6):** for each ingredient you have, the recipe page says how much it uses of what you have ("uses 4 oz, about half your bag · 4 oz left after"). Mark cooked subtracts exactly that; the rest stays in Pantry for later plans and searches.
+
 **Moved to 2b.3b (H3)**, because they need LLM ideas: New badges and the "Writing new ideas…" strip; the countdown wait state (strip, "Ready in 0:45" button, and the Pantry quick-add sheet, D63); More ideas live and the held `prefetched` list; the C8 steps state for an idea.
 
 **Acceptance criteria**
@@ -2248,8 +2266,93 @@ versions to offer and `load_ingredient_plans` the lots to skip. Nothing changed 
 2. On a 375 × 667 screen, both choice buttons are fully visible without scrolling, with every Cook home section present, and nothing renders above them except the one-line greeting.
 3. Every C0–C8 state that needs no LLM (loading, empty, error, offline) is reachable in tests. More ideas is disabled and says "coming soon".
 4. The frontend still has no nutrition, unit or cost arithmetic.
+5. **Versions (J4):** turkey pepperoni never counts toward the pork cap; pork + beef pepperoni is always excluded (even if you try to allow it); choosing a version never releases the generic held item.
+6. **Presets (J5):** every ingredient you can add has presets for each of its forms; Not sure adds the most common size and marks the lot estimated; a frozen form keeps its frozen shelf life.
+7. **Your terms (J6):** the recipe page's note for an item you have matches what Mark cooked takes, to the gram, and the rest stays in Pantry.
 
-**Tests (Vitest).** Stream reducer (`results` replace the list; partial); answers → request (only toggled-off items sent); cards render server strings only; Cook home order (the two buttons first; Meal prep opens the plan flow); More ideas disabled with "coming soon"; favorites queue replay; cooking-mode navigation.
+**Tests (Vitest).** Stream reducer (`results` replace the list; partial); answers → request (only toggled-off items sent); cards render server strings only; Cook home order (the two buttons first; Meal prep opens the plan flow); More ideas disabled with "coming soon"; favorites queue replay; cooking-mode navigation; the version sheet; form → preset → Not sure in the add flow.
+
+**Tests (backend, for J2–J6).** Culinary groups (every vegetable and herb in one group; yellow onion never becomes spinach; swaps only inside a group); Mark cooked skips the lots you turned off; versions (pork cap, beef exclusion, the generic stays held); presets (coverage, Not sure, estimated flag, frozen shelf life); amounts in your terms (the note equals the deduction).
+
+**2b.4 outcome (2026-10-10).** Every deliverable is built and every acceptance criterion is met, with the
+deviations below (D77–D88). Backend: 992 tests pass (964 before; 2 opt-in skipped), ruff and mypy clean.
+Frontend: 236 Vitest tests pass (187 before), type check clean, the static export builds (21 pages). One
+migration (`0006_pantry_presets`), 20 new seed ingredients (205 now), a new seed catalog, no new dependency.
+
+- **AC 1:** `app/cook/tests/test_meal_now_screens.py` makes the screens' calls in order against the backend
+  (Cook home, the add flow, Find recipes with an item turned off and a could-buy item, the stored search, a
+  card's recipe page, Cook this, Buy first, cooking mode, Mark cooked, Cook home again); the Vitest tests cover
+  each screen against those responses. Not clicked through in a browser here (sign-in needs your password).
+- **AC 2:** the two choices are the first section, with only the one-line greeting before them (DOM-order test);
+  each is at least 120 px tall and full width (CSS test); with the 40 px greeting and the 64 px tab bar they take
+  316 px of a 667 px screen. Checked by layout budget, not yet on a 375 × 667 device.
+- **AC 3:** loading, empty (with its fixes), error, stream lost and offline states are reachable in tests for C0,
+  C2, C3, C5, C7, C8, Buy first and cooking mode. More ideas is disabled with "New recipe ideas: coming soon."
+- **AC 4:** the no-math audit scans the new files and finds nothing; every number on screen is the server's.
+- **AC 5 (J4):** `test_pantry_add.py`: turkey pepperoni never counts toward the pork cap; pork + beef pepperoni is
+  excluded even if you try to allow it; relabeling a lot never releases the generic held item. Vitest: the
+  version sheet (guidance, pork + beef refused, turkey continues to its own sizes, Not sure stays held).
+- **AC 6 (J5):** every addable seed ingredient has presets with one default (catalog test); Not sure adds the
+  default size with the lot marked estimated, and Pantry's Correct amount clears it; frozen cauliflower keeps 240
+  days in the freezer. Vitest: form → size → Custom → Not sure in the add flow.
+- **AC 7 (J6):** the recipe page's note for frozen broccoli ("uses 8 oz, about half your bag · 8 oz left after")
+  equals what Mark cooked takes, to the gram, and the other 8 oz stays as an active lot.
+
+**Decisions and deviations (D77–D88).**
+- **D77. Culinary groups (J2).** 25 groups cover every vegetable and herb in the seed table (listed in
+  `docs/review/pantry_catalog.md`). A line in a group (or any vegetable line) is swapped only inside its group,
+  whatever its role, so a cilantro garnish can become parsley; one in no group, or alone in its group, gets no
+  substitute. Accepted pairs still come first. The catalog's version is part of the meal-now cache key.
+- **D78. Mark cooked fix (J3).** A one-meal plan stores the lots of the items you turned off
+  (`lots_off_lot_ids` in its constraints; a "have it" extra of the same item isn't turned off); Mark cooked
+  skips them.
+- **D79. The catalog is seed data, not tables.** `app/seed/data/pantry_catalog.json` (groups, versions, forms,
+  package sizes) is written by `backend/scripts/build_pantry_catalog.py`, validated on load
+  (`PantryCatalogFile`) and read at runtime with a cache (`app/services/catalog.py`). The script also writes
+  the review sheet; a test keeps both in step with it.
+- **D80. Versions (J4).** Each version is its own ingredient: pepperoni and salami (pork + beef, pork, turkey,
+  chicken) and chicken bouillon (no beef listed, contains beef). Nutrition is estimated and flagged for pork-only
+  pepperoni (USDA "Salami, dry or hard, pork") and chicken pepperoni and salami (from the turkey ones).
+  Choosing a version for a lot (`POST /inventory/{id}/version`) adds a lot of that version with the same amount,
+  place and dates, and empties the old one (manual-adjust events). Held lots can't be toggled in C3 and offer
+  "Which version?" there and in Pantry. Settings lists the versions under held items; picking your usual one is
+  kept on this device and only pre-selects it in the sheet. Deli meats count as "as sold" even when USDA's
+  description says cooked. Asking "when planning" lands with the meal-prep screens (2b.7).
+- **D81. Forms and package sizes (J5).** Migration `0006_pantry_presets` adds `inventory_item.quantity_is_estimate`
+  and `container`; the later planned migrations move up one (Phase 3 is now `0007_feedback_loop`, through
+  `0010_ranker`). The add flow's sizes replace Full/¾/½/¼ in the app (the P1 picker is gone; the API's
+  `amount_options` stay). **Not sure** is pre-selected, so an amount you don't pick is honest about being a guess.
+  A size added without a date gets an estimated use-by from its shelf life where it's kept. Pantry corrects an
+  estimate with `PATCH /inventory/{id}` and a `preset`, or a `quantity` + `unit` (the server converts). In "What
+  do you have?", Have it with a size sends that amount to the search; Save to pantry adds the lot instead, which
+  then shows as a pantry row.
+- **D82. Your terms (J6).** The notes come from the same lots, in the same order, as Mark cooked (open packages
+  first, then the soonest use-by), skipping turned-off lots: on the recipe page from a search, on a plan batch
+  (`pantry_notes`) and in cooking mode. A recipe opened from a search now opens at that card's portions, so the
+  notes match what Cook this cooks.
+- **D83. Routes.** `/cook/results/?run=<key>` while the search streams (the answers wait in session storage under
+  a one-off key, and the run lives outside React, so a remount never sends it twice), then `?search=<id>`.
+  `/cook/saved/?list=`, `/cook/buy/?batch=&plan=` and `/cook/cooking/?batch=` are new; the tab bar hides in
+  cooking mode; the service worker (v3) caches the new pages.
+- **D84. Cook home.** `GET /cook/home` adds your household `portions` and `portion_size` (saved cards open for
+  your household). Same as last time shows meal-now searches only until 2b.7. The Today card reads the home's
+  `today` instead of the plan endpoints.
+- **D85. Empty state.** Time: "Allow N min" (the next of 10, 15, 20, 30, 45, 60, 90, 120). Mood: the two other
+  moods, because a mood filter can rule recipes out in either direction. Equipment and food rules: a link to
+  Settings. "Write new recipes (coming soon)" is disabled.
+- **D86. Recipe page actions.** A saved recipe's Cook this cooks up to 8 portions (the portions stepper stops at
+  `CookMealIn`'s limit). On a plan batch, Cook this opens cooking mode and Mark cooked stays in the batch card.
+  Buy first is the one-meal plan's grocery list, checked off with the Grocery tab's queue (a shared hook), with
+  "I have everything, start cooking".
+- **D87. Cooking mode.** Get ready (the ingredients, with your-terms notes), then one step per screen, then Mark
+  cooked. Its Back / Next bar is sticky, not fixed, so the 2b.2 footer rule holds. The screen wake lock is asked
+  for again when you come back to the page, and the top bar says "Screen stays on" while it holds.
+- **D88. Also.** Settings' `diet_review` items carry their `versions`; the `IngredientSearch`, `AddFlow`,
+  `VersionSheet` and `CorrectAmountSheet` components are shared by Pantry and C3; `docs/review/usda_mappings.md`
+  was regenerated for the 205 ingredients.
+
+**Dev database.** Upgraded to `0006` and re-seeded (205 ingredients). To undo: `docker compose exec -T backend uv
+run --frozen alembic downgrade 0005`.
 
 #### 2b.5 Meal prep: engine (backend)
 
@@ -2435,9 +2538,9 @@ versions to offer and `load_ingredient_plans` the lots to skip. Nothing changed 
 7. **Weighted scoring function:** `preference_score` in [−1, 1] → solver preference term, reuse order, prompt hints. Its score and components are written into the `plan_candidate` rows that Phase 2 already logs. Capped never-favored items get no preference-score boost from nutrition, price or inventory features (§7.4).
 8. **Cook Again:** your default version is re-scaled and re-costed deterministically (0 LLM calls). It calls the LLM once only on the triggers (excluded/disliked ingredient, missing equipment, can't fit calories/time by scaling, or "adapt to what I have"). Adapted versions apply to that cook unless you save them.
 
-**Files and folders.** Creates `app/feedback/`, `app/preferences/`, `app/substitutions/`, `app/domain/preferences.py`, `app/schemas/feedback.py`, prompts (comment_tags, substitution, step_rewrite, adaptation), API routes (ratings, cook_logs, recipe_versions, substitutions, cook_again, profile), `migrations/versions/0006_feedback_loop.py`; frontend `history/`, `learned/` (reached from Settings and the Cook tab), rating sheet, editor, substitution sheet. (♥ and 🔖 shipped in Phase 2b.)
+**Files and folders.** Creates `app/feedback/`, `app/preferences/`, `app/substitutions/`, `app/domain/preferences.py`, `app/schemas/feedback.py`, prompts (comment_tags, substitution, step_rewrite, adaptation), API routes (ratings, cook_logs, recipe_versions, substitutions, cook_again, profile), `migrations/versions/0007_feedback_loop.py`; frontend `history/`, `learned/` (reached from Settings and the Cook tab), rating sheet, editor, substitution sheet. (♥ and 🔖 shipped in Phase 2b.)
 
-**Database.** Migration `0006_feedback_loop` (planned as 0003): `prepared_portion`, `preference_profile`; `plan_meal.prepared_portion_id`; `inventory_event.prepared_portion_id` + CHECK (§4.5). `feedback_event` and `recipe_favorite` already exist (Phase 2b, `0005_cook_flow`).
+**Database.** Migration `0007_feedback_loop` (planned as 0003): `prepared_portion`, `preference_profile`; `plan_meal.prepared_portion_id`; `inventory_event.prepared_portion_id` + CHECK (§4.5). `feedback_event` and `recipe_favorite` already exist (Phase 2b, `0005_cook_flow`).
 
 **Acceptance criteria**
 1. Favorites (from Phase 2b) feed the weighted preference score; with otherwise-equal candidates the favorite still wins.
@@ -2491,9 +2594,9 @@ versions to offer and `load_ingredient_plans` the lots to skip. Nothing changed 
 5. **Mode toggle:** in settings and per plan.
 6. **"What's left today" feeds A meal now:** with consumption logged, the meal-now calorie target becomes the remaining calories for today (e.g. 750 kcal), within the same mode rules.
 
-**Files and folders.** Creates `app/overrides/`; extends `app/domain/calories.py`; prompt `off_plan_parse`; API routes (days, consumption, rebalance); frontend Today additions on the Cook tab; `migrations/versions/0007_daily_overrides.py`.
+**Files and folders.** Creates `app/overrides/`; extends `app/domain/calories.py`; prompt `off_plan_parse`; API routes (days, consumption, rebalance); frontend Today additions on the Cook tab; `migrations/versions/0008_daily_overrides.py`.
 
-**Database.** Migration `0007_daily_overrides` (planned as 0004): `day_override`, `consumption_entry`.
+**Database.** Migration `0008_daily_overrides` (planned as 0004): `day_override`, `consumption_entry`.
 
 **Acceptance criteria**
 1. A day override changes only the targeted meals; all other `plan_meal` rows are identical before and after.
@@ -2533,9 +2636,9 @@ versions to offer and `load_ingredient_plans` the lots to skip. Nothing changed 
 5. **Next-list recommendations:** extends Phase 2b's "What should I buy?" (a shop-mode plan with templated reasons from current prices) with expiring items and open packages, usual items from history (a separate dismissible section) and within-store deals, all as templated, data-backed sentences.
 6. **Grocery Store Mode** (in the Grocery tab): a `cart_session` per store; "+ Add Grocery" entries; **Optimize My Cart** in two modes, quick (recipes fixed, cheapest packages) and full re-plan, returning the cheapest combination, nutritional value, meals, servings and cost per serving.
 
-**Files and folders.** Creates `app/grocery/`, `app/domain/price_stats.py`, `app/seed/data/seasonality_new_england.json`, API routes (price_history, deals, recommendations, cart_sessions), frontend `store/`, history views, mode selector, badges, `migrations/versions/0008_grocery_intelligence.py`. Changes `objective.py`, `app/cook/grocery_advice.py` (Phase 2b) and `docs/data-sources.md`.
+**Files and folders.** Creates `app/grocery/`, `app/domain/price_stats.py`, `app/seed/data/seasonality_new_england.json`, API routes (price_history, deals, recommendations, cart_sessions), frontend `store/`, history views, mode selector, badges, `migrations/versions/0009_grocery_intelligence.py`. Changes `objective.py`, `app/cook/grocery_advice.py` (Phase 2b) and `docs/data-sources.md`.
 
-**Database.** Migration `0008_grocery_intelligence` (planned as 0005): `region`, `ingredient_seasonality`, `cart_session`, `price_observation.cart_session_id`.
+**Database.** Migration `0009_grocery_intelligence` (planned as 0005): `region`, `ingredient_seasonality`, `cart_session`, `price_observation.cart_session_id`.
 
 **Acceptance criteria**
 1. Deal labels appear only when the same-store thresholds are met. A lower Price Rite price never marks a Stop & Shop observation as a deal, or vice versa.
@@ -2576,9 +2679,9 @@ versions to offer and `load_ingredient_plans` the lots to skip. Nothing changed 
 5. **Serving:** blended score → solver preference term; exploration allowance (e.g. one new recipe per week); top features shown in "What I've learned".
 6. **Retraining:** `cli ranker-train`, version registry, one-command rollback.
 
-**Files and folders.** Creates `app/ranking/`, CLI commands, API `ranker/status`, a frontend settings panel, `migrations/versions/0009_ranker.py`. Changes the preference-term source in `objective.py` and in `app/cook/ranking.py` (Phase 2b).
+**Files and folders.** Creates `app/ranking/`, CLI commands, API `ranker/status`, a frontend settings panel, `migrations/versions/0010_ranker.py`. Changes the preference-term source in `objective.py` and in `app/cook/ranking.py` (Phase 2b).
 
-**Database.** Migration `0009_ranker` (planned as 0006): `ranker_model`.
+**Database.** Migration `0010_ranker` (planned as 0006): `ranker_model`.
 
 **Acceptance criteria**
 1. A test proves the dataset is leak-free (features for an occasion use only earlier events).
@@ -2785,6 +2888,17 @@ No other dependencies are planned. Auth uses the stdlib, and the solver uses HiG
 | H4 | New plan view (2b.5, 2b.7) | It starts with Today. Freeze and spoil warnings never appear as a block above the days; they collapse into one tappable "Prep notes" row (e.g. "3 to freeze · 4 may spoil"), and freeze steps also appear on the shopping day itself. Days with nothing to cook use "Nothing to cook, eating prepped meals". FLOW_SPEC C6. |
 | H5 | "How do you want to cook?" (2b.5, 2b.7) | A meal-prep step with four options: **One big cook day** (pick the day and that day's hands-on minutes, which can go well above the usual; everything is cooked that day); **A few sessions** (pick cook days, like the cook-day settings); **Same dish, many portions** (one recipe scaled to any number of portions; overrides the 5-portions-per-recipe weekly cap, F22); **Mix it up** (today's variety behavior). Rules: portions within the fridge window stay in the fridge, later ones go to the freezer with a plain thaw-in-the-fridge-the-night-before instruction, stated per day; a "freezes well" flag on recipes (seeds set by hand: rice dishes and curry gravies yes, yogurt sauces and fresh salads no or with a freeze-the-base note; ideas include it and the validator checks it), and portions past the fridge window only use recipes that freeze well; a big cook day's total hands-on time is estimated and checked against that day's time; the cook day shows a simple prep order where the recipes allow it. The 2b.5 and 2b.7 criteria and tests cover all four options, including a whole week cooked on one day and one dish for 8 portions. FLOW_SPEC C1b, C6, §16 F22. |
 | H6 | Pre-deploy | The login rate limit must key on the real client address (X-Forwarded-For read only from the trusted proxy), so devices and visitors don't share one lockout counter. Added to the pre-deploy list (§12.4). |
+
+**Step 2b.3a approval (2026-10-10).** You approved 2b.3a, then:
+
+| # | Topic | Decision |
+|---|---|---|
+| J1 | 2b.3a | Approved, including D65–D76. |
+| J2 | Substitute groups (D66 follow-up) | Vegetable swaps use culinary role groups instead of the broad "vegetable" category: groups drafted in seed data (aromatics, leafy greens, sturdy vegetables, and so on) covering every vegetable and herb in the ingredient table. Swaps happen only inside a group; an ingredient in no group gets no substitute. Tests include "yellow onion never becomes spinach". The full group list goes in the step summary. |
+| J3 | Mark cooked fix | Mark cooked on a one-meal plan never takes from the items you turned off for that search. With a test. |
+| J4 | Held items with versions (in 2b.4) | Ask which version when adding, toggling or planning with one, with "Check the label" guidance. Pepperoni and salami: pork + beef (excluded), pork only (allowed, counts toward the pork cap), turkey (allowed, no pork cap), chicken (allowed, no pork cap), not sure (stays held). Bouillon cubes or powder: chicken, no beef listed (allowed); contains beef or beef fat (excluded); not sure (stays held). Each allowed version is its own ingredient with its own tags and nutrition (estimated and flagged where USDA has no exact entry). Choosing a version never releases the generic held item. Same choices in Settings under held items. Tests: turkey pepperoni never counts toward the pork cap; pork + beef pepperoni is always excluded. |
+| J5 | Amount presets (in 2b.4) | Adding to Pantry or "What do you have?": step 1 the form (fresh, frozen, canned, dried, or that ingredient's forms), mapped to the right ingredient entry; step 2 common package sizes for that form as buttons, plus Custom, plus Not sure (the most common size, the lot marked estimated, correctable from Pantry). Presets in seed data per ingredient and form, realistic US sizes, flagged as estimates; listed in the step summary. |
+| J6 | Recipe amounts in your terms (in 2b.4) | For each ingredient you have, the recipe page shows how much the recipe uses relative to what you have ("uses 4 oz, about half your bag · 4 oz left after"). Mark cooked subtracts exactly that; the leftover stays in Pantry for later plans and searches. |
 
 ### 12.2 Remaining questions (from applying your answers)
 

@@ -338,6 +338,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/ingredients/{ingredient_id}/add-options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Add Options
+         * @description What adding this item asks (step 2b.4): which version of a held item (J4), which form, and the common
+         *     package sizes for each form plus custom units (J5). Send the chosen form's ingredient id and a preset key
+         *     (or not_sure) to POST /inventory/bulk.
+         */
+        get: operations["get_add_options_api_v1_ingredients__ingredient_id__add_options_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/inventory": {
         parameters: {
             query?: never;
@@ -446,6 +468,27 @@ export interface paths {
         put?: never;
         /** Discard Lot */
         post: operations["discard_lot_api_v1_inventory__item_id__discard_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inventory/{item_id}/version": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Set Version
+         * @description This lot of a held item is the version on its label (step 2b.4, J4): a new lot of that version takes
+         *     its amount, place and dates. The generic held item stays held.
+         */
+        post: operations["set_version_api_v1_inventory__item_id__version_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -841,6 +884,31 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
+         * AddOptionsOut
+         * @description GET /ingredients/{id}/add-options: what adding this item asks. A held item that comes in versions asks
+         *     which version first (then ask again for the chosen version); then the form; then the amount.
+         */
+        AddOptionsOut: {
+            /** Food */
+            food: string | null;
+            /** Forms */
+            forms: components["schemas"]["FormOut"][];
+            /** Ingredient Id */
+            ingredient_id: number;
+            /** Message */
+            message: string | null;
+            /** Name */
+            name: string;
+            /** Selected Form */
+            selected_form: string;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "allowed" | "capped" | "held" | "excluded";
+            versions: components["schemas"]["VersionsOut"] | null;
+        };
+        /**
          * AlwaysHaveOptionOut
          * @description An ingredient you can mark as Always have (S2); common staples come first.
          */
@@ -907,6 +975,8 @@ export interface components {
             meals: components["schemas"]["MealOut"][];
             /** Package Notes */
             package_notes: string[];
+            /** Pantry Notes */
+            pantry_notes?: components["schemas"]["PantryNoteOut"][];
             /** Plan Id */
             plan_id: number;
             /** Planned Minutes */
@@ -987,8 +1057,9 @@ export interface components {
         /**
          * BulkItemIn
          * @description One lot to add. The amount is given one way: `quantity` + `unit` (any unit the ingredient understands),
-         *     an `amount_option` of its quick pick (Full, ¾, ½ or ¼ of `product_id`'s package, else its usual one), or a
-         *     `custom_amount` + `custom_unit` from the quick pick's custom units. The server converts it.
+         *     an `amount_option` of its quick pick (Full, ¾, ½ or ¼ of `product_id`'s package, else its usual one), a
+         *     `custom_amount` + `custom_unit` from the quick pick's custom units, a package `preset` key (step 2b.4),
+         *     or `not_sure` (the most common package, with the lot marked as an estimate). The server converts it.
          */
         BulkItemIn: {
             /** Acquired On */
@@ -1009,10 +1080,17 @@ export interface components {
             /** Ingredient Id */
             ingredient_id: number;
             location: components["schemas"]["StorageLocation"];
+            /**
+             * Not Sure
+             * @default false
+             */
+            not_sure: boolean;
             /** Notes */
             notes?: string | null;
             /** Opened On */
             opened_on?: string | null;
+            /** Preset */
+            preset?: string | null;
             /** Product Id */
             product_id?: number | null;
             /** Quantity */
@@ -1150,6 +1228,13 @@ export interface components {
             later: components["schemas"]["SavedPreviewOut"][];
             /** Later Count */
             later_count: number;
+            /** @default normal */
+            portion_size: components["schemas"]["PortionSize"];
+            /**
+             * Portions
+             * @default 1
+             */
+            portions: number;
             today: components["schemas"]["TodayOut"] | null;
         };
         /**
@@ -1204,7 +1289,7 @@ export interface components {
             /** Status */
             status: string;
             /** Suggestions */
-            suggestions: components["schemas"]["app__schemas__cook__SuggestionOut"][];
+            suggestions: components["schemas"]["RecipeSuggestionOut"][];
         };
         /**
          * CookSession
@@ -1267,7 +1352,7 @@ export interface components {
             /** Status */
             status?: ("succeeded" | "partial" | "failed") | null;
             /** Suggestions */
-            suggestions?: components["schemas"]["app__schemas__cook__SuggestionOut"][] | null;
+            suggestions?: components["schemas"]["RecipeSuggestionOut"][] | null;
             /** Total Tokens */
             total_tokens?: number | null;
             /** Wait S */
@@ -1435,6 +1520,7 @@ export interface components {
             name: string;
             /** Note */
             note: string | null;
+            versions?: components["schemas"]["VersionsOut"] | null;
         };
         /** DiscardIn */
         DiscardIn: {
@@ -1502,6 +1588,30 @@ export interface components {
             loc: (string | number)[];
             /** Msg */
             msg: string;
+        };
+        /**
+         * FormOut
+         * @description One form of a food (fresh, frozen, canned, dried), each its own ingredient.
+         */
+        FormOut: {
+            /** Custom Units */
+            custom_units: components["schemas"]["CustomUnitOut"][];
+            /** Form */
+            form: string;
+            /** Ingredient Id */
+            ingredient_id: number;
+            /** Label */
+            label: string;
+            location: components["schemas"]["StorageLocation"];
+            /** Name */
+            name: string;
+            /** Presets */
+            presets: components["schemas"]["PresetOut"][];
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "allowed" | "capped" | "held" | "excluded";
         };
         /** FreezeOut */
         FreezeOut: {
@@ -1871,6 +1981,8 @@ export interface components {
         InventoryLotOut: {
             /** Acquired On */
             acquired_on: string | null;
+            /** Container */
+            container?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -1882,6 +1994,11 @@ export interface components {
             expires_on: string | null;
             /** Expiry Is Estimate */
             expiry_is_estimate: boolean;
+            /**
+             * Has Versions
+             * @default false
+             */
+            has_versions: boolean;
             /** Id */
             id: number;
             /** Ingredient Id */
@@ -1898,6 +2015,17 @@ export interface components {
             product_id: number | null;
             /** Quantity */
             quantity: string;
+            /**
+             * Quantity Is Estimate
+             * @default false
+             */
+            quantity_is_estimate: boolean;
+            /**
+             * State
+             * @default allowed
+             * @enum {string}
+             */
+            state: "allowed" | "capped" | "held" | "excluded";
             /** Status */
             status: string;
             /** Unit */
@@ -1913,10 +2041,35 @@ export interface components {
             /** Opened On */
             opened_on?: string | null;
             /**
+             * Preset
+             * @description a package preset key: the lot holds that amount
+             */
+            preset?: string | null;
+            /**
              * Quantity
-             * @description counted quantity in the lot's base unit
+             * @description counted quantity in the lot's base unit (or in `unit`)
              */
             quantity?: number | string | null;
+            /**
+             * Unit
+             * @description the unit of `quantity`; the server converts it
+             */
+            unit?: string | null;
+        };
+        /**
+         * LastExtraOut
+         * @description An item you added last time, for the "From last time" chips (never pre-selected).
+         */
+        LastExtraOut: {
+            /** Ingredient Id */
+            ingredient_id: number;
+            /** Name */
+            name: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "have" | "could_buy";
         };
         /** LastSearchOut */
         LastSearchOut: {
@@ -1924,6 +2077,8 @@ export interface components {
             answers: {
                 [key: string]: unknown;
             };
+            /** Extras */
+            extras?: components["schemas"]["LastExtraOut"][];
             /**
              * Mode
              * @enum {string}
@@ -2081,6 +2236,15 @@ export interface components {
          * @enum {string}
          */
         NutritionPriority: "protein" | "carb" | "iron" | "balanced" | "fiber" | "lower_fat" | "satiety" | "vegetable";
+        /** PantryNoteOut */
+        PantryNoteOut: {
+            /** Ingredient Id */
+            ingredient_id: number;
+            /** Name */
+            name: string;
+            /** Note */
+            note: string;
+        };
         /**
          * PantryToggle
          * @description A pantry item turned off for this search ("not for this search"). Only items turned off need
@@ -2428,6 +2592,26 @@ export interface components {
             start: ("today" | "tomorrow") | string;
         };
         /**
+         * PresetOut
+         * @description A common package size (an estimate): send its `key` as `preset` to POST /inventory/bulk.
+         */
+        PresetOut: {
+            /** Container */
+            container: string | null;
+            /** Default */
+            default: boolean;
+            /** Is Estimate */
+            is_estimate: boolean;
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Quantity */
+            quantity: string;
+            /** Unit */
+            unit: string;
+        };
+        /**
          * PriceBasis
          * @enum {string}
          */
@@ -2657,6 +2841,43 @@ export interface components {
             title: string;
             /** Versions */
             versions: components["schemas"]["RecipeVersionSummaryOut"][];
+        };
+        /**
+         * RecipeSuggestionOut
+         * @description One recipe card (FLOW_SPEC §5.3). Every number is code-computed, at the card's portions.
+         */
+        RecipeSuggestionOut: {
+            /** Badges */
+            badges: ("favorite" | "saved" | "new" | "draft")[];
+            /** Could Buy */
+            could_buy: components["schemas"]["CostLineOut"][];
+            /** Dish Category */
+            dish_category: string;
+            /** Good Match */
+            good_match: boolean;
+            /** Missing */
+            missing: components["schemas"]["MissingLineOut"][];
+            /** Numbers */
+            numbers: string[];
+            portion_size: components["schemas"]["PortionSize"];
+            /** Portions */
+            portions: number;
+            /** Portions Display */
+            portions_display: string;
+            /** Recipe Id */
+            recipe_id: number;
+            /** Score */
+            score: string;
+            /** Steps Ready */
+            steps_ready: boolean;
+            /** Title */
+            title: string;
+            /** Uses */
+            uses: string[];
+            /** Version Id */
+            version_id: number;
+            /** Why */
+            why: string[];
         };
         /** RecipeVersionOut */
         RecipeVersionOut: {
@@ -3152,6 +3373,43 @@ export interface components {
             /** Error Type */
             type: string;
         };
+        /** VersionChoiceOut */
+        VersionChoiceOut: {
+            /** Ingredient Id */
+            ingredient_id: number | null;
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Name */
+            name: string | null;
+            /** Note */
+            note: string;
+            /** Nutrition Estimated */
+            nutrition_estimated: boolean;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "allowed" | "capped" | "held" | "excluded";
+        };
+        /**
+         * VersionIn
+         * @description POST /inventory/{id}/version: this lot of a held item is the version on its label.
+         */
+        VersionIn: {
+            /** Ingredient Id */
+            ingredient_id: number;
+        };
+        /** VersionsOut */
+        VersionsOut: {
+            /** Choices */
+            choices: components["schemas"]["VersionChoiceOut"][];
+            /** Guidance */
+            guidance: string;
+            /** Question */
+            question: string;
+        };
         /**
          * Weekday
          * @enum {string}
@@ -3189,43 +3447,6 @@ export interface components {
             store_id: number;
             /** Store Name */
             store_name: string;
-        };
-        /**
-         * SuggestionOut
-         * @description One recipe card (FLOW_SPEC §5.3). Every number is code-computed, at the card's portions.
-         */
-        app__schemas__cook__SuggestionOut: {
-            /** Badges */
-            badges: ("favorite" | "saved" | "new" | "draft")[];
-            /** Could Buy */
-            could_buy: components["schemas"]["CostLineOut"][];
-            /** Dish Category */
-            dish_category: string;
-            /** Good Match */
-            good_match: boolean;
-            /** Missing */
-            missing: components["schemas"]["MissingLineOut"][];
-            /** Numbers */
-            numbers: string[];
-            portion_size: components["schemas"]["PortionSize"];
-            /** Portions */
-            portions: number;
-            /** Portions Display */
-            portions_display: string;
-            /** Recipe Id */
-            recipe_id: number;
-            /** Score */
-            score: string;
-            /** Steps Ready */
-            steps_ready: boolean;
-            /** Title */
-            title: string;
-            /** Uses */
-            uses: string[];
-            /** Version Id */
-            version_id: number;
-            /** Why */
-            why: string[];
         };
         /** SuggestionOut */
         app__schemas__inventory__SuggestionOut: {
@@ -3774,6 +3995,37 @@ export interface operations {
             };
         };
     };
+    get_add_options_api_v1_ingredients__ingredient_id__add_options_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ingredient_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AddOptionsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_inventory_api_v1_inventory_get: {
         parameters: {
             query?: {
@@ -3971,6 +4223,41 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["DiscardIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InventoryLotOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_version_api_v1_inventory__item_id__version_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionIn"];
             };
         };
         responses: {

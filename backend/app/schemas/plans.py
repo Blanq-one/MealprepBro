@@ -379,6 +379,14 @@ class BatchDetailOut(BaseModel):
     package_notes: list[str]  # "Uses the whole 2 lb pack" / "0.3 lb left: an open package"
     freeze_notes: list[str]
     recipe: RecipeVersionOut
+    # step 2b.4 (J6), while the batch is planned: what it uses of what you have (what Mark cooked takes)
+    pantry_notes: list["PantryNoteOut"] = Field(default_factory=list)
+
+
+class PantryNoteOut(BaseModel):
+    ingredient_id: int
+    name: str
+    note: str  # "uses 4 oz, about half your bag · 4 oz left after"
 
 
 class BatchLineOut(BaseModel):

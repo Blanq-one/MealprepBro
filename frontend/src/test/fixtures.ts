@@ -1,6 +1,10 @@
 // API-shaped test data (types from the generated schema, so a backend change breaks these at compile time).
 import type {
+  AddOptions,
+  BatchDetail,
+  CookHome,
   GroceryItem,
+  InventoryLot,
   GroceryList,
   PlanSummary,
   QuickPick,
@@ -8,6 +12,7 @@ import type {
   SettingsOut,
   SettingsPreview,
   Store,
+  Suggestion,
   UserSettings,
 } from "@/lib/api/types";
 
@@ -402,6 +407,206 @@ export function recipe(overrides: Partial<RecipeVersion> = {}): RecipeVersion {
     is_saved: false,
     steps_ready: true,
     search_context: null,
+    ...overrides,
+  };
+}
+
+// ---------------- step 2b.4: the meal-now flow ----------------
+export function suggestion(overrides: Partial<Suggestion> = {}): Suggestion {
+  return {
+    version_id: 21,
+    recipe_id: 11,
+    title: "Everyday chicken curry",
+    dish_category: "curry",
+    badges: [],
+    steps_ready: true,
+    portions: 1,
+    portion_size: "normal",
+    portions_display: "1 portion",
+    numbers: ["540 kcal", "41 g protein", "35 min", "$2.10 a portion est."],
+    uses: ["chicken thigh, boneless skinless", "spinach"],
+    could_buy: [
+      { ingredient_id: 7, name: "chickpeas", cost_cents: 129, cost_display: "$1.29 est.", store: "Stop & Shop", is_estimate: true, display: "chickpeas $1.29 est. (Stop & Shop)" },
+    ],
+    missing: [
+      {
+        ingredient_id: 8,
+        name: "lemon",
+        kind: "missing",
+        substitute: { ingredient_id: 9, name: "lime juice", amount_display: "2 tbsp", you_have: true, note: null },
+        buy: null,
+        display: "lemon → lime juice (you have it)",
+      },
+    ],
+    why: ["Uses 2 of your items", "ready in 35 min"],
+    score: "1.25",
+    good_match: true,
+    ...overrides,
+  };
+}
+
+export function cookHome(overrides: Partial<CookHome> = {}): CookHome {
+  return {
+    last: [
+      {
+        mode: "now",
+        search_id: 5,
+        summary: "A meal now · Dinner for 1 · Quick (30 min) · + chickpeas (could buy)",
+        answers: { schema_version: 1, mode: "now", goals: ["quick"], time_limit_minutes: 30, pantry: [], extras: [{ ingredient_id: 7, status: "could_buy" }], allow_llm: true },
+        extras: [{ ingredient_id: 7, name: "chickpeas", status: "could_buy" }],
+      },
+    ],
+    today: null,
+    favorites: [{ recipe_id: 11, version_id: 21, title: "Everyday chicken curry", dish_category: "curry" }],
+    favorites_count: 1,
+    later: [],
+    later_count: 0,
+    portions: 2,
+    portion_size: "normal",
+    ...overrides,
+  };
+}
+
+export function lot(overrides: Partial<InventoryLot> = {}): InventoryLot {
+  return {
+    id: 31,
+    ingredient_id: 1,
+    name: "chicken thigh, boneless skinless",
+    product_id: null,
+    quantity: "907.185",
+    unit: "g",
+    display: "2 lb",
+    location: "fridge",
+    acquired_on: "2026-10-09",
+    opened_on: null,
+    expires_on: null,
+    expiry_is_estimate: true,
+    status: "active",
+    notes: null,
+    created_at: "2026-10-09T12:00:00Z",
+    quantity_is_estimate: false,
+    container: null,
+    state: "allowed",
+    has_versions: false,
+    ...overrides,
+  };
+}
+
+type FormFixture = AddOptions["forms"][number];
+const NO_UNITS: FormFixture["custom_units"] = [];
+
+/** GET /ingredients/{id}/add-options for frozen cauliflower: two forms, each with its package sizes. */
+export function cauliflowerOptions(): AddOptions {
+  return {
+    ingredient_id: 61,
+    name: "cauliflower, frozen",
+    state: "allowed",
+    message: null,
+    versions: null,
+    food: "Cauliflower",
+    selected_form: "frozen",
+    forms: [
+      {
+        form: "fresh",
+        label: "Fresh head",
+        ingredient_id: 60,
+        name: "cauliflower",
+        location: "fridge",
+        state: "allowed",
+        presets: [
+          { key: "small", label: "small head (about 1.5 lb)", quantity: "680.389", unit: "g", container: "head", default: false, is_estimate: true },
+          { key: "medium", label: "medium head (about 2 lb)", quantity: "907.185", unit: "g", container: "head", default: true, is_estimate: true },
+        ],
+        custom_units: NO_UNITS,
+      },
+      {
+        form: "frozen",
+        label: "Frozen florets",
+        ingredient_id: 61,
+        name: "cauliflower, frozen",
+        location: "freezer",
+        state: "allowed",
+        presets: [
+          { key: "10oz", label: "10 oz bag", quantity: "283.495", unit: "g", container: "bag", default: false, is_estimate: true },
+          { key: "12oz", label: "12 oz bag", quantity: "340.194", unit: "g", container: "bag", default: true, is_estimate: true },
+          { key: "16oz", label: "16 oz bag", quantity: "453.592", unit: "g", container: "bag", default: false, is_estimate: true },
+        ],
+        custom_units: [
+          { unit: "lb", label: "lb", step: "0.25", start: "0.75" },
+          { unit: "oz", label: "oz", step: "1", start: "12" },
+        ],
+      },
+    ],
+  };
+}
+
+/** Pepperoni: held, with its versions (J4). */
+export function pepperoniOptions(): AddOptions {
+  return {
+    ingredient_id: 70,
+    name: "pepperoni",
+    state: "held",
+    message: "Pepperoni is held: it may contain beef. Pick the version on its label.",
+    food: null,
+    selected_form: "as_is",
+    forms: [{ form: "as_is", label: "pepperoni", ingredient_id: 70, name: "pepperoni", location: "fridge", state: "held", presets: [], custom_units: NO_UNITS }],
+    versions: {
+      question: "Which pepperoni is it?",
+      guidance: "Check the label: the ingredients list says which meats it has.",
+      choices: [
+        { key: "pork_beef", label: "Pork + beef", ingredient_id: 71, name: "pepperoni, pork and beef", state: "excluded", note: "Off your list: it contains beef", nutrition_estimated: false },
+        { key: "pork", label: "Pork only", ingredient_id: 72, name: "pepperoni, pork", state: "capped", note: "Allowed; counts toward your limit for pork as a meal component (1 meal a week)", nutrition_estimated: true },
+        { key: "turkey", label: "Turkey", ingredient_id: 73, name: "pepperoni, turkey", state: "allowed", note: "Allowed", nutrition_estimated: false },
+        { key: "chicken", label: "Chicken", ingredient_id: 74, name: "pepperoni, chicken", state: "allowed", note: "Allowed", nutrition_estimated: true },
+        { key: "not_sure", label: "Not sure", ingredient_id: null, name: null, state: "held", note: "Stays held until you check the label", nutrition_estimated: false },
+      ],
+    },
+  };
+}
+
+export function turkeyPepperoniOptions(): AddOptions {
+  return {
+    ingredient_id: 73,
+    name: "pepperoni, turkey",
+    state: "allowed",
+    message: null,
+    versions: null,
+    food: null,
+    selected_form: "as_is",
+    forms: [
+      {
+        form: "as_is",
+        label: "pepperoni, turkey",
+        ingredient_id: 73,
+        name: "pepperoni, turkey",
+        location: "fridge",
+        state: "allowed",
+        presets: [
+          { key: "5oz", label: "5 oz pack", quantity: "141.748", unit: "g", container: "pack", default: true, is_estimate: true },
+          { key: "8oz", label: "8 oz pack", quantity: "226.796", unit: "g", container: "pack", default: false, is_estimate: true },
+        ],
+        custom_units: [{ unit: "oz", label: "oz", step: "1", start: "5" }],
+      },
+    ],
+  };
+}
+
+export function batchDetail(overrides: Partial<BatchDetail> = {}): BatchDetail {
+  return {
+    id: 44,
+    plan_id: 9,
+    status: "planned",
+    cook_on: "2026-10-10",
+    portions: 1,
+    portions_to_freeze: 0,
+    portion_size: "normal",
+    planned_minutes: 30,
+    meals: [],
+    lines: [{ ingredient_id: 1, name: "chicken thigh, boneless skinless", display: "6 oz", preparation: "cubed", optional: false, adjustment: null } as BatchDetail["lines"][number]],
+    package_notes: [],
+    freeze_notes: [],
+    recipe: recipe(),
+    pantry_notes: [{ ingredient_id: 1, name: "chicken thigh, boneless skinless", note: "uses 6 oz, about a quarter of your pack · 1.6 lb left after" }],
     ...overrides,
   };
 }

@@ -123,6 +123,8 @@ class PlanConstraints(_Frozen):
     always_have_ingredient_ids: frozenset[int] = frozenset()
     # Phase 2b: pantry items you turned off for this request ("not for this search"): their lots aren't used
     lots_off_ingredient_ids: frozenset[int] = frozenset()
+    # ... and the exact lots of them you had then: Mark cooked never takes from these (later lots are fine)
+    lots_off_lot_ids: frozenset[int] = frozenset()
     # Phase 2b: a meal is this many equal portions from one batch; calorie and protein limits are for your
     # portion. Used by one-meal plans from step 2b.3a; the solver takes it from step 2b.5.
     household_size: int = Field(default=1, ge=1, le=8)
@@ -223,6 +225,7 @@ class PlanConstraints(_Frozen):
             "favorite_recipe_ids",
             "always_have_ingredient_ids",
             "lots_off_ingredient_ids",
+            "lots_off_lot_ids",
         ):
             data[key] = sorted(data[key])
         for cap in data["frequency_caps"]:

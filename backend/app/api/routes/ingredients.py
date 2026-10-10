@@ -8,8 +8,10 @@ from app.api.presenters import price_out
 from app.domain.enums import IngredientCategory, StorageLocation
 from app.domain.units import UnitKind
 from app.schemas.api import IngredientDetailOut, IngredientSearchHitOut, NutrientPer100gOut, UnitOut
+from app.schemas.inventory import AddOptionsOut
 from app.services import ingredients as service
 from app.services import suggestions
+from app.services.pantry_add import add_options
 
 router = APIRouter(prefix="/api/v1/ingredients", tags=["ingredients"])
 
@@ -93,6 +95,14 @@ def approve_suggested(name: str, body: ApproveIn, session: DbSession, user: Curr
     )
     session.commit()
     return ApprovedOut(name=name, ingredient_id=ingredient.id, created_ingredient=True)
+
+
+@router.get("/{ingredient_id}/add-options", response_model=AddOptionsOut)
+def get_add_options(ingredient_id: int, session: DbSession, user: CurrentUser) -> AddOptionsOut:
+    """What adding this item asks (step 2b.4): which version of a held item (J4), which form, and the common
+    package sizes for each form plus custom units (J5). Send the chosen form's ingredient id and a preset key
+    (or not_sure) to POST /inventory/bulk."""
+    return add_options(session, user.id, ingredient_id)
 
 
 @router.get("/{ingredient_id}", response_model=IngredientDetailOut)

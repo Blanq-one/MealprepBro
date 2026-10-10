@@ -37,5 +37,5 @@ export function BottomNav({ pathname }: { pathname: string }) {
 
 /** Question flows and cooking mode show a back arrow and progress dots instead of the tabs. */
 export function showsTabs(pathname: string): boolean {
-  return !["/login", "/welcome", "/settings/edit", "/cook/ask"].some((p) => pathname.startsWith(p));
+  return !["/login", "/welcome", "/settings/edit", "/cook/ask", "/cook/cooking"].some((p) => pathname.startsWith(p));
 }

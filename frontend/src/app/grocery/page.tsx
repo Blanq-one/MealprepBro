@@ -4,15 +4,14 @@ import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { useOnline } from "@/components/AppShell";
-import { GroceryChecklist, type ItemOverride } from "@/components/GroceryChecklist";
+import { useGroceryChecks } from "@/components/grocery/useGroceryChecks";
+import { GroceryChecklist } from "@/components/GroceryChecklist";
 import { Page } from "@/components/Page";
 import { ProblemNotice, SyncNote } from "@/components/Status";
 import { Segmented } from "@/components/ui/Segmented";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
-import { api } from "@/lib/api/client";
-import type { GroceryComplete, GroceryItem, GroceryItemPatch, GroceryList, PlanListItem } from "@/lib/api/types";
+import type { GroceryList, PlanListItem } from "@/lib/api/types";
 import { useApi } from "@/lib/hooks/useApi";
-import { appQueue } from "@/lib/offline/queue";
 
 type GroupBy = "store" | "category";
 
@@ -24,50 +23,8 @@ function Grocery() {
   const planId = requested ?? (current ? String(current.id) : null);
   const [groupBy, setGroupBy] = useState<GroupBy>("store");
   const list = useApi<GroceryList>(planId ? `/api/v1/plans/${planId}/grocery-list?group_by=${groupBy}` : null);
-  const [overrides, setOverrides] = useState<Record<number, ItemOverride>>({});
-  const [completing, setCompleting] = useState(false);
-  const [completed, setCompleted] = useState<GroceryComplete | null>(null);
-  const [error, setError] = useState<unknown>(null);
+  const { overrides, patch, done, completing, completed, error } = useGroceryChecks(list);
   const online = useOnline();
-
-  function patch(item: GroceryItem, changes: GroceryItemPatch) {
-    setOverrides((o) => ({
-      ...o,
-      [item.id]: {
-        ...o[item.id],
-        ...(changes.checked !== undefined ? { checked: changes.checked ?? false } : {}),
-        ...(changes.purchased_amount ? { purchased: `${changes.purchased_amount} ${changes.purchased_unit ?? ""}`.trim() } : {}),
-      },
-    }));
-    const queue = appQueue();
-    queue.enqueue({
-      method: "PATCH",
-      url: `/api/v1/grocery-items/${item.id}`,
-      body: changes as Record<string, unknown>,
-      label: `${changes.checked === false ? "Uncheck" : "Check off"} ${item.name}`,
-    });
-    void queue.replay().then((result) => {
-      if (result.sent > 0 && result.kept === 0) void list.reload().then(() => setOverrides({}));
-    });
-  }
-
-  async function done() {
-    if (!list.data) return;
-    setCompleting(true);
-    setError(null);
-    try {
-      const pending = await appQueue().replay();
-      if (pending.kept > 0) throw new Error("Some check-offs haven't synced yet. Try again when you're online.");
-      setCompleted(
-        await api<GroceryComplete>(`/api/v1/grocery-lists/${list.data.id}/complete`, { method: "POST", json: {} }),
-      );
-      await list.reload();
-    } catch (e) {
-      setError(e);
-    } finally {
-      setCompleting(false);
-    }
-  }
 
   if (plans.loading || (list.loading && !list.data)) return <Skeleton cards={3} label="Loading your grocery list" />;
   if (!planId) {
@@ -121,7 +78,7 @@ function Grocery() {
         </section>
       )}
       {!isDone ? (
-        <button type="button" className="btn btn-primary btn-block" onClick={done} disabled={completing || !online}>
+        <button type="button" className="btn btn-primary btn-block" onClick={() => void done()} disabled={completing || !online}>
           {completing ? "Saving…" : online ? "Done shopping" : "Done shopping (needs a connection)"}
         </button>
       ) : (

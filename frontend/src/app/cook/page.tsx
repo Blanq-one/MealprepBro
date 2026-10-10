@@ -1,34 +1,35 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { TodayCard } from "@/components/cook/TodayCard";
-import { Pottle } from "@/components/ui/Pottle";
+import { useOnline } from "@/components/AppShell";
+import { CookHomeView } from "@/components/cook/CookHome";
+import type { CookAnswers, CookHome } from "@/lib/api/types";
+import { savePending } from "@/lib/cook/answers";
 import { partOfDay } from "@/lib/format/dates";
+import { useApi } from "@/lib/hooks/useApi";
 
-import styles from "./cook.module.css";
-
-// Cook home (C0). Until step 2b.4 adds "A meal now" and "Meal prep", it shows the Today card and the way to
-// your existing plan view.
-export default function CookHome() {
+// C0 Cook home (FLOW_SPEC §7): A meal now and Meal prep first, then Same as last time, Today and Saved.
+export default function CookHomePage() {
   const [greeting, setGreeting] = useState("Hi");
   useEffect(() => setGreeting(partOfDay()), []);
+  const home = useApi<CookHome>("/api/v1/cook/home");
+  const online = useOnline();
+  const router = useRouter();
   return (
-    <>
-      <header className={styles.greeting}>
-        <Pottle state="idle" size={32} />
-        <h1 className={styles.title}>{greeting}! What are we making?</h1>
-      </header>
-      <TodayCard />
-      <section className={styles.links} aria-label="Plans">
-        <Link href="/plan/" className="btn btn-block">
-          Your plans
-        </Link>
-        <Link href="/plan/new/" className="btn btn-block">
-          Plan a week
-        </Link>
-      </section>
-    </>
+    <CookHomeView
+      greeting={greeting}
+      home={home.data}
+      loading={home.loading}
+      error={home.error}
+      online={online}
+      onRetry={() => void home.reload()}
+      onSameAgain={(last) => {
+        // those exact answers again, with today's pantry (instant when nothing changed)
+        const run = savePending(last.answers as unknown as CookAnswers);
+        router.push(`/cook/results/?run=${run}`);
+      }}
+    />
   );
 }

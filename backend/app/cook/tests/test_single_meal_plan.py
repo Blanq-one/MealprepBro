@@ -129,3 +129,31 @@ def test_a_recipe_your_rules_rule_out_is_refused(api, seeded_db):
     second = cook(api, version_id=pork.id, slot="dinner")
     assert second.status_code == 422 and "allowance" in second.json()["detail"]
     assert cook(api, version_id=999999).status_code == 404
+
+
+def test_mark_cooked_never_takes_from_the_items_you_turned_off(api, seeded_db):
+    """J3: the thighs you turned off stay untouched; thighs bought after Cook this are used."""
+    reserved = add_stock(seeded_db, "chicken-thigh-boneless-skinless", 1000)
+    events = meal_now(
+        api, slot="dinner", pantry=[{"ingredient_id": reserved.ingredient_id, "include": False}]
+    )
+    gravy = card(events, "Chicken and spinach gravy")
+    out = cook(api, version_id=gravy["version_id"], search_id=final(events)["search_id"]).json()
+    first = api.post(f"/api/v1/cook-batches/{out['batch_id']}/cooked", json={}).json()
+    thighs = next(d for d in first["deductions"] if d["ingredient_id"] == reserved.ingredient_id)
+    assert thighs["shortfall"] is not None  # nothing else to take from: reported, never an error
+    seeded_db.refresh(reserved)
+    assert reserved.quantity == Decimal(1000)
+
+    # the same search again, then a pack bought for it: Mark cooked takes the new pack only
+    events = meal_now(
+        api, slot="dinner", pantry=[{"ingredient_id": reserved.ingredient_id, "include": False}]
+    )
+    out = cook(api, version_id=gravy["version_id"], search_id=final(events)["search_id"]).json()
+    bought = add_stock(seeded_db, "chicken-thigh-boneless-skinless", 700)
+    second = api.post(f"/api/v1/cook-batches/{out['batch_id']}/cooked", json={}).json()
+    taken = next(d for d in second["deductions"] if d["ingredient_id"] == reserved.ingredient_id)
+    assert taken["shortfall"] is None
+    seeded_db.refresh(reserved)
+    seeded_db.refresh(bought)
+    assert reserved.quantity == Decimal(1000) and bought.quantity < Decimal(700)

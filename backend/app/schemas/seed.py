@@ -293,3 +293,95 @@ class SeedRecipe(_Strict):
                     f"doneness check for '{step.doneness_check_for}', which is not an ingredient"
                 )
         return self
+
+
+# ---------------- pantry catalog (Phase 2b, step 2b.4: decisions J2, J4, J5) ----------------
+class CulinaryGroup(_Strict):
+    """Vegetables or herbs that can stand in for each other (J2). Swaps happen only inside a group."""
+
+    key: str = Field(pattern=r"^[a-z0-9_]+$")
+    label: str
+    members: list[str] = Field(min_length=1)  # ingredient slugs
+
+
+class FoodForm(_Strict):
+    form: Literal["fresh", "frozen", "canned", "dried"]
+    label: str
+    ingredient: str  # slug: each form is its own ingredient (nutrition and shelf life differ)
+
+
+class Food(_Strict):
+    """One food you can add in more than one form (J5)."""
+
+    key: str = Field(pattern=r"^[a-z0-9_]+$")
+    label: str
+    forms: list[FoodForm] = Field(min_length=2)
+
+
+class VersionChoice(_Strict):
+    key: str = Field(pattern=r"^[a-z0-9_]+$")
+    label: str
+    ingredient: str | None  # None = "Not sure": the item stays the generic, held one
+    nutrition_estimated: bool = False  # USDA has no exact entry for this version
+
+
+class HeldVersions(_Strict):
+    """A held item that comes in versions (J4): the question, the label guidance and the choices."""
+
+    generic: str  # the held ingredient's slug
+    question: str
+    guidance: str
+    choices: list[VersionChoice] = Field(min_length=2)
+
+    @model_validator(mode="after")
+    def _not_sure_last(self) -> Self:
+        if [c.ingredient for c in self.choices].count(None) != 1 or self.choices[-1].ingredient is not None:
+            raise ValueError(f"{self.generic}: exactly one 'Not sure' choice, and it comes last")
+        return self
+
+
+class PresetOption(_Strict):
+    key: str = Field(pattern=r"^[a-z0-9_]+$")
+    label: str  # "16 oz bag"
+    amount: Decimal = Field(gt=0)
+    unit: str  # any unit the ingredient understands (oz, lb, fl_oz, count, can, clove, …)
+    container: str | None = None  # "bag": the recipe page says "about half your bag" (J6)
+    default: bool = False  # the most common size, used for "Not sure"
+
+
+class IngredientPresets(_Strict):
+    ingredient: str
+    options: list[PresetOption] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def _one_default(self) -> Self:
+        if sum(1 for o in self.options if o.default) != 1:
+            raise ValueError(f"{self.ingredient}: exactly one default preset")
+        keys = [o.key for o in self.options]
+        if len(set(keys)) != len(keys):
+            raise ValueError(f"{self.ingredient}: duplicate preset keys")
+        return self
+
+
+class PantryCatalogFile(_Strict):
+    """app/seed/data/pantry_catalog.json, written by scripts/build_pantry_catalog.py."""
+
+    schema_version: Literal[1]
+    presets_are_estimates: bool
+    culinary_groups: list[CulinaryGroup]
+    foods: list[Food]
+    versions: list[HeldVersions]
+    presets: list[IngredientPresets]
+
+    @model_validator(mode="after")
+    def _unique(self) -> Self:
+        grouped = [m for g in self.culinary_groups for m in g.members]
+        if dupes := sorted({m for m in grouped if grouped.count(m) > 1}):
+            raise ValueError(f"in more than one culinary group: {dupes}")
+        formed = [f.ingredient for food in self.foods for f in food.forms]
+        if dupes := sorted({m for m in formed if formed.count(m) > 1}):
+            raise ValueError(f"a form of more than one food: {dupes}")
+        preset = [p.ingredient for p in self.presets]
+        if dupes := sorted({m for m in preset if preset.count(m) > 1}):
+            raise ValueError(f"presets listed twice: {dupes}")
+        return self

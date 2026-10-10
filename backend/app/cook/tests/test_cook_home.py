@@ -30,6 +30,8 @@ def test_a_first_visit_has_nothing_to_repeat_no_plan_and_nothing_saved(api):
         "favorites_count": 0,
         "later": [],
         "later_count": 0,
+        "portions": 1,  # saved cards open for your household (step 2b.4)
+        "portion_size": "normal",
     }
 
 

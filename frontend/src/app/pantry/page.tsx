@@ -1,15 +1,18 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
+import { useState } from "react";
 
 import { useOnline } from "@/components/AppShell";
 import { NLQuickAdd } from "@/components/NLQuickAdd";
-import { AmountPicker } from "@/components/pantry/AmountPicker";
+import { AddFlow } from "@/components/pantry/AddFlow";
+import { CorrectAmountSheet } from "@/components/pantry/CorrectAmountSheet";
+import { IngredientSearch } from "@/components/pantry/IngredientSearch";
+import { LotBadges } from "@/components/pantry/LotBadges";
+import { VersionSheet } from "@/components/pantry/VersionSheet";
 import { ProblemNotice, SyncNote } from "@/components/Status";
 import { Skeleton } from "@/components/ui/States";
 import { api } from "@/lib/api/client";
-import type { IngredientHit, InventoryLot, InventoryLotIn, QuickPick, StorageLocation } from "@/lib/api/types";
-import { daysUntil, shortDate } from "@/lib/format/dates";
+import type { InventoryLot, QuickPick, StorageLocation } from "@/lib/api/types";
 import { useApi } from "@/lib/hooks/useApi";
 
 import styles from "./pantry.module.css";
@@ -19,129 +22,18 @@ const LOCATIONS: { key: StorageLocation; label: string }[] = [
   { key: "freezer", label: "Freezer" },
   { key: "pantry", label: "Pantry" },
 ];
-const UNITS = ["g", "kg", "oz", "lb", "ml", "l", "cup", "tbsp", "tsp", "count"];
-const USE_SOON_DAYS = 3;
 
-function ExpiryBadge({ lot }: { lot: InventoryLot }) {
-  if (!lot.expires_on) return null;
-  const days = daysUntil(lot.expires_on);
-  const estimate = lot.expiry_is_estimate ? " (est.)" : "";
-  if (days < 0) return <span className="badge badge-danger">Past use-by {shortDate(lot.expires_on)}</span>;
-  if (days <= USE_SOON_DAYS) return <span className="badge badge-warn">Use soon: {shortDate(lot.expires_on)}{estimate}</span>;
-  return <span className="badge">Use by {shortDate(lot.expires_on)}{estimate}</span>;
-}
-
-async function addLots(items: InventoryLotIn[], source: "quick_add" | "parse"): Promise<InventoryLot[]> {
-  return api<InventoryLot[]>("/api/v1/inventory/bulk", { method: "POST", json: { items, source } });
-}
-
-function SearchAdd({ onAdded }: { onAdded: () => void }) {
-  const [query, setQuery] = useState("");
-  const [hits, setHits] = useState<IngredientHit[]>([]);
-  const [picked, setPicked] = useState<IngredientHit | null>(null);
-  const [amount, setAmount] = useState("");
-  const [unit, setUnit] = useState("lb");
-  const [location, setLocation] = useState<StorageLocation>("fridge");
-  const [error, setError] = useState<unknown>(null);
-  const [busy, setBusy] = useState(false);
-
-  async function search(value: string) {
-    setQuery(value);
-    setPicked(null);
-    if (value.trim().length < 2) {
-      setHits([]);
-      return;
-    }
-    try {
-      setHits(await api<IngredientHit[]>(`/api/v1/ingredients?q=${encodeURIComponent(value.trim())}&limit=6`));
-    } catch (e) {
-      setError(e);
-    }
-  }
-
-  async function add(event: FormEvent) {
-    event.preventDefault();
-    if (!picked || !/^\d+(\.\d+)?$/.test(amount.trim())) return;
-    setBusy(true);
-    setError(null);
-    try {
-      await addLots(
-        [{ ingredient_id: picked.id, quantity: amount.trim(), unit, location, expiry_is_estimate: true }],
-        "quick_add",
-      );
-      setQuery("");
-      setHits([]);
-      setPicked(null);
-      setAmount("");
-      onAdded();
-    } catch (e) {
-      setError(e);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <form className="card" onSubmit={add} aria-label="Add by name">
-      <h2>Add by name</h2>
-      <label htmlFor="search" className="sr-only">
-        Ingredient
-      </label>
-      <input id="search" placeholder="Search: chicken, rice, eggs…" value={query} onChange={(e) => void search(e.target.value)} />
-      {!picked && hits.length > 0 && (
-        <ul className="list">
-          {hits.map((hit) => (
-            <li key={hit.id}>
-              <button
-                type="button"
-                className={`btn btn-block ${styles.hit}`}
-                disabled={hit.status === "excluded"}
-                onClick={() => {
-                  setPicked(hit);
-                  setQuery(hit.name);
-                }}
-              >
-                {hit.name}
-                {hit.status !== "allowed" && <span className="badge"> {hit.status}</span>}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-      {picked && (
-        <>
-          <div className="row" style={{ marginTop: 8 }}>
-            <input aria-label="Amount" inputMode="decimal" placeholder="Amount" value={amount} onChange={(e) => setAmount(e.target.value)} />
-            <select aria-label="Unit" value={unit} onChange={(e) => setUnit(e.target.value)} style={{ width: "6.5em" }}>
-              {UNITS.map((u) => (
-                <option key={u}>{u}</option>
-              ))}
-            </select>
-            <select aria-label="Where" value={location} onChange={(e) => setLocation(e.target.value as StorageLocation)} style={{ width: "7em" }}>
-              {LOCATIONS.map((l) => (
-                <option key={l.key} value={l.key}>
-                  {l.label.toLowerCase()}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button type="submit" className="btn btn-primary btn-block" disabled={busy || !/^\d+(\.\d+)?$/.test(amount.trim())} style={{ marginTop: 8 }}>
-            Add {picked.name}
-          </button>
-        </>
-      )}
-      <ProblemNotice error={error} />
-    </form>
-  );
-}
-
-// P0 Pantry (FLOW_SPEC §9): the Phase 2 inventory screen; a quick pick opens the amount picker (P1).
+// P0 Pantry (FLOW_SPEC §9): items by location. Adding (a quick pick or a typed name) opens the add flow
+// (J4–J5: version, form, package size, Custom or Not sure); an estimated amount can be corrected, and a held
+// item that comes in versions can be set to the version on its label.
 export default function PantryPage() {
   const lots = useApi<InventoryLot[]>("/api/v1/inventory");
   const picks = useApi<QuickPick[]>("/api/v1/inventory/quick-picks");
   const [error, setError] = useState<unknown>(null);
   const [added, setAdded] = useState<string | null>(null);
-  const [picking, setPicking] = useState<QuickPick | null>(null);
+  const [adding, setAdding] = useState<{ id: number; name: string } | null>(null);
+  const [correcting, setCorrecting] = useState<InventoryLot | null>(null);
+  const [versioning, setVersioning] = useState<InventoryLot | null>(null);
   const online = useOnline();
 
   async function discard(lot: InventoryLot) {
@@ -165,27 +57,50 @@ export default function PantryPage() {
         </p>
       )}
 
-      {picks.data && picks.data.length > 0 && (
-        <section className="card" aria-label="Quick add">
-          <h2>Quick add</h2>
-          <div className={styles.chips}>
-            {picks.data.map((pick) => (
-              <button key={`${pick.ingredient_id}-${pick.product_id ?? 0}`} type="button" className="btn btn-small" onClick={() => setPicking(pick)}>
-                + {pick.name}
-                <span className="muted small"> {pick.display}</span>
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
+      <section className="card" aria-label="Add">
+        <IngredientSearch label="Add by name" onPick={(hit) => setAdding({ id: hit.id, name: hit.name })} disabled={!online} />
+        {picks.data && picks.data.length > 0 && (
+          <>
+            <h2 className={styles.quickTitle}>Quick add</h2>
+            <div className={styles.chips}>
+              {picks.data.map((pick) => (
+                <button key={`${pick.ingredient_id}-${pick.product_id ?? 0}`} type="button" className="btn btn-small" disabled={!online} onClick={() => setAdding({ id: pick.ingredient_id, name: pick.name })}>
+                  + {pick.name}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </section>
 
-      <AmountPicker
-        pick={picking}
+      <AddFlow
+        ingredient={adding}
+        context="pantry"
         online={online}
-        onClose={() => setPicking(null)}
+        onClose={() => setAdding(null)}
         onAdded={(out) => {
-          setPicking(null);
-          setAdded(`Added ${out.map((l) => `${l.name} (${l.display})`).join(", ")}`);
+          setAdding(null);
+          setAdded(`Added ${out.map((l) => `${l.name} (${l.display}${l.quantity_is_estimate ? ", estimated" : ""})`).join(", ")}`);
+          void lots.reload();
+        }}
+      />
+      <CorrectAmountSheet
+        lot={correcting}
+        online={online}
+        onClose={() => setCorrecting(null)}
+        onChanged={(lot) => {
+          setCorrecting(null);
+          setAdded(`${lot.name}: now ${lot.display}`);
+          void lots.reload();
+        }}
+      />
+      <VersionSheet
+        lot={versioning}
+        online={online}
+        onClose={() => setVersioning(null)}
+        onChanged={(lot) => {
+          setVersioning(null);
+          setAdded(`Now ${lot.name} (${lot.display})`);
           void lots.reload();
         }}
       />
@@ -196,7 +111,6 @@ export default function PantryPage() {
           void lots.reload();
         }}
       />
-      <SearchAdd onAdded={() => void lots.reload()} />
 
       {lots.loading && !lots.data && <Skeleton cards={3} label="Loading your pantry" />}
       {lots.data &&
@@ -214,10 +128,21 @@ export default function PantryPage() {
                     <div>
                       <strong>{lot.name}</strong> <span>{lot.display}</span>
                       <div className="row" style={{ flexWrap: "wrap", marginTop: 2 }}>
-                        {lot.opened_on && <span className="badge badge-accent">Open package</span>}
-                        <ExpiryBadge lot={lot} />
+                        <LotBadges lot={lot} />
                       </div>
                       {lot.notes && <p className="small muted">{lot.notes}</p>}
+                      <div className="row" style={{ flexWrap: "wrap", marginTop: 4 }}>
+                        {lot.quantity_is_estimate && (
+                          <button type="button" className="btn btn-small" disabled={!online} onClick={() => setCorrecting(lot)}>
+                            Correct amount
+                          </button>
+                        )}
+                        {lot.state === "held" && lot.has_versions && (
+                          <button type="button" className="btn btn-small" disabled={!online} onClick={() => setVersioning(lot)}>
+                            Which version?
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <button type="button" className="btn btn-small btn-danger" onClick={() => void discard(lot)} aria-label={`Throw out ${lot.name}`}>
                       Toss

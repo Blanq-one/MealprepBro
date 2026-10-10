@@ -12,10 +12,12 @@ export function MarkCooked({
   batchId,
   status,
   onCooked,
+  disabled = false,
 }: {
   batchId: number;
   status: string;
   onCooked?: (result: Cooked) => void;
+  disabled?: boolean;
 }) {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Cooked | null>(null);
@@ -40,7 +42,7 @@ export function MarkCooked({
   return (
     <div>
       {!done && !alreadyCooked && (
-        <button type="button" className="btn btn-primary btn-block" onClick={cook} disabled={busy}>
+        <button type="button" className="btn btn-primary btn-block" onClick={cook} disabled={busy || disabled}>
           {busy ? "Updating inventory…" : "Mark cooked"}
         </button>
       )}

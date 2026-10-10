@@ -1,6 +1,84 @@
 {
  "components": {
   "schemas": {
+   "AddOptionsOut": {
+    "description": "GET /ingredients/{id}/add-options: what adding this item asks. A held item that comes in versions asks\nwhich version first (then ask again for the chosen version); then the form; then the amount.",
+    "properties": {
+     "food": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Food"
+     },
+     "forms": {
+      "items": {
+       "$ref": "#/components/schemas/FormOut"
+      },
+      "title": "Forms",
+      "type": "array"
+     },
+     "ingredient_id": {
+      "title": "Ingredient Id",
+      "type": "integer"
+     },
+     "message": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Message"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "selected_form": {
+      "title": "Selected Form",
+      "type": "string"
+     },
+     "state": {
+      "enum": [
+       "allowed",
+       "capped",
+       "held",
+       "excluded"
+      ],
+      "title": "State",
+      "type": "string"
+     },
+     "versions": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/VersionsOut"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "required": [
+     "ingredient_id",
+     "name",
+     "state",
+     "message",
+     "versions",
+     "food",
+     "forms",
+     "selected_form"
+    ],
+    "title": "AddOptionsOut",
+    "type": "object"
+   },
    "AlwaysHaveOptionOut": {
     "description": "An ingredient you can mark as Always have (S2); common staples come first.",
     "properties": {
@@ -163,6 +241,13 @@
        "type": "string"
       },
       "title": "Package Notes",
+      "type": "array"
+     },
+     "pantry_notes": {
+      "items": {
+       "$ref": "#/components/schemas/PantryNoteOut"
+      },
+      "title": "Pantry Notes",
       "type": "array"
      },
      "plan_id": {
@@ -384,7 +469,7 @@
    },
    "BulkItemIn": {
     "additionalProperties": false,
-    "description": "One lot to add. The amount is given one way: `quantity` + `unit` (any unit the ingredient understands),\nan `amount_option` of its quick pick (Full, \u00be, \u00bd or \u00bc of `product_id`'s package, else its usual one), or a\n`custom_amount` + `custom_unit` from the quick pick's custom units. The server converts it.",
+    "description": "One lot to add. The amount is given one way: `quantity` + `unit` (any unit the ingredient understands),\nan `amount_option` of its quick pick (Full, \u00be, \u00bd or \u00bc of `product_id`'s package, else its usual one), a\n`custom_amount` + `custom_unit` from the quick pick's custom units, a package `preset` key (step 2b.4),\nor `not_sure` (the most common package, with the lot marked as an estimate). The server converts it.",
     "properties": {
      "acquired_on": {
       "anyOf": [
@@ -468,6 +553,11 @@
      "location": {
       "$ref": "#/components/schemas/StorageLocation"
      },
+     "not_sure": {
+      "default": false,
+      "title": "Not Sure",
+      "type": "boolean"
+     },
      "notes": {
       "anyOf": [
        {
@@ -491,6 +581,19 @@
        }
       ],
       "title": "Opened On"
+     },
+     "preset": {
+      "anyOf": [
+       {
+        "maxLength": 40,
+        "minLength": 1,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Preset"
      },
      "product_id": {
       "anyOf": [
@@ -923,6 +1026,15 @@
       "title": "Later Count",
       "type": "integer"
      },
+     "portion_size": {
+      "$ref": "#/components/schemas/PortionSize",
+      "default": "normal"
+     },
+     "portions": {
+      "default": 1,
+      "title": "Portions",
+      "type": "integer"
+     },
      "today": {
       "anyOf": [
        {
@@ -1096,7 +1208,7 @@
      },
      "suggestions": {
       "items": {
-       "$ref": "#/components/schemas/app__schemas__cook__SuggestionOut"
+       "$ref": "#/components/schemas/RecipeSuggestionOut"
       },
       "title": "Suggestions",
       "type": "array"
@@ -1333,7 +1445,7 @@
       "anyOf": [
        {
         "items": {
-         "$ref": "#/components/schemas/app__schemas__cook__SuggestionOut"
+         "$ref": "#/components/schemas/RecipeSuggestionOut"
         },
         "type": "array"
        },
@@ -1814,6 +1926,16 @@
        }
       ],
       "title": "Note"
+     },
+     "versions": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/VersionsOut"
+       },
+       {
+        "type": "null"
+       }
+      ]
      }
     },
     "required": [
@@ -2003,6 +2125,66 @@
      "msg"
     ],
     "title": "FieldErrorOut",
+    "type": "object"
+   },
+   "FormOut": {
+    "description": "One form of a food (fresh, frozen, canned, dried), each its own ingredient.",
+    "properties": {
+     "custom_units": {
+      "items": {
+       "$ref": "#/components/schemas/CustomUnitOut"
+      },
+      "title": "Custom Units",
+      "type": "array"
+     },
+     "form": {
+      "title": "Form",
+      "type": "string"
+     },
+     "ingredient_id": {
+      "title": "Ingredient Id",
+      "type": "integer"
+     },
+     "label": {
+      "title": "Label",
+      "type": "string"
+     },
+     "location": {
+      "$ref": "#/components/schemas/StorageLocation"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "presets": {
+      "items": {
+       "$ref": "#/components/schemas/PresetOut"
+      },
+      "title": "Presets",
+      "type": "array"
+     },
+     "state": {
+      "enum": [
+       "allowed",
+       "capped",
+       "held",
+       "excluded"
+      ],
+      "title": "State",
+      "type": "string"
+     }
+    },
+    "required": [
+     "form",
+     "label",
+     "ingredient_id",
+     "name",
+     "location",
+     "state",
+     "presets",
+     "custom_units"
+    ],
+    "title": "FormOut",
     "type": "object"
    },
    "FreezeOut": {
@@ -3184,6 +3366,17 @@
       ],
       "title": "Acquired On"
      },
+     "container": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Container"
+     },
      "created_at": {
       "format": "date-time",
       "title": "Created At",
@@ -3207,6 +3400,11 @@
      },
      "expiry_is_estimate": {
       "title": "Expiry Is Estimate",
+      "type": "boolean"
+     },
+     "has_versions": {
+      "default": false,
+      "title": "Has Versions",
       "type": "boolean"
      },
      "id": {
@@ -3261,6 +3459,22 @@
      },
      "quantity": {
       "title": "Quantity",
+      "type": "string"
+     },
+     "quantity_is_estimate": {
+      "default": false,
+      "title": "Quantity Is Estimate",
+      "type": "boolean"
+     },
+     "state": {
+      "default": "allowed",
+      "enum": [
+       "allowed",
+       "capped",
+       "held",
+       "excluded"
+      ],
+      "title": "State",
       "type": "string"
      },
      "status": {
@@ -3341,6 +3555,20 @@
       ],
       "title": "Opened On"
      },
+     "preset": {
+      "anyOf": [
+       {
+        "maxLength": 40,
+        "minLength": 1,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "a package preset key: the lot holds that amount",
+      "title": "Preset"
+     },
      "quantity": {
       "anyOf": [
        {
@@ -3354,11 +3582,53 @@
         "type": "null"
        }
       ],
-      "description": "counted quantity in the lot's base unit",
+      "description": "counted quantity in the lot's base unit (or in `unit`)",
       "title": "Quantity"
+     },
+     "unit": {
+      "anyOf": [
+       {
+        "maxLength": 20,
+        "minLength": 1,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "the unit of `quantity`; the server converts it",
+      "title": "Unit"
      }
     },
     "title": "InventoryLotPatch",
+    "type": "object"
+   },
+   "LastExtraOut": {
+    "description": "An item you added last time, for the \"From last time\" chips (never pre-selected).",
+    "properties": {
+     "ingredient_id": {
+      "title": "Ingredient Id",
+      "type": "integer"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "status": {
+      "enum": [
+       "have",
+       "could_buy"
+      ],
+      "title": "Status",
+      "type": "string"
+     }
+    },
+    "required": [
+     "ingredient_id",
+     "name",
+     "status"
+    ],
+    "title": "LastExtraOut",
     "type": "object"
    },
    "LastSearchOut": {
@@ -3367,6 +3637,13 @@
       "additionalProperties": true,
       "title": "Answers",
       "type": "object"
+     },
+     "extras": {
+      "items": {
+       "$ref": "#/components/schemas/LastExtraOut"
+      },
+      "title": "Extras",
+      "type": "array"
      },
      "mode": {
       "enum": [
@@ -3829,6 +4106,29 @@
     ],
     "title": "NutritionPriority",
     "type": "string"
+   },
+   "PantryNoteOut": {
+    "properties": {
+     "ingredient_id": {
+      "title": "Ingredient Id",
+      "type": "integer"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "note": {
+      "title": "Note",
+      "type": "string"
+     }
+    },
+    "required": [
+     "ingredient_id",
+     "name",
+     "note"
+    ],
+    "title": "PantryNoteOut",
+    "type": "object"
    },
    "PantryToggle": {
     "additionalProperties": false,
@@ -4829,6 +5129,57 @@
     "title": "PrepAmount",
     "type": "object"
    },
+   "PresetOut": {
+    "description": "A common package size (an estimate): send its `key` as `preset` to POST /inventory/bulk.",
+    "properties": {
+     "container": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Container"
+     },
+     "default": {
+      "title": "Default",
+      "type": "boolean"
+     },
+     "is_estimate": {
+      "title": "Is Estimate",
+      "type": "boolean"
+     },
+     "key": {
+      "title": "Key",
+      "type": "string"
+     },
+     "label": {
+      "title": "Label",
+      "type": "string"
+     },
+     "quantity": {
+      "title": "Quantity",
+      "type": "string"
+     },
+     "unit": {
+      "title": "Unit",
+      "type": "string"
+     }
+    },
+    "required": [
+     "key",
+     "label",
+     "quantity",
+     "unit",
+     "container",
+     "default",
+     "is_estimate"
+    ],
+    "title": "PresetOut",
+    "type": "object"
+   },
    "PriceBasis": {
     "enum": [
      "per_package",
@@ -5492,6 +5843,118 @@
      "default_version"
     ],
     "title": "RecipeOut",
+    "type": "object"
+   },
+   "RecipeSuggestionOut": {
+    "description": "One recipe card (FLOW_SPEC \u00a75.3). Every number is code-computed, at the card's portions.",
+    "properties": {
+     "badges": {
+      "items": {
+       "enum": [
+        "favorite",
+        "saved",
+        "new",
+        "draft"
+       ],
+       "type": "string"
+      },
+      "title": "Badges",
+      "type": "array"
+     },
+     "could_buy": {
+      "items": {
+       "$ref": "#/components/schemas/CostLineOut"
+      },
+      "title": "Could Buy",
+      "type": "array"
+     },
+     "dish_category": {
+      "title": "Dish Category",
+      "type": "string"
+     },
+     "good_match": {
+      "title": "Good Match",
+      "type": "boolean"
+     },
+     "missing": {
+      "items": {
+       "$ref": "#/components/schemas/MissingLineOut"
+      },
+      "title": "Missing",
+      "type": "array"
+     },
+     "numbers": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Numbers",
+      "type": "array"
+     },
+     "portion_size": {
+      "$ref": "#/components/schemas/PortionSize"
+     },
+     "portions": {
+      "title": "Portions",
+      "type": "integer"
+     },
+     "portions_display": {
+      "title": "Portions Display",
+      "type": "string"
+     },
+     "recipe_id": {
+      "title": "Recipe Id",
+      "type": "integer"
+     },
+     "score": {
+      "title": "Score",
+      "type": "string"
+     },
+     "steps_ready": {
+      "title": "Steps Ready",
+      "type": "boolean"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     },
+     "uses": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Uses",
+      "type": "array"
+     },
+     "version_id": {
+      "title": "Version Id",
+      "type": "integer"
+     },
+     "why": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Why",
+      "type": "array"
+     }
+    },
+    "required": [
+     "version_id",
+     "recipe_id",
+     "title",
+     "dish_category",
+     "badges",
+     "steps_ready",
+     "portions",
+     "portion_size",
+     "portions_display",
+     "numbers",
+     "uses",
+     "could_buy",
+     "missing",
+     "why",
+     "score",
+     "good_match"
+    ],
+    "title": "RecipeSuggestionOut",
     "type": "object"
    },
    "RecipeVersionOut": {
@@ -6902,6 +7365,110 @@
     "title": "ValidationError",
     "type": "object"
    },
+   "VersionChoiceOut": {
+    "properties": {
+     "ingredient_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Ingredient Id"
+     },
+     "key": {
+      "title": "Key",
+      "type": "string"
+     },
+     "label": {
+      "title": "Label",
+      "type": "string"
+     },
+     "name": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Name"
+     },
+     "note": {
+      "title": "Note",
+      "type": "string"
+     },
+     "nutrition_estimated": {
+      "title": "Nutrition Estimated",
+      "type": "boolean"
+     },
+     "state": {
+      "enum": [
+       "allowed",
+       "capped",
+       "held",
+       "excluded"
+      ],
+      "title": "State",
+      "type": "string"
+     }
+    },
+    "required": [
+     "key",
+     "label",
+     "ingredient_id",
+     "name",
+     "state",
+     "note",
+     "nutrition_estimated"
+    ],
+    "title": "VersionChoiceOut",
+    "type": "object"
+   },
+   "VersionIn": {
+    "additionalProperties": false,
+    "description": "POST /inventory/{id}/version: this lot of a held item is the version on its label.",
+    "properties": {
+     "ingredient_id": {
+      "title": "Ingredient Id",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "ingredient_id"
+    ],
+    "title": "VersionIn",
+    "type": "object"
+   },
+   "VersionsOut": {
+    "properties": {
+     "choices": {
+      "items": {
+       "$ref": "#/components/schemas/VersionChoiceOut"
+      },
+      "title": "Choices",
+      "type": "array"
+     },
+     "guidance": {
+      "title": "Guidance",
+      "type": "string"
+     },
+     "question": {
+      "title": "Question",
+      "type": "string"
+     }
+    },
+    "required": [
+     "question",
+     "guidance",
+     "choices"
+    ],
+    "title": "VersionsOut",
+    "type": "object"
+   },
    "Weekday": {
     "enum": [
      "mon",
@@ -6990,118 +7557,6 @@
      "is_estimate"
     ],
     "title": "PriceOut",
-    "type": "object"
-   },
-   "app__schemas__cook__SuggestionOut": {
-    "description": "One recipe card (FLOW_SPEC \u00a75.3). Every number is code-computed, at the card's portions.",
-    "properties": {
-     "badges": {
-      "items": {
-       "enum": [
-        "favorite",
-        "saved",
-        "new",
-        "draft"
-       ],
-       "type": "string"
-      },
-      "title": "Badges",
-      "type": "array"
-     },
-     "could_buy": {
-      "items": {
-       "$ref": "#/components/schemas/CostLineOut"
-      },
-      "title": "Could Buy",
-      "type": "array"
-     },
-     "dish_category": {
-      "title": "Dish Category",
-      "type": "string"
-     },
-     "good_match": {
-      "title": "Good Match",
-      "type": "boolean"
-     },
-     "missing": {
-      "items": {
-       "$ref": "#/components/schemas/MissingLineOut"
-      },
-      "title": "Missing",
-      "type": "array"
-     },
-     "numbers": {
-      "items": {
-       "type": "string"
-      },
-      "title": "Numbers",
-      "type": "array"
-     },
-     "portion_size": {
-      "$ref": "#/components/schemas/PortionSize"
-     },
-     "portions": {
-      "title": "Portions",
-      "type": "integer"
-     },
-     "portions_display": {
-      "title": "Portions Display",
-      "type": "string"
-     },
-     "recipe_id": {
-      "title": "Recipe Id",
-      "type": "integer"
-     },
-     "score": {
-      "title": "Score",
-      "type": "string"
-     },
-     "steps_ready": {
-      "title": "Steps Ready",
-      "type": "boolean"
-     },
-     "title": {
-      "title": "Title",
-      "type": "string"
-     },
-     "uses": {
-      "items": {
-       "type": "string"
-      },
-      "title": "Uses",
-      "type": "array"
-     },
-     "version_id": {
-      "title": "Version Id",
-      "type": "integer"
-     },
-     "why": {
-      "items": {
-       "type": "string"
-      },
-      "title": "Why",
-      "type": "array"
-     }
-    },
-    "required": [
-     "version_id",
-     "recipe_id",
-     "title",
-     "dish_category",
-     "badges",
-     "steps_ready",
-     "portions",
-     "portion_size",
-     "portions_display",
-     "numbers",
-     "uses",
-     "could_buy",
-     "missing",
-     "why",
-     "score",
-     "good_match"
-    ],
-    "title": "SuggestionOut",
     "type": "object"
    },
    "app__schemas__inventory__SuggestionOut": {
@@ -7883,6 +8338,49 @@
     ]
    }
   },
+  "/api/v1/ingredients/{ingredient_id}/add-options": {
+   "get": {
+    "description": "What adding this item asks (step 2b.4): which version of a held item (J4), which form, and the common\npackage sizes for each form plus custom units (J5). Send the chosen form's ingredient id and a preset key\n(or not_sure) to POST /inventory/bulk.",
+    "operationId": "get_add_options_api_v1_ingredients__ingredient_id__add_options_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "ingredient_id",
+      "required": true,
+      "schema": {
+       "title": "Ingredient Id",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AddOptionsOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Get Add Options",
+    "tags": [
+     "ingredients"
+    ]
+   }
+  },
   "/api/v1/inventory": {
    "get": {
     "operationId": "list_inventory_api_v1_inventory_get",
@@ -8182,6 +8680,59 @@
      }
     },
     "summary": "Discard Lot",
+    "tags": [
+     "inventory"
+    ]
+   }
+  },
+  "/api/v1/inventory/{item_id}/version": {
+   "post": {
+    "description": "This lot of a held item is the version on its label (step 2b.4, J4): a new lot of that version takes\nits amount, place and dates. The generic held item stays held.",
+    "operationId": "set_version_api_v1_inventory__item_id__version_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "item_id",
+      "required": true,
+      "schema": {
+       "title": "Item Id",
+       "type": "integer"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/VersionIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/InventoryLotOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Set Version",
     "tags": [
      "inventory"
     ]

@@ -10,7 +10,7 @@ from app.domain.nutrition import NutritionProfile
 from app.domain.units import IngredientUnits, UnitKind
 
 CHICKEN_BREAST, CHICKEN_THIGH, TOFU, RICE, PASTA, BROCCOLI, SPINACH = 1, 2, 3, 4, 5, 6, 7
-CHAPATI, TORTILLA, CUMIN, PAPRIKA, MILK, YOGURT = 8, 9, 10, 11, 12, 13
+CHAPATI, TORTILLA, CUMIN, PAPRIKA, MILK, YOGURT, CAULIFLOWER = 8, 9, 10, 11, 12, 13, 14
 
 
 def profile(i: int, protein: str, kcal: str, edible: str = "1") -> NutritionProfile:
@@ -35,6 +35,7 @@ def have(
     density: str | None = None,
     opened: bool = False,
     name: str | None = None,
+    group: str | None = None,
 ) -> Have:
     unit = {UnitKind.MASS: "g", UnitKind.VOLUME: "ml", UnitKind.COUNT: "count"}[kind]
     return Have(
@@ -53,6 +54,7 @@ def have(
         stock=stock,
         opened=opened,
         roles=frozenset(roles),
+        group=group,
     )
 
 
@@ -65,8 +67,11 @@ def missing(
     protein: str = "0",
     kcal: str = "0",
     count: Decimal | None = None,
+    group: str | None = None,
 ) -> MissingLine:
-    return MissingLine(i, f"food {i}", role, category, Decimal(grams), count, Decimal(protein), Decimal(kcal))
+    return MissingLine(
+        i, f"food {i}", role, category, Decimal(grams), count, Decimal(protein), Decimal(kcal), group
+    )
 
 
 def test_an_accepted_pair_comes_first_with_its_own_rule():
@@ -97,9 +102,9 @@ def test_a_carb_keeps_its_kcal_and_anything_else_its_mass():
     rice_line = missing(RICE, "carb", "grain", "75", kcal="270")
     pasta = have(PASTA, "grain", {"carb"}, kcal="371")
     assert find_substitute(rice_line, [pasta], []).display == "75 g"  # 270 / 3.71 = 72.8 g → 75 g
-    veg = missing(BROCCOLI, "vegetable", "vegetable", "100")
-    spinach = have(SPINACH, "vegetable", {"vegetable"})
-    assert find_substitute(veg, [spinach], []).display == "100 g"
+    veg = missing(BROCCOLI, "vegetable", "vegetable", "100", group="sturdy")
+    cauliflower = have(CAULIFLOWER, "vegetable", {"vegetable"}, group="sturdy")
+    assert find_substitute(veg, [cauliflower], []).display == "100 g"
 
 
 def test_amounts_come_out_in_the_substitutes_natural_unit():
@@ -138,17 +143,55 @@ def test_never_something_excluded_held_disliked_already_in_the_recipe_or_short()
 
 
 def test_an_open_package_is_offered_first():
-    line = missing(BROCCOLI, "vegetable", "vegetable", "100")
-    first = have(SPINACH, "vegetable", {"vegetable"}, name="a spinach")
-    opened = have(30, "vegetable", {"vegetable"}, opened=True, name="z kale")
+    line = missing(SPINACH, "vegetable", "vegetable", "100", group="cooking_greens")
+    first = have(31, "vegetable", {"vegetable"}, name="a frozen spinach", group="cooking_greens")
+    opened = have(30, "vegetable", {"vegetable"}, opened=True, name="z kale", group="cooking_greens")
     assert find_substitute(line, [first, opened], []).ingredient_id == 30
 
 
+# ---------------- culinary groups (J2) ----------------
+ONION, RED_ONION, SCALLION, CILANTRO, PARSLEY, GARLIC = 40, 41, 42, 43, 44, 45
+
+
+def test_yellow_onion_never_becomes_spinach():
+    onion = missing(ONION, "vegetable", "vegetable", "220", group="onions")
+    spinach = have(SPINACH, "vegetable", {"vegetable"}, group="cooking_greens")
+    assert find_substitute(onion, [spinach], []) is None
+    red = have(RED_ONION, "vegetable", {"vegetable"}, group="onions")
+    sub = find_substitute(onion, [spinach, red], [])
+    assert sub is not None and sub.ingredient_id == RED_ONION and sub.display == "220 g"
+
+
+def test_swaps_happen_only_inside_a_group_whatever_the_role():
+    # a garnish of cilantro can become parsley (soft herbs), never spinach or a scallion
+    cilantro = missing(CILANTRO, "garnish", "vegetable", "10", group="soft_herbs")
+    others = [
+        have(SPINACH, "vegetable", {"vegetable"}, group="cooking_greens"),
+        have(SCALLION, "vegetable", {"garnish"}, group="onions"),
+    ]
+    assert find_substitute(cilantro, others, []) is None
+    parsley = have(PARSLEY, "vegetable", {"vegetable"}, group="soft_herbs")  # never a garnish in your recipes
+    assert find_substitute(cilantro, [*others, parsley], []).ingredient_id == PARSLEY
+
+
+def test_a_vegetable_in_no_group_or_alone_in_its_group_gets_no_substitute():
+    loose = missing(46, "vegetable", "vegetable", "100")  # no group at all
+    assert (
+        find_substitute(loose, [have(SPINACH, "vegetable", {"vegetable"}, group="cooking_greens")], [])
+        is None
+    )
+    garlic = missing(GARLIC, "seasoning", "vegetable", "15", group="garlic")
+    assert (
+        find_substitute(garlic, [have(SPINACH, "vegetable", {"vegetable"}, group="cooking_greens")], [])
+        is None
+    )
+
+
 def test_one_stand_in_covers_at_most_one_line_of_a_recipe():
-    lines = [
-        NeedLine(
-            BROCCOLI,
-            "broccoli",
+    def veg(i: int, name: str) -> NeedLine:
+        return NeedLine(
+            i,
+            name,
             "vegetable",
             "vegetable",
             Decimal(100),
@@ -156,29 +199,18 @@ def test_one_stand_in_covers_at_most_one_line_of_a_recipe():
             Decimal(100),
             None,
             Decimal(3),
-            Decimal(34),
-        ),
-        NeedLine(
-            31,
-            "pepper",
-            "vegetable",
-            "vegetable",
-            Decimal(100),
-            "g",
-            Decimal(100),
-            None,
-            Decimal(1),
-            Decimal(31),
-        ),
-    ]
+            Decimal(30),
+            group="sturdy",
+        )
+
     inputs = CoverageInputs(
-        stock={SPINACH: Stock(None)},
+        stock={CAULIFLOWER: Stock(None)},
         could_buy=frozenset(),
         offers={},
         store_order=(),
         store_names={},
-        haves=[have(SPINACH, "vegetable", {"vegetable"})],
+        haves=[have(CAULIFLOWER, "vegetable", {"vegetable"}, group="sturdy")],
     )
-    first, second = cover(lines, inputs)
+    first, second = cover([veg(BROCCOLI, "broccoli"), veg(31, "green beans")], inputs)
     assert first.status is Status.MISSING and first.substitute is not None
     assert second.status is Status.MISSING and second.substitute is None and second.purchase is None

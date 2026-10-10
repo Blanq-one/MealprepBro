@@ -96,12 +96,13 @@ def test_fdc_ids_exist(seeded_db):
 
 
 def test_nutrition_complete(seeded_db):
-    """Every ingredient has energy/protein/carbs/fat, except pepperoni (held, and USDA has no proximates
-    for it yet)."""
+    """Every ingredient has energy/protein/carbs/fat, except pepperoni and its pork + beef version (held and
+    excluded, and USDA has no proximates for that pepperoni yet)."""
     data = load_by_slug(seeded_db)
     gaps = {slug: [c for c in CORE_CODES if c not in d.profile.per_100g] for slug, d in data.items()}
     gaps = {slug: missing for slug, missing in gaps.items() if missing}
-    assert gaps == {"pepperoni": ["energy_kcal", "protein_g", "carbohydrate_g", "fat_g"]}
+    core = ["energy_kcal", "protein_g", "carbohydrate_g", "fat_g"]
+    assert gaps == {"pepperoni": core, "pepperoni-pork-beef": core}
 
 
 def _sources(session, slug):

@@ -12,6 +12,7 @@ from app.db.models import AppUser, CookSearch, Ingredient, MealPlan
 from app.schemas.cook import (
     CookAnswers,
     CookHomeOut,
+    LastExtraOut,
     LastSearchOut,
     SavedPreviewOut,
     TodayMealOut,
@@ -62,6 +63,13 @@ def last_searches(session: Session, user: AppUser, now: datetime) -> list[LastSe
                 search_id=search.id,
                 summary=answers_mod.summary(answers, query, names),
                 answers=search.answers,
+                extras=[
+                    LastExtraOut(
+                        ingredient_id=e.ingredient_id, name=names.get(e.ingredient_id, "?"), status=e.status
+                    )
+                    for e in answers.extras
+                    if e.ingredient_id in names
+                ],
             )
         )
     return out
@@ -140,7 +148,10 @@ def _previews(
 def cook_home(session: Session, user: AppUser, now: datetime) -> CookHomeOut:
     favorites_preview, favorites_count = _previews(session, user.id, favorites.SavedList.FAVORITES)
     later_preview, later_count = _previews(session, user.id, favorites.SavedList.LATER)
+    settings = load_settings(session, user.id)
     return CookHomeOut(
+        portions=settings.household_size,
+        portion_size=settings.default_portion_size,
         last=last_searches(session, user, now),
         today=today_card(session, user.id, now.date()),
         favorites=favorites_preview,

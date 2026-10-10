@@ -13,7 +13,7 @@ from app.domain.dish_category import DishCategory
 from app.domain.enums import PortionSize
 from app.domain.nutrition import kcal_display
 from app.schemas.cards import CostLineOut, LineContextOut, MissingLineOut, SubstituteOut
-from app.schemas.cook import GoalTile, SuggestionOut
+from app.schemas.cook import GoalTile, RecipeSuggestionOut
 
 Badge = Literal["favorite", "saved", "new", "draft"]
 _ONE = Decimal(1)
@@ -192,9 +192,9 @@ def suggestion(
     portion_size: PortionSize,
     saved_ids: frozenset[int],
     categories: Mapping[int, DishCategory],
-) -> SuggestionOut:
+) -> RecipeSuggestionOut:
     uses, could_buy, missing = coverage_lines(item.rank_input.coverage)
-    return SuggestionOut(
+    return RecipeSuggestionOut(
         version_id=item.version.id,
         recipe_id=item.recipe.id,
         title=item.version.title,

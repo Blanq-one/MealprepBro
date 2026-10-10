@@ -10,9 +10,9 @@
   text-align: left;
 }
 
-.hit {
-  justify-content: flex-start;
-  margin-top: 6px;
+.quickTitle {
+  margin: 16px 0 8px;
+  font-size: 1rem;
 }
 
 .lot {

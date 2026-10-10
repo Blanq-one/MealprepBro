@@ -1,0 +1,46 @@
+.forLine {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  margin-bottom: 12px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.label {
+  margin: 16px 0 6px;
+  font-weight: 700;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.groupTitle {
+  margin: 8px 0 0;
+  font-size: 1rem;
+}
+
+.always {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: var(--radius-tile);
+  background: var(--surface-2);
+}
+
+.always summary {
+  min-height: 24px;
+  font-weight: 600;
+  cursor: pointer;
+}

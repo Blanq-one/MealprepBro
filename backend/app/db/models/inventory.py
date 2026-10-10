@@ -32,6 +32,10 @@ class InventoryItem(Base):
     expiry_is_estimate: Mapped[bool] = mapped_column(Boolean, server_default="true")
     status: Mapped[str] = mapped_column(Text)
     notes: Mapped[str | None] = mapped_column(Text)
+    # Phase 2b (migration 0006, J5): "Not sure" adds the usual package size, marked as an estimate (NULL or
+    # false = exact); a preset's container ("bag") lets the recipe page say "about half your bag" (J6)
+    quantity_is_estimate: Mapped[bool | None] = mapped_column(Boolean)
+    container: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = created_at_column()
     updated_at: Mapped[datetime] = updated_at_column()
 
