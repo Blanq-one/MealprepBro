@@ -1,5 +1,85 @@
 # Personal Meal-Prep AI - Expanded Product Requirements
 
+## Primary user flow (added 2026-10-10)
+
+The app is organized around how I actually think about cooking: "what can I make now?" or "what should I prep for
+the next few days?", then "what do I have?", then "show me options". Every screen asks one question with one large
+control, explains in one short line why it asks, and starts pre-filled from my last answers or my settings. The full
+screen-by-screen spec is `docs/FLOW_SPEC.md`; the sections below remain the detailed requirements behind it.
+
+**Four tabs: Cook (the app opens here), Grocery, Pantry, Settings.**
+
+### Cook
+
+1. **A meal now, or meal prep:** the two dominant buttons at the top of the screen. Meal prep also asks how much (a
+   number of portions, or which days and meals, e.g. 5 lunches, or lunch + dinner Mon–Fri) and when I'll cook (today,
+   or on my cook days). Below the two buttons the screen also shows:
+   - a **Same as last time** card that skips straight to results;
+   - today's meals from my current plan;
+   - a **Saved** section with my favorites and recipes saved for later.
+2. **Goals:** multi-select tiles (high protein, high carb, cheap, quick, iron rich, low calorie) plus a mood (simple,
+   medium, fancy). They map onto the existing nutrition priorities (§3), time limits (§6), moods (§5) and cost
+   weighting (§13).
+3. **What do I have?** Pre-filled from my pantry inventory; I can switch any item off for this search. I can add more
+   items, each marked **have it** or **could buy** (e.g. standing in the store looking at chickpeas), with quick add
+   or typed entry. Meal prep then asks whether I'm shopping for it, with an optional budget.
+4. **Results.**
+   - **A meal now:** a ranked list of recipe cards. Each card shows a dish-category icon, kcal, protein, time, cost,
+     which of my ingredients it uses, the "could buy" items with their cost, and anything missing with a suggested
+     substitute. Saved and seed recipes appear immediately; newly generated recipes stream in after, once they pass
+     the same validator and code-computed nutrition rules as everything else.
+   - **Meal prep:** a plan that starts with today, then the following days. Each day shows kcal, protein and cost;
+     each meal row shows its icon, name, kcal and protein, and has a **swap** button that replaces only that meal
+     and keeps the plan valid. A Recipes / Shopping list toggle switches views.
+5. **Recipe page:** full ingredients and real cooking instructions (§11), with **cook this**, **favorite**, **save
+   for later** and **mark cooked**. For meal prep it is scaled to the requested portions, with the batch, fridge and
+   freezer logic of the weekly planner.
+
+While anything is built, the app shows its real progress stages as friendly steps (checking pantry, finding
+recipes, balancing calories, pricing groceries), not a spinner. When the recipe service's per-minute limit needs a
+pause (e.g. tapping "More ideas" twice quickly), the app shows a friendly wait with a short countdown, never an
+error.
+
+**High protein** asks for more protein than my target, but only up to 1.5 × my daily target. Beyond that, extra
+protein earns nothing, so the tile can't push plans back into expensive all-chicken weeks.
+
+### Grocery
+
+**What should I buy?** I pick filters (protein rich, low calorie, cheap, …) and an optional budget. The app does the
+math and suggests what to buy, with a one-line reason per item computed from stored data (e.g. "chicken thighs:
+cheapest protein per dollar at Price Rite"). The checklist grouped by store, the stock-up section and Done shopping
+stay here.
+
+### Pantry and Settings
+
+- **Pantry** is the inventory screen. Quick add asks how much: full, ¾, ½, ¼, or a custom amount in the item's
+  natural unit (default full).
+- **Settings** holds everything (people, calories, protein target, budget, cook days, stores, diet rules, held items,
+  frequency caps, meals to plan, equipment, "always have" staples), editable any time.
+- **A first-run onboarding wizard** (9 short screens, related questions combined) fills Settings once, pre-filled
+  from my saved settings: how many people I cook for, calories, protein, weekly budget (optional), stores, dietary
+  rules, which meals to plan, cook days and kitchen equipment. The first screen offers **Skip, use my current
+  settings**. It never calculates a calorie recommendation.
+
+### Favorites and save for later
+
+- **Favorite (♥)** means "suggest this more often": it persists and boosts the recipe in rankings and plans whenever
+  it fits my constraints (§17).
+- **Save for later (🔖)** is a plain bookmark with no ranking effect, for recipes I want to try another time.
+- Both appear in the Saved section of the Cook tab, and both buttons are on recipe cards and recipe pages.
+
+### Look and feel
+
+Friendly and warm: a light theme by default with a dark mode, large type, generous spacing, rounded cards, and
+dish-category icons or emoji instead of food photos. The app has its own original personality (a small clay pot
+called Pottle) and a calm, plain-spoken voice.
+
+### What doesn't change
+
+Code does all math; the LLM only writes recipes and text; nutrition comes from the database; the solver fits
+multi-meal plans; every LLM output is validated; diet, food-safety and claims rules apply on every screen. Ratings,
+recipe editing and versioning, the preference profile and Cook Again (§18–§24) come later.
+
 ## 1. Core Concept
 
 This is a personal AI-powered meal-prep and grocery optimization app.

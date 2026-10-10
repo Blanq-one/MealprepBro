@@ -1,11 +1,11 @@
 # Mealbro Build Plan
 
-**Status:** v3, **approved** 2026-10-08 with the changes recorded in §12.1. Phase 0 approved. Phase 1 approved 2026-10-09 (with C1–C8 and D1–D22); a post-approval round (C9–C14, D23–D28) is done. A3 is answered in `docs/hosting.md`; the hosting decision changed at the Phase 2 kickoff to Vercel Hobby + Neon Free, $0/month (K1, §12.1). Phase 2 (PWA, deploy prep only) is done and awaiting approval.
-**Source documents:** `CLAUDE.md` (build rules, wins on conflict), `docs/PRD.md` (product vision).
+**Status:** v3, **approved** 2026-10-08 with the changes recorded in §12.1. Phase 0 approved. Phase 1 approved 2026-10-09 (with C1–C8 and D1–D22); a post-approval round (C9–C14, D23–D28) is done. A3 is answered in `docs/hosting.md`; the hosting decision changed at the Phase 2 kickoff to Vercel Hobby + Neon Free, $0/month (K1, §12.1). Phase 2 (PWA, deploy prep only) was approved 2026-10-10. **Phase 2b (cook-first redesign) was added and its spec approved 2026-10-10** (with changes E10–E13, §12.1): the spec is `docs/FLOW_SPEC.md` and the build steps are in §9. Building starts with step 2b.1.
+**Source documents:** `CLAUDE.md` (build rules, wins on conflict), `docs/PRD.md` (product vision; "Primary user flow" at the top), `docs/FLOW_SPEC.md` (screens and backend work for Phase 2b).
 
-This plan covers Phases 0–6. One phase per session. A phase is done only when its acceptance criteria are met, its tests pass, and the test output has been shown.
+This plan covers Phases 0–6, plus Phase 2b. One phase per session; Phase 2b is split into build steps, one per session (§9). A phase or step is done only when its acceptance criteria are met, its tests pass, and the test output has been shown.
 
-**How to read this plan in a session** (per CLAUDE.md): read only the current phase's section in §9 plus the shared sections: §1 progress, §2 design decisions, §3 repo structure, §4 schema, §5 LLM/solver/validator flow, §6 Pydantic models, §7 cross-cutting rules and conventions, §10 dependencies, §12 decisions and open items. Read §13 (seed recipes) only in phases that touch seed data.
+**How to read this plan in a session** (per CLAUDE.md): read only the current phase's section in §9 plus the shared sections: §1 progress, §2 design decisions, §3 repo structure, §4 schema, §5 LLM/solver/validator flow, §6 Pydantic models, §7 cross-cutting rules and conventions, §10 dependencies, §12 decisions and open items. Read §13 (seed recipes) only in phases that touch seed data. Phase 2b sessions also read the `docs/FLOW_SPEC.md` sections their step names.
 
 ---
 
@@ -18,8 +18,9 @@ This plan covers Phases 0–6. One phase per session. A phase is done only when 
 | 0 | Data foundation | Approved | 2026-10-08 | 2026-10-08 | 321 tests pass (local + Docker), domain coverage 99.6% (domain tests alone), ruff/mypy clean. 185 ingredients, 649 aliases, 9 draft seeds. Open: FoodSafety.gov chart (A1), powder carbs/fat (A2), R8. Deviations in the Phase 0 outcome note (§9). |
 | — | Pre-Phase 1 tasks | Done | 2026-10-08 | 2026-10-08 | Package-label data (tortillas, protein powder), USDA mapping review sheet (`docs/review/usda_mappings.md`), raw/dry/as-sold rule + check (§7.8), CLAUDE.md machine-boundaries rule. Round 2: FoodSafety.gov chart transcribed (53 rows, §7.2), top-25 mappings approved, tortilla renamed, Docker rule clarified, fresh-clone check made a per-phase step. |
 | 1 | Planning brain | Approved 2026-10-09; post-approval round done | 2026-10-08 | 2026-10-09 | First pass: 645 tests, fresh-clone check passed; D1–D13 and C1–C3 approved 2026-10-09. Fix-up round (C4–C8: budget per request with inventory/shop modes, cash vs food eaten, freeze-on-shopping-day and waste, 100 g protein floor, elapsed time): 705 tests pass (the opt-in live test skips), domain coverage 99%, ruff/mypy clean, fresh-clone check passed; deviations D14–D22 in the fix-up note. Approved 2026-10-09. Post-approval round (C9–C14: powder prices, stock-up items, shelf-life fix, regular chicken packs, two-week steady-state check, A3 hosting): 721 tests pass (the opt-in live test skips), domain coverage 99%; deviations D23–D28. |
-| 2 | Mobile PWA + cloud deploy (deploy prep only, K7) | Done, awaiting approval | 2026-10-09 | 2026-10-09 | Pre-work K2–K6 done; PWA, auth, shopping, Mark cooked, quick add, exposure log. 800 backend tests pass (2 opt-in skipped), 78 frontend tests; not deployed (your step, `docs/deploy.md`). Deviations D29–D43 in the Phase 2 outcome note (§9). |
-| 3 | Feedback loop | Not started | | | |
+| 2 | Mobile PWA + cloud deploy (deploy prep only, K7) | Approved 2026-10-10 | 2026-10-09 | 2026-10-09 | Pre-work K2–K6 done; PWA, auth, shopping, Mark cooked, quick add, exposure log. 800 backend tests pass (2 opt-in skipped), 78 frontend tests; not deployed (your step, `docs/deploy.md`). Deviations D29–D43 in the Phase 2 outcome note (§9). |
+| 2b | Cook-first flow redesign | Spec approved 2026-10-10; building not started | 2026-10-10 | | `docs/FLOW_SPEC.md`; PRD "Primary user flow"; 8 build steps (2b.1–2b.8, §9); changes F1–F18 approved (FLOW_SPEC §16); decisions E1–E14 (§12.1). No code yet. |
+| 3 | Feedback loop | Not started | | | Favorites moved to 2b. |
 | 4 | Daily overrides | Not started | | | |
 | 5 | Grocery intelligence | Not started | | | |
 | 6 | Learned ranker | Not started | | | |
@@ -46,6 +47,7 @@ This plan covers Phases 0–6. One phase per session. A phase is done only when 
 13. **Cold start needs zero LLM calls** for slots covered by the seed recipe library (§13).
 14. **Generation finishes inside its request, and the structured-output mode is configurable.** `POST /plans` runs the plan in the request (serverless hosting stops a function at 300 s, so nothing may continue after the response; K2) and streams NDJSON progress lines, then the finished plan. Run records are kept. (Phase 1 returned `202` + a run id and solved in a background task.) `LLM_STRUCTURED_MODE` is `strict` (constrained decoding) or `best_effort` (Pydantic validation + retry). Never combined with streaming or tool use.
 15. **The frontend does no nutrition, unit or cost math.** The API returns computed numbers and display strings.
+16. **Two engines behind the Cook tab (Phase 2b).** "A meal now" ranks candidates with a deterministic scoring function, because one meal is coupled to nothing else. Meal prep, swaps and grocery advice use the weekly solver, where packages, fridge windows, cook time, calories and budget interact. Both use the same rounding, nutrition, cost, exclusion, cap and validator code (`docs/FLOW_SPEC.md` §14).
 
 ---
 
@@ -74,10 +76,11 @@ Mealbro/
 │   │   ├── 0001_initial.py            # P0: the 31 tables Phases 0–1 use
 │   │   ├── 0002_settings_v2_budget_per_request.py · 0003_stock_up_and_other_store.py  # P1 (data, column)
 │   │   ├── 0004_pwa_and_exposure_log.py  # P2 (planned as 0002)
-│   │   ├── 0003_feedback_loop.py      # P3
-│   │   ├── 0004_daily_overrides.py    # P4
-│   │   ├── 0005_grocery_intelligence.py  # P5
-│   │   └── 0006_ranker.py             # P6
+│   │   ├── 0005_cook_flow.py          # P2b: favorites, saved, feedback_event, cook_search, meal_plan.kind, settings v3
+│   │   ├── 0006_feedback_loop.py      # P3 (planned as 0003)
+│   │   ├── 0007_daily_overrides.py    # P4 (planned as 0004)
+│   │   ├── 0008_grocery_intelligence.py  # P5 (planned as 0005)
+│   │   └── 0009_ranker.py             # P6 (planned as 0006)
 │   └── app/
 │       ├── main.py · config.py · cli.py
 │       ├── db/                        # P0: base (naming convention), session, types, models/
@@ -88,6 +91,7 @@ Mealbro/
 │       │   ├── exclusions.py          # P0: diet-tag exclusion + held-item resolution
 │       │   ├── frequency_caps.py      # P0: per-ingredient / per-tag meals-per-week caps (pork = 1)
 │       │   ├── text_rules.py          # P1: the narrow prose filter (§7.3)
+│       │   ├── dish_category.py       # P2b: deterministic dish-category classifier (FLOW_SPEC §4.4)
 │       │   ├── preferences.py         # P3
 │       │   ├── price_stats.py         # P5
 │       │   └── tests/
@@ -116,6 +120,8 @@ Mealbro/
 │       │   ├── solver/ (model.py · objective.py · absorption.py · diagnostics.py)
 │       │   └── tests/
 │       ├── auth/                      # P2: single-user passphrase session
+│       ├── cook/                      # P2b: answers → requests, single-meal ranking, substitutes, search memory,
+│       │                              #      grocery advice reasons (planning/pins.py: the swap's pinned re-solve)
 │       ├── feedback/ · preferences/ · substitutions/   # P3
 │       ├── overrides/                 # P4
 │       ├── grocery/                   # P5
@@ -127,7 +133,9 @@ Mealbro/
     ├── public/ (icons/, sw.js)
     └── src/
         ├── app/ (layout, manifest, plan/, plan/[date]/, plan/new/, recipes/[versionId]/,
-        │         inventory/, grocery/, settings/, login/ · P3 history/, learned/ · P4 today/ · P5 store/)
+        │         inventory/, grocery/, settings/, login/ · P2b welcome/, cook/ (home, ask, results, plan, saved),
+        │         recipe/, grocery/advice/, pantry/, settings/edit/ (old plan/, day/, inventory/ redirect)
+        │         · P3 history/, learned/ · P4 today/ (now the Cook home Today card) · P5 store/)
         ├── components/ · lib/{api, offline, format}/ · test/setup.ts
 ```
 
@@ -158,10 +166,11 @@ Mealbro/
 | `0002_settings_v2_budget_per_request` | 1 (fix-up) | — | data only: settings v2 (D20) |
 | `0003_stock_up_and_other_store` | 1 (post-approval) | — | `ingredient.stock_up`, `store.kind` (C10, D23) |
 | `0004_pwa_and_exposure_log` (planned as 0002) | 2 | plan_candidate (exposure log; starts with real use, can't be backfilled), login_attempt (rate limiting across serverless instances) | `price_observation.client_ref` (offline idempotency) |
-| `0003_feedback_loop` | 3 | prepared_portion, feedback_event, recipe_favorite, preference_profile | `plan_meal.prepared_portion_id`, `inventory_event.prepared_portion_id` + CHECK |
-| `0004_daily_overrides` | 4 | day_override, consumption_entry | — |
-| `0005_grocery_intelligence` | 5 | region, ingredient_seasonality, cart_session | `price_observation.cart_session_id` |
-| `0006_ranker` | 6 | ranker_model | — |
+| `0005_cook_flow` | 2b | recipe_favorite and feedback_event (both pulled forward from P3, unchanged), recipe_saved, cook_search | `meal_plan.kind`; data: settings v3 |
+| `0006_feedback_loop` (planned as 0003) | 3 | prepared_portion, preference_profile | `plan_meal.prepared_portion_id`, `inventory_event.prepared_portion_id` + CHECK |
+| `0007_daily_overrides` (planned as 0004) | 4 | day_override, consumption_entry | — |
+| `0008_grocery_intelligence` (planned as 0005) | 5 | region, ingredient_seasonality, cart_session | `price_observation.cart_session_id` |
+| `0009_ranker` (planned as 0006) | 6 | ranker_model | — |
 
 ### 4.2a Table audit for `0001_initial` (2026-10-08)
 
@@ -214,8 +223,10 @@ app_user ─┬─ user_settings (1:1)            ├─ ingredient_preference
           │             ├─ plan_meal ── [P3] prepared_portion · [P4] day_override
           │             └─ grocery_list ── grocery_list_item ── store
           ├─ generation_run ─┬─ llm_call
-          │                  └─ [P2] plan_candidate
-          ├─ [P3] feedback_event · recipe_favorite · preference_profile
+          │                  ├─ [P2] plan_candidate
+          │                  └─ [P2b] cook_search (also → meal_plan)
+          ├─ [P2b] feedback_event · recipe_favorite · recipe_saved
+          ├─ [P3] preference_profile
           ├─ [P4] consumption_entry
           └─ [P5] cart_session ── store
 
@@ -681,42 +692,56 @@ plan_candidate                                  -- exposure log for the ranker; 
   heuristic_score numeric(8,4) NULL, score_components jsonb NULL, features jsonb NULL,
   selected bool NN, portions_selected smallint NN DEFAULT 0, created_at
 
--- 0003_feedback_loop (Phase 3) -------------------------------------------------------
+-- 0005_cook_flow (Phase 2b) ---------------------------------------------------------
+feedback_event                                  -- pulled forward from P3, unchanged; append-only (never UPDATE/DELETE)
+  id, user_id FK, event_type text NN (rating | cook_completed | substitution | recipe_edited | leftover | waste |
+  favorite_added | favorite_removed | saved_added | saved_removed (2b) | meal_skipped | meal_swapped |
+  off_plan_food | inventory_correction),
+  occurred_at timestamptz NN, recipe_id NULL FK, recipe_version_id NULL FK, plan_meal_id NULL FK,
+  cook_batch_id NULL FK, ingredient_id NULL FK, payload jsonb NN, payload_version smallint NN, created_at
+  IX (user_id, event_type, occurred_at) · IX (recipe_id)
+  -- 2b writes favorite_added/removed, saved_added/removed, meal_swapped; the rest start in P3
+
+recipe_favorite      (user_id FK, recipe_id FK, created_at, PK (user_id, recipe_id))   -- pulled forward from P3
+recipe_saved         (user_id FK, recipe_id FK, created_at, PK (user_id, recipe_id))   -- "save for later", no ranking effect
+
+cook_search                                     -- last answers per mode, result cache, meal-now exposures
+  id, user_id FK NN, mode text NN (now | prep | grocery), answers jsonb NN (CookAnswers + schema_version),
+  answers_hash text NN, cache_key text NN, generation_run_id NULL FK, meal_plan_id NULL FK,
+  results jsonb NULL, status text NN (running | done | failed), created_at
+  IX (user_id, mode, created_at DESC) · IX (user_id, cache_key)
+
+ALTER meal_plan ADD kind text NULL              -- meal_prep | single | grocery_advice; NULL = Phase 1–2 week plans
+-- data: UserSettings v3 (household_size 1, always_have [], default_budget_cents null, onboarding_completed false)
+
+-- 0006_feedback_loop (Phase 3; planned as 0003) --------------------------------------
 prepared_portion                                -- cooked leftovers / frozen meal-prep portions
   id, user_id FK→app_user, recipe_version_id FK→recipe_version, cook_batch_id NULL FK→plan_cook_batch,
   portions smallint NN CHECK ≥ 0, portion_size text NN, location text NN (fridge | freezer),
   cooked_on date NN, use_by date NN (from the food-safety table), status text NN (available | eaten | discarded),
   created_at, updated_at
 
-feedback_event                                  -- append-only; services never UPDATE/DELETE
-  id, user_id FK, event_type text NN (rating | cook_completed | substitution | recipe_edited | leftover | waste |
-  favorite_added | favorite_removed | meal_skipped | meal_swapped | off_plan_food | inventory_correction),
-  occurred_at timestamptz NN, recipe_id NULL FK, recipe_version_id NULL FK, plan_meal_id NULL FK,
-  cook_batch_id NULL FK, ingredient_id NULL FK, payload jsonb NN, payload_version smallint NN, created_at
-  IX (user_id, event_type, occurred_at) · IX (recipe_id)
-
-recipe_favorite      (user_id FK, recipe_id FK, created_at, PK (user_id, recipe_id))
 preference_profile   (id, user_id FK, computed_at, through_event_id FK→feedback_event, profile jsonb NN, schema_version)
 
 ALTER plan_meal       ADD prepared_portion_id bigint NULL FK→prepared_portion
 ALTER inventory_event ADD prepared_portion_id bigint NULL FK→prepared_portion
 ALTER inventory_event ADD CHECK (inventory_item_id IS NOT NULL OR prepared_portion_id IS NOT NULL)
 
--- 0004_daily_overrides (Phase 4) -----------------------------------------------------
+-- 0007_daily_overrides (Phase 4; planned as 0004) ------------------------------------
 day_override        (id, meal_plan_id FK, day date NN, cook_minutes smallint NULL, mood text NULL,
                      slots text[] NN, reason text NULL, generation_run_id NULL FK, created_at)
 consumption_entry   (id, user_id FK, consumed_on date NN, slot text NULL, plan_meal_id NULL FK, description text NN,
                      kcal integer NN CHECK ≥ 0, protein_g numeric(8,2) NULL, source text NN (planned_meal | manual | parsed),
                      is_estimate bool NN, parsed_items jsonb NULL, created_at)
 
--- 0005_grocery_intelligence (Phase 5) ------------------------------------------------
+-- 0008_grocery_intelligence (Phase 5; planned as 0005) -------------------------------
 region                 (code text PK, name text NN)
 ingredient_seasonality (ingredient_id FK, region_code text FK→region.code, month smallint CHECK 1–12,
                         availability text NN (peak | available), source text NN, PK (ingredient_id, region_code, month))
 cart_session           (id, user_id FK, store_id NN FK→store, started_at, ended_at NULL, status text NN)
 ALTER price_observation ADD cart_session_id bigint NULL FK→cart_session
 
--- 0006_ranker (Phase 6) --------------------------------------------------------------
+-- 0009_ranker (Phase 6; planned as 0006) ---------------------------------------------
 ranker_model (id, version integer NN UNIQUE, algorithm text NN, trained_at timestamptz NN, train_window jsonb NN,
               n_examples integer NN, feature_spec jsonb NN, weights jsonb NN, metrics jsonb NN,
               is_active bool NN DEFAULT false, created_at)   UQ partial (is_active) WHERE is_active
@@ -727,7 +752,7 @@ ranker_model (id, version integer NN UNIQUE, algorithm text NN, trained_at times
 - **Solver:** its inputs (recipe versions, nutrition, per-store prices, inventory including open packages) and outputs (plans, batches, practical batch quantities, meals, store-assigned grocery lists) all exist in `0001`.
 - **Versioning:** the family / recipe / immutable version / `default_version_id` structure covers seeds, edits, branches, reverts and Cook Again.
 - **Price history:** `price_observation` is append-only, per store, and normalized to base units. Within-store deal detection is pure computation over it.
-- **Ranker logging:** `plan_candidate` arrives in `0002` (exposures logged from the first real use) and `feedback_event` in `0003`, both as new tables that reference existing ones. `inventory_event`, `llm_call`, `plan_cook_batch.status` and `meal_plan.totals` already carry timestamped history from Phase 1.
+- **Ranker logging:** `plan_candidate` arrives in `0004` (exposures logged from the first real use) and `feedback_event` in `0005` (Phase 2b, so favorite and swap history starts with the new flow), both as new tables that reference existing ones. `inventory_event`, `llm_call`, `plan_cook_batch.status` and `meal_plan.totals` already carry timestamped history from Phase 1.
 - **Overrides:** `plan_meal.status` + `replaced_by_plan_meal_id` exist from `0001`; Phase 4 adds leaf tables only.
 - **Substitution cache:** reuses `ingredient_substitution` (`source = llm`, `status = suggested`), so no new table is needed.
 
@@ -991,6 +1016,16 @@ class PlanConstraints(_Frozen):
 
 **Phase 1 fix-up (2026-10-09, C4 and C7).** `schema_version` is 2. `weekly_budget_cents` and `budget_is_hard` are gone: `planning_mode` (`inventory` | `shop`) and `purchase_limit_cents` (a hard limit on cash this trip: shop mode's optional budget, or inventory mode's top-up, default 0) come from each plan request, never from settings. `daily_protein_target_g` (settings default 100, request override) is a floor per calorie mode: strict daily = every day, weekly = the week total. `UserSettings` is version 2 too (migration 0002 moves your stored settings: data only).
 
+**Phase 2b (planned, `docs/FLOW_SPEC.md` §13.3).** `PlanConstraints` gains:
+- `household_size` (a meal is h portions; limits apply to your portion);
+- `protein_reward` (only with the High protein tile), capped: each day's protein earns a reward only up to 1.5 × `daily_protein_target_g` (E11);
+- `allowed_purchase_ingredient_ids` (could-buy items in "use what I have" mode);
+- `always_have_ingredient_ids` (unlimited owned stock);
+- `pinned` (the swap's fixed meals and batches);
+- calendar-week cap allowances (`cap_used_by_week`, from other plans and one-meal plans).
+
+`favorite_recipe_ids` is filled from `recipe_favorite`. `UserSettings` becomes version 3 (household size, Always have, default budget as a pre-fill only, onboarding flag; data migration in `0005_cook_flow`). Each addition is optional with a default, so existing callers and stored snapshots stay valid.
+
 Mapping from PRD §32's example: `daily_calorie_limit` → `daily_kcal_target`; `weekly_calorie_limit` → `weekly_kcal_target`; `meals_per_day` → `DaySpec.slots`; `portion_size` → `default_portion_size`; `cooking_time`/`recipe_mood` → per-day `cook_minutes_available`/`mood`; `budget_priority` → dropped in favor of `grocery_mode` (Q12); `equipment` → `equipment`.
 
 ### 6.3 LLM-generated recipe (`app/schemas/llm_recipe.py`, Phase 1)
@@ -1211,11 +1246,12 @@ How the filter decides:
 - **Groq strict structured outputs:** `openai/gpt-oss-20b`, `openai/gpt-oss-120b`, `qwen/qwen3.8-27b`. **Best-effort:** those plus `openai/gpt-oss-safeguard-20b`. Neither works with streaming or tool use.
 - **Published base limits** for those models: 30 req/min, 1K req/day, **8K tokens/min**, 200K tokens/day. The client reads `x-ratelimit-*`/`retry-after` rather than hardcoding limits.
 - **Implications:** 2–3 recipes per call, compact prompts, low reasoning effort, a daily token guard, and the seed library plus reuse to avoid calls.
+- **Phase 2b estimates** (`docs/FLOW_SPEC.md` §15): a meal-now search makes 0–1 calls (≈ 6–7K tokens with a narrowed vocabulary, measured in step 2b.3); a typical meal prep and a swap make 0; worst cases are capped by the gap rules, the 180 s request budget and the 8K tokens/min limit.
 - **Observed in the Phase 1 live runs (2026-10-09, `openai/gpt-oss-120b`, strict):** a two-recipe batch is ~5.9K prompt + ~1.8K completion tokens, so a second call in the same minute gets a 429 (retry-after 7–39 s, handled). Strict mode still returned `json_validate_failed` once (retried as a parse error). A retry that re-sent the whole failed reply grew to 11.4K requested tokens and was refused with HTTP 413, so retries now re-send only short replies and `LLM_MAX_COMPLETION_TOKENS` defaults to 3000.
 
 ### 7.7 API and config conventions
 
-- REST under `/api/v1`. Errors are `application/problem+json`. Long operations finish inside the request and stream `application/x-ndjson` progress (heartbeat every 5 s) ending in one result line (Phase 2, K2); every LLM call, rate-limit wait and solve fits `PLAN_TIME_BUDGET_SECONDS` (180 s).
+- REST under `/api/v1`. Errors are `application/problem+json`. Long operations finish inside the request and stream `application/x-ndjson` progress (heartbeat every 5 s) ending in one result line (Phase 2, K2); every LLM call, rate-limit wait and solve fits `PLAN_TIME_BUDGET_SECONDS` (180 s). Phase 2b's `/cook/meal-now`, `/cook/meal-prep`, swap and `/grocery/advice` use the same pattern; meal now also streams intermediate `results` lines. This is HTTP response streaming only: LLM calls never stream (CLAUDE.md rule 6).
 - Environment-only config; `.env.example` updated in every phase.
 
 ### 7.8 Raw / dry / as-sold rule (added before Phase 1)
@@ -1240,23 +1276,24 @@ How the filter decides:
 
 | PRD § | Topic | Phase(s) |
 |---|---|---|
+| top | Primary user flow (4 tabs, Cook flow, Grocery advice, onboarding, favorites + save for later, look and feel) | 2b (`docs/FLOW_SPEC.md`) |
 | 1 | Core concept | all |
 | 2 | Calorie planning | 0 (math) · 1 · 2 (display) |
 | 3 | Nutrition priority modes | 0 (data, heme estimate) · 1 (protein/carb/iron/balanced; registry for future modes) |
-| 4 | Weekly configuration | 1 (API) · 2 (UI) |
-| 5 | Recipe mood | 1 (per-day) · 4 (change a day after planning) |
-| 6 | Cooking time | 1 (cook schedule, minutes) · 4 |
-| 7 | Portion size | 0 (math) · 1 · 2 |
-| 8 | Meal-prep quantity, package sizes | 0 (math) · 1 (batches, freezer, absorption pass) · 2 (open packages via "Mark cooked") |
+| 4 | Weekly configuration | 1 (API) · 2 (UI) · 2b (onboarding, Settings tab, goal tiles) |
+| 5 | Recipe mood | 1 (per-day) · 2b (mood per search) · 4 (change a day after planning) |
+| 6 | Cooking time | 1 (cook schedule, minutes) · 2b (Quick time limit) · 4 |
+| 7 | Portion size | 0 (math) · 1 · 2 · 2b (household size) |
+| 8 | Meal-prep quantity, package sizes | 0 (math) · 1 (batches, freezer, absorption pass) · 2 (open packages via "Mark cooked") · 2b (portions / days & meals, extra to freeze) |
 | 9 | Recipe editing | 3 |
-| 10 | Substitution engine | 0 (accepted pairs) · 1 (applied in planning) · 3 (engine) |
-| 11 | Cooking instructions | 0 (safety table, seed drafts) · 1 (generation + injection) · 2 (display) |
-| 12 | Grocery recommendations | 1 (plan − inventory, expiring, open packages) · 5 (full engine) |
-| 13 | Grocery list modes | 1 (balanced default) · 5 |
-| 14 | Grocery recommendation engine | 5 |
+| 10 | Substitution engine | 0 (accepted pairs) · 1 (applied in planning) · 2b (deterministic suggestions for missing items) · 3 (engine) |
+| 11 | Cooking instructions | 0 (safety table, seed drafts) · 1 (generation + injection) · 2 (display) · 2b (cooking mode) |
+| 12 | Grocery recommendations | 1 (plan − inventory, expiring, open packages) · 2b (basic "What should I buy?") · 5 (full engine) |
+| 13 | Grocery list modes | 1 (balanced default) · 2b (Cheap tile → cheapest weights) · 5 |
+| 14 | Grocery recommendation engine | 2b (templated reasons from current prices) · 5 (deals, history) |
 | 15 | Price tracking | 0 (per-store schema, estimates) · 1 (manual entry) · 2 (price at check-off) · 5 (history, within-store deals) |
 | 16 | Seasonal recommendations | 5 |
-| 17 | Favorites | 3 |
+| 17 | Favorites | 2b (♥, Saved section, ranking + solver boost; plus save for later) · 3 (weighted preference score) |
 | 18 | Ratings | 3 |
 | 19 | Preference learning | 3 · 6 |
 | 20 | Feedback pipeline | 3 |
@@ -1264,8 +1301,8 @@ How the filter decides:
 | 22 | Personal learning loop | 2 (cook deduction) · 3 · 4 · 6 |
 | 23 | Recipe versioning | 0 (schema, seed drafts) · 3 (edit behavior) |
 | 24 | Cook Again | 3 |
-| 25 | Weekly planning screen | 1 (data) · 2 (UI) |
-| 26 | Daily adjustment | 4 |
+| 25 | Weekly planning screen | 1 (data) · 2 (UI) · 2b (meal-prep results: Today first, Recipes / Shopping list) |
+| 26 | Daily adjustment | 2b (swap one meal, rest fixed) · 4 (day-level time/mood overrides) |
 | 27 | Dynamic calorie rebalancing | 4 |
 | 28 | Strict daily vs weekly | 1 (both modes in solver, approved) · 4 (toggle UX, rebalancing) |
 | 29 | Protein desserts | 0 (seed pudding) · 1 · 2 |
@@ -1273,8 +1310,8 @@ How the filter decides:
 | 31 | Prompting architecture | 0 · 1 |
 | 32 | Constraint engine | 1 |
 | 33 | Validation layer | 1 |
-| 34 | Mobile-first PWA | 2 (+ screens in 3–6) |
-| 35 | Grocery Store Mode | 5 |
+| 34 | Mobile-first PWA | 2 · 2b (question screens, minimal typing, light/dark) (+ screens in 3–6) |
+| 35 | Grocery Store Mode | 5 (in the Grocery tab) |
 | 36 | Final vision | all |
 
 ---
@@ -1729,18 +1766,293 @@ with your OK.
 
 ---
 
+### Phase 2b: Cook-first flow (redesign)
+
+**Goal.** Rebuild the app around how you cook:
+- four tabs (Cook, Grocery, Pantry, Settings);
+- a question-per-screen Cook flow for "a meal now" or "meal prep";
+- ranked recipe cards that use what you have;
+- meal-prep plans that start today, with a swap on every meal;
+- "What should I buy?";
+- favorites and save for later;
+- a first-run onboarding wizard;
+- a warm light/dark visual style with its own personality.
+
+Every number still comes from code, and the LLM still only writes recipes.
+
+**Spec.** `docs/FLOW_SPEC.md` (approved 2026-10-10): screens and states, the screen → backend map, endpoints, models, scoring, data model, LLM budget, the approved changes F1–F18 and the answered questions. PRD: "Primary user flow".
+
+**PRD sections.** Primary user flow; §4, §5, §6, §7, §8, §10 (deterministic suggestions), §12 and §14 (basic), §17, §25, §26 (single-meal swap), §34.
+
+**Pulled forward, and what stays** (FLOW_SPEC §17):
+- **From Phase 3:** favorites (♥, persistence, ranking and solver boost), the `recipe_favorite` and `feedback_event` tables, and deterministic substitute suggestions. Save for later is new. Ratings, cook logs, prepared portions, recipe editing and versioning, the LLM substitution engine, the preference profile, the weighted preference score and Cook Again **stay in Phase 3**.
+- **From Phase 4:** the pinned re-solve, for the single-meal swap. Consumption, day-level overrides, rebalancing and the mode toggle stay in Phase 4.
+- **From Phase 5:** a basic "What should I buy?" with templated reasons from current prices. Price history, deals, seasonality, usual items and the cart optimizer stay in Phase 5.
+
+**How the steps run.** Eight build steps, one per session, in order:
+- Each step ends exactly like a phase: its acceptance criteria met, `pytest` (and from 2b.2 `vitest`) output shown, a commit, `scripts/fresh_clone_check.sh` after committing, a short summary, then a stop for your approval.
+- Each step's session reads this section, the shared sections, and the FLOW_SPEC sections listed with the step.
+- The phase-end rules in CLAUDE.md apply to every step (see §11 item 7).
+
+#### 2b.1 Backend foundations
+
+*Reads FLOW_SPEC §11, §13.1 (E7–E9, E11–E17), §13.3, §13.4.*
+
+**Deliverables**
+1. Migration `0005_cook_flow` (§4.5) with the settings v3 data migration (reversible, like 0002).
+2. Favorites and saved: E7–E9 and their `feedback_event` rows. `favorite_recipe_ids` is filled from `recipe_favorite`, which turns on the solver's favorite bonus and the exposure log's `favorite` source.
+3. Settings v3 in the settings API; `POST /settings/preview`; `GET` and `POST /stores`.
+4. Always have: unlimited owned lots in the planning problem, grocery list and costs; water never listed; no "0 g" lines.
+5. Display additions:
+   - `cash_split_display` and `DayOut.cook_note`;
+   - per-meal and per-day cost (largest-remainder split of each batch's cost);
+   - `dish_category` (classifier) on versions, meals and batches;
+   - `kind` on plans.
+6. Quick-pick `amount_options` and `custom_units`; bulk add takes an option key or a custom amount.
+7. Carried decisions:
+   - `SOLVER_TIME_LIMIT_SECONDS` default 30 (`config.py`, `.env.example`);
+   - sweet potatoes get a 28-day pantry life (seed data, cited like D38).
+
+**Acceptance criteria**
+1. The migration upgrades and downgrades cleanly; settings go v2 → v3 → v2 unchanged apart from the new defaults.
+2. ♥ and 🔖 are idempotent, and each real change writes exactly one `feedback_event`. With otherwise-equal candidates, the favorite wins a solve.
+3. An Always-have item is never bought and never listed under "check you have"; cash + from inventory = eaten + frozen + leftover still holds to the cent.
+4. Meal costs add up to their batch, and day costs add up to food eaten, to the cent.
+5. Amount options are right for mass, count and piece items; custom units are converted on the server.
+6. Every seed recipe gets its expected dish category.
+
+**Tests.** `test_cook_flow_migration.py`, `test_favorites.py`, `test_settings_v3.py`, `test_always_have.py`, `test_cost_split.py`, `test_quick_pick_amounts.py`, `domain/tests/test_dish_category.py`; grocery-list tests extended (water, 0 g).
+
+#### 2b.2 Look, shell, onboarding, Settings, Pantry (frontend)
+
+*Reads FLOW_SPEC §3–§6, §9–§11.*
+
+**Deliverables**
+1. Design tokens: light by default, dark, Match my phone (§4.2–§4.3). Pottle's SVG states; emoji and icon maps.
+2. Building blocks (§5): question screen, stepper, slider, tile grid, segmented control (fixed selected state), chips, bottom sheet, recipe card, building steps, and the empty, error and offline patterns.
+3. The four-tab shell, opening on Cook. Until 2b.4, Cook home shows the Today card and a link to the existing plan view. Old routes redirect.
+4. Onboarding W0–W8: nine screens, related questions paired (E10), and **Skip, use my current settings** on W0. Settings S0–S2, whose editors reuse the question screens; the weekly band is hidden in strict mode.
+5. The Pantry tab with the P1 amount picker. The Grocery tab with the existing checklist and the split header.
+
+**Acceptance criteria**
+1. Onboarding is nine screens. It pre-fills from saved settings, validates through the API, saves once, and doesn't run again. "Skip, use my current settings" leaves every setting unchanged and marks onboarding done.
+2. Every new screen works at 375 px with no horizontal scroll and ≥ 48 px targets; text meets AA contrast in both themes.
+3. The frontend still has no nutrition, unit or money arithmetic (the Phase 2 AC 7 check covers the new files).
+
+**Tests (Vitest).** Stepper bounds and hold-repeat; the two-nutrition-goal limit; segmented `aria-pressed`; onboarding draft and final PUT; Skip sends only the onboarding flag; paired screens validate both controls; strict mode hides the band; the amount picker sends the option key; theme switch.
+
+#### 2b.3 A meal now: engine (backend)
+
+*Reads FLOW_SPEC §7 (C2–C5, C8), §13.1 (E1–E3, E17), §13.2, §13.3, §13.5–§13.7, §14, §15.*
+
+**Deliverables**
+1. `CookAnswers` and the goal mapping (`app/cook/answers.py`).
+2. Ranking (`app/cook/ranking.py`):
+   - filters, scaling and rounding, coverage;
+   - deterministic substitutes (`app/cook/substitutes.py`);
+   - score components, the never-favored rule, favorites;
+   - the calendar-week pork-cap count.
+3. `POST /cook/meal-now` (NDJSON):
+   - saved results first, then the gap rule;
+   - the `meal_now_generation` prompt with a narrowed vocabulary;
+   - validated recipes merged into the list;
+   - fallbacks for the daily guard and the rate limit.
+4. `cook_search`: last answers, the cache key, Same as last time; `GET /cook/home`.
+5. `POST /cook/meals`: a one-meal plan (`kind = single`, validator scope "single", could-buy grocery list). Mark cooked works on it.
+6. The exposure log for meal-now searches, with `selected` set when you cook one.
+7. Friendly rate-limit waits on every LLM path: meal now, meal prep, swap, grocery advice and quick-add parse (E13, FLOW_SPEC §5.5 and §13.2).
+   - Before each call, the pacer checks the call's estimated tokens against the per-minute allowance left.
+   - A predicted overflow or a 429 waits and streams `waiting` with `wait_s`.
+   - A wait too long for the request ends it as `partial` with `retry_after_s`, never as a problem error.
+
+**Acceptance criteria**
+1. A card's numbers equal `GET /recipe-versions/{id}?portions=h` for the same version.
+2. Beef, held items and a used-up pork cap never appear. A pork-component recipe never outranks an otherwise-equal recipe on goal, pantry or cost terms.
+3. LLM call counts:
+   - 3 or more good matches → 0 calls; fewer → exactly 1;
+   - More ideas → 1;
+   - an identical repeat → 0 calls and the same order;
+   - an LLM failure → saved results plus a note, with status `partial`.
+4. Generated recipes pass the recipe validator before they are streamed; nothing unvalidated is saved.
+5. A one-meal plan validates, deducts inventory on Mark cooked, and never becomes the current plan.
+6. The opt-in live test reports the narrowed prompt's tokens. If a 2-recipe call is over 8K, the batch drops to 1 recipe and the note says so.
+7. Two More ideas requests inside one minute never return an error.
+   - The second one either waits and finishes (a `waiting` event with a decreasing countdown), or ends `partial` with `retry_after_s` and the saved results intact.
+   - The same holds for a 429 reply.
+   - Only the daily guard gives the "back tomorrow" note.
+
+**Tests.**
+- `cook/tests/test_ranking.py`: golden ordering, components, never-favored, cap week boundaries, more than one person, the per-meal protein cap.
+- `test_substitutes.py`.
+- `test_meal_now_stream.py`: event order, merge, gap-rule call counts with FakeLLM, cache hit.
+- `test_rate_limit_waits.py` (fake clock and fake rate-limit headers): predicted overflow → wait; 429 → wait; too long → `partial` + `retry_after_s`; never a problem response; the same on the meal-prep stream and on quick-add parse.
+- `test_single_meal_plan.py`, `test_exposure_meal_now.py`.
+
+#### 2b.4 A meal now: screens (frontend)
+
+*Reads FLOW_SPEC §5, §7 (C0, C2–C5, C7, C8).*
+
+**Deliverables**
+1. Cook home (C0), complete: **A meal now** and **Meal prep** are the two dominant buttons at the top, with Same as last time, Today and Saved below them (E12).
+2. C2 goals; C3 "What do you have?": toggles, have it / could buy, typed and quick add, chips from last time.
+3. Building → C5 streamed results: New badges, More ideas, fallbacks, and the countdown wait state (strip and "Ready in 0:45" button; also in the Pantry quick-add sheet).
+4. C7 Saved lists.
+5. C8 recipe-page actions:
+   - Cook this → a one-meal plan, with a Buy first checklist when needed;
+   - cooking mode (screen kept awake);
+   - Mark cooked.
+6. ♥ and 🔖 optimistic and queued offline.
+
+**Acceptance criteria**
+1. The meal-now flow works end to end against the backend.
+2. On a 375 × 667 screen, both choice buttons are fully visible without scrolling, with every Cook home section present, and nothing renders above them except the one-line greeting.
+3. Every C0–C8 state (loading, empty, error, offline, rate-limit wait) is reachable in tests. A rate-limit wait never shows the error pattern.
+4. The frontend still has no nutrition, unit or cost arithmetic (the countdown is only a timer).
+
+**Tests (Vitest).** Stream reducer (results replace, new ids, partial); answers → request (only toggled-off items sent); cards render server strings only; Cook home order (the two buttons first); the countdown from `wait_s` and `retry_after_s` re-enables More ideas at zero; favorites queue replay; cooking-mode navigation.
+
+#### 2b.5 Meal prep: engine (backend)
+
+*Reads FLOW_SPEC §7 (C1, C1b, C3b, C6), §13.1 (E4, E6), §13.3, §13.6.*
+
+**Deliverables**
+1. Answers → `PlanRequest`:
+   - presets, portions → days, start day, today-only cooking, extra to freeze;
+   - have-it and could-buy lots, could-buy-only purchases;
+   - shopping with the budget pre-fill;
+   - goals (protein reward, low-calorie targets, Quick minutes) and mood.
+2. Household size through the solver, post-solve, validator and grocery list.
+3. `POST /cook/meal-prep` with the `pricing` stage and friendly messages.
+4. Overlap-aware accept.
+5. Calendar-week frequency caps across plans.
+
+**Acceptance criteria**
+1. "5 lunches from today, cooking today" gives one batch today, freezes the portions past the fridge window, and makes 0 LLM calls with the seed library.
+2. A household of 2 doubles purchases and portions; calories and protein are checked per person, and the validator agrees.
+3. The High protein tile raises the plan's protein against the same request without it, with the floor still met. Without the tile, protein earns nothing (C7 unchanged).
+4. **The protein reward is capped (E11).** Protein above 1.5 × the daily target earns no extra reward:
+   - With the tile on, a plan at about 1.5 × the target beats a costlier plan at 2 × the target (e.g. an all-chicken week) whose only advantage is the extra protein.
+   - The objective's protein term never exceeds `w_protein × 1.5 × target` per day.
+   - Below the cap, more protein still wins at equal cost.
+5. Could-buy-only mode never buys outside the could-buy set.
+6. A plan that crosses two calendar weeks keeps each week's pork cap, counting other active plans and one-meal plans.
+7. Accepting an overlapping plan returns 409 without `replace_overlapping` and supersedes it with the flag.
+8. Stages arrive in order: constraints, candidates, (generating), solving, pricing, validating.
+
+**Tests.** `test_answers_to_request.py`, `test_household.py` (solver, validator, grocery), `test_protein_reward.py` (tile vs no tile; `test_reward_capped_at_1_5x_target`: the 1.5× plan beats the costlier 2× all-chicken plan, the term's per-day bound, below-cap monotonicity, weekly and strict modes), `test_could_buy_only.py`, `test_calendar_week_caps.py`, `test_accept_overlap.py`, a stage-order stream test. K6 holds: small instances, no wall-clock dependence.
+
+#### 2b.6 Swap (backend)
+
+*Reads FLOW_SPEC §7 (C6 swap), §13.1 (E5), §13.3 (pinned re-solve), §15.*
+
+**Deliverables**
+1. `planning/pins.py`.
+2. `POST /plans/{id}/meals/{meal_id}/swap`:
+   - takes the swapped-away list and tries the saved pool first;
+   - uses the LLM (`allow_llm`) only after "Write a new one";
+   - writes a new plan version that supersedes the old one, carrying grocery check-offs over;
+   - after shopping, runs in inventory mode with Allow buying;
+   - keeps cooked batches fixed and returns `also_changed` lines;
+   - Undo re-accepts the previous plan.
+3. A `meal_swapped` event; exposure rows under `swap`.
+
+**Acceptance criteria**
+1. Every other `plan_meal` keeps its recipe, day, slot and portion size. Only the batches that fed the swapped meal (or one new batch) change, and the new plan passes the full validator.
+2. Repeated swaps never return a recipe already swapped away for that meal; when none is left, "no other fits" comes back with 0 LLM calls.
+3. "Write a new one" makes at most 1 batch call (plus at most 1 revision). If that call has to wait for the per-minute limit, the swap stream shows the wait (`wait_s`), not an error.
+4. Undo restores the previous plan exactly (identical summary).
+5. After Done shopping, a swap buys nothing unless you allow it.
+
+**Tests.** `test_pins.py` (a diff test like Phase 4 AC 1); `test_swap_api.py` (cycling, none fits, LLM gating, undo, check-off carry-over, after shopping); event and exposure rows.
+
+#### 2b.7 Meal prep and swap: screens (frontend)
+
+*Reads FLOW_SPEC §7 (C1, C1b, C3b, C4, C6, C8).*
+
+**Deliverables**
+1. The C1, C1b and C3b question screens.
+2. Building steps from the real stages, including the countdown wait state (also in the swap's "Write a new one" sheet).
+3. C6 results:
+   - Today first, earlier days folded, day totals, cook notes, meal rows;
+   - Swap with progress, toast and Undo, and the no-fit sheet;
+   - the Recipes | Shopping list toggle;
+   - Use this plan with the overlap sheet;
+   - fix buttons on an infeasible plan.
+4. The Cook home Today card links to C6; the old plan and day screens are retired.
+
+**Acceptance criteria**
+1. The meal-prep flow works end to end; swap and undo work from the UI.
+2. Every C6 state is reachable in tests; 375 px.
+
+**Tests (Vitest).** Day order with Today first; swap optimistic states and undo; the overlap confirm; diagnostics → fix buttons; toggle memory.
+
+#### 2b.8 What should I buy?, and phase wrap-up
+
+*Reads FLOW_SPEC §8, §13.1 (E10), §15.*
+
+**Deliverables**
+1. `POST /grocery/advice`: a shop-mode draft plan, LLM off by default.
+2. Reason templates (`app/cook/grocery_advice.py`) with the comparison rule.
+3. The G0–G3 screens, "I always have this", and open one-meal lists.
+4. The phase-level checks and the manual iPhone checklist.
+
+**Acceptance criteria**
+1. Every reason line comes from a template over computed facts.
+   - A "cheapest … per dollar" line appears only when the item is strictly lowest in its comparison set at your stores.
+   - Estimated prices say "est.".
+   - No "deal" or "seasonal" labels.
+2. Use this list accepts the plan behind it, and the Grocery tab shows it as the current list.
+3. A budget that's too low reports the cost of the cheapest plan that fits (D22).
+
+**Tests.** `test_grocery_advice.py` (reasons; comparison edge cases including ties and estimates; budget); Vitest for G1–G3.
+
+**Phase 2b acceptance (after 2b.8).**
+1. Every step's criteria are met; full `pytest` and `vitest` pass; the fresh-clone check passes.
+2. The frontend has no nutrition, unit or cost arithmetic.
+3. Every new screen works at 375 px with ≥ 48 px targets, in both themes.
+4. Every flow honors the beef exclusion, held items and the pork cap.
+5. LLM call counts in tests match FLOW_SPEC §15, and no flow shows a rate limit as an error.
+6. You complete the manual iPhone checklist: onboarding, meal now, meal prep, swap, cooking mode, grocery advice, dark mode, offline.
+
+**Files and folders.**
+- **Creates:**
+  - backend: `app/cook/` (answers, ranking, substitutes, search, grocery_advice, tests), `app/planning/pins.py`, `app/domain/dish_category.py`, `app/llm/prompts/meal_now_generation.py`, `app/schemas/cook.py`;
+  - API routes: cook, favorites, stores, grocery advice, swap;
+  - `migrations/versions/0005_cook_flow.py`;
+  - frontend: `welcome/`, `cook/`, `pantry/`, `grocery/advice/`, `settings/edit/`, and the §5 components.
+- **Changes:**
+  - `config.py` and `.env.example` (`SOLVER_TIME_LIMIT_SECONDS=30`);
+  - `planning/`: constraints, solver, post-solve, validator scope, grocery list, accept;
+  - `services/plan_stream.py` (stages);
+  - seed `ingredients.json` (sweet potatoes).
+
+**Database.** Migration `0005_cook_flow` (§4.5).
+
+**Dependencies.** None new. Wake Lock is a browser API, icons are emoji and in-house inline SVG, and fonts are system fonts.
+
+**Depends on.** Phase 2 (approved 2026-10-10). The FLOW_SPEC §18 questions are answered.
+
+**Risks and mitigations**
+- *Scope.* Eight steps, each shippable. If one runs long, I'll stop and propose a split rather than rush it.
+- *Solver size with household and pins.* Pins shrink the model and household size is a constant multiplier; the K6 determinism rules stay.
+- *Meal-now latency under 8K tokens a minute.* Saved results come first; one 2-recipe call; a batch of 1 if the measured prompt is too large.
+- *The two engines drifting apart.* They share rounding, nutrition, cost and validator code, and a test compares card numbers with the recipe endpoint.
+- *Replacing a plan while cooked food remains.* The replace sheet names it; prepared portions arrive in Phase 3 (FLOW_SPEC §18 Q3).
+
+---
+
 ### Phase 3: Feedback loop
 
-**Goal.** Make the app learn you: favorites, ratings, cook logs (actual time and cost), leftovers and waste, recipe editing with versioning (including adjusting the seed drafts), a substitution engine, a transparent preference profile that steers planning, and Cook Again that reuses your version without unnecessary LLM calls.
+**Goal.** Make the app learn you: ratings, cook logs (actual time and cost), leftovers and waste, recipe editing with versioning (including adjusting the seed drafts), a substitution engine, a transparent preference profile that steers planning, and Cook Again that reuses your version without unnecessary LLM calls. (Favorites, save for later and their events arrived in Phase 2b.)
 
 **PRD sections.** §9, §10, §17, §18, §19, §20, §22, §23, §24, §21 (weighted scoring precursor).
 
 **Deliverables**
-1. **Favorites:** ❤️ per lineage; events; solver bonus; reused first.
+1. **Favorites (built in Phase 2b):** ♥ per lineage, save for later, events and the solver/ranking boost already exist. Phase 3 folds favorites into the weighted preference score (deliverable 7) and adds them to the profile.
 2. **Ratings:** 👍/😐/👎 required, 1–5 stars optional, quick tags, comment. The LLM parses comments into validated tags. `rating` events use the PRD §20 shape.
 3. **Cook log:** extends Phase 2's "Mark cooked" with actual minutes, actual cost and portions made → `cook_completed` event. Leftover and frozen portions become `prepared_portion` rows (`use_by` from the chart), which also enables cross-week carry-over. Waste and leftover events.
 4. **Editing and versioning:** quantity, seasoning, protein/vegetable/carb/sauce (via substitution), cooking method (LLM step rewrite); portion size is a plan parameter, not a version. Saving creates an immutable new version (`change_set`, `change_summary`); the default pointer moves; revert; branching. **Editing a seed draft creates your confirmed version** (`is_draft=false`).
-5. **Substitution engine:**
+5. **Substitution engine** (Phase 2b already suggests substitutes for missing items deterministically: accepted pairs, then pantry items with the same role. Phase 3 adds the LLM candidates, the cache and applying a substitution):
    - Accepted pairs (chapati → tortilla) are listed first.
    - Otherwise, a cache lookup in `ingredient_substitution` by context → on a miss, one LLM call → resolve → drop excluded, held and disliked items.
    - Code computes inventory availability, price delta (only with price data, within one store), and nutrition-preserving quantities (protein keeps protein grams; vegetables keep mass; carbs keep kcal).
@@ -1749,12 +2061,12 @@ with your OK.
 7. **Weighted scoring function:** `preference_score` in [−1, 1] → solver preference term, reuse order, prompt hints. Its score and components are written into the `plan_candidate` rows that Phase 2 already logs. Capped never-favored items get no preference-score boost from nutrition, price or inventory features (§7.4).
 8. **Cook Again:** your default version is re-scaled and re-costed deterministically (0 LLM calls). It calls the LLM once only on the triggers (excluded/disliked ingredient, missing equipment, can't fit calories/time by scaling, or "adapt to what I have"). Adapted versions apply to that cook unless you save them.
 
-**Files and folders.** Creates `app/feedback/`, `app/preferences/`, `app/substitutions/`, `app/domain/preferences.py`, `app/schemas/feedback.py`, prompts (comment_tags, substitution, step_rewrite, adaptation), API routes (favorites, ratings, cook_logs, recipe_versions, substitutions, cook_again, profile), `migrations/versions/0003_feedback_loop.py`; frontend `history/`, `learned/`, rating sheet, editor, substitution sheet, ❤️.
+**Files and folders.** Creates `app/feedback/`, `app/preferences/`, `app/substitutions/`, `app/domain/preferences.py`, `app/schemas/feedback.py`, prompts (comment_tags, substitution, step_rewrite, adaptation), API routes (ratings, cook_logs, recipe_versions, substitutions, cook_again, profile), `migrations/versions/0006_feedback_loop.py`; frontend `history/`, `learned/` (reached from Settings and the Cook tab), rating sheet, editor, substitution sheet. (♥ and 🔖 shipped in Phase 2b.)
 
-**Database.** Migration `0003_feedback_loop`: `prepared_portion`, `feedback_event`, `recipe_favorite`, `preference_profile`; `plan_meal.prepared_portion_id`; `inventory_event.prepared_portion_id` + CHECK (§4.5).
+**Database.** Migration `0006_feedback_loop` (planned as 0003): `prepared_portion`, `preference_profile`; `plan_meal.prepared_portion_id`; `inventory_event.prepared_portion_id` + CHECK (§4.5). `feedback_event` and `recipe_favorite` already exist (Phase 2b, `0005_cook_flow`).
 
 **Acceptance criteria**
-1. Favorites persist, and with otherwise-equal candidates the favorite wins.
+1. Favorites (from Phase 2b) feed the weighted preference score; with otherwise-equal candidates the favorite still wins.
 2. Each feedback action writes exactly one valid `feedback_event`; events are never updated or deleted.
 3. Editing creates version N+1 with the correct parent and diff, leaving the original byte-identical. Editing a seed draft yields a non-draft user version, and the next plan uses it. Revert works.
 4. "Replace broccoli" returns ranked, code-justified alternatives. "Cheaper" appears only with same-store price data. An identical repeat request makes 0 LLM calls.
@@ -1772,9 +2084,9 @@ with your OK.
 - **Scoring:** bounds; monotonicity; recency penalty.
 - **Cook Again:** unchanged → 0 calls; price change only → 0 calls, cost updated; excluded ingredient → 1 call.
 - **Exposure log scores:** `plan_candidate.heuristic_score` equals the weighted preference score used by the solver.
-- **Frontend:** rating sheet, editor diff, substitution list, ❤️ optimistic update.
+- **Frontend:** rating sheet, editor diff, substitution list (♥ is tested in Phase 2b).
 
-**Depends on.** Phases 1–2.
+**Depends on.** Phases 1–2 and 2b.
 
 **Risks and mitigations**
 - *Overfitting to few ratings.* Priors, minimum counts.
@@ -1790,9 +2102,9 @@ with your OK.
 **PRD sections.** §5, §6 (day-level), §26, §27, §28.
 
 **Deliverables**
-1. **Today screen:** meals, consumed vs remaining for the day and week, quick actions.
+1. **Today:** extends the Cook home "Today" card and the meal-prep results' Today section (Phase 2b) with consumed vs remaining for the day and week and quick actions; no separate `today/` route is needed.
 2. **Day override:**
-   - A partial re-solve of the targeted day/slot(s) with everything else fixed. Purchased inventory and open packages count as zero cost; new purchases are penalized.
+   - A partial re-solve of the targeted day/slot(s) with everything else fixed, built on Phase 2b's pinned re-solve (`planning/pins.py`, used there for single-meal swaps). Purchased inventory and open packages count as zero cost; new purchases are penalized.
    - One targeted LLM call only if no saved or seed candidate fits.
    - Displaced portions are reassigned within the fridge window, frozen, or the batch is cancelled if uncooked.
    - If the override turns a non-cook day (Tue/Fri) into cooking, it asks first and records the change.
@@ -1803,10 +2115,11 @@ with your OK.
    - *Weekly:* the difference is spread across the remaining days within ±150 kcal of each day's target, never exceeding the weekly ceiling.
    - Shown as a diff you confirm.
 5. **Mode toggle:** in settings and per plan.
+6. **"What's left today" feeds A meal now:** with consumption logged, the meal-now calorie target becomes the remaining calories for today (e.g. 750 kcal), within the same mode rules.
 
-**Files and folders.** Creates `app/overrides/`; extends `app/domain/calories.py`; prompt `off_plan_parse`; API routes (days, consumption, rebalance); frontend `today/`; `migrations/versions/0004_daily_overrides.py`.
+**Files and folders.** Creates `app/overrides/`; extends `app/domain/calories.py`; prompt `off_plan_parse`; API routes (days, consumption, rebalance); frontend Today additions on the Cook tab; `migrations/versions/0007_daily_overrides.py`.
 
-**Database.** Migration `0004_daily_overrides`: `day_override`, `consumption_entry`.
+**Database.** Migration `0007_daily_overrides` (planned as 0004): `day_override`, `consumption_entry`.
 
 **Acceptance criteria**
 1. A day override changes only the targeted meals; all other `plan_meal` rows are identical before and after.
@@ -1823,7 +2136,7 @@ with your OK.
 - **Off-plan parse:** estimate flagged; invalid JSON → retry; user number used as-is.
 - **Mode toggle:** golden tests for strict vs weekly on the same consumption.
 
-**Depends on.** Phases 1–3.
+**Depends on.** Phases 1–3 and 2b.
 
 **Risks and mitigations**
 - *Groceries bought for the original meal.* Inventory-first objective; freed items shown as "use soon".
@@ -1843,12 +2156,12 @@ with your OK.
 2. **Deal detection** (`domain/price_stats.py`): **within the same store only.** Compare the per-gram (or per-count) unit price against that store's history for the ingredient. GOOD DEAL needs ≥ 3 prior observations at that store on ≥ 2 dates within 180 days, at ≤ 85% of the trailing average; "above usual" at ≥ 115%. Otherwise no label. "Per gram of protein" comparisons are computed by code.
 3. **Seasonality:** curated Massachusetts/New England harvest calendar (cited) → "Seasonal in your region"; never implies price.
 4. **Grocery modes:** CHEAPEST / HEALTHIER / SEASONAL / BALANCED as solver weight profiles plus list rules.
-5. **Next-list recommendations:** planned needs, expiring items and open packages, usual items from history (a separate dismissible section), budget, deals → templated, data-backed sentences.
-6. **Grocery Store Mode:** a `cart_session` per store; "+ Add Grocery" entries; **Optimize My Cart** in two modes, quick (recipes fixed, cheapest packages) and full re-plan, returning the cheapest combination, nutritional value, meals, servings and cost per serving.
+5. **Next-list recommendations:** extends Phase 2b's "What should I buy?" (a shop-mode plan with templated reasons from current prices) with expiring items and open packages, usual items from history (a separate dismissible section) and within-store deals, all as templated, data-backed sentences.
+6. **Grocery Store Mode** (in the Grocery tab): a `cart_session` per store; "+ Add Grocery" entries; **Optimize My Cart** in two modes, quick (recipes fixed, cheapest packages) and full re-plan, returning the cheapest combination, nutritional value, meals, servings and cost per serving.
 
-**Files and folders.** Creates `app/grocery/`, `app/domain/price_stats.py`, `app/seed/data/seasonality_new_england.json`, API routes (price_history, deals, recommendations, cart_sessions), frontend `store/`, history views, mode selector, badges, `migrations/versions/0005_grocery_intelligence.py`. Changes `objective.py` and `docs/data-sources.md`.
+**Files and folders.** Creates `app/grocery/`, `app/domain/price_stats.py`, `app/seed/data/seasonality_new_england.json`, API routes (price_history, deals, recommendations, cart_sessions), frontend `store/`, history views, mode selector, badges, `migrations/versions/0008_grocery_intelligence.py`. Changes `objective.py`, `app/cook/grocery_advice.py` (Phase 2b) and `docs/data-sources.md`.
 
-**Database.** Migration `0005_grocery_intelligence`: `region`, `ingredient_seasonality`, `cart_session`, `price_observation.cart_session_id`.
+**Database.** Migration `0008_grocery_intelligence` (planned as 0005): `region`, `ingredient_seasonality`, `cart_session`, `price_observation.cart_session_id`.
 
 **Acceptance criteria**
 1. Deal labels appear only when the same-store thresholds are met. A lower Price Rite price never marks a Stop & Shop observation as a deal, or vice versa.
@@ -1882,16 +2195,16 @@ with your OK.
 **PRD sections.** §19, §21, §22.
 
 **Deliverables**
-1. **Dataset builder:** examples come from `feedback_event` + `plan_candidate` exposures, with features only from data before each occasion (ingredient categories and mass shares, family, protein source, cuisine/tags, mood, estimated vs actual time, cost/serving, nutrition/serving, repeats, recency, waste, slot). Label: 👍 or ≥ 4 stars.
+1. **Dataset builder:** examples come from `feedback_event` + `plan_candidate` exposures (including Phase 2b's meal-now searches, whose `selected` is set when you cook one, and swaps, which are negative signals), with features only from data before each occasion (ingredient categories and mass shares, family, protein source, cuisine/tags, mood, estimated vs actual time, cost/serving, nutrition/serving, repeats, recency, waste, slot). Label: 👍 or ≥ 4 stars.
 2. **Model:** a regularized logistic regression implemented in pure Python (no new dependencies); weights stored as JSON in `ranker_model`.
 3. **Evaluation:** time-based split; AUC, log loss and top-k precision vs the weighted baseline; `cli ranker-eval`.
 4. **Gating:** activate only after ≥ 100 rated meals across ≥ 25 distinct recipes over ≥ 8 weeks **and** a configured margin over baseline.
 5. **Serving:** blended score → solver preference term; exploration allowance (e.g. one new recipe per week); top features shown in "What I've learned".
 6. **Retraining:** `cli ranker-train`, version registry, one-command rollback.
 
-**Files and folders.** Creates `app/ranking/`, CLI commands, API `ranker/status`, a frontend settings panel, `migrations/versions/0006_ranker.py`. Changes the preference-term source in `objective.py`.
+**Files and folders.** Creates `app/ranking/`, CLI commands, API `ranker/status`, a frontend settings panel, `migrations/versions/0009_ranker.py`. Changes the preference-term source in `objective.py` and in `app/cook/ranking.py` (Phase 2b).
 
-**Database.** Migration `0006_ranker`: `ranker_model`.
+**Database.** Migration `0009_ranker` (planned as 0006): `ranker_model`.
 
 **Acceptance criteria**
 1. A test proves the dataset is leak-free (features for an occasion use only earlier events).
@@ -1941,7 +2254,7 @@ Listed in CLAUDE.md: Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2.0, Alembic,
 | `@testing-library/react` 16.3.3, `user-event` 14.6.7, `jest-dom` 6.9.1, `jsdom` 29.1.1, `openapi-typescript` 7.13.0 | 2 | Approved (Q17) | jsdom 30 needs Node ≥ 22.22 and jest-dom 6.10.0 is deprecated, so the previous releases |
 | `@testing-library/dom` 10.4.2 | 2 | Required peer of `@testing-library/react` 16 | Part of the approved testing-library set; nothing else was added |
 
-No other dependencies are planned. Auth uses the stdlib, and the solver uses HiGHS through PuLP (C3). If one becomes necessary, I'll ask first with a one-line justification.
+No other dependencies are planned. Auth uses the stdlib, and the solver uses HiGHS through PuLP (C3). **Phase 2b adds none:** the screen-wake lock is a browser API, icons are emoji and in-house inline SVG, and fonts are system fonts. If one becomes necessary, I'll ask first with a one-line justification.
 
 ---
 
@@ -1953,6 +2266,9 @@ No other dependencies are planned. Auth uses the stdlib, and the solver uses HiG
 4. **PRD §24:** Cook Again "should regenerate". **CLAUDE.md rule 7:** reuse unless constraints changed. → Deterministic re-scale by default; LLM only on the Q20 triggers.
 5. **PRD §10:** "not a static substitution table". **CLAUDE.md rule 7:** cache per ingredient. → Cache culinary candidates only; inventory, price and nutrition ranking is recomputed live.
 6. **CLAUDE.md outline** puts strict/weekly modes in Phase 4. → **Approved:** the solver supports both from Phase 1; Phase 4 adds the toggle UX and rebalancing.
+7. **CLAUDE.md phase outline vs Phase 2b (flagged 2026-10-10; resolved: CLAUDE.md updated with your OK the same day).** CLAUDE.md listed favorites under Phase 3, had no Phase 2b, and says "build exactly ONE phase per session". This plan, following your brief, moves favorites to 2b and runs 2b as eight one-session build steps, each ending with the phase-end steps (tests shown, commit, fresh-clone check, summary, stop). The CLAUDE.md wording now in place:
+   - add "Phase 2b: Cook-first flow (4 tabs, Cook flow, favorites and save for later, onboarding, swap, grocery advice). Built in steps 2b.1–2b.8, one step per session; each step ends like a phase.";
+   - change Phase 3's line to "Feedback loop (ratings, recipe versioning, preference profile, Cook Again)".
 
 ---
 
@@ -2053,7 +2369,33 @@ No other dependencies are planned. Auth uses the stdlib, and the solver uses HiG
 | K6 | Test determinism | No test may depend on wall-clock solver time limits: tests that check plan contents use small instances that solve to proven optimality, or assert properties; audit and fix the existing solver tests. |
 | K7 | Phase 2 scope | iPhone Safari first; screens: week, recipe, inventory with fast quick add, grocery checklist grouped by store (stock-up items in their own section), generate with progress, Mark cooked; both planning modes with optional budget and top-up; exposure logging; single password, long-lived secure HttpOnly cookie, rate-limited login; **deploy prep only** (Vercel config, Neon connection setup, migrations-on-deploy, env var list, `docs/deploy.md`): no accounts, nothing deployed. |
 
+**Phase 2b kickoff (2026-10-10).** Your redesign brief. No code this session: spec, PRD and plan only.
+
+| # | Topic | Decision |
+|---|---|---|
+| E1 | Main flow | Four tabs: Cook (opens here), Grocery, Pantry, Settings. Cook: a meal now or meal prep → goals + mood → what you have (have it / could buy) → ranked cards or a meal-prep plan → recipe page. Full spec: `docs/FLOW_SPEC.md`. |
+| E2 | Favorites and save for later | Pulled forward from Phase 3: ♥ boosts a recipe in rankings and plans when it fits; 🔖 is a plain bookmark with no boost; both live in the Cook tab's Saved section. Ratings, versioning and the preference profile stay in Phase 3. |
+| E3 | UI direction | One question per screen with one large control (steppers, a budget slider, icon tiles), a fixed Continue button, back arrow, progress dots, a one-line why; minimal typing; pre-filled from last answers or settings; real progress stages; a swap on every meal; a Recipes / Shopping list toggle. |
+| E4 | Onboarding | A first-run wizard fills Settings once (people, calories, protein, optional budget, stores, diet rules, meals, cook days, equipment), pre-filled from saved settings, with no calculated recommendations. |
+| E5 | Visual style | Warm and friendly, light by default with a dark mode, large type, rounded cards, dish-category icons or emoji (no photos, no image generation), an original personality. |
+| E6 | Pending UI fixes | Selected state on segmented controls; hide the daily band in strict mode; groceries + stock-up shown separately; no water or "0 g" in "check you have"; an Always-have staples list; a quick-add amount picker; "Nothing to cook, eating prepped meals". |
+| E7 | Solver time limit | 30 s (`SOLVER_TIME_LIMIT_SECONDS`; D43). |
+| E8 | Sweet potatoes | Multi-week pantry life, like potatoes. |
+| E9 | Hosting and variety | Try Vercel Services first; keep the two-project fallback documented (`docs/deploy.md`, already there). Variety caps as a setting ("max servings of one recipe per week") are deferred to a later phase; the built-in Q14 rule is unchanged. |
+
+**Spec approval (2026-10-10).** You approved the spec and Phase 2, with these changes:
+
+| # | Topic | Decision |
+|---|---|---|
+| E10 | Onboarding length | 9 screens (W0–W8) instead of the draft's 13 (W0–W12), by pairing related questions (calories + protein; meals + their calories; cook days + minutes; people + budget). The first screen offers **Skip, use my current settings**, since settings already exist. |
+| E11 | Protein reward cap | The High protein tile's per-request reward (F3) is approved, but capped: protein above **1.5 × the daily target** earns no extra reward, so the tile can't push plans back into expensive all-chicken weeks. The meal-now ranking uses the same cap per meal. Tested in 2b.5 (`test_reward_capped_at_1_5x_target`). |
+| E12 | Cook home | **A meal now** and **Meal prep** stay the two dominant buttons at the top; Same as last time, today's meals and Saved sit below them. |
+| E13 | Rate limits | When a call would exceed Groq's per-minute limit (e.g. More ideas tapped twice quickly), show a friendly wait state with a short countdown, never an error. Built in 2b.3 (backend, every LLM path) and 2b.4 / 2b.7 (screens). |
+| E14 | Approvals | All 18 flagged changes (FLOW_SPEC §16) approved, F3 with E11's cap. All 10 questions answered with the defaults, including Pottle as the mascot (FLOW_SPEC §18). Phase 2 approved. CLAUDE.md updated with the proposed wording (§11 item 7). |
+
 ### 12.2 Remaining questions (from applying your answers)
+
+- **Phase 2b questions:** all answered (FLOW_SPEC §18). None open.
 
 - **R8. Other possibly-beef items.** I applied your gelatin rule ("source not stated → excluded by default, since it may be bovine") to the other items from the old R2 list that could contain beef. All are **held** (excluded until you allow them), and none is in a seed recipe, so nothing is blocked today:
   - cheese (rennet may come from calves)
