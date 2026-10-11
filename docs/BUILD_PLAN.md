@@ -1,6 +1,7 @@
 # Mealbro Build Plan
 
-**Status:** v3, **approved** 2026-10-08 with the changes recorded in §12.1. Phase 0 approved. Phase 1 approved 2026-10-09 (with C1–C8 and D1–D22); a post-approval round (C9–C14, D23–D28) is done. A3 is answered in `docs/hosting.md`; the hosting decision changed at the Phase 2 kickoff to Vercel Hobby + Neon Free, $0/month (K1, §12.1). Phase 2 (PWA, deploy prep only) was approved 2026-10-10. **Phase 2b (cook-first redesign) was added and its spec approved 2026-10-10** (with changes E10–E13, §12.1): the spec is `docs/FLOW_SPEC.md` and the build steps are in §9. Step 2b.1 (backend foundations) was built and **approved 2026-10-10, including D44–D53**; step 2b.2 (look, shell, onboarding, Settings, Pantry) started the same day. **Addition (2026-10-10, E15–E17):** two-stage recipe generation (ideas for the cards, steps on first open, and after the first More ideas tap a background batch for later taps) to fit Groq's 8K tokens a minute; the target-0 fallback for the protein cap; and step 2b.3 split into 2b.3a (ranking and cards) and 2b.3b (ideas, steps, background batch). All approved. **Step 2b.2 was approved 2026-10-10, including D54–D64** (H1–H6, §12.1): a footer fix on question screens, a new build order (**2b.3a → 2b.4 → 2b.3b**, then 2b.5–2b.8, so the meal-now flow can be used before LLM ideas exist), notes for 2b.5 and 2b.7 (the plan view's Prep notes row; a "How do you want to cook?" step with four options) and a pre-deploy item (§12.4). Step 2b.3a (ranking and cards) was built the same day and **approved, including D65–D76** (J1–J6, §12.1: culinary groups for vegetable swaps, a Mark cooked fix, and three additions to 2b.4). Step 2b.4 (the meal-now screens, with J2–J6) was built the same day and **approved, including D77–D88** (M1–M20, §12.1); its follow-up fixes were built and committed on their own, and 2b.3b starts next session.
+**Status:** v3, **approved** 2026-10-08 with the changes recorded in §12.1. Phase 0 approved. Phase 1 approved 2026-10-09 (with C1–C8 and D1–D22); a post-approval round (C9–C14, D23–D28) is done. A3 is answered in `docs/hosting.md`; the hosting decision changed at the Phase 2 kickoff to Vercel Hobby + Neon Free, $0/month (K1, §12.1). Phase 2 (PWA, deploy prep only) was approved 2026-10-10. **Phase 2b (cook-first redesign) was added and its spec approved 2026-10-10** (with changes E10–E13, §12.1): the spec is `docs/FLOW_SPEC.md` and the build steps are in §9. Step 2b.1 (backend foundations) was built and **approved 2026-10-10, including D44–D53**; step 2b.2 (look, shell, onboarding, Settings, Pantry) started the same day. **Addition (2026-10-10, E15–E17):** two-stage recipe generation (ideas for the cards, steps on first open, and after the first More ideas tap a background batch for later taps) to fit Groq's 8K tokens a minute; the target-0 fallback for the protein cap; and step 2b.3 split into 2b.3a (ranking and cards) and 2b.3b (ideas, steps, background batch). All approved. **Step 2b.2 was approved 2026-10-10, including D54–D64** (H1–H6, §12.1): a footer fix on question screens, a new build order (**2b.3a → 2b.4 → 2b.3b**, then 2b.5–2b.8, so the meal-now flow can be used before LLM ideas exist), notes for 2b.5 and 2b.7 (the plan view's Prep notes row; a "How do you want to cook?" step with four options) and a pre-deploy item (§12.4). Step 2b.3a (ranking and cards) was built the same day and **approved, including D65–D76** (J1–J6, §12.1: culinary groups for vegetable swaps, a Mark cooked fix, and three additions to 2b.4). Step 2b.4 (the meal-now screens, with J2–J6) was built the same day and **approved, including D77–D88** (M1–M20, §12.1); its follow-up fixes were built and committed on their own, and **approved 2026-10-10 (N1–N3, §12.1:
+the ground-vs-whole-cut swap rule and the mapping review)**. Step 2b.3b (LLM ideas, steps on first open, More ideas and the background batch, rate-limit waits, the live token test, and the screens that need ideas) was built 2026-10-11 with D89–D101 and awaits approval; the live findings are in FLOW_SPEC §15.1.
 **Source documents:** `CLAUDE.md` (build rules, wins on conflict), `docs/PRD.md` (product vision; "Primary user flow" at the top), `docs/FLOW_SPEC.md` (screens and backend work for Phase 2b).
 
 This plan covers Phases 0–6, plus Phase 2b. One phase per session; Phase 2b is split into build steps, one per session (§9). A phase or step is done only when its acceptance criteria are met, its tests pass, and the test output has been shown.
@@ -19,7 +20,7 @@ This plan covers Phases 0–6, plus Phase 2b. One phase per session; Phase 2b is
 | — | Pre-Phase 1 tasks | Done | 2026-10-08 | 2026-10-08 | Package-label data (tortillas, protein powder), USDA mapping review sheet (`docs/review/usda_mappings.md`), raw/dry/as-sold rule + check (§7.8), CLAUDE.md machine-boundaries rule. Round 2: FoodSafety.gov chart transcribed (53 rows, §7.2), top-25 mappings approved, tortilla renamed, Docker rule clarified, fresh-clone check made a per-phase step. |
 | 1 | Planning brain | Approved 2026-10-09; post-approval round done | 2026-10-08 | 2026-10-09 | First pass: 645 tests, fresh-clone check passed; D1–D13 and C1–C3 approved 2026-10-09. Fix-up round (C4–C8: budget per request with inventory/shop modes, cash vs food eaten, freeze-on-shopping-day and waste, 100 g protein floor, elapsed time): 705 tests pass (the opt-in live test skips), domain coverage 99%, ruff/mypy clean, fresh-clone check passed; deviations D14–D22 in the fix-up note. Approved 2026-10-09. Post-approval round (C9–C14: powder prices, stock-up items, shelf-life fix, regular chicken packs, two-week steady-state check, A3 hosting): 721 tests pass (the opt-in live test skips), domain coverage 99%; deviations D23–D28. |
 | 2 | Mobile PWA + cloud deploy (deploy prep only, K7) | Approved 2026-10-10 | 2026-10-09 | 2026-10-09 | Pre-work K2–K6 done; PWA, auth, shopping, Mark cooked, quick add, exposure log. 800 backend tests pass (2 opt-in skipped), 78 frontend tests; not deployed (your step, `docs/deploy.md`). Deviations D29–D43 in the Phase 2 outcome note (§9). |
-| 2b | Cook-first flow redesign | 2b.1 approved 2026-10-10 (D44–D53); 2b.2 approved 2026-10-10 (D54–D64, H1–H6); 2b.3a approved 2026-10-10 (D65–D76, J1–J6); 2b.4 approved 2026-10-10 (D77–D88, M1–M20); 2b.4 fixes built 2026-10-10, awaiting approval; 2b.3b not started | 2026-10-10 | | `docs/FLOW_SPEC.md`; PRD "Primary user flow"; 9 build steps, built in the order 2b.1, 2b.2, 2b.3a, **2b.4, 2b.3b**, 2b.5–2b.8 (H3; §9); changes F1–F21 approved (FLOW_SPEC §16); decisions E1–E17 (§12.1). Two-stage generation added the same day (E15, E17; built in 2b.3b). **2b.1 (backend foundations):** 898 backend tests pass (2 opt-in skipped), 78 frontend tests, ruff/mypy clean; deviations D44–D53 in the 2b.1 outcome note (§9). **2b.2 (look, shell, onboarding, Settings, Pantry):** 180 frontend tests (78 before), 899 backend tests pass (2 opt-in skipped), type checks clean, static export builds; AA contrast tested, 375 px not yet checked on a device; deviations D54–D64 in the 2b.2 outcome note (§9). Footer fix H2 done before 2b.3a. **2b.3a (ranking and cards, no LLM calls):** 964 backend tests pass (2 opt-in skipped), 187 frontend tests, ruff, mypy and type check clean; deviations D65–D76 in the 2b.3a outcome note (§9). **2b.4 (A meal now: screens, with J2–J6):** 993 backend tests pass (2 opt-in skipped), 236 frontend tests, ruff, mypy and type check clean, static export builds; migration `0006_pantry_presets`; deviations D77–D88 in the 2b.4 outcome note (§9). **2b.4 fixes (M2–M13, M15, M17, M20):** 1056 backend tests pass (2 opt-in skipped), 244 frontend tests, ruff, mypy and type check clean; no migration; 37 new draft seed recipes (47 in all); solver shortlist; fixes outcome note (§9). |
+| 2b | Cook-first flow redesign | 2b.1 approved 2026-10-10 (D44–D53); 2b.2 approved 2026-10-10 (D54–D64, H1–H6); 2b.3a approved 2026-10-10 (D65–D76, J1–J6); 2b.4 approved 2026-10-10 (D77–D88, M1–M20); 2b.4 fixes approved 2026-10-10 (N1–N3); 2b.3b built 2026-10-11 (D89–D101), awaiting approval | 2026-10-10 | | `docs/FLOW_SPEC.md`; PRD "Primary user flow"; 9 build steps, built in the order 2b.1, 2b.2, 2b.3a, **2b.4, 2b.3b**, 2b.5–2b.8 (H3; §9); changes F1–F21 approved (FLOW_SPEC §16); decisions E1–E17 (§12.1). Two-stage generation added the same day (E15, E17; built in 2b.3b). **2b.1 (backend foundations):** 898 backend tests pass (2 opt-in skipped), 78 frontend tests, ruff/mypy clean; deviations D44–D53 in the 2b.1 outcome note (§9). **2b.2 (look, shell, onboarding, Settings, Pantry):** 180 frontend tests (78 before), 899 backend tests pass (2 opt-in skipped), type checks clean, static export builds; AA contrast tested, 375 px not yet checked on a device; deviations D54–D64 in the 2b.2 outcome note (§9). Footer fix H2 done before 2b.3a. **2b.3a (ranking and cards, no LLM calls):** 964 backend tests pass (2 opt-in skipped), 187 frontend tests, ruff, mypy and type check clean; deviations D65–D76 in the 2b.3a outcome note (§9). **2b.4 (A meal now: screens, with J2–J6):** 993 backend tests pass (2 opt-in skipped), 236 frontend tests, ruff, mypy and type check clean, static export builds; migration `0006_pantry_presets`; deviations D77–D88 in the 2b.4 outcome note (§9). **2b.4 fixes (M2–M13, M15, M17, M20):** 1056 backend tests pass (2 opt-in skipped), 244 frontend tests, ruff, mypy and type check clean; no migration; 37 new draft seed recipes (47 in all); solver shortlist; fixes outcome note (§9). **2b.3b (ideas, steps, More ideas, background batch, rate-limit waits, live test, screens; with N2, ground vs whole cuts):** 1132 backend tests pass (2 opt-in skipped), 263 frontend tests, ruff, mypy and type check clean, static export builds; no migration, no new dependency; the live Groq test ran (FLOW_SPEC §15.1); deviations D89–D101 in the 2b.3b outcome note (§9). |
 | 3 | Feedback loop | Not started | | | Favorites moved to 2b. |
 | 4 | Daily overrides | Not started | | | |
 | 5 | Grocery intelligence | Not started | | | |
@@ -97,6 +98,7 @@ Mealbro/
 │       │   ├── frequency_caps.py      # P0: per-ingredient / per-tag meals-per-week caps (pork = 1)
 │       │   ├── text_rules.py          # P1: the narrow prose filter (§7.3)
 │       │   ├── dish_category.py       # P2b: deterministic dish-category classifier (FLOW_SPEC §4.4)
+│       │   ├── meat_forms.py · prompt_names.py   # P2b (2b.3b): ground vs whole cuts; short names for prompts
 │       │   ├── preferences.py         # P3
 │       │   ├── price_stats.py         # P5
 │       │   └── tests/
@@ -122,11 +124,13 @@ Mealbro/
 │       ├── planning/                  # P1
 │       │   ├── constraint_builder.py · resolver.py · recipe_validator.py · candidates.py
 │       │   ├── rendering.py · post_solve.py · plan_validator.py · grocery_list.py · orchestrator.py
+│       │   ├── ideas.py · steps.py        # P2b (2b.3b): the ideas pass and steps on first open
 │       │   ├── solver/ (model.py · objective.py · absorption.py · diagnostics.py)
 │       │   └── tests/
 │       ├── auth/                      # P2: single-user passphrase session
 │       ├── cook/                      # P2b: answers → requests, single-meal ranking, substitutes, search memory,
-│       │                              #      grocery advice reasons (planning/pins.py: the swap's pinned re-solve)
+│       │                              #      ideas and More ideas (2b.3b), grocery advice reasons
+│       │                              #      (planning/pins.py: the swap's pinned re-solve)
 │       ├── feedback/ · preferences/ · substitutions/   # P3
 │       ├── overrides/                 # P4
 │       ├── grocery/                   # P5
@@ -1274,8 +1278,8 @@ How the filter decides:
     - each More ideas session (a first and a second tap) adds ≈ 20K [17K];
     - background batches stop first, keeping a 30K reserve.
   - **Reasoning effort:** ideas and steps calls use the lowest effort the model supports (`LLM_REASONING_EFFORT`, `low` for `openai/gpt-oss-*`).
-  - **To be measured:** step 2b.3b's live test measures the real split. That includes whether the unexplained ≈ 3.5K shrinks with the smaller ideas schema.
-- **Each request's prompt + maximum completion must fit the minute's limit.** The Phase 1 HTTP 413 (next bullet) suggests Groq counts both, so every call keeps prompt estimate + `max_completion_tokens` ≤ 95% of the header limit, with a per-purpose maximum completion. 2b.3b confirms this live.
+  - **Measured in 2b.3b (2026-10-11; FLOW_SPEC §15.1, §15.2 now use these):** an ideas call ≈ 4.7K (1.5K prompt + 3.1K for 8 ideas), a steps call ≈ 1.2K, the Phase 1 batch ≈ 4.1K. The unexplained ≈ 3.5K doesn't exist: prompts are (text + schema JSON) ÷ 4 × 1.03–1.11 plus 40–80 tokens; the ideas schema costs 519 tokens. A typical day ≈ 6K, a heavy day ≈ 37K, a More ideas session ≈ 14K.
+- **Each request's prompt + maximum completion stays within 95% of the minute's limit** (the per-call sizing rule; ideas and steps size their own maximum). The 2b.3b live probe showed Groq doesn't count the maximum completion against the minute (8,114 requested against 8,000 went through); the Phase 1 HTTP 413 was the oversized prompt of a retry that re-sent the whole failed reply. The pacer still waits for prompt + maximum completion, which can only overestimate.
 - **Observed in the Phase 1 live runs (2026-10-09, `openai/gpt-oss-120b`, strict):** a two-recipe batch is ~5.9K prompt + ~1.8K completion tokens, so a second call in the same minute gets a 429 (retry-after 7–39 s, handled). Strict mode still returned `json_validate_failed` once (retried as a parse error). A retry that re-sent the whole failed reply grew to 11.4K requested tokens and was refused with HTTP 413, so retries now re-send only short replies and `LLM_MAX_COMPLETION_TOKENS` defaults to 3000.
 
 ### 7.7 API and config conventions
@@ -2234,6 +2238,97 @@ versions to offer and `load_ingredient_plans` the lots to skip. Nothing changed 
 - `llm/tests/test_live.py` (opt-in): AC 7.
 - **Vitest (moved from 2b.4):** stream reducer (new ids and New badges; a held `prefetched` list never shown before the next More ideas tap; the first tap always calls live); the countdown from `wait_s` and `retry_after_s` re-enables More ideas at zero; the C8 steps state (writing, waiting, failed, ready; Cook this disabled until ready).
 
+**2b.3b outcome (2026-10-11).** Every deliverable is built and every acceptance criterion is met, with the
+deviations below (D89–D101). Backend: 1132 tests pass (1056 at the 2b.4 fixes; 2 opt-in skipped), ruff and
+mypy clean. Frontend: 263 Vitest tests pass (244 before), type check clean, the static export builds. No
+migration, no new dependency. The live test ran twice against Groq (findings in FLOW_SPEC §15.1).
+
+- **AC 1:** `test_steps_pass.py::test_nothing_else_changes_and_the_numbers_stay_the_same`: an idea's card equals
+  its recipe page at the card's portions, and the page's lines, nutrition, cost, times and equipment are identical
+  before and after its steps are written (only the steps and `steps_status` change).
+- **AC 2:** `test_meal_now_stream.py::test_ideas_with_beef_held_items_or_a_used_up_pork_cap_are_dropped`, and the
+  idea checks in `planning/tests/test_ideas_pass.py`.
+- **AC 3:** with FakeLLM: 6 or more good matches make 0 calls; fewer make exactly 1 ideas call; a search never
+  writes a background batch (`test_meal_now_stream.py`); the first More ideas tap makes 1 call before its cards and
+  then 1 background batch; a later tap with a held batch makes 0 calls before its cards, and 1 ideas call when none
+  is held (`test_more_ideas.py`); opening an idea makes 1 steps call, then 0; two opens at once make 1; seed and
+  saved recipes make 0 (`test_steps_pass.py`); an identical repeat makes 0 and keeps the order; a failed call keeps
+  the saved cards with a note and status `partial`; a failed or skipped background batch changes nothing on screen.
+- **AC 4:** ideas pass the idea checks before they are streamed; steps pass the step checks, the prose filter and
+  safety injection before they are saved; steps with an unlisted ingredient or appliance, or a storage claim, are
+  retried with the errors; after the capped attempts nothing is saved and the idea stays pending.
+- **AC 5:** every ideas, revision and steps request carries `reasoning_effort="low"` (checked on FakeLLM's
+  requests); a value the model rejects ends as a configuration error naming LLM_REASONING_EFFORT.
+- **AC 6:** `test_more_ideas.py`: the background batch starts only after a tap, waits while a steps call for you
+  runs and then gives up silently, keeps the 30K reserve, is skipped when it can't start within the wait limit,
+  waits for room when it can (about 50 s on the fake clock), is never revised, and its ideas are logged as
+  exposures only when a tap shows them.
+- **AC 7:** the opt-in live test (`llm/tests/test_live.py`) made the Phase 1 batch, one ideas call, the same ideas
+  messages in plain JSON mode, one steps call and a tiny probe, all with effort `low`. Measured: Phase 1 batch
+  2,428 + 1,709; ideas 1,533 + 3,117 (8 asked, 5 passed); plain JSON 1,014 (the schema costs 519); steps 710 + 526.
+  The ≈ 3.5K overhead doesn't exist (prompts are about 1.03–1.11 × characters ÷ 4, plus 40–80 tokens), and Groq
+  doesn't count the maximum completion against the minute (the probe asked for 8,114 of 8,000 and went through).
+  8 ideas always fit. Recorded in FLOW_SPEC §15.1; §15.2 and §7.6 now use the measured case.
+- **AC 8:** two More ideas taps inside a minute: the second waits with a countdown and finishes, or ends `partial`
+  with `retry_after_s` and the cards untouched; the same for a 429 (short: a `waiting` line, then success; long:
+  `partial`) and for a steps request (`waiting` with `retry_after_s`). Only the daily guard gives the "back
+  tomorrow" note (`test_more_ideas.py`, `test_rate_limit_waits.py`, `test_steps_pass.py`).
+- **AC 9:** Vitest covers every C5 and C8 idea state: the strip, the countdown strip, New badges and the toast,
+  the failed-call note, More ideas live and from the held list, "Writing…", "Ready in 0:45"; the Steps section
+  writing, waiting, failed, daily and offline, and Cook this held as "Writing steps…" until the steps land; the
+  quick-add sheet's "Ready in 0:45". No state shows the error pattern for a rate limit, and the no-math audit
+  passes (the countdown is only a timer).
+
+**Decisions and deviations (D89–D101).**
+- **D89. Ground vs whole cuts (N2).** `meat_forms` in the pantry catalog (ground: ground chicken, turkey, pork,
+  beef; whole cuts: the seven chicken cuts, turkey breast, pork chop and tenderloin, sirloin, each with its bone
+  and skin) and `domain/meat_forms.py`, checked in every substitute step next to M6. As built the rule is
+  symmetric: neither kind stands in for, or is replaced by, something that is neither (eggs, tofu, beans, fish,
+  sausage). So chicken thighs no longer stand in for salmon, shrimp or eggs on a card, and the golden ordering and
+  gap-rule tests changed accordingly. Fish fillets are "neither" for now (a question in the summary).
+- **D90. The pacer.** One rate state per provider and model for the whole process (a second request inside the
+  minute knows what the first used), refilled at limit ÷ 60 a second. A wait over LLM_MAX_RATE_WAIT_SECONDS or the
+  time budget raises `LLMWaitTooLongError` (a kind of `LLMDeadlineError`, so `POST /plans` still plans with the
+  recipes saved so far); before, a long wait was cut to 60 s and slept.
+- **D91. Measured estimates.** The calibration counts the schema's characters too and starts at 1.2 (the planned
+  2.5 assumed the overhead the live test ruled out); an idea is 360 completion tokens, not 330.
+- **D92. Salvage and short retries (live test).** Groq's strict mode still rejected about half the schema replies.
+  A rejected or partly invalid ideas batch keeps the ideas that validate on their own (the rest are dropped and
+  logged, like ideas that fail the checks); retries carry only the provider's schema message, never the failed
+  reply. The ideas rules add "pots and pans aren't equipment" and "fresh herbs and leafy greens in grams".
+- **D93. Idea checks for meal now.** The meal, mood up to yours (simpler ideas land in "Simpler options"), hands-on
+  time for the mood, the Quick limit on total time, no ingredient of a cap used up this week, and complete
+  nutrition. "Must use" is a prompt direction, not a check.
+- **D94. The cache.** A search is re-keyed on the pool after its ideas, and after each More ideas tap (held batch
+  included), so an identical repeat returns the stored result with 0 calls. `steps_status` left the pool
+  fingerprint (writing steps changes no number). A partial result a repeat could fix (a pause, a failed call, the
+  daily guard) is never served from the cache; "not set up" is.
+- **D95. More ideas bookkeeping.** Each tap is its own run (`more_ideas`); the ideas it shows are logged under it,
+  and Cook this marks the cooked recipe across all the search's runs. A cache hit carries the held batch. The
+  background batch checks for a running steps call every second while it waits.
+- **D96. Steps.** E19 takes the GET's query (portions, portion size, search), so its result is the recipe page
+  payload. An idea's page shows no steps, not even the app's safety lines, until they are written. One call per
+  recipe: a lock in the process, plus the running `recipe_steps` run for other processes (polled each second).
+  Cook this on an idea writes its steps first (up to 90 s), otherwise answers 409 with `retry_after_s`.
+- **D97. No LLM set up.** A search that wants ideas keeps its saved cards with "New ideas aren't set up yet (…)"
+  and status `partial`; the Cook tests run with no LLM unless they script one.
+- **D98. Other LLM paths.** Quick-add parse answers `status: waiting` with `retry_after_s` (HTTP 200). The plan
+  stream's `waiting` lines carry `wait_s`; when new recipes would wait too long, the plan carries on with saved
+  recipes, with a note and `retry_after_s`.
+- **D99. Config.** LLM_TOKENS_PER_MINUTE (8000, until the header arrives) and LLM_PREFETCH_DAILY_RESERVE (30000);
+  an empty LLM_REASONING_EFFORT means none; docker compose forwards LLM_REASONING_EFFORT. The API's LLM clock and
+  settings are dependencies, so tests never really sleep.
+- **D100. Screens.** More ideas state is kept per search outside React; "Writing…" shows only after a tap during
+  the background batch (nothing else shows it); the empty state's "Write new recipes" is a More ideas tap; New
+  badges come from the server, with a toast; notes are plain notices. The recipe page reloads its GET once the
+  steps land.
+- **D101. The live test** is one test (the Phase 1 batch, ideas, plain JSON, steps, and the probe as a fifth tiny
+  call) in place of Phase 1's single-batch live test. Also: the onboarding flow test gets a 15 s timeout (1.4 s
+  alone, over 5 s when every test file runs at once), and the full backend suite now takes about 20 minutes here.
+
+**Dev database.** No migration and no seed change (the catalog's `meat_forms` is read from the seed file at
+runtime). Nothing to upgrade.
+
 #### 2b.4 A meal now: screens (frontend)
 
 *Reads FLOW_SPEC §5, §7 (C0, C2–C5, C7, C8). Built right after 2b.3a and before 2b.3b (H3), so it uses seed and saved recipes only.*
@@ -2419,6 +2514,9 @@ that need ideas (New badges, the "Writing new ideas…" strip, countdown waits, 
 state).
 
 **Dev database.** Re-seeded (210 ingredients, 47 seed recipes, 89 products, 174 prices); no migration.
+
+**Fixes approved 2026-10-10, including every decision and deviation (N1),** with the ground-vs-whole-cut swap rule
+(N2) and the mapping review (N3) recorded in §12.1. N2 was built at the start of the 2b.3b session.
 
 #### 2b.5 Meal prep: engine (backend)
 
@@ -3000,6 +3098,14 @@ No other dependencies are planned. Auth uses the stdlib, and the solver uses HiG
 | M18 | Custom items from labels (C, backlog) | Add an item that isn't in USDA (granola bought abroad) by entering label values per serving. Scheduled together with DF1 (§12.5, DF3). |
 | M19 | Daily habit items (C, backlog) | A recurring item counted every day toward calories and protein, with a one-tap "had an extra today". Placed with Phase 4 (daily tracking and rebalancing). |
 | M20 | Solver shortlist (asked during the fixes) | With the 47 seed recipes the weekly MILP stopped proving its best plan in time (slower plans that could differ between identical requests; planning tests timed out). Your choice: before each solve, code shortlists the best 3 candidates per meal (your nutrition priority per kcal, closeness to the meal's calories, favorites, pantry use, price; never-favored and disliked last), preferring recipes that share ingredients, since solve time grows with the number of different ingredients. When the shortlist can't make a plan it widens to 6 per meal, and a library of 16 or fewer is solved whole. The solver still does all the fitting. A default week now solves in about 6 s (the 10 Phase 0 seeds took about 10 s). `app/planning/shortlist.py`. |
+
+**Step 2b.4 fixes approval (2026-10-10).** You approved the fixes, then:
+
+| # | Topic | Decision |
+|---|---|---|
+| N1 | 2b.4 fixes | Approved: M2–M13, M15, M17 and M20, including every decision and deviation in the fixes outcome note (§9). |
+| N2 | Ground vs whole cuts | Ground meat swaps only with ground meat (ground turkey and ground chicken are fine for each other); a whole cut swaps only with a whole cut of the same form (bone and skin, as M6). Never between ground and whole cuts. Tests include "ground turkey never becomes chicken thigh". Built at the start of 2b.3b: `meat_forms` in the pantry catalog, `domain/meat_forms.py`, checked in every substitute step (accepted pairs and pantry). As built, the rule is symmetric: neither kind stands in for, or is replaced by, something that is neither (eggs, tofu, beans, fish, sausage), so chicken thighs no longer stand in for salmon, shrimp or eggs on a card. |
+| N3 | Mapping review (13 ingredients new to the top 25) | Ground turkey: 93% lean (FDC 172850). Salmon: farmed Atlantic, raw (FDC 175167). Canned chickpeas: drained solids (173800). Red lentils (174284) and quinoa (168874): dry, uncooked. Approved as-is: the five chicken cuts, ground chicken, pita, russet potato. Bone-in thigh keeps the raw leg's 27% refuse for now, noted in the seed as replaceable with a measured value. All 13 are marked reviewed (`nutrition_reviewed_on` 2026-10-10, already in the seed; no mapping changed). |
 
 ### 12.2 Remaining questions (from applying your answers)
 

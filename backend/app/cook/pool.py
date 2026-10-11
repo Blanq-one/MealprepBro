@@ -33,6 +33,7 @@ from app.domain.chicken_cuts import CutForm
 from app.domain.enums import Equipment, RecipeMood
 from app.domain.exclusions import ExclusionStatus
 from app.domain.frequency_caps import ResolvedCap
+from app.domain.meat_forms import MeatForm
 from app.domain.nutrition import NutritionLine, line_amounts
 from app.domain.scaling import PORTION_MULTIPLIERS
 from app.domain.units import ConversionError, UnitError, to_base
@@ -74,6 +75,10 @@ class Pool:
     saved_ids: frozenset[int]  # recipes saved for later (a badge only)
     cap_used: dict[str, int]
     fingerprint: dict[str, Any] = field(default_factory=dict)  # what the cache key hashes
+    stock: dict[int, Stock] = field(
+        default_factory=dict
+    )  # your items for this search (read by the ideas pass)
+    always_have_ids: frozenset[int] = frozenset()
 
     def item(self, version_id: int) -> PoolItem | None:
         return next((i for i in self.items if i.version.id == version_id), None)
@@ -134,6 +139,7 @@ def _haves(
     *,
     groups: Mapping[int, str],
     cuts: Mapping[int, CutForm] | None = None,
+    meats: Mapping[int, MeatForm] | None = None,
 ) -> list[Have]:
     out = []
     for i, plan in plans.items():
@@ -156,6 +162,7 @@ def _haves(
                 roles=roles.get(i, frozenset()),
                 group=groups.get(i),
                 cut=(cuts or {}).get(i),
+                meat=(meats or {}).get(i),
             )
         )
     return out
@@ -180,6 +187,7 @@ def need_lines(
     *,
     groups: Mapping[int, str] | None = None,
     cuts: Mapping[int, CutForm] | None = None,
+    meats: Mapping[int, MeatForm] | None = None,
 ) -> list[NeedLine]:
     """One need per ingredient at the card's practical amounts (repeated lines added up), in recipe order."""
     grouped: dict[int, list[tuple[RecipeLine, LineResult]]] = defaultdict(list)
@@ -215,6 +223,7 @@ def need_lines(
                 owned=plan.unlimited,
                 group=(groups or {}).get(i),
                 cut=(cuts or {}).get(i),
+                meat=(meats or {}).get(i),
             )
         )
     return out
@@ -290,6 +299,7 @@ def load_pool(
             library_roles(session, user_id),
             groups=catalog.group_of,
             cuts=catalog.cut_of,
+            meats=catalog.meat_of,
         ),
         pairs=accepted_pairs(session),
         unusable=excluded | diet.disliked_ids,
@@ -315,7 +325,15 @@ def load_pool(
         )
         calc = scaled.calculation
         coverage: tuple[LineCoverage, ...] = cover(
-            need_lines(recipe_lines, scaled, plans, context, groups=catalog.group_of, cuts=catalog.cut_of),
+            need_lines(
+                recipe_lines,
+                scaled,
+                plans,
+                context,
+                groups=catalog.group_of,
+                cuts=catalog.cut_of,
+                meats=catalog.meat_of,
+            ),
             inputs,
         )
         cost = cost_per_portion(scaled, query.store_order)
@@ -349,7 +367,8 @@ def load_pool(
     marks = favorites.marks(session, user_id)
     fingerprint = {
         "settings": settings.model_dump(mode="json"),
-        "pool": [(r.id, v.id, v.steps_status) for r, v in pairs],
+        # not steps_status: writing an idea's steps changes no number, so a repeat never goes back to the LLM
+        "pool": [(r.id, v.id) for r, v in pairs],
         "favorites": sorted(diet.favorite_recipe_ids),
         "saved": sorted(marks.saved),
         "disliked": sorted(diet.disliked_ids),
@@ -371,6 +390,8 @@ def load_pool(
         saved_ids=marks.saved,
         cap_used=cap_used,
         fingerprint=fingerprint,
+        stock=stock,
+        always_have_ids=diet.always_have_ids,
     )
 
 

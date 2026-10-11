@@ -1,14 +1,18 @@
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Query, Response
+from fastapi.responses import StreamingResponse
+from sqlalchemy.orm import Session
 
-from app.api.deps import CurrentUser, DbSession
+from app.api.deps import CurrentUser, DbSession, LLMClientFactory, LLMClock, LLMSettings, SessionFactory
 from app.api.presenters import costs_out, nutrition_out
 from app.cook import search as search_service
 from app.cook.saved import saved_cards
+from app.cook.stream import steps_events
 from app.domain.enums import PortionSize, RecipeOrigin
 from app.schemas.api import SeedRecipeOut
 from app.schemas.cards import SearchContextOut
+from app.schemas.cook import StepsStreamEvent
 from app.schemas.recipes import (
     RecipeOut,
     RecipeVersionOut,
@@ -23,6 +27,7 @@ from app.services.recipes import VersionView, recipe_view, seed_recipes, version
 
 router = APIRouter(prefix="/api/v1/recipes", tags=["recipes"])
 versions_router = APIRouter(prefix="/api/v1/recipe-versions", tags=["recipes"])
+NDJSON = "application/x-ndjson"
 
 
 @router.get("/seed", response_model=list[SeedRecipeOut])
@@ -101,7 +106,9 @@ def version_out(
                 added_by_app=s.added_by_app,
             )
             for s in rendered.steps
-        ],
+        ]
+        if v.steps_status is None  # a new idea shows no steps (not even the app's lines) until written
+        else [],
         per_container=rendered.per_container,
         labels=list(rendered.labels),
         heme_note=rendered.heme_note,
@@ -181,30 +188,93 @@ def get_recipe(recipe_id: int, session: DbSession, user: CurrentUser) -> RecipeO
     )
 
 
+def page_payload(
+    session: Session,
+    user_id: int,
+    version_id: int,
+    *,
+    portions: int | None,
+    portion_size: PortionSize | None,
+    search: int | None,
+) -> RecipeVersionOut:
+    if search is not None and portions is None:  # open at the search card's portions (C8)
+        card = search_service.card_portions(session, user_id, search, version_id)
+        if card is not None:
+            portions, portion_size = card[0], portion_size or card[1]
+    view = version_view(session, user_id, version_id, portions, portion_size)
+    context = None
+    if search is not None:
+        counted = [
+            (ln.ingredient.id, ln.quantity, ln.unit) for ln in view.calculation.lines if not ln.optional
+        ]
+        context = search_service.search_context(session, user_id, search, version_id, counted)
+    return version_out(session, view, context)
+
+
+Portions = Annotated[int | None, Query(ge=1, le=40)]
+Size = Annotated[PortionSize | None, Query()]
+SearchId = Annotated[int | None, Query(description="a meal-now search: its coverage lines for this recipe")]
+
+
 @versions_router.get("/{version_id}", response_model=RecipeVersionOut)
 def get_version(
     version_id: int,
     *,
     session: DbSession,
     user: CurrentUser,
-    portions: Annotated[int | None, Query(ge=1, le=40)] = None,
-    portion_size: Annotated[PortionSize | None, Query()] = None,
-    search: Annotated[
-        int | None, Query(description="a meal-now search: its coverage lines for this recipe")
-    ] = None,
+    portions: Portions = None,
+    portion_size: Size = None,
+    search: SearchId = None,
 ) -> RecipeVersionOut:
     """A recipe version scaled to any number of portions: practical quantities, code-computed nutrition
     and cost, and the food-safety lines the app injects. With `search`, that search's pantry coverage and
-    substitute lines for this recipe (the numbers stay those of the recipe as written)."""
-    if search is not None and portions is None:  # open at the search card's portions (C8)
-        card = search_service.card_portions(session, user.id, search, version_id)
-        if card is not None:
-            portions, portion_size = card[0], portion_size or card[1]
-    view = version_view(session, user.id, version_id, portions, portion_size)
-    context = None
-    if search is not None:
-        counted = [
-            (ln.ingredient.id, ln.quantity, ln.unit) for ln in view.calculation.lines if not ln.optional
-        ]
-        context = search_service.search_context(session, user.id, search, version_id, counted)
-    return version_out(session, view, context)
+    substitute lines for this recipe (the numbers stay those of the recipe as written). A new idea's steps
+    are empty until written (`steps_ready` false; POST .../steps writes them)."""
+    return page_payload(
+        session, user.id, version_id, portions=portions, portion_size=portion_size, search=search
+    )
+
+
+@versions_router.post(
+    "/{version_id}/steps",
+    response_class=StreamingResponse,
+    responses={
+        200: {"model": StepsStreamEvent, "content": {NDJSON: {}}, "description": "NDJSON event lines"}
+    },
+)
+def write_steps(
+    version_id: int,
+    *,
+    session: DbSession,
+    user: CurrentUser,
+    session_factory: SessionFactory,
+    client_factory: LLMClientFactory,
+    clock: LLMClock,
+    llm_settings: LLMSettings,
+    portions: Portions = None,
+    portion_size: Size = None,
+    search: SearchId = None,
+) -> StreamingResponse:
+    """E19: writes a new idea's steps the first time it is opened and saves them with the recipe (once).
+    Returns at once when they exist; a second request for the same recipe waits for the call already running.
+    The result carries the recipe page payload (same query as GET), or `waiting` with `retry_after_s`."""
+    version_view(session, user.id, version_id)  # 404 before the stream starts
+
+    def present(worker_session: Session) -> dict[str, Any]:
+        out = page_payload(
+            worker_session, user.id, version_id, portions=portions, portion_size=portion_size, search=search
+        )
+        return out.model_dump(mode="json")
+
+    events = steps_events(
+        session_factory,
+        user.id,
+        version_id,
+        client_factory=client_factory,
+        present=present,
+        clock=clock,
+        settings=llm_settings,
+    )
+    return StreamingResponse(
+        events, media_type=NDJSON, headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"}
+    )

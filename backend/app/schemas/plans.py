@@ -74,6 +74,8 @@ class PlanStreamEvent(BaseModel):
     elapsed_s: float
     stage: str | None = None
     message: str | None = None  # human text for the progress screen
+    wait_s: int | None = None  # progress `waiting`: seconds of a rate-limit wait (the countdown, 2b.3b)
+    retry_after_s: int | None = None  # result: new recipes had to wait longer than this request could
     status: Literal["succeeded", "infeasible", "failed"] | None = None  # result only
     plan_id: int | None = None
     plan: "PlanSummaryOut | None" = None

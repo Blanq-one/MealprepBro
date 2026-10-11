@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 
 from app.cook.answers import slot_from_clock
 from app.cook.caps import meals_this_week, used_up
+from app.cook.ideas import LLMAccess, wait_seconds
 from app.cook.pool import store_ids
 from app.cook.search import get_search, local_now
 from app.db.models import (
@@ -35,6 +36,7 @@ from app.db.models import (
 from app.domain.enums import MealSlot, PlanningMode, PortionSize, RecipeMood
 from app.domain.exclusions import ExclusionStatus
 from app.domain.nutrition import kcal_display
+from app.llm.pacing import Deadline
 from app.planning.constraint_builder import DietInputs
 from app.planning.costing import cost_summary
 from app.planning.grocery_list import build_grocery
@@ -48,6 +50,7 @@ from app.planning.reference import load_reference
 from app.planning.rounded import RoundedMeal, RoundedPlan
 from app.planning.rounding import round_batch
 from app.planning.solver.model import SolvedBatch
+from app.planning.steps import StepsWriter
 from app.schemas.constraints import (
     CalorieTolerance,
     DaySpec,
@@ -58,6 +61,7 @@ from app.schemas.constraints import (
 from app.schemas.cook import CookAnswers, CookMealIn, CookMealOut
 from app.schemas.settings import UserSettings
 from app.services import plans as plan_service
+from app.services.errors import ConflictError
 from app.services.recipes import RecipeNotFoundError
 from app.services.settings import load_settings
 
@@ -68,6 +72,21 @@ _PROTEIN = Decimal("0.1")
 
 class CookThisError(ValueError):
     """The recipe can't be cooked as asked (a diet rule, this week's cap); the message says why (422)."""
+
+
+class StepsNotReadyError(ConflictError):
+    """A new idea whose steps couldn't be written just now (409; `retry_after_s` during a rate-limit
+    pause)."""
+
+    def __init__(self, message: str, *, retry_after_s: int | None = None, code: str | None = None) -> None:
+        super().__init__(message)
+        self.retry_after_s = retry_after_s
+        self.code = code
+
+
+STEPS_TIME_BUDGET_S = (
+    90.0  # Cook this waits this long for an idea's steps (the recipe page writes them first)
+)
 
 
 def _version(session: Session, user_id: int, version_id: int) -> tuple[Recipe, RecipeVersion]:
@@ -248,14 +267,50 @@ def _out(session: Session, user_id: int, plan_id: int, batch_id: int, created: b
     )
 
 
+def ensure_steps(session: Session, user: AppUser, version: RecipeVersion, access: LLMAccess | None) -> None:
+    """A new idea gets its steps before it is cooked (step 2b.3b deliverable 6); 0 calls when they exist."""
+    if version.steps_status is None:
+        return
+    client, reason = access.client() if access is not None else (None, "no LLM client is configured")
+    if client is None or access is None:
+        raise StepsNotReadyError(
+            f"The steps for {version.title} aren't written yet ({reason}).", code="llm_config"
+        )
+    deadline = Deadline.after(access.clock, STEPS_TIME_BUDGET_S)
+    outcome = StepsWriter(
+        session,
+        user.id,
+        lambda run: access.context(session, client, run.id, deadline=deadline),
+        clock=access.clock,
+    ).write(version.id)
+    if outcome.status == "waiting":
+        raise StepsNotReadyError(
+            f"The steps for {version.title} need a short wait.",
+            retry_after_s=wait_seconds(outcome.retry_after_s),
+            code="llm_wait_too_long",
+        )
+    if outcome.status != "ready":
+        raise StepsNotReadyError(
+            f"I couldn't write the steps for {version.title} just now.",
+            code=outcome.error.code if outcome.error else None,
+        )
+    session.refresh(version)
+
+
 def cook_meal(
-    session: Session, user: AppUser, body: CookMealIn, *, now: datetime | None = None
+    session: Session,
+    user: AppUser,
+    body: CookMealIn,
+    *,
+    now: datetime | None = None,
+    access: LLMAccess | None = None,
 ) -> CookMealOut:
     """`now`: your local time (tests pass it); default the clock in your timezone."""
     now = now or local_now(user)
     today = now.date()
     settings = load_settings(session, user.id)
     recipe, version = _version(session, user.id, body.version_id)
+    ensure_steps(session, user, version, access)
     search = get_search(session, user.id, body.search_id) if body.search_id is not None else None
     resolved: dict[str, Any] = (search.results or {}).get("resolved", {}) if search is not None else {}
     answers = CookAnswers.model_validate(search.answers) if search is not None else None
@@ -311,11 +366,13 @@ def cook_meal(
     batch_id = session.scalars(select(PlanCookBatch.id).where(PlanCookBatch.meal_plan_id == saved.id)).one()
     if search is not None:
         search.meal_plan_id = saved.id
-        if run_id is not None:  # the meal-now exposure: you cooked this one (F9)
+        # the meal-now exposure: you cooked this one (F9); More ideas logs what it shows under its tap's run
+        runs = [int(i) for i in (search.results or {}).get("run_ids", [])] or ([run_id] if run_id else [])
+        if runs:
             session.execute(
                 update(PlanCandidate)
                 .where(
-                    PlanCandidate.generation_run_id == run_id,
+                    PlanCandidate.generation_run_id.in_(runs),
                     PlanCandidate.recipe_version_id == version.id,
                     PlanCandidate.filtered_reason.is_(None),
                 )

@@ -89,6 +89,29 @@ Every package size is a typical US size and an **estimate**.
 | chicken-wing | bone-in | skin-on |
 | chicken-whole | bone-in | skin-on |
 
+## Ground meat and whole cuts are never swapped for each other
+
+Ground swaps only with ground; a whole cut only with a whole cut of the same bone and skin;
+neither ever stands in for, or is replaced by, anything else.
+
+| Ingredient | Kind | Bone | Skin |
+|---|---|---|---|
+| ground-chicken | ground | — | — |
+| ground-turkey-93 | ground | — | — |
+| ground-pork | ground | — | — |
+| ground-beef-85 | ground | — | — |
+| chicken-thigh-boneless-skinless | whole cut | boneless | skinless |
+| chicken-breast-boneless-skinless | whole cut | boneless | skinless |
+| chicken-thigh-bone-in-skin-on | whole cut | bone-in | skin-on |
+| chicken-breast-bone-in-skin-on | whole cut | bone-in | skin-on |
+| chicken-drumstick | whole cut | bone-in | skin-on |
+| chicken-wing | whole cut | bone-in | skin-on |
+| chicken-whole | whole cut | bone-in | skin-on |
+| turkey-breast | whole cut | boneless | skinless |
+| pork-chop-boneless | whole cut | boneless | skinless |
+| pork-tenderloin | whole cut | boneless | skinless |
+| beef-sirloin-steak | whole cut | boneless | skinless |
+
 ## Close matches, always labeled (M7)
 
 | You type | Closest match |

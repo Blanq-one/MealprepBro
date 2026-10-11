@@ -21,10 +21,13 @@ export function RecipeActions({
   recipe,
   cook,
   online,
+  blocked = null,
 }: {
   recipe: { recipe_id: number; title: string; is_favorite: boolean; is_saved: boolean };
   cook: { meal: CookMealIn } | { batchId: number };
   online: boolean;
+  /** Cook this waits for something first, with this label (a new idea: "Writing steps…" until they land). */
+  blocked?: string | null;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -60,8 +63,13 @@ export function RecipeActions({
         </p>
       )}
       <div className={styles.buttons}>
-        <button type="button" className={`btn btn-primary ${styles.cook}`} onClick={() => void cookThis()} disabled={busy || (!online && !("batchId" in cook))}>
-          {busy ? "Saving…" : "Cook this"}
+        <button
+          type="button"
+          className={`btn btn-primary ${styles.cook}`}
+          onClick={() => void cookThis()}
+          disabled={busy || blocked !== null || (!online && !("batchId" in cook))}
+        >
+          {busy ? "Saving…" : (blocked ?? "Cook this")}
         </button>
         <button
           type="button"

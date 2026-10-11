@@ -7,7 +7,7 @@ from datetime import date, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from app.cook.answers import MealNowQuery, NutritionTerm
 from app.cook.caps import meals_this_week, week_of
@@ -15,7 +15,7 @@ from app.cook.coverage import LineCoverage, NeedLine, Purchase, Status
 from app.cook.ranking import RankInput, Rules, empty_reason, good_matches, ideas_needed, rank, top_filter
 from app.cook.substitutes import Substitute
 from app.cook.tests.conftest import ZONE, add_recipe, add_stock, final, meal_now, results, titles
-from app.db.models import Ingredient, MealPlan, PlanCandidate, PlanCookBatch, PlanMeal
+from app.db.models import Ingredient, MealPlan, PlanCandidate, PlanCookBatch, PlanMeal, RecipeStep
 from app.domain.enums import Equipment, MealSlot, PortionSize, RecipeMood, StorageLocation
 from app.domain.frequency_caps import ResolvedCap
 from app.schemas.cook import GoalTile
@@ -320,12 +320,14 @@ def test_golden_ordering_with_a_pantry_of_chicken_thighs_spinach_and_tortillas(a
     assert titles(cards)[:8] == [
         "Chicken and spinach gravy",  # uses all three, and the spinach before it expires
         "Everyday chicken curry gravy",
-        "Lemon garlic salmon with rice and broccoli",  # its protein and carb are swaps you have
         "Sheet-pan chicken and peppers over rice",
+        # its carb is a swap you have; the salmon is never swapped for your thighs (a whole cut swaps only
+        # with a whole cut of the same form, 2b.4 fixes approval)
+        "Lemon garlic salmon with rice and broccoli",
         "Yogurt chicken gravy",
         "Air-fryer chicken wings with sweet potato wedges",
-        "Shakshuka with warm tortillas",
         "Roast bone-in chicken breasts with quinoa and asparagus",
+        "Chicken and black bean burrito bowls",
     ]
     sections = [
         c["section"] for c in cards
@@ -476,3 +478,27 @@ def test_yellow_onion_never_becomes_spinach_on_a_card(api, seeded_db):
     onion = next(s for s in curry["swaps"] if s["name"] == "yellow onion")
     assert onion["substitute"]["name"] == "red onion"
     assert onion["display"] == "Swap: red onion instead of yellow onion (you have it)"
+
+
+# ---------------- ideas rank like any recipe (step 2b.3b) ----------------
+def test_an_idea_ranks_exactly_like_the_same_recipe_with_steps(api, seeded_db):
+    lines = [
+        ("chicken-thigh-boneless-skinless", 600, "g", "protein"),
+        ("rice-long-grain-white", 300, "g", "carb"),
+        ("spinach", 200, "g", "vegetable"),
+    ]
+    add_recipe(seeded_db, "Twin with steps", lines, mood="medium")
+    idea = add_recipe(seeded_db, "Twin without steps", lines, mood="medium")
+    seeded_db.execute(delete(RecipeStep).where(RecipeStep.recipe_version_id == idea.id))
+    idea.steps_status = "pending"
+    seeded_db.flush()
+    add_stock(seeded_db, "chicken-thigh-boneless-skinless", 1000)
+    cards = {c["title"]: c for c in results(meal_now(api, slot="dinner"))}
+    a, b = cards["Twin with steps"], cards["Twin without steps"]
+    assert (a["steps_ready"], b["steps_ready"]) == (True, False)
+    same = ("numbers", "uses", "could_buy", "missing", "swaps", "why", "score", "section", "good_match")
+    assert {k: a[k] for k in same} == {k: b[k] for k in same}
+    order = [c["title"] for c in results(meal_now(api, slot="dinner"))]
+    assert (
+        abs(order.index("Twin with steps") - order.index("Twin without steps")) == 1
+    )  # only the id breaks the tie

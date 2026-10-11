@@ -391,6 +391,25 @@ class CloseMatch(_Strict):
     ingredient: str
 
 
+class MeatFormEntry(_Strict):
+    """Ground meat or a whole cut (2b.4 fixes approval): ground swaps only with ground, a whole cut only with
+    a whole cut of the same bone and skin, never one for the other."""
+
+    ingredient: str
+    kind: Literal["ground", "whole_cut"]
+    bone: Literal["bone_in", "boneless"] | None = None  # whole cuts only
+    skin: Literal["skin_on", "skinless"] | None = None
+
+    @model_validator(mode="after")
+    def _form(self) -> Self:
+        has_form = self.bone is not None or self.skin is not None
+        if self.kind == "ground" and has_form:
+            raise ValueError(f"{self.ingredient}: ground meat has no bone or skin")
+        if self.kind == "whole_cut" and (self.bone is None or self.skin is None):
+            raise ValueError(f"{self.ingredient}: a whole cut needs its bone and skin")
+        return self
+
+
 class PantryCatalogFile(_Strict):
     """app/seed/data/pantry_catalog.json, written by scripts/build_pantry_catalog.py."""
 
@@ -402,6 +421,21 @@ class PantryCatalogFile(_Strict):
     presets: list[IngredientPresets]
     chicken_cuts: list[ChickenCut] = Field(default_factory=list)
     close_matches: list[CloseMatch] = Field(default_factory=list)
+    meat_forms: list[MeatFormEntry] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _meat_forms(self) -> Self:
+        meats = [m.ingredient for m in self.meat_forms]
+        if dupes := sorted({m for m in meats if meats.count(m) > 1}):
+            raise ValueError(f"meat forms listed twice: {dupes}")
+        forms = {m.ingredient: m for m in self.meat_forms}
+        for cut in self.chicken_cuts:  # every chicken cut is a whole cut of its own bone and skin
+            entry = forms.get(cut.ingredient)
+            if entry is None or (entry.kind, entry.bone, entry.skin) != ("whole_cut", cut.bone, cut.skin):
+                raise ValueError(
+                    f"{cut.ingredient}: list it in meat_forms as a whole cut, {cut.bone} {cut.skin}"
+                )
+        return self
 
     @model_validator(mode="after")
     def _unique(self) -> Self:

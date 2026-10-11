@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 
+import { clockLabel, useCountdown } from "@/components/ui/BuildingSteps";
 import { api } from "@/lib/api/client";
 import type { InventoryLot, InventoryLotIn, ParsedLot, ParseResult, StorageLocation } from "@/lib/api/types";
+import type { Wait } from "@/lib/cook/stream";
 
 import { ProblemNotice } from "./Status";
 import styles from "./NLQuickAdd.module.css";
@@ -59,12 +61,20 @@ export function NLQuickAdd({ onAdded }: { onAdded: (lots: InventoryLot[]) => voi
   const [drafts, setDrafts] = useState<Draft[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
+  const [retry, setRetry] = useState<Wait | null>(null); // the recipe service asked for a longer pause (D63)
+  const left = useCountdown(retry?.seconds ?? null, retry?.startedAt ?? null);
+  const cooling = left !== null && left > 0;
 
   async function read() {
     setBusy(true);
     setError(null);
     try {
       const out = await api<ParseResult>("/api/v1/inventory/parse", { method: "POST", json: { text } });
+      if (out.status === "waiting") {
+        setRetry({ seconds: out.retry_after_s ?? 60, startedAt: Date.now() });
+        return;
+      }
+      setRetry(null);
       setDrafts(out.items.map(draftOf));
     } catch (e) {
       setError(e);
@@ -110,9 +120,14 @@ export function NLQuickAdd({ onAdded }: { onAdded: (lots: InventoryLot[]) => voi
         value={text}
         onChange={(e) => setText(e.target.value)}
       />
-      <button type="button" className="btn btn-block" onClick={read} disabled={busy || text.trim().length < 2} style={{ marginTop: 8 }}>
-        {busy && !drafts ? "Reading…" : "Read it"}
+      <button type="button" className="btn btn-block" onClick={read} disabled={busy || cooling || text.trim().length < 2} style={{ marginTop: 8 }}>
+        {busy && !drafts ? "Reading…" : cooling ? `Ready in ${clockLabel(left)}` : "Read it"}
       </button>
+      {cooling && (
+        <p className="small muted" role="status">
+          The recipe service needs a short breather. Your note is kept.
+        </p>
+      )}
       <ProblemNotice error={error} />
       {drafts && (
         <div className={styles.preview}>

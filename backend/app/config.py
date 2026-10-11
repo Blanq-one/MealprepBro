@@ -4,7 +4,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -61,12 +61,23 @@ class Settings(BaseSettings):
     llm_max_attempts: int = Field(default=3, ge=1, le=6)  # parse/validation attempts per call
     llm_max_transport_retries: int = Field(default=3, ge=0, le=6)  # 429 / timeouts, counted separately
     llm_timeout_seconds: float = Field(default=60, gt=0, le=600)
+    # The lowest effort the configured model accepts ("low" for Groq's gpt-oss models); empty = the model has
+    # no such setting. A value the provider rejects is a configuration error naming this variable (2b.3b).
     llm_reasoning_effort: str | None = "low"
     # a 2-recipe batch uses ~1,900 completion tokens including reasoning
     llm_max_completion_tokens: int = Field(default=3000, ge=256, le=32768)
     llm_daily_token_budget: int = Field(default=150_000, ge=0)  # rolling 24 h, below Groq's 200K/day
     llm_max_calls_per_run: int = Field(default=12, ge=1, le=100)
     llm_max_rate_wait_seconds: float = Field(default=60, ge=0)  # longest pause for a rate-limit reset
+    # The per-minute token allowance assumed until the provider's x-ratelimit-limit-tokens header arrives
+    llm_tokens_per_minute: int = Field(default=8000, ge=1000)
+    # More ideas' background batch never leaves less than this much of the daily budget for calls you ask for
+    llm_prefetch_daily_reserve: int = Field(default=30_000, ge=0)
+
+    @field_validator("llm_reasoning_effort", mode="before")
+    @classmethod
+    def _blank_effort_is_none(cls, value: object) -> object:
+        return None if isinstance(value, str) and not value.strip() else value
 
     # Solver (Phase 1)
     # The gaps usually stop the solver first (deterministic); a week that hits the limit returns its best plan

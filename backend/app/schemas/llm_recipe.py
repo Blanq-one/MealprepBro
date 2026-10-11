@@ -115,3 +115,72 @@ class GeneratedRecipe(BaseModel):
 class GeneratedRecipeBatch(BaseModel):
     model_config = ConfigDict(extra="forbid")
     recipes: list[GeneratedRecipe] = Field(min_length=1, max_length=6)
+
+
+# ---------------- two-stage generation (Phase 2b, FLOW_SPEC §13.5) ----------------
+class IdeaIngredient(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: str = Field(min_length=2, max_length=80, description="A name from INGREDIENTS, exactly as listed")
+    quantity: float = Field(gt=0, le=5000, description="Raw/dry, as-purchased amount for base_servings")
+    unit: LLMUnit
+    role: IngredientRole
+
+
+class RecipeIdea(BaseModel):
+    """An idea: everything the app needs to check, price and rank a recipe, and no steps (written on first
+    open). Creative content only, like GeneratedRecipe: no calorie, macro, cost, temperature or storage
+    fields."""
+
+    model_config = ConfigDict(extra="forbid")
+    title: str = Field(min_length=3, max_length=80)
+    method: str = Field(min_length=10, max_length=140, description="One line: how it's cooked")
+    meal_slots: list[MealSlot] = Field(min_length=1, max_length=3)
+    mood: RecipeMood
+    base_servings: int = Field(ge=1, le=12)
+    active_minutes: int = Field(ge=1, le=240, description="Hands-on minutes")
+    total_minutes: int = Field(ge=1, le=720, description="Start-to-finish minutes, including waiting")
+    equipment: list[Equipment] = Field(default_factory=list)
+    freezer_friendly: bool
+    ingredients: list[IdeaIngredient] = Field(min_length=2, max_length=20)
+
+    @model_validator(mode="after")
+    def _structure(self) -> Self:
+        if self.total_minutes < self.active_minutes:
+            raise ValueError("total_minutes must be >= active_minutes")
+        names = [i.name.strip().lower() for i in self.ingredients]
+        if len(set(names)) != len(names):
+            raise ValueError("duplicate ingredient names; combine them into one line")
+        return self
+
+
+class RecipeIdeaBatch(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    ideas: list[RecipeIdea] = Field(min_length=1, max_length=8)
+
+
+class RecipeSteps(BaseModel):
+    """The steps for one saved idea (LLMStep unchanged). Validated together with the idea as one
+    GeneratedRecipe, so every step check above runs as it is."""
+
+    model_config = ConfigDict(extra="forbid")
+    steps: list[LLMStep] = Field(min_length=3, max_length=30)
+
+
+def idea_as_recipe(idea: RecipeIdea, steps: list[LLMStep]) -> GeneratedRecipe:
+    """An idea and its steps as one GeneratedRecipe (raises ValidationError when the steps break a rule)."""
+    return GeneratedRecipe(
+        title=idea.title,
+        description=idea.method,
+        meal_slots=idea.meal_slots,
+        mood=idea.mood,
+        base_servings=idea.base_servings,
+        active_minutes=idea.active_minutes,
+        total_minutes=idea.total_minutes,
+        equipment=idea.equipment,
+        freezer_friendly=idea.freezer_friendly,
+        ingredients=[
+            LLMIngredient(name=i.name, quantity=i.quantity, unit=i.unit, role=i.role)
+            for i in idea.ingredients
+        ],
+        steps=steps,
+    )

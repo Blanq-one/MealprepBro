@@ -157,7 +157,9 @@ export interface paths {
          * Meal Now
          * @description A meal now: ranked recipe cards for one meal, inside this request. The response is a stream of JSON
          *     lines (`CookStreamEvent`): `started` (search and run ids), `progress`, `results` (the full ranked list),
-         *     `heartbeat` lines while it works, and one `result`. An identical repeat returns the stored result.
+         *     `heartbeat` lines while it works, and one `result`. With fewer than 6 good matches, one ideas call writes
+         *     new ideas, streamed into the list as a second `results` (a rate-limit wait is a `waiting` line with a
+         *     countdown, never an error). An identical repeat returns the stored result.
          */
         post: operations["meal_now_api_v1_cook_meal_now_post"];
         delete?: never;
@@ -179,7 +181,7 @@ export interface paths {
          * Cook This
          * @description Cook this: saves the recipe at N portions as a one-meal plan for today (never your current plan),
          *     with its grocery list for anything to buy first. Tapping it again for the same search returns that plan
-         *     (200).
+         *     (200). A new idea gets its steps first (409 with `retry_after_s` when they can't be written right now).
          */
         post: operations["cook_this_api_v1_cook_meals_post"];
         delete?: never;
@@ -202,6 +204,29 @@ export interface paths {
         get: operations["get_search_api_v1_cook_searches__search_id__get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cook/searches/{search_id}/more": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * More Ideas
+         * @description More ideas (E18). The first tap in a search makes one ideas call; a later tap shows the batch held from
+         *     the last tap at once (`results`), or makes one ideas call when none is held. Every tap then writes the
+         *     next batch in the background and sends it as `prefetched`: keep it until the next tap, never show it
+         *     before. A rate-limit wait is a `waiting` line, or a `partial` result with `retry_after_s`.
+         */
+        post: operations["more_ideas_api_v1_cook_searches__search_id__more_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -661,11 +686,34 @@ export interface paths {
          * Get Version
          * @description A recipe version scaled to any number of portions: practical quantities, code-computed nutrition
          *     and cost, and the food-safety lines the app injects. With `search`, that search's pantry coverage and
-         *     substitute lines for this recipe (the numbers stay those of the recipe as written).
+         *     substitute lines for this recipe (the numbers stay those of the recipe as written). A new idea's steps
+         *     are empty until written (`steps_ready` false; POST .../steps writes them).
          */
         get: operations["get_version_api_v1_recipe_versions__version_id__get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/recipe-versions/{version_id}/steps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Write Steps
+         * @description E19: writes a new idea's steps the first time it is opened and saves them with the recipe (once).
+         *     Returns at once when they exist; a second request for the same recipe waits for the call already running.
+         *     The result carries the recipe page payload (same query as GET), or `waiting` with `retry_after_s`.
+         */
+        post: operations["write_steps_api_v1_recipe_versions__version_id__steps_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1329,9 +1377,12 @@ export interface components {
         };
         /**
          * CookStreamEvent
-         * @description One line of POST /cook/meal-now (application/x-ndjson): `started` (search and run ids), `progress`
-         *     lines and a `heartbeat` every few seconds, `results` (the full ranked list, replacing the last one), then
-         *     one `result`. Step 2b.3b adds new ideas and `prefetched` (More ideas only).
+         * @description One line of POST /cook/meal-now (E2) and POST /cook/searches/{id}/more (E18), application/x-ndjson:
+         *     `started` (search and run ids); `progress` lines (stage `generating` while new ideas are written,
+         *     `waiting` with `wait_s` during a rate-limit wait, `prefetching` while More ideas writes the next batch);
+         *     a `heartbeat` every few seconds; `results` (the full ranked list, replacing the last one;
+         *     `new_version_ids` are the ideas just added); `prefetched` (E18 only: the list as it will look after the
+         *     next More ideas tap, held by the app and never shown before); then one `result`.
          */
         CookStreamEvent: {
             /** Cached */
@@ -2334,8 +2385,16 @@ export interface components {
             items: components["schemas"]["ParsedLotOut"][];
             /** Llm Call Count */
             llm_call_count: number;
+            /** Retry After S */
+            retry_after_s?: number | null;
             /** Run Id */
             run_id: number;
+            /**
+             * Status
+             * @default ok
+             * @enum {string}
+             */
+            status: "ok" | "waiting";
         };
         /**
          * ParsedLotOut
@@ -2484,6 +2543,8 @@ export interface components {
             /** Plan Id */
             plan_id?: number | null;
             problem?: components["schemas"]["ProblemOut"] | null;
+            /** Retry After S */
+            retry_after_s?: number | null;
             /** Run Id */
             run_id: number;
             /** Stage */
@@ -2492,6 +2553,8 @@ export interface components {
             status?: ("succeeded" | "infeasible" | "failed") | null;
             /** Total Tokens */
             total_tokens?: number | null;
+            /** Wait S */
+            wait_s?: number | null;
         };
         /**
          * PlanSummaryOut
@@ -3237,6 +3300,41 @@ export interface components {
             slot: components["schemas"]["MealSlot"];
         };
         /**
+         * StepsStreamEvent
+         * @description One line of POST /recipe-versions/{id}/steps (E19): `started`, `progress` (`writing_steps`, `waiting`
+         *     with `wait_s`, `checking`), heartbeats, then one `result`: succeeded with the recipe page payload, waiting
+         *     with `retry_after_s` (try again then; never an error), or failed with the problem.
+         */
+        StepsStreamEvent: {
+            /** Elapsed S */
+            elapsed_s: number;
+            /**
+             * Event
+             * @enum {string}
+             */
+            event: "started" | "progress" | "heartbeat" | "result";
+            /** Llm Call Count */
+            llm_call_count?: number | null;
+            /** Message */
+            message?: string | null;
+            /** Pad */
+            pad?: string | null;
+            problem?: components["schemas"]["ProblemOut"] | null;
+            /** Retry After S */
+            retry_after_s?: number | null;
+            /** Run Id */
+            run_id?: number | null;
+            /** Stage */
+            stage?: ("writing_steps" | "waiting" | "checking") | null;
+            /** Status */
+            status?: ("succeeded" | "waiting" | "failed") | null;
+            version?: components["schemas"]["RecipeVersionOut"] | null;
+            /** Version Id */
+            version_id: number;
+            /** Wait S */
+            wait_s?: number | null;
+        };
+        /**
          * StorageLocation
          * @enum {string}
          */
@@ -3868,6 +3966,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CookSearchOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    more_ideas_api_v1_cook_searches__search_id__more_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                search_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description NDJSON event lines */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CookStreamEvent"];
+                    "application/x-ndjson": unknown;
                 };
             };
             /** @description Validation Error */
@@ -4761,6 +4891,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RecipeVersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    write_steps_api_v1_recipe_versions__version_id__steps_post: {
+        parameters: {
+            query?: {
+                portions?: number | null;
+                portion_size?: components["schemas"]["PortionSize"] | null;
+                /** @description a meal-now search: its coverage lines for this recipe */
+                search?: number | null;
+            };
+            header?: never;
+            path: {
+                version_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description NDJSON event lines */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StepsStreamEvent"];
+                    "application/x-ndjson": unknown;
                 };
             };
             /** @description Validation Error */

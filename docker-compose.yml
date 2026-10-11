@@ -45,6 +45,7 @@ services:
       GROQ_API_KEY: ${GROQ_API_KEY:-}
       LLM_MODEL: ${LLM_MODEL:-}
       LLM_STRUCTURED_MODE: ${LLM_STRUCTURED_MODE:-strict}
+      LLM_REASONING_EFFORT: ${LLM_REASONING_EFFORT-low}  # empty in .env = a model without the setting
       # Sign-in (Phase 2): make both with `python -m app.cli hash-password` and put them in .env.
       AUTH_PASSWORD_HASH: ${AUTH_PASSWORD_HASH:-}
       SESSION_SECRET: ${SESSION_SECRET:-}

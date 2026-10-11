@@ -5708,5 +5708,97 @@
    "alias": "rice vinegar",
    "ingredient": "vinegar-white"
   }
+ ],
+ "meat_forms": [
+  {
+   "ingredient": "ground-chicken",
+   "kind": "ground",
+   "bone": null,
+   "skin": null
+  },
+  {
+   "ingredient": "ground-turkey-93",
+   "kind": "ground",
+   "bone": null,
+   "skin": null
+  },
+  {
+   "ingredient": "ground-pork",
+   "kind": "ground",
+   "bone": null,
+   "skin": null
+  },
+  {
+   "ingredient": "ground-beef-85",
+   "kind": "ground",
+   "bone": null,
+   "skin": null
+  },
+  {
+   "ingredient": "chicken-thigh-boneless-skinless",
+   "kind": "whole_cut",
+   "bone": "boneless",
+   "skin": "skinless"
+  },
+  {
+   "ingredient": "chicken-breast-boneless-skinless",
+   "kind": "whole_cut",
+   "bone": "boneless",
+   "skin": "skinless"
+  },
+  {
+   "ingredient": "chicken-thigh-bone-in-skin-on",
+   "kind": "whole_cut",
+   "bone": "bone_in",
+   "skin": "skin_on"
+  },
+  {
+   "ingredient": "chicken-breast-bone-in-skin-on",
+   "kind": "whole_cut",
+   "bone": "bone_in",
+   "skin": "skin_on"
+  },
+  {
+   "ingredient": "chicken-drumstick",
+   "kind": "whole_cut",
+   "bone": "bone_in",
+   "skin": "skin_on"
+  },
+  {
+   "ingredient": "chicken-wing",
+   "kind": "whole_cut",
+   "bone": "bone_in",
+   "skin": "skin_on"
+  },
+  {
+   "ingredient": "chicken-whole",
+   "kind": "whole_cut",
+   "bone": "bone_in",
+   "skin": "skin_on"
+  },
+  {
+   "ingredient": "turkey-breast",
+   "kind": "whole_cut",
+   "bone": "boneless",
+   "skin": "skinless"
+  },
+  {
+   "ingredient": "pork-chop-boneless",
+   "kind": "whole_cut",
+   "bone": "boneless",
+   "skin": "skinless"
+  },
+  {
+   "ingredient": "pork-tenderloin",
+   "kind": "whole_cut",
+   "bone": "boneless",
+   "skin": "skinless"
+  },
+  {
+   "ingredient": "beef-sirloin-steak",
+   "kind": "whole_cut",
+   "bone": "boneless",
+   "skin": "skinless"
+  }
  ]
 }

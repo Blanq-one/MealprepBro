@@ -24,19 +24,30 @@ from app.llm.errors import (
     LLMOutputError,
     LLMProviderOutputError,
     LLMRateLimitedError,
+    LLMReasoningEffortError,
     LLMStrictUnsupportedError,
     LLMTimeoutError,
     LLMTransportError,
     LLMTruncatedError,
 )
-from app.llm.pacing import CallBudget, Clock, Deadline, Pacer, SystemClock, TokenGuard
+from app.llm.pacing import (
+    CallBudget,
+    Clock,
+    Deadline,
+    Pacer,
+    RateState,
+    SystemClock,
+    TokenGuard,
+    prompt_ratio,
+    rate_state,
+    raw_estimate,
+)
 from app.llm.schema import schema_summary, transport_schema
 
 MAX_FEEDBACK_ERRORS = 12
 # A failed reply is sent back with the retry only when it is short: re-sending a long one makes every attempt
 # bigger, and Groq's free tier rejects a request over 8K tokens per minute outright (HTTP 413).
 MAX_ECHO_CHARS = 2000
-CHARS_PER_TOKEN = 4  # rough estimate for pacing and the daily guard only
 
 
 @dataclass(frozen=True)
@@ -48,6 +59,29 @@ class StructuredSpec[T: BaseModel]:
     # Whole-response domain check: a non-empty list of errors triggers a retry with those errors.
     domain_check: Callable[[T], list[str]] | None = None
     raise_on_truncation: bool = False  # batch callers halve the batch instead of retrying
+    max_completion_tokens: int | None = None  # per purpose (2b.3b); None = LLM_MAX_COMPLETION_TOKENS
+    daily_reserve: int = 0  # tokens of the daily budget this call must leave unspent (the background batch)
+    # A batch whose reply fails as a whole (the provider rejected it, or one item broke the model) keeps the
+    # items that validate on their own; None = the whole reply must validate (2b.3b, ideas only)
+    salvage: Callable[[Any], T | None] | None = None
+
+
+@dataclass(frozen=True)
+class CallEstimate:
+    """What one call is expected to cost: its calibrated prompt, and with its maximum completion."""
+
+    prompt_tokens: int
+    max_completion_tokens: int
+
+    @property
+    def minute_tokens(self) -> int:
+        """Checked against the minute's allowance: the provider seems to count the maximum completion."""
+        return self.prompt_tokens + self.max_completion_tokens
+
+    @property
+    def daily_tokens(self) -> int:
+        """Checked against the daily guard: about half the maximum completion is usually used."""
+        return self.prompt_tokens + self.max_completion_tokens // 2
 
 
 @dataclass
@@ -69,6 +103,7 @@ class LLMRunContext:
     clock: Clock = field(default_factory=SystemClock)
     deadline: Deadline | None = None  # the request's time budget: planning runs inside one request
     on_wait: Callable[[float], None] | None = None
+    rate: RateState | None = None  # None = the process-wide state for this client's provider and model
     calls: CallBudget = field(init=False)
     tokens: TokenGuard = field(init=False)
     pacer: Pacer = field(init=False)
@@ -77,7 +112,12 @@ class LLMRunContext:
         self.calls = CallBudget(self.settings.llm_max_calls_per_run)
         self.tokens = TokenGuard(self.session, self.settings.llm_daily_token_budget)
         self.pacer = Pacer(
-            self.clock, self.settings.llm_max_rate_wait_seconds, deadline=self.deadline, on_wait=self.on_wait
+            self.clock,
+            self.settings.llm_max_rate_wait_seconds,
+            state=self.rate or rate_state(self.client.provider, self.client.model),
+            fallback_limit=self.settings.llm_tokens_per_minute,
+            deadline=self.deadline,
+            on_wait=self.on_wait,
         )
 
     @property
@@ -87,13 +127,31 @@ class LLMRunContext:
     def generate[T: BaseModel](self, spec: StructuredSpec[T]) -> StructuredResult[T]:
         return _generate(self, spec)
 
+    def prompt_estimate(
+        self, purpose: str, messages: Sequence[Message], response_model: type[BaseModel]
+    ) -> int:
+        """The calibrated prompt tokens of a call (messages and transport schema), as sent in this mode."""
+        schema = transport_schema(response_model)
+        sent = tuple(messages) if self.strict else _system_with_summary(tuple(messages), schema)
+        return _calibrated(self, purpose, sent, schema)
+
+    def estimate(self, spec: StructuredSpec[Any]) -> CallEstimate:
+        prompt = self.prompt_estimate(spec.purpose, spec.messages, spec.response_model)
+        return CallEstimate(prompt, _max_completion(self, spec))
+
 
 def _schema_name(model: type[BaseModel]) -> str:
     return model.__name__
 
 
-def _estimate_tokens(messages: Sequence[Message], max_completion: int) -> int:
-    return sum(len(m["content"]) for m in messages) // CHARS_PER_TOKEN + max_completion // 2
+def _max_completion(ctx: LLMRunContext, spec: StructuredSpec[Any]) -> int:
+    return spec.max_completion_tokens or ctx.settings.llm_max_completion_tokens
+
+
+def _calibrated(
+    ctx: LLMRunContext, purpose: str, messages: Sequence[Message], schema: dict[str, Any] | None
+) -> int:
+    return int(raw_estimate(messages, schema) * prompt_ratio(ctx.session, purpose, schema)) + 1
 
 
 def _system_with_summary(messages: tuple[Message, ...], schema: dict[str, Any]) -> tuple[Message, ...]:
@@ -164,11 +222,14 @@ def _call_with_transport_retries(
 ) -> tuple[LLMResponse | None, LLMProviderOutputError | None, int | None]:
     """Returns (response, provider output error, last logged call id). Raises after the transport retries."""
     retries = 0
-    estimate = _estimate_tokens(request.messages, request.max_completion_tokens)
+    schema = dict(request.json_schema) if request.json_schema is not None else None
+    estimate = CallEstimate(
+        _calibrated(ctx, spec.purpose, request.messages, schema), request.max_completion_tokens
+    )
     while True:
         ctx.calls.take()
-        ctx.tokens.check(estimate)
-        ctx.pacer.before_call(estimate)
+        ctx.tokens.check(estimate.daily_tokens, reserve=spec.daily_reserve)
+        ctx.pacer.before_call(estimate.minute_tokens)
         if ctx.deadline is not None:
             request = replace(request, timeout_s=ctx.deadline.call_timeout(ctx.settings.llm_timeout_seconds))
         try:
@@ -233,6 +294,24 @@ def _call_with_transport_retries(
                 "set LLM_STRUCTURED_MODE=best_effort (or choose a model that supports strict mode)",
                 detail={"provider_message": str(exc)},
             ) from exc
+        except LLMReasoningEffortError as exc:
+            row = _record(
+                ctx,
+                spec,
+                attempt=attempt,
+                parent_id=parent_id,
+                messages=request.messages,
+                response=None,
+                outcome="transport_error",
+                error_detail={"error": str(exc)},
+            )
+            call_ids.append(row.id)
+            raise LLMConfigError(
+                f"the model '{ctx.client.model}' doesn't accept LLM_REASONING_EFFORT="
+                f"'{request.reasoning_effort}'; set it to the lowest value the model's Groq docs list, or "
+                "leave it empty for a model without that setting",
+                detail={"provider_message": str(exc)},
+            ) from exc
         except LLMProviderOutputError as exc:
             return None, exc, parent_id
         ctx.pacer.observe(response.rate_limit)
@@ -252,7 +331,7 @@ def _generate[T: BaseModel](ctx: LLMRunContext, spec: StructuredSpec[T]) -> Stru
             schema_name=_schema_name(spec.response_model),
             json_schema=schema,
             strict=ctx.strict,
-            max_completion_tokens=ctx.settings.llm_max_completion_tokens,
+            max_completion_tokens=_max_completion(ctx, spec),
             reasoning_effort=ctx.settings.llm_reasoning_effort,
         )
         response, provider_error, parent_id = _call_with_transport_retries(
@@ -263,6 +342,19 @@ def _generate[T: BaseModel](ctx: LLMRunContext, spec: StructuredSpec[T]) -> Stru
             last_errors = [
                 f"the provider rejected the output as invalid JSON for the schema: {provider_error}"
             ]
+            kept = _salvaged(spec, text)
+            if kept is not None:
+                return _kept(
+                    ctx,
+                    spec,
+                    kept,
+                    attempt=attempt,
+                    parent_id=parent_id,
+                    messages=messages,
+                    response=None,
+                    errors=last_errors,
+                    call_ids=call_ids,
+                )
             row = _record(
                 ctx,
                 spec,
@@ -314,6 +406,19 @@ def _generate[T: BaseModel](ctx: LLMRunContext, spec: StructuredSpec[T]) -> Stru
                     value = spec.response_model.model_validate(payload)
                 except ValidationError as exc:
                     last_errors = _validation_feedback(exc)
+                    kept = _salvaged(spec, response.text)
+                    if kept is not None:
+                        return _kept(
+                            ctx,
+                            spec,
+                            kept,
+                            attempt=attempt,
+                            parent_id=parent_id,
+                            messages=messages,
+                            response=response,
+                            errors=last_errors,
+                            call_ids=call_ids,
+                        )
                     row = _record(
                         ctx,
                         spec,
@@ -360,6 +465,47 @@ def _generate[T: BaseModel](ctx: LLMRunContext, spec: StructuredSpec[T]) -> Stru
         + "; ".join(last_errors),
         detail={"call_ids": call_ids, "errors": last_errors},
     )
+
+
+def _salvaged[T: BaseModel](spec: StructuredSpec[T], text: str | None) -> T | None:
+    """The items of a failed batch that validate on their own (spec.salvage), or None."""
+    if spec.salvage is None or not text:
+        return None
+    try:
+        payload = json.loads(text)
+    except json.JSONDecodeError:
+        return None
+    kept = spec.salvage(payload)
+    if kept is None or (spec.domain_check is not None and spec.domain_check(kept)):
+        return None
+    return kept
+
+
+def _kept[T: BaseModel](
+    ctx: LLMRunContext,
+    spec: StructuredSpec[T],
+    value: T,
+    *,
+    attempt: int,
+    parent_id: int | None,
+    messages: Sequence[Message],
+    response: LLMResponse | None,
+    errors: list[str],
+    call_ids: list[int],
+) -> StructuredResult[T]:
+    """A salvaged batch: logged as ok, with the errors of the items it dropped."""
+    row = _record(
+        ctx,
+        spec,
+        attempt=attempt,
+        parent_id=parent_id,
+        messages=messages,
+        response=response,
+        outcome="ok",
+        error_detail={"salvaged": True, "errors": errors},
+    )
+    call_ids.append(row.id)
+    return StructuredResult(value, call_ids, row.id, attempt)
 
 
 def _retry_message(errors: Sequence[str], echoed: bool = True) -> str:

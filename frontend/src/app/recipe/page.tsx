@@ -1,10 +1,11 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import { useOnline } from "@/components/AppShell";
 import { RecipeActions } from "@/components/cook/RecipeActions";
+import { StepsPending } from "@/components/cook/StepsPending";
 import { MarkCooked } from "@/components/MarkCooked";
 import { Page } from "@/components/Page";
 import { type RecipeLine, RecipeView } from "@/components/RecipeView";
@@ -12,6 +13,7 @@ import { ProblemNotice, SyncNote } from "@/components/Status";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { ApiError } from "@/lib/api/client";
 import type { BatchDetail, PortionSize, RecipeVersion, SearchContext } from "@/lib/api/types";
+import { useSteps, writeSteps } from "@/lib/cook/steps";
 import { dayLabel } from "@/lib/format/dates";
 import { slotLabel } from "@/lib/format/labels";
 import { useApi } from "@/lib/hooks/useApi";
@@ -62,9 +64,22 @@ function BeforeYouStart({ context }: { context: SearchContext }) {
   );
 }
 
+/** A new idea's steps, written on first open (E19): the Steps section's state and Cook this held until they
+ * land. Nothing for a recipe that has its steps. */
+function useIdeaSteps(recipe: RecipeVersion | null, query: string, online: boolean, reload: () => Promise<void>) {
+  const onReady = useCallback(() => void reload(), [reload]);
+  const state = useSteps(recipe?.version_id ?? null, recipe ? recipe.steps_ready : true, query, online, onReady);
+  const pending = recipe !== null && !recipe.steps_ready;
+  return {
+    blocked: pending ? "Writing steps…" : null,
+    slot: pending ? <StepsPending method={recipe.description} state={state} online={online} onRetry={() => writeSteps(recipe.version_id, query, onReady)} /> : undefined,
+  };
+}
+
 function BatchRecipe({ batchId }: { batchId: string }) {
   const batch = useApi<BatchDetail>(`/api/v1/cook-batches/${batchId}`);
   const online = useOnline();
+  const steps = useIdeaSteps(batch.data?.recipe ?? null, "", online, batch.reload);
   if (batch.loading && !batch.data) return <Skeleton cards={3} label="Loading the recipe" />;
   if (!batch.data) return <Unavailable error={batch.error} onRetry={() => void batch.reload()} />;
   const b = batch.data;
@@ -74,6 +89,7 @@ function BatchRecipe({ batchId }: { batchId: string }) {
       <SyncNote syncedAt={batch.syncedAt} fromCache={batch.fromCache} />
       <RecipeView
         recipe={b.recipe}
+        stepsSlot={steps.slot}
         notes={[...b.package_notes, ...b.freeze_notes]}
         lines={b.lines.map((l, i) => ({
           key: `${l.ingredient_id}-${i}`,
@@ -97,7 +113,7 @@ function BatchRecipe({ batchId }: { batchId: string }) {
           </p>
           <MarkCooked batchId={b.id} status={b.status} onCooked={() => void batch.reload()} />
         </section>
-        {b.status !== "cooked" && <RecipeActions recipe={b.recipe} cook={{ batchId: b.id }} online={online} />}
+        {b.status !== "cooked" && <RecipeActions recipe={b.recipe} cook={{ batchId: b.id }} online={online} blocked={steps.blocked} />}
       </RecipeView>
     </>
   );
@@ -107,6 +123,7 @@ function BatchRecipe({ batchId }: { batchId: string }) {
 function SearchRecipe({ versionId, searchId }: { versionId: string; searchId: string }) {
   const version = useApi<RecipeVersion>(`/api/v1/recipe-versions/${versionId}?search=${searchId}`);
   const online = useOnline();
+  const steps = useIdeaSteps(version.data, `search=${searchId}`, online, version.reload);
   if (version.loading && !version.data) return <Skeleton cards={3} label="Loading the recipe" />;
   if (!version.data) return <Unavailable error={version.error} onRetry={() => void version.reload()} />;
   const recipe = version.data;
@@ -115,12 +132,13 @@ function SearchRecipe({ versionId, searchId }: { versionId: string; searchId: st
   return (
     <>
       <SyncNote syncedAt={version.syncedAt} fromCache={version.fromCache} />
-      <RecipeView recipe={recipe} lines={linesWith(recipe, details)} portionsLine={context?.portions_display ?? null}>
+      <RecipeView recipe={recipe} lines={linesWith(recipe, details)} portionsLine={context?.portions_display ?? null} stepsSlot={steps.slot}>
         {context && <BeforeYouStart context={context} />}
         <RecipeActions
           recipe={recipe}
           cook={{ meal: { version_id: recipe.version_id, search_id: context ? context.search_id : null } }}
           online={online}
+          blocked={steps.blocked}
         />
       </RecipeView>
     </>
@@ -134,6 +152,7 @@ function VersionRecipe({ versionId, portions, size }: { versionId: string; porti
   const query = new URLSearchParams({ portion_size: portionSize, ...(count ? { portions: String(count) } : {}) });
   const version = useApi<RecipeVersion>(`/api/v1/recipe-versions/${versionId}?${query.toString()}`);
   const online = useOnline();
+  const steps = useIdeaSteps(version.data, query.toString(), online, version.reload);
   const shownCount = count ?? version.data?.portions ?? 1;
   if (version.loading && !version.data) return <Skeleton cards={3} label="Loading the recipe" />;
   if (!version.data) return <Unavailable error={version.error} onRetry={() => void version.reload()} />;
@@ -156,11 +175,12 @@ function VersionRecipe({ versionId, portions, size }: { versionId: string; porti
         </select>
       </section>
       <ProblemNotice error={version.error} />
-      <RecipeView recipe={version.data}>
+      <RecipeView recipe={version.data} stepsSlot={steps.slot}>
         <RecipeActions
           recipe={version.data}
           cook={{ meal: { version_id: version.data.version_id, search_id: null, portions: shownCount } }}
           online={online}
+          blocked={steps.blocked}
         />
       </RecipeView>
     </>

@@ -4,10 +4,11 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.orm import Session
 
-from app.config import get_settings
+from app.config import Settings, get_settings
 from app.db.models import AppUser
 from app.db.session import get_session, get_sessionmaker
 from app.llm.client import LLMClient, make_client
+from app.llm.pacing import Clock, SystemClock
 from app.services.settings import current_user
 
 DbSession = Annotated[Session, Depends(get_session)]
@@ -35,5 +36,17 @@ def get_llm_client_factory() -> Callable[[], LLMClient | None]:
     return _configured_client
 
 
+def get_llm_clock() -> Clock:
+    """The clock rate-limit waits sleep on (tests override it with a fake clock)."""
+    return SystemClock()
+
+
+def get_llm_settings() -> Settings:
+    """The LLM caps, waits and budgets a request uses (tests override single values)."""
+    return get_settings()
+
+
 SessionFactory = Annotated[Callable[[], Session], Depends(get_session_factory)]
 LLMClientFactory = Annotated[Callable[[], LLMClient | None], Depends(get_llm_client_factory)]
+LLMClock = Annotated[Clock, Depends(get_llm_clock)]
+LLMSettings = Annotated[Settings, Depends(get_llm_settings)]

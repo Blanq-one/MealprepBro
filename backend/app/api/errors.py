@@ -11,7 +11,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.api.problems import ProblemError
 from app.auth.passwords import PasswordHashError
 from app.cook.search import SearchNotFoundError
-from app.cook.single_meal import CookThisError
+from app.cook.single_meal import CookThisError, StepsNotReadyError
 from app.domain.quantities import QuantityParseError
 from app.domain.scaling import ScalingError
 from app.domain.units import InvalidQuantityError, UnitError
@@ -96,6 +96,10 @@ def install_error_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(ConflictError)
     async def _conflict(_: Request, exc: ConflictError) -> JSONResponse:
+        if isinstance(exc, StepsNotReadyError):  # never an error page: try again at retry_after_s
+            return problem(
+                409, "The steps aren't written yet", str(exc), code=exc.code, retry_after_s=exc.retry_after_s
+            )
         return problem(409, "Conflict", str(exc))
 
     @app.exception_handler(PasswordHashError)

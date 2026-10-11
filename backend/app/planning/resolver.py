@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 from app.db.models import IngredientAlias, IngredientSubstitution
 from app.domain.chicken_cuts import CutForm, conflicts, stated_form
 from app.domain.exclusions import ExclusionResult, ExclusionStatus
+from app.domain.prompt_names import short_name
 from app.seed.files import normalize_name
 from app.services.catalog import load_catalog
 from app.services.exclusions import diet_status
@@ -112,6 +113,14 @@ class IngredientResolver:
             if hits[0].score - runner_up >= TRIGRAM_MARGIN:
                 return hits[0].id, "trigram", ()
         return None, None, suggestions
+
+    def short_name(self, ingredient_id: int) -> str:
+        """The name every new prompt uses (domain/prompt_names.py): an alias of this same ingredient, so it
+        maps back exactly."""
+        return short_name(
+            self.data[ingredient_id].name,
+            lambda text: self.aliases.get(normalize_name(text)) == ingredient_id,
+        )
 
     def lookup(self, name: str) -> tuple[int | None, tuple[str, ...]]:
         """The ingredient a name means (no diet check, no substitution), or None with suggestions."""

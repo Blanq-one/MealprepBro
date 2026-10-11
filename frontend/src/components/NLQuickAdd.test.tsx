@@ -9,6 +9,8 @@ import { NLQuickAdd } from "./NLQuickAdd";
 const parsed: ParseResult = {
   run_id: 3,
   llm_call_count: 1,
+  status: "ok",
+  retry_after_s: null,
   items: [
     {
       text: "2 lb chicken thighs",
@@ -114,5 +116,23 @@ describe("NLQuickAdd", () => {
       source: "parse",
       items: [{ ingredient_id: 6, quantity: "2", unit: "lb", location: "pantry", product_id: null, expiry_is_estimate: true }],
     });
+  });
+});
+
+describe("NLQuickAdd during a rate-limit pause (step 2b.3b, D63)", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("a waiting answer shows 'Ready in 0:45' on Read it, keeps the note, and never the error pattern", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(JSON.stringify({ run_id: 4, llm_call_count: 0, items: [], status: "waiting", retry_after_s: 45 }), { status: 200 })),
+    );
+    render(<NLQuickAdd onAdded={() => undefined} />);
+    await userEvent.type(screen.getByLabelText("What you have"), "2 lb chicken thighs");
+    await userEvent.click(screen.getByRole("button", { name: "Read it" }));
+    expect(await screen.findByRole("button", { name: /^Ready in 0:4\d$/ })).toBeDisabled();
+    expect(screen.getByRole("status")).toHaveTextContent("The recipe service needs a short breather. Your note is kept.");
+    expect(screen.getByLabelText("What you have")).toHaveValue("2 lb chicken thighs");
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 });

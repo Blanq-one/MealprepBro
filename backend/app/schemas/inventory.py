@@ -121,6 +121,10 @@ class ParseOut(BaseModel):
     run_id: int
     llm_call_count: int
     items: list[ParsedLotOut]
+    # waiting: the recipe service needs a pause longer than this request waits; try again at retry_after_s
+    # (step 2b.3b: a rate limit is never an error)
+    status: Literal["ok", "waiting"] = "ok"
+    retry_after_s: int | None = None
 
 
 AmountOptionKey = Literal["full", "three_quarters", "half", "quarter"]

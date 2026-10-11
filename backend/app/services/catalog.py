@@ -4,7 +4,7 @@ data kept with the seed files and validated when it loads; slugs are resolved to
 ids."""
 
 import hashlib
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import lru_cache
 
 from sqlalchemy import select
@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models import Ingredient
 from app.domain.chicken_cuts import CutForm
+from app.domain.meat_forms import MeatForm
 from app.schemas.seed import PantryCatalogFile, PresetOption
 from app.seed.files import DATA_DIR, normalize_name
 
@@ -71,6 +72,7 @@ class Catalog:
     presets_of: dict[int, tuple[PresetOption, ...]]
     cut_of: dict[int, CutForm]  # chicken cuts' bone and skin (M6)
     close_of: dict[str, int]  # a normalized name -> its closest ingredient, always labeled (M7)
+    meat_of: dict[int, MeatForm] = field(default_factory=dict)  # ground meat or a whole cut (never swapped)
 
     def default_preset(self, ingredient_id: int) -> PresetOption | None:
         return next((o for o in self.presets_of.get(ingredient_id, ()) if o.default), None)
@@ -88,6 +90,7 @@ def load_catalog(session: Session) -> Catalog:
     }
     slugs |= {p.ingredient for p in cat.presets}
     slugs |= {c.ingredient for c in cat.chicken_cuts} | {c.ingredient for c in cat.close_matches}
+    slugs |= {m.ingredient for m in cat.meat_forms}
     ids = dict(
         session.execute(select(Ingredient.slug, Ingredient.id).where(Ingredient.slug.in_(slugs)))
         .tuples()
@@ -127,4 +130,5 @@ def load_catalog(session: Session) -> Catalog:
         presets_of={ids[p.ingredient]: tuple(p.options) for p in cat.presets},
         cut_of={ids[c.ingredient]: CutForm(c.bone, c.skin) for c in cat.chicken_cuts},
         close_of={normalize_name(c.alias): ids[c.ingredient] for c in cat.close_matches},
+        meat_of={ids[m.ingredient]: MeatForm(m.kind, CutForm(m.bone, m.skin)) for m in cat.meat_forms},
     )

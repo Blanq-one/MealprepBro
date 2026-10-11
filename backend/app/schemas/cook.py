@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from app.domain.enums import MealSlot, PortionSize, RecipeMood
 from app.schemas.cards import CostLineOut, MissingLineOut, SwapLineOut
 from app.schemas.plans import PlanSummaryOut, ProblemOut
+from app.schemas.recipes import RecipeVersionOut
 
 ANSWERS_SCHEMA_VERSION = 1
 NUTRITION_GOALS_MAX = 2
@@ -138,9 +139,12 @@ class RecipeSuggestionOut(BaseModel):
 
 # ---------------- the meal-now stream ----------------
 class CookStreamEvent(BaseModel):
-    """One line of POST /cook/meal-now (application/x-ndjson): `started` (search and run ids), `progress`
-    lines and a `heartbeat` every few seconds, `results` (the full ranked list, replacing the last one), then
-    one `result`. Step 2b.3b adds new ideas and `prefetched` (More ideas only)."""
+    """One line of POST /cook/meal-now (E2) and POST /cook/searches/{id}/more (E18), application/x-ndjson:
+    `started` (search and run ids); `progress` lines (stage `generating` while new ideas are written,
+    `waiting` with `wait_s` during a rate-limit wait, `prefetching` while More ideas writes the next batch);
+    a `heartbeat` every few seconds; `results` (the full ranked list, replacing the last one;
+    `new_version_ids` are the ideas just added); `prefetched` (E18 only: the list as it will look after the
+    next More ideas tap, held by the app and never shown before); then one `result`."""
 
     event: Literal["started", "progress", "heartbeat", "results", "prefetched", "result"]
     search_id: int
@@ -150,20 +154,41 @@ class CookStreamEvent(BaseModel):
     message: str | None = None
     suggestions: list[RecipeSuggestionOut] | None = None
     new_version_ids: list[int] = Field(default_factory=list)
-    status: Literal["succeeded", "partial", "failed"] | None = None  # result only
+    # result only: partial = saved results with a note (the ideas call failed or has to wait)
+    status: Literal["succeeded", "partial", "failed"] | None = None
     cached: bool | None = None  # result: an identical earlier search's result, returned as it was
     good_matches: int | None = None  # result: the gap rule's count (FLOW_SPEC §14)
-    ideas_needed: bool | None = None  # result: fewer than 3 good matches
+    ideas_needed: bool | None = None  # result: fewer than 6 good matches, so an ideas call was due
     header: str | None = None  # result: "Dinner for 1 · High protein, Quick · Simple"
     empty_reason: str | None = None  # result with no suggestions: what ruled them out
     empty_filter: str | None = None  # result with no suggestions: time | mood | equipment | ... (its button)
-    wait_s: int | None = None
-    retry_after_s: int | None = None
+    wait_s: int | None = None  # progress `waiting`: seconds until the call can go (the countdown)
+    retry_after_s: int | None = None  # result `partial` after a wait too long for this request
     notes: list[str] = Field(default_factory=list)
     problem: ProblemOut | None = None
     llm_call_count: int | None = None
     total_tokens: int | None = None
     pad: str | None = None  # `started` only: padding so the first bytes reach the phone at once
+
+
+class StepsStreamEvent(BaseModel):
+    """One line of POST /recipe-versions/{id}/steps (E19): `started`, `progress` (`writing_steps`, `waiting`
+    with `wait_s`, `checking`), heartbeats, then one `result`: succeeded with the recipe page payload, waiting
+    with `retry_after_s` (try again then; never an error), or failed with the problem."""
+
+    event: Literal["started", "progress", "heartbeat", "result"]
+    version_id: int
+    run_id: int | None = None
+    elapsed_s: float
+    stage: Literal["writing_steps", "waiting", "checking"] | None = None
+    message: str | None = None
+    wait_s: int | None = None
+    status: Literal["succeeded", "waiting", "failed"] | None = None
+    retry_after_s: int | None = None
+    version: RecipeVersionOut | None = None
+    problem: ProblemOut | None = None
+    llm_call_count: int | None = None
+    pad: str | None = None
 
 
 class CookSearchOut(BaseModel):

@@ -3,14 +3,16 @@
 import Link from "next/link";
 import { useState } from "react";
 
-import { BuildingSteps, type Stage } from "@/components/ui/BuildingSteps";
+import { BuildingSteps, clockLabel, type Stage, useCountdown } from "@/components/ui/BuildingSteps";
+import { Pottle } from "@/components/ui/Pottle";
 import { RecipeCard } from "@/components/ui/RecipeCard";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { ApiError } from "@/lib/api/client";
 import type { CookAnswers, Problem, Suggestion } from "@/lib/api/types";
 import { nextQuick } from "@/lib/cook/answers";
 import { useMarks } from "@/lib/cook/marks";
-import { type StageKey, STAGES } from "@/lib/cook/stream";
+import { DAILY_NOTE, type MoreState, tapMore, useMore } from "@/lib/cook/more";
+import { type StageKey, STAGES, type Wait } from "@/lib/cook/stream";
 
 import { cardData, cardHref, initialMarks } from "./cards";
 import styles from "./Results.module.css";
@@ -36,10 +38,14 @@ export type ResultsData = {
   emptyReason: string | null;
   emptyFilter: string | null;
   problem: Problem | null;
+  generating?: boolean; // the search is writing new ideas (step 2b.3b)
+  wait?: Wait | null; // ...and waiting for the recipe service
+  newIds?: number[];
+  notes?: string[];
 };
 
 /** A change to the answers that the empty state offers, from the filter that removed the most recipes. */
-export type Fix = { label: string; answers: CookAnswers } | { label: string; href: string } | { label: string; disabled: true };
+export type Fix = { label: string; answers: CookAnswers } | { label: string; href: string } | { label: string; more: true };
 
 export function emptyFixes(filter: string | null, answers: CookAnswers | null): Fix[] {
   const fixes: Fix[] = [];
@@ -51,7 +57,7 @@ export function emptyFixes(filter: string | null, answers: CookAnswers | null): 
   }
   if (filter === "equipment") fixes.push({ label: "Check your equipment", href: "/settings/" });
   if (filter === "held" || filter === "excluded" || filter === "frequency_cap") fixes.push({ label: "Review held items", href: "/settings/" });
-  fixes.push({ label: "Write new recipes (coming soon)", disabled: true });
+  fixes.push({ label: "Write new recipes", more: true });
   return fixes;
 }
 
@@ -64,8 +70,37 @@ function problemError(problem: Problem): ApiError {
   return new ApiError(problem.status, problem.title, problem.detail);
 }
 
+/** "Writing new ideas…", or during a rate-limit wait the friendly countdown (FLOW_SPEC §5.5). Never an error. */
+export function IdeasStrip({ wait }: { wait: Wait | null }) {
+  const left = useCountdown(wait?.seconds ?? null, wait?.startedAt ?? null);
+  const waiting = left !== null && left > 0;
+  return (
+    <div className={styles.strip} role="status" aria-live="polite">
+      <Pottle state="working" size={40} decorative />
+      <p>{waiting ? `The recipe service needs a short breather. Writing your ideas in ${clockLabel(left)}…` : "Writing new ideas…"}</p>
+    </div>
+  );
+}
+
+/** More ideas (E18): the first tap waits for one ideas call; later taps show the held batch at once. "Ready in
+ * 0:45" counts down a wait too long for the request; "Writing…" when tapped while the next batch is written. */
+export function MoreIdeasButton({ more, searchId, disabled }: { more: MoreState | null; searchId: number; disabled: boolean }) {
+  const left = useCountdown(more?.retry?.seconds ?? null, more?.retry?.startedAt ?? null);
+  const cooling = left !== null && left > 0;
+  const label = more?.wantMore ? "Writing…" : cooling ? `Ready in ${clockLabel(left)}` : "More ideas";
+  const off = disabled || !!more?.live || !!more?.wantMore || !!more?.daily || cooling;
+  return (
+    <div className={styles.more}>
+      <button type="button" className="btn btn-block" disabled={off} aria-busy={more?.wantMore || more?.live ? true : undefined} onClick={() => tapMore(searchId)}>
+        {label}
+      </button>
+      {more?.daily && <p className="small muted">{DAILY_NOTE}</p>}
+    </div>
+  );
+}
+
 /** C5 Results for a meal now (FLOW_SPEC §7): the header with Edit, the top 12 cards (Show more for the rest),
- * More ideas (disabled, "coming soon", until step 2b.3b), and the loading, empty, error and lost states. */
+ * new ideas streaming in with New badges, More ideas, and the loading, empty, error and lost states. */
 export function ResultsView({
   data,
   answers,
@@ -84,7 +119,9 @@ export function ResultsView({
   onRerun: (answers: CookAnswers) => void;
 }) {
   const [all, setAll] = useState(false);
-  const cards = data.suggestions ?? [];
+  const more = useMore(data.searchId);
+  const cards = more?.shown ?? data.suggestions ?? [];
+  const newIds = more?.shown ? more.newIds : (data.newIds ?? []);
   const { marks, toggle, error: markError } = useMarks(initialMarks(cards), online);
 
   if (error) return <ErrorState error={error} onRetry={onRetry} runId={data.runId} />;
@@ -103,6 +140,9 @@ export function ResultsView({
 
   const shown = all ? cards : cards.slice(0, FIRST_PAGE);
   const done = data.status !== "running";
+  const writing = (!done && !!data.generating) || !!more?.live;
+  const notes = more?.shown || more?.notes.length ? (more?.notes ?? []) : (data.notes ?? []);
+  const canMore = data.searchId !== null && done && data.status !== "failed" && data.status !== "lost";
   return (
     <>
       <header className={styles.header}>
@@ -111,6 +151,19 @@ export function ResultsView({
           Edit
         </button>
       </header>
+      {writing && <IdeasStrip wait={more?.live ? more.wait : (data.wait ?? null)} />}
+      {!writing && newIds.length > 0 && (
+        <p className={styles.toast} role="status">
+          {newIds.length === 1 ? "1 new idea added" : `${newIds.length} new ideas added`}
+        </p>
+      )}
+      {notes
+        .filter((note) => note !== DAILY_NOTE || !more?.daily)
+        .map((note) => (
+          <p key={note} className="notice">
+            {note}
+          </p>
+        ))}
       {data.status === "lost" && (
         <div className="notice notice-warn" role="alert">
           <p className={styles.lost}>Lost the connection; these may be incomplete.</p>
@@ -144,7 +197,13 @@ export function ResultsView({
                   {fix.label}
                 </Link>
               ) : (
-                <button key={fix.label} type="button" className="btn btn-block" disabled>
+                <button
+                  key={fix.label}
+                  type="button"
+                  className="btn btn-block"
+                  disabled={!online || !canMore || !!more?.live || !!more?.daily}
+                  onClick={() => data.searchId !== null && tapMore(data.searchId)}
+                >
                   {fix.label}
                 </button>
               ),
@@ -178,16 +237,7 @@ export function ResultsView({
           Show more
         </button>
       )}
-      {cards.length > 0 && (
-        <div className={styles.more}>
-          <button type="button" className="btn btn-block" disabled aria-describedby="more-ideas-soon">
-            More ideas
-          </button>
-          <p id="more-ideas-soon" className="small muted">
-            New recipe ideas: coming soon.
-          </p>
-        </div>
-      )}
+      {cards.length > 0 && data.searchId !== null && <MoreIdeasButton more={more} searchId={data.searchId} disabled={!online || !canMore} />}
     </>
   );
 }

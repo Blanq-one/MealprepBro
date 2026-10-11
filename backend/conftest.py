@@ -25,6 +25,7 @@ from app.auth.dependencies import require_session
 from app.auth.sessions import Session as SignedInSession
 from app.config import BACKEND_DIR, get_settings
 from app.db.session import get_session
+from app.llm.pacing import reset_rate_states
 from app.main import create_app
 from app.seed.loader import seed_all
 from app.usda.importer import import_release
@@ -102,6 +103,14 @@ def _solver_test_mode(request: pytest.FixtureRequest) -> Iterator[None]:
     _solve_mode["real_limits"] = "perf" in request.keywords
     yield
     _solve_mode.update(saved)
+
+
+@pytest.fixture(autouse=True)
+def _fresh_rate_limits() -> Iterator[None]:
+    """The rate-limit headers a process remembers (llm/pacing.py) never carry from one test to the next."""
+    reset_rate_states()
+    yield
+    reset_rate_states()
 
 
 def alembic_config(url: str) -> Config:

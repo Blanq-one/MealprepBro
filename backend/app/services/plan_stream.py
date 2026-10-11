@@ -8,6 +8,7 @@ work after the response: the stream ends only when the run has committed.
 
 import json
 import logging
+import math
 import queue
 import threading
 import time
@@ -28,7 +29,7 @@ STAGE_MESSAGES = {
     "constraints": "Reading your settings",
     "candidates": "Gathering your recipes",
     "generating": "Writing new recipes for {slots}",
-    "waiting": "Waiting {seconds} s for the recipe service's rate limit",
+    "waiting": "The recipe service needs a short breather",
     "solving": "Fitting the week together",
     "validating": "Checking every number",
     "re-solving": "Adjusting after rounding",
@@ -58,6 +59,7 @@ def _result(session: Session, user_id: int, outcome: PlanOutcome, elapsed: float
         "notes": outcome.notes,
         "llm_call_count": outcome.llm_calls,
         "total_tokens": outcome.tokens,
+        "retry_after_s": outcome.retry_after_s,
     }
     if outcome.status == "succeeded" and outcome.plan_id is not None:
         summary = service.plan_summary(session, user_id, outcome.plan_id)
@@ -121,6 +123,9 @@ def plan_events(
                     elapsed_s=elapsed,
                     stage=str(payload.get("stage")),
                     message=stage_message(payload),
+                    wait_s=max(1, math.ceil(payload["seconds"]))
+                    if payload.get("stage") == "waiting" and payload.get("seconds") is not None
+                    else None,
                 )
             )
             continue

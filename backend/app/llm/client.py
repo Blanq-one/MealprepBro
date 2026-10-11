@@ -2,7 +2,8 @@
 
 This is the ONLY module that imports the Groq SDK (CLAUDE.md rule 6). The model name comes from
 LLM_MODEL. Requests are never streamed and never use tools: `LLMRequest` has no way to ask for either,
-and structured outputs are always sent as a JSON-schema response format.
+and structured outputs are always sent as a JSON-schema response format. The one exception is plain JSON
+mode (no schema), used only by the opt-in live test to measure what the schema costs (step 2b.3b).
 """
 
 import time
@@ -18,6 +19,7 @@ from app.llm.errors import (
     LLMProviderError,
     LLMProviderOutputError,
     LLMRateLimitedError,
+    LLMReasoningEffortError,
     LLMStrictUnsupportedError,
     LLMTimeoutError,
     LLMTransportError,
@@ -30,7 +32,8 @@ Message = dict[str, str]  # {"role": "system" | "user" | "assistant", "content":
 class LLMRequest:
     messages: tuple[Message, ...]
     schema_name: str
-    json_schema: Mapping[str, Any]
+    # None = plain JSON mode with no schema: measurement only (the live test), never used by the app
+    json_schema: Mapping[str, Any] | None
     strict: bool  # True in LLM_STRUCTURED_MODE=strict (constrained decoding), False in best_effort
     max_completion_tokens: int
     reasoning_effort: str | None = None
@@ -46,6 +49,8 @@ class RateLimitInfo:
     reset_requests_s: float | None = None
     reset_tokens_s: float | None = None
     retry_after_s: float | None = None
+    limit_requests: int | None = None
+    limit_tokens: int | None = None  # the per-minute allowance (Groq's free tier: 8K for the strict models)
 
 
 @dataclass(frozen=True)
@@ -117,12 +122,19 @@ def parse_rate_limit(headers: Mapping[str, str]) -> RateLimitInfo:
         reset_requests_s=parse_duration_s(h.get("x-ratelimit-reset-requests")),
         reset_tokens_s=parse_duration_s(h.get("x-ratelimit-reset-tokens")),
         retry_after_s=parse_duration_s(h.get("retry-after")),
+        limit_requests=_int(h.get("x-ratelimit-limit-requests")),
+        limit_tokens=_int(h.get("x-ratelimit-limit-tokens")),
     )
 
 
 def _is_strict_unsupported(message: str) -> bool:
     text = message.lower()
     return ("strict" in text or "json_schema" in text) and ("not supported" in text or "unsupported" in text)
+
+
+def _is_reasoning_rejected(message: str) -> bool:
+    text = message.lower()
+    return "reasoning_effort" in text or "reasoning effort" in text
 
 
 class GroqLLMClient:
@@ -134,17 +146,22 @@ class GroqLLMClient:
         self.model = model
 
     def complete(self, request: LLMRequest) -> LLMResponse:
-        kwargs: dict[str, Any] = {
-            "model": self.model,
-            "messages": list(request.messages),
-            "response_format": {
+        response_format: dict[str, Any] = (
+            {"type": "json_object"}
+            if request.json_schema is None
+            else {
                 "type": "json_schema",
                 "json_schema": {
                     "name": request.schema_name,
                     "schema": dict(request.json_schema),
                     "strict": request.strict,
                 },
-            },
+            }
+        )
+        kwargs: dict[str, Any] = {
+            "model": self.model,
+            "messages": list(request.messages),
+            "response_format": response_format,
             "max_completion_tokens": request.max_completion_tokens,
         }
         if request.reasoning_effort:
@@ -167,9 +184,14 @@ class GroqLLMClient:
             body = exc.body if isinstance(exc.body, dict) else {}
             error = body.get("error", {}) if isinstance(body.get("error"), dict) else {}
             if error.get("code") == "json_validate_failed" or "json_validate_failed" in message:
-                raise LLMProviderOutputError(message, failed_output=error.get("failed_generation")) from exc
+                # the provider's own message names the schema rule; never the whole failed reply (it goes into
+                # the retry message, and a long one makes every attempt bigger)
+                concise = str(error.get("message") or "the output didn't match the schema")
+                raise LLMProviderOutputError(concise, failed_output=error.get("failed_generation")) from exc
             if request.strict and _is_strict_unsupported(message):
                 raise LLMStrictUnsupportedError(message) from exc
+            if request.reasoning_effort and _is_reasoning_rejected(message):
+                raise LLMReasoningEffortError(message) from exc
             raise LLMProviderError(message) from exc
         except groq.APIStatusError as exc:
             if exc.status_code >= 500:

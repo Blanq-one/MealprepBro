@@ -82,7 +82,7 @@ describe("onboarding", () => {
     expect(puts[0]?.body).toEqual({ ...userSettings(), household_size: 2, daily_protein_target_g: 95, onboarding_completed: true });
     expect(calls.filter((c) => c.method === "PATCH")).toHaveLength(0);
     expect(localStorage.getItem(DRAFT_KEY)).toBeNull();
-  });
+  }, 15_000); // nine screens of clicks: about 1.5 s alone, over 5 s when every test file runs at once
 
   it("Skip, use my current settings sends only the onboarding flag", async () => {
     const calls = api();

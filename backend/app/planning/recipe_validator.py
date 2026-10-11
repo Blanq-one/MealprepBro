@@ -11,21 +11,24 @@ LLM can act on in a retry.
   * equipment ⊆ what you have; hands-on time fits the mood;
   * the prose filter (§7.3) on every displayed text.
 A recipe with poultry, meat, fish or an egg dish but no doneness step gets one appended (not an error).
+
+Ideas (Phase 2b, FLOW_SPEC §13.5) get every check here except the step checks (`validate_idea`); an idea and
+its steps are later validated together as one GeneratedRecipe.
 """
 
 import re
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from decimal import Decimal
 
 from app.domain.cook_time import mood_time_error
-from app.domain.enums import Equipment, InstructionSection
+from app.domain.enums import Equipment, InstructionSection, RecipeMood
 from app.domain.food_safety import IngredientSafety, doneness_requirement
 from app.domain.food_state import line_state_error
 from app.domain.text_rules import check_text
 from app.domain.units import UnitError, grams_of, normalize_unit, to_base
 from app.planning.resolver import IngredientResolver, Resolution
-from app.schemas.llm_recipe import GeneratedRecipe
+from app.schemas.llm_recipe import GeneratedRecipe, IdeaIngredient, LLMIngredient, RecipeIdea
 from app.seed.files import normalize_name
 
 # Upper bounds on grams per serving, by ingredient category (raw / dry / as sold).
@@ -108,16 +111,23 @@ def _covers(alias: str, names: Iterable[str]) -> bool:
     return False
 
 
-def validate_generated(
-    recipe: GeneratedRecipe,
+@dataclass(frozen=True)
+class ValidatedIdea:
+    idea: RecipeIdea
+    lines: tuple[ResolvedLine, ...]
+
+
+def check_lines(
+    items: Sequence[LLMIngredient | IdeaIngredient],
+    base_servings: int,
     resolver: IngredientResolver,
-    scanner: StepScanner,
-    equipment: frozenset[Equipment],
-) -> tuple[ValidatedRecipe | None, list[str]]:
+) -> tuple[list[ResolvedLine], dict[str, Resolution], list[str]]:
+    """Names, units, the raw / dry / as-sold rule, plausible amounts, duplicate lines and total food per
+    serving. Returns (lines, how each name resolved, errors)."""
     errors: list[str] = []
     lines: list[ResolvedLine] = []
     resolutions: dict[str, Resolution] = {}
-    for item in recipe.ingredients:
+    for item in items:
         res = resolver.resolve(item.name)
         resolutions[item.name] = res
         if not res.ok:
@@ -138,12 +148,12 @@ def validate_generated(
             continue
         if problem := line_state_error(data.name, None, data.mapping_state):
             errors.append(problem)
-        per_serving = grams / Decimal(recipe.base_servings)
+        per_serving = grams / Decimal(base_servings)
         cap = MAX_GRAMS_PER_SERVING.get(data.category, Decimal(300))
         if per_serving > cap:
             errors.append(
                 f"{item.name}: {per_serving:.0f} g per serving is implausible for {data.category} "
-                f"(at most {cap} g); check the quantity is for all {recipe.base_servings} servings"
+                f"(at most {cap} g); check the quantity is for all {base_servings} servings"
             )
         lines.append(
             ResolvedLine(
@@ -154,10 +164,10 @@ def validate_generated(
                 unit=base.unit.value,
                 authored_quantity=quantity,
                 authored_unit=unit,
-                preparation=item.preparation,
+                preparation=getattr(item, "preparation", None),
                 role=item.role.value,
-                component=item.component,
-                optional=item.optional,
+                component=getattr(item, "component", None),
+                optional=getattr(item, "optional", False),
                 substituted_from=res.substituted_from,
             )
         )
@@ -173,19 +183,53 @@ def validate_generated(
         ),
         Decimal(0),
     )
-    if total / Decimal(recipe.base_servings) > MAX_TOTAL_GRAMS_PER_SERVING:
+    if total / Decimal(base_servings) > MAX_TOTAL_GRAMS_PER_SERVING:
         errors.append(
-            f"about {total / recipe.base_servings:.0f} g of food per serving is implausible; "
-            "check base_servings"
+            f"about {total / base_servings:.0f} g of food per serving is implausible; check base_servings"
         )
-    if missing := sorted(set(recipe.equipment) - equipment):
+    return lines, resolutions, errors
+
+
+def _basics(
+    used: Iterable[Equipment], equipment: frozenset[Equipment], mood: RecipeMood, active_minutes: int
+) -> list[str]:
+    errors = []
+    if missing := sorted(set(used) - equipment):
         errors.append(f"uses equipment that isn't available: {', '.join(missing)}")
-    if problem := mood_time_error(recipe.mood, recipe.active_minutes):
+    if problem := mood_time_error(mood, active_minutes):
         errors.append(problem)
+    return errors
+
+
+def _prose(texts: Iterable[str]) -> list[str]:
+    return [v.message for text in texts for v in check_text(text)]
+
+
+def validate_idea(
+    idea: RecipeIdea, resolver: IngredientResolver, equipment: frozenset[Equipment]
+) -> tuple[ValidatedIdea | None, list[str]]:
+    """Every recipe check except the step checks: names, units and the as-sold rule, exclusions and held
+    items, plausible amounts, equipment, hands-on time for the mood, and the prose filter on the title and
+    method. (Complete nutrition, caps and the request's own limits are checked by the caller.)"""
+    lines, _, errors = check_lines(idea.ingredients, idea.base_servings, resolver)
+    errors += _basics(idea.equipment, equipment, idea.mood, idea.active_minutes)
+    errors += _prose([idea.title, idea.method])
+    if errors:
+        return None, list(dict.fromkeys(errors))
+    return ValidatedIdea(idea, tuple(lines)), []
+
+
+def validate_generated(
+    recipe: GeneratedRecipe,
+    resolver: IngredientResolver,
+    scanner: StepScanner,
+    equipment: frozenset[Equipment],
+) -> tuple[ValidatedRecipe | None, list[str]]:
+    lines, resolutions, errors = check_lines(recipe.ingredients, recipe.base_servings, resolver)
+    errors += _basics(recipe.equipment, equipment, recipe.mood, recipe.active_minutes)
     texts = [recipe.title, recipe.description] + [i.preparation or "" for i in recipe.ingredients]
     texts += [s.text for s in recipe.steps]
-    for text in texts:
-        errors.extend(v.message for v in check_text(text))
+    errors += _prose(texts)
     # Everything the recipe lists counts as listed for the step checks, even a line whose unit was rejected
     # above, so one bad unit doesn't cascade into "step uses an unlisted ingredient" errors.
     resolved = [(name, r) for name, r in resolutions.items() if r.ingredient_id is not None]

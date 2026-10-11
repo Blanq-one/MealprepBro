@@ -93,3 +93,22 @@ class LLMDeadlineError(LLMError):
     rate-limit wait. Planning keeps what was generated so far and carries on without the LLM."""
 
     code = "llm_deadline"
+
+
+class LLMWaitTooLongError(LLMDeadlineError):
+    """A rate-limit wait longer than LLM_MAX_RATE_WAIT_SECONDS, or longer than what is left of the request's
+    time budget. Never a problem error: the request ends gracefully with what it has and says when to try
+    again (`retry_after_s`, FLOW_SPEC §5.5)."""
+
+    code = "llm_wait_too_long"
+
+    def __init__(self, message: str, *, retry_after_s: float, detail: dict[str, Any] | None = None) -> None:
+        super().__init__(message, detail=detail)
+        self.retry_after_s = retry_after_s
+
+
+class LLMReasoningEffortError(LLMError):
+    """The provider refused the reasoning effort for this model (raised by the client; the structured layer
+    turns it into a configuration error naming LLM_REASONING_EFFORT)."""
+
+    code = "llm_reasoning_effort"

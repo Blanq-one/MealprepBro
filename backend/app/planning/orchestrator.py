@@ -17,6 +17,7 @@ candidate-exposure log (plan_candidate), one row per recipe offered to the solve
 """
 
 import logging
+import math
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
@@ -28,7 +29,7 @@ from sqlalchemy.orm import Session
 from app.config import Settings, get_settings
 from app.db.models import GenerationRun
 from app.llm.client import LLMClient
-from app.llm.errors import LLMDeadlineError, LLMError
+from app.llm.errors import LLMDeadlineError, LLMError, LLMWaitTooLongError
 from app.llm.pacing import Clock, Deadline, SystemClock
 from app.llm.structured import LLMRunContext
 from app.planning.candidates import CandidateGenerator, Gap, gap_analysis
@@ -71,6 +72,10 @@ OUT_OF_TIME_NOTE = (
     "Recipe generation stopped early: this request ran out of time ({reason}). The recipes made so far are "
     "saved, so planning again carries on from there."
 )
+WAIT_NOTE = (
+    "The recipe service needs a {seconds} s pause, longer than this request can wait, so this plan uses the "
+    "recipes you have. Plan again in a minute for new ones."
+)
 
 ProgressListener = Callable[[dict[str, Any]], None]
 
@@ -91,6 +96,7 @@ class PlanOutcome:
     llm_calls: int = 0
     tokens: int = 0
     notes: list[str] = field(default_factory=list)
+    retry_after_s: int | None = None  # new recipes had to wait longer than the request could (2b.3b)
 
 
 # The validator spy hook used by tests: receives every RoundedPlan that is validated.
@@ -196,6 +202,7 @@ class Orchestrator:
         self.deadline = deadline
         self.on_progress = on_progress
         self.notes: list[str] = []
+        self.retry_after_s: int | None = None
 
     def _progress(self, run: GenerationRun, stage: str, **extra: Any) -> None:
         run.progress = {"stage": stage, **extra}
@@ -211,6 +218,7 @@ class Orchestrator:
         outcome.llm_calls = run.llm_call_count
         outcome.tokens = run.total_tokens
         outcome.notes = [*self.notes, *outcome.notes]
+        outcome.retry_after_s = outcome.retry_after_s or self.retry_after_s
         if outcome.notes:
             run.progress = {**(run.progress or {}), "notes": outcome.notes}
         self.session.flush()
@@ -324,6 +332,10 @@ class Orchestrator:
         """False when the time budget ran out; what was generated before that is saved and used."""
         try:
             generator.generate(problem, gaps)
+        except LLMWaitTooLongError as exc:  # a pause, never an error: plan with the recipes made so far
+            self.retry_after_s = max(1, math.ceil(exc.retry_after_s))
+            self.notes.append(WAIT_NOTE.format(seconds=self.retry_after_s))
+            return False
         except LLMDeadlineError as exc:
             self.notes.append(OUT_OF_TIME_NOTE.format(reason=exc))
             return False

@@ -57,6 +57,7 @@ export function RecipeView({
   lines,
   notes = [],
   portionsLine,
+  stepsSlot,
   children,
 }: {
   recipe: RecipeVersion;
@@ -64,6 +65,8 @@ export function RecipeView({
   notes?: string[];
   /** The API's portions line ("for 2 people") in place of the recipe's portions count. */
   portionsLine?: string | null;
+  /** Shown in place of the steps while a new idea's steps are being written (C8). */
+  stepsSlot?: ReactNode;
   children?: ReactNode;
 }) {
   const shown: RecipeLine[] =
@@ -89,7 +92,7 @@ export function RecipeView({
           {recipe.is_favorite && <span className="badge badge-accent">Favorite</span>}
           {recipe.is_saved && <span className="badge badge-accent">Saved</span>}
         </div>
-        {recipe.description && <p className="muted">{recipe.description}</p>}
+        {recipe.description && !stepsSlot && <p className="muted">{recipe.description}</p>}
         <p className="small muted">
           {portionsLine ?? `${recipe.portions} portions`} ({recipe.portion_size.replace(/_/g, " ")}) · {minutesLabel(recipe.active_minutes)}{" "}
           hands-on, {minutesLabel(recipe.total_minutes)} total{recipe.time_note ? ` (${recipe.time_note})` : ""}
@@ -133,7 +136,8 @@ export function RecipeView({
         {recipe.per_container && <p className="small muted">{recipe.per_container}</p>}
       </section>
 
-      {sections(recipe.steps).map(([section, steps], i) => (
+      {stepsSlot}
+      {!stepsSlot && sections(recipe.steps).map(([section, steps], i) => (
         <section key={`${section}-${i}`} className="card" aria-label={sectionLabel(section)}>
           <h2>{sectionLabel(section)}</h2>
           <ol className={styles.steps}>

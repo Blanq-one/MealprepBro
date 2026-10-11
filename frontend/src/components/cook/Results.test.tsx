@@ -1,9 +1,10 @@
-import { render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "@/lib/api/client";
 import type { CookAnswers } from "@/lib/api/types";
+import { resetMore } from "@/lib/cook/more";
 import { mockApi } from "@/test/api";
 import { suggestion } from "@/test/fixtures";
 
@@ -33,8 +34,32 @@ function view(props: Partial<Parameters<typeof ResultsView>[0]> = {}) {
   return handlers;
 }
 
+/** fetch answers each POST with the next list of NDJSON lines; returns the calls made. */
+function streamReplies(replies: object[][]): string[] {
+  const calls: string[] = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (url: string, init: RequestInit = {}) => {
+      calls.push(`${(init.method ?? "GET").toUpperCase()} ${url}`);
+      const lines = replies.shift() ?? [];
+      const text = lines.map((l) => JSON.stringify(l)).join("\n") + "\n";
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode(text));
+          controller.close();
+        },
+      });
+      return new Response(body, { status: 200, headers: { "content-type": "application/x-ndjson" } });
+    }),
+  );
+  return calls;
+}
+
 describe("C5 results for a meal now", () => {
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    resetMore();
+  });
 
   it("cards show the server's strings only, and open the recipe in this search", () => {
     view();
@@ -52,11 +77,57 @@ describe("C5 results for a meal now", () => {
     for (const n of numbers) expect(sent).toContain(n);
   });
 
-  it("More ideas is shown disabled with 'coming soon' until step 2b.3b", () => {
+  it("More ideas is on once the search is done (step 2b.3b), and off while it streams or offline", () => {
     view();
-    const more = screen.getByRole("button", { name: "More ideas" });
-    expect(more).toBeDisabled();
-    expect(more).toHaveAccessibleDescription("New recipe ideas: coming soon.");
+    expect(screen.getByRole("button", { name: "More ideas" })).toBeEnabled();
+    cleanup();
+    view({ data: data({ status: "running" }) });
+    expect(screen.getByRole("button", { name: "More ideas" })).toBeDisabled();
+    cleanup();
+    view({ online: false });
+    expect(screen.getByRole("button", { name: "More ideas" })).toBeDisabled();
+  });
+
+  it("while new ideas are written: the strip, then a countdown during a rate-limit wait (never an error)", () => {
+    vi.useFakeTimers({ now: 100_000 });
+    view({ data: data({ status: "running", generating: true }) });
+    expect(screen.getByRole("status")).toHaveTextContent("Writing new ideas…");
+    cleanup();
+    view({ data: data({ status: "running", generating: true, wait: { seconds: 23, startedAt: 100_000 } }) });
+    expect(screen.getByRole("status")).toHaveTextContent("The recipe service needs a short breather. Writing your ideas in 0:23…");
+    expect(screen.queryByRole("alert")).toBeNull();
+    vi.useRealTimers();
+  });
+
+  it("new ideas land with New badges and a toast; a failed call keeps the saved ones with the server's note", () => {
+    const fresh = suggestion({ version_id: 30, recipe_id: 30, title: "Garlic chicken rice", badges: ["new"], steps_ready: false });
+    view({ data: data({ suggestions: [suggestion(), fresh], newIds: [30] }) });
+    expect(screen.getByText("1 new idea added")).toBeInTheDocument();
+    expect(within(screen.getAllByRole("article")[1] as HTMLElement).getByText("New")).toBeInTheDocument();
+    cleanup();
+    view({ data: data({ status: "partial", notes: ["I couldn't write new ideas just now. These are your saved ones."] }) });
+    expect(screen.getByText("I couldn't write new ideas just now. These are your saved ones.")).toBeInTheDocument();
+    expect(screen.getByRole("article")).toBeInTheDocument();
+  });
+
+  it("the first More ideas tap calls E18 and shows its ideas; a long wait reads 'Ready in 0:45'", async () => {
+    const fresh = suggestion({ version_id: 30, recipe_id: 30, title: "Garlic chicken rice", badges: ["new"] });
+    const calls = streamReplies([
+      [
+        { event: "started", search_id: 5, run_id: 12, elapsed_s: 0 },
+        { event: "progress", search_id: 5, run_id: 12, elapsed_s: 0.1, stage: "generating" },
+        { event: "results", search_id: 5, run_id: 12, elapsed_s: 9, suggestions: [suggestion(), fresh], new_version_ids: [30] },
+        { event: "result", search_id: 5, run_id: 12, elapsed_s: 9.5, status: "succeeded" },
+      ],
+      [{ event: "result", search_id: 5, run_id: 13, elapsed_s: 1, status: "partial", retry_after_s: 45, notes: ["The recipe service needs a short breather. Your saved ones are here meanwhile."] }],
+    ]);
+    view();
+    await userEvent.click(screen.getByRole("button", { name: "More ideas" }));
+    expect(await screen.findByRole("link", { name: "Garlic chicken rice" })).toBeInTheDocument();
+    expect(calls).toEqual(["POST /api/v1/cook/searches/5/more"]);
+    await userEvent.click(screen.getByRole("button", { name: "More ideas" }));
+    expect(await screen.findByRole("button", { name: /Ready in 0:4\d/ })).toBeDisabled();
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 
   it("shows the top 12, then Show more", async () => {
@@ -78,9 +149,9 @@ describe("C5 results for a meal now", () => {
     expect(screen.getByText("Nothing fits 20 minutes.")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Allow 30 min" }));
     expect(onRerun).toHaveBeenCalledWith(expect.objectContaining({ time_limit_minutes: 30, mood: "fancy" }));
-    expect(screen.getByRole("button", { name: "Write new recipes (coming soon)" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Write new recipes" })).toBeEnabled(); // More ideas, from here
     expect(screen.queryByRole("button", { name: "More ideas" })).not.toBeInTheDocument();
-    expect(emptyFixes("time", { ...answers, time_limit_minutes: 120 }).map((f) => f.label)).toEqual(["Write new recipes (coming soon)"]);
+    expect(emptyFixes("time", { ...answers, time_limit_minutes: 120 }).map((f) => f.label)).toEqual(["Write new recipes"]);
     expect(emptyFixes("equipment", answers)[0]).toEqual({ label: "Check your equipment", href: "/settings/" });
   });
 

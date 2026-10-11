@@ -1388,13 +1388,14 @@ steps are written only for the recipes you open.
 | Steps for one recipe | ≈ 4.2K (1.7K) | ≈ 0.6K | **≈ 4.8K** | ≈ 2.3K |
 | Idea revision (only when no idea in a batch passes) | ≈ 5.5K (4.6K) | ≈ 0.9K | **≈ 6.4K** | ≈ 5.5K |
 
-- **Ideas per call:** code picks the largest count from 8 down to 5 for which the prompt estimate + count × 330 + 300
-  (reasoning) fits in 95% of the minute's limit. That gives 6 in the cautious case and 8 if it scales. The table's
-  totals are for 6 ideas; 8 add ≈ 0.6K. If even 5 don't fit, no call is made, and 2b.3b stops and tells you.
-- **Calibrated estimates:** the pacer and the daily guard estimate a call from its characters
-  (`CHARS_PER_TOKEN = 4`), which would undercount the measured prompt about 2.5 times. From 2b.3b they scale that by
-  the median ratio of real to estimated prompt tokens over the last 20 logged calls of the same purpose (2.5 until
-  five are logged), so predicted waits match Groq's.
+- **Ideas per call:** code picks the largest count from 8 down to 5 for which the prompt estimate + count × 360 + 300
+  (reasoning) fits in 95% of the minute's limit (330 before the live test). With the measured prompts that is
+  always 8. If even 5 don't fit, no call is made.
+- **Calibrated estimates:** the pacer and the daily guard estimate a call from its characters, messages and schema
+  together (`CHARS_PER_TOKEN = 4`), scaled by the median ratio of real to estimated prompt tokens over the last 20
+  logged calls of the same purpose (1.2 until five are logged; 2.5 before the live test showed 1.03–1.11), so
+  predicted waits match Groq's.
+- *The table above is the plan made before the live test; the measured calls are in the findings below.*
 - **Timing:** a call with ≈ 1.8K of completion took 10–20 s in Phase 1. Groq refills the minute's allowance
   continuously (Phase 1's retry-after times were 7–39 s). So right after an ideas call, a steps call waits about
   15–30 s (cautious) or 5–15 s (if it scales), and the next ideas call (the background batch) about 50–60 s.
@@ -1410,46 +1411,78 @@ estimated here:
      instead.
 3. **Whether Groq counts the maximum completion** in its per-minute check.
 
-**Live findings (2b.3b):** *to be recorded here.* The planning numbers then switch from the cautious case to the
-measured one, and the ideas count, the background reserve and the heavy-day estimate are re-checked.
+**Live findings (2b.3b, 2026-10-11).** `openai/gpt-oss-120b`, strict mode, reasoning effort `low` on every call;
+two runs, the second after the fixes below. Measured in the second run:
+
+| Call | Schema (characters) | Prompt | Completion | Total | What happened |
+|---|---|---|---|---|---|
+| Phase 1 batch: 2 full recipes | 3,324 | 2,428 | 1,709 | 4,137 | attempt 1 rejected by Groq (`json_validate_failed`, no usage reported); attempt 2 passed |
+| Ideas: 8 asked, meal now | 1,947 | 1,533 | 3,117 | 4,650 | strict mode rejected the reply over one idea; the 7 valid ideas were kept (no retry), 5 passed the checks |
+| The same ideas messages, plain JSON mode | none | 1,014 | 700 | – | the schema costs **519** tokens |
+| Steps for one idea | 1,034 | 710 | 526 | 1,236 | passed on the first attempt |
+| Probe: a 114-token prompt with a maximum completion of 8,000 (limit 8,000) | none | 114 | 28 | – | accepted |
+
+1. **The ≈ 3.5K doesn't exist.** Every prompt is about (our text + the schema's JSON) ÷ 4 × 1.03–1.11, plus
+   40–80 tokens of framing. The schema is counted at about its JSON size (519 tokens for 1,947 characters), so the
+   three schema sizes (3,324 / 1,947 / 1,034 characters) track their prompts with no fixed overhead. Phase 1's
+   5.9K isn't reproduced: today's Phase 1 batch prompt is 2.4K. The first run today showed where big prompts come
+   from: a retry that re-sent the provider's whole error, failed reply included (4,445 tokens; fixed: retries now
+   carry only the schema rule that failed).
+2. **Groq doesn't count the maximum completion** against the minute: the probe asked for 8,114 tokens against
+   an 8,000 limit and went through. The Phase 1 HTTP 413 was the oversized prompt of that retry. The pacer still
+   checks prompt + maximum completion (it can only overestimate), and "≤ 95% of the minute" stays as the sizing
+   rule for one call.
+3. **An idea is about 360 completion tokens** with low reasoning (3,117 for 8), not 330. The count rule now uses
+   360: with a 1.5K prompt, 8 ideas fit easily (1,533 + 8 × 360 + 300 ≈ 4.7K of 7.6K). Even 5 always fit.
+4. **Strict mode still rejects about half the schema replies** (Phase 1 attempt 1 in both runs, the ideas call
+   in both runs; one model listed "pot" as equipment). Two fixes: a rejected ideas batch keeps the ideas that
+   validate on their own (the rest are dropped and logged, like ideas that fail the checks), and the ideas rules
+   say pots and pans aren't equipment and fresh herbs go in grams.
+5. **Calibration** starts at 1.2 (measured 1.03–1.11) instead of 2.5 until five calls of a purpose are logged.
+
+The planning numbers below now use the measured case. The ideas count (8), the background reserve (30K) and the
+heavy-day estimate were re-checked against them.
 
 ### 15.2 Estimates per flow
 
-| Flow | Calls | Tokens, cautious (if it scales) | Worst case (capped) |
+Measured case (the 2b.3b live test, §15.1): an ideas call ≈ **4.7K** (1.5K prompt + 3.1K for 8 ideas), a steps
+call ≈ **1.2K**, a revision ≈ 4K (estimated: three failed ideas sent back, about half a batch written). The
+pre-test cautious figures are in brackets.
+
+| Flow | Calls | Tokens, measured [cautious] | Worst case (capped) |
 |---|---|---|---|
-| **A meal now: the cards** | **0** when at least 6 saved or seed recipes are good matches (M14; cards in under a second). Otherwise **1** ideas call; its 5–8 cards land 10–20 s after the saved ones | 0, or ≈ 6.8K (5.6K) | 1 ideas call + 1 idea revision ≈ 13K (11K); the revision about a minute later |
-| **More ideas, first tap in a search** | **1** ideas call (waits normally: the strip, or the countdown if the minute is used up), then **+1** background batch once the minute has room | ≈ 6.8K + 6.8K = 13.6K (11.2K) | 1 ideas call + 1 revision, then the background batch (never revised) ≈ 20K (17K) |
-| **More ideas, later taps** | **0** before the cards when the held batch is ready (instant); otherwise 1 ideas call. Then **+1** background batch | ≈ 6.8K (5.6K) per tap | As the first tap |
-| **Opening a new idea** | **1** steps call, the first time only. **0** for seed and saved recipes and every later open | ≈ 4.8K (2.3K) | 3 attempts (rule 5) ≈ 14K (7K) |
-| **Meal prep** (5 lunches, or lunch + dinner Mon–Fri) | **0** with today's library: 6 lunch/dinner seeds cover a slot for up to 5 days each (variety rule) | 0 | One ideas call per uncovered meal slot, ≈ 7.1K (6.3K), each bringing 5–8 options instead of 2–3. Plus targeted rounds after an infeasible solve: the 180 s budget and 8K/min allow about **3 calls**, ≈ 21K (19K). Steps only for the new recipes you open, ≈ 4.8K (2.3K) each |
-| **Swap one meal** | **0** (other saved recipes fit) | 0 | **Write a new one:** 1 ideas call + at most 1 revision, ≈ 7.1–13.5K (6.3–11.8K). Then the swapped-in recipe's steps when you open it, ≈ 4.8K (2.3K). The call's other ideas join the pool, so the next swap of that meal usually needs no call |
+| **A meal now: the cards** | **0** when at least 6 saved or seed recipes are good matches (M14; cards in under a second). Otherwise **1** ideas call; its ideas land about 30–40 s after the saved cards (3.1K of completion) | 0, or ≈ 4.7K [6.8K] | 1 ideas call + 1 idea revision ≈ 9K [13K] |
+| **More ideas, first tap in a search** | **1** ideas call (waits normally: the strip, or the countdown if the minute is used up), then **+1** background batch once the minute has room (≈ 15 s later) | ≈ 4.7K + 4.7K = 9.4K [13.6K] | 1 ideas call + 1 revision, then the background batch (never revised) ≈ 14K [20K] |
+| **More ideas, later taps** | **0** before the cards when the held batch is ready (instant); otherwise 1 ideas call. Then **+1** background batch | ≈ 4.7K [6.8K] per tap | As the first tap |
+| **Opening a new idea** | **1** steps call, the first time only. **0** for seed and saved recipes and every later open | ≈ 1.2K [4.8K] | 3 attempts (rule 5) ≈ 4K [14K] |
+| **Meal prep** (5 lunches, or lunch + dinner Mon–Fri) | **0** with today's library: the lunch and dinner seeds cover a slot for up to 5 days each (variety rule) | 0 | One ideas call per uncovered meal slot, ≈ 4.7K [7.1K], each bringing 5–8 options instead of 2–3. Plus targeted rounds after an infeasible solve: the 180 s budget allows about **3 calls**, ≈ 14K [21K]. Steps only for the new recipes you open, ≈ 1.2K each |
+| **Swap one meal** | **0** (other saved recipes fit) | 0 | **Write a new one:** 1 ideas call + at most 1 revision, ≈ 4.7–9K [7.1–13.5K]. Then the swapped-in recipe's steps when you open it, ≈ 1.2K. The call's other ideas join the pool, so the next swap of that meal usually needs no call |
 | **What should I buy?** | **0** (generation is off by default) | 0 | As meal prep, if you turn on "include new recipes" |
 | **Same as last time, reopening results** | **0** | 0 | 0 when nothing changed; otherwise as the flow |
-| NL quick add (unchanged) | 1 per parse | ≈ 1–2K of text; up to ≈ 4–5K if the cautious overhead holds | 3 attempts |
+| NL quick add (unchanged) | 1 per parse | ≈ 1–2K | 3 attempts |
 
 **Days.**
 - **A typical day:** one meal-now search that writes ideas, with one new idea opened and no More ideas:
-  6.8 + 4.8 ≈ **11.6K (7.9K)**, about 8% (5%) of the daily guard. Meal prep from the saved pool adds 0.
+  4.7 + 1.2 ≈ **6K** [11.6K], about 4% of the daily guard. Meal prep from the saved pool adds 0.
 - **With the 6-match rule (M14)** more searches write ideas, mostly in the first weeks: a slot and mood needs 6 good
   matches before searches stop calling. A day of 3 searches that each write ideas and open one new idea each is
-  3 × 11.6 ≈ **35K (24K)**, about 23% (16%) of the guard. Calls per search don't change (at most one ideas call), so
-  the per-minute picture below is the same; the 47 seed recipes (M13) and every saved idea fill the pool faster.
-- **A heavy day** (the same day the earlier estimates used: 5 meal-now searches that each write ideas, 1 meal prep
-  with one uncovered slot, 2 swaps from the pool), opening one new idea per search and both new meal-prep recipes:
-  - 5 × (6.8 + 4.8) + 7.1 + 2 × 4.8 ≈ **75K (50K)**, about 50% (34%) of the guard.
-  - With the background batch on every search (the previous draft) this was ≈ 109K (78K); the original one-stage
-    estimate was ≈ 40K, with 2 recipes per search instead of 5–8.
-- **Each More ideas session costs extra:** a first tap and one later tap add ≈ 20.4K (16.8K). That is the first
-  tap's call, the batch held for the second tap, and the next batch written after it, which stays in the pool if
-  you stop there. A heavy day with two such sessions is ≈ 116K (84K), about 77% (56%) of the guard.
+  3 × 5.9 ≈ **18K** [35K], about 12% of the guard.
+- **A heavy day** (5 meal-now searches that each write ideas, 1 meal prep with one uncovered slot, 2 swaps from the
+  pool), opening one new idea per search and both new meal-prep recipes: 5 × (4.7 + 1.2) + 4.7 + 2 × 1.2 ≈
+  **37K** [75K], about 25% of the guard.
+- **Each More ideas session costs extra:** a first tap and one later tap add ≈ 14K [20.4K]: the first tap's call,
+  the batch held for the second tap, and the next batch written after it (it stays in the pool if you stop there).
+  A heavy day with two such sessions is ≈ 65K [116K], about 43% of the guard.
 - **The extras go first:** background batches stop when less than 30K of the daily guard would remain, so calls you
-  ask for keep the rest. When the guard can't afford a call you asked for, flows fall back to saved recipes with a
+  ask for keep the rest. Re-checked with the measured numbers: 30K is still about six searches' worth (ideas and
+  one steps call each). When the guard can't afford a call you asked for, flows fall back to saved recipes with a
   note (§15.3, item 8).
 - **The pool grows fast:** each ideas call adds 5–8 saved recipes, so later searches more often find 6 good matches
   and make no call at all.
-- **Per minute:** every single call fits under 8K. A second call in the same minute (a first More ideas tap right
-  after the search's own ideas, or a new idea opened right after a batch) gets the friendly countdown wait (5.5),
-  never an error. Requests per minute and per day never bind first.
+- **Per minute:** one ideas call uses about 4.7K of the 8K. A new idea opened right after it usually goes at once
+  (1.2K more); the next ideas call (the background batch, or a quick second More ideas tap) waits about 15 s by the
+  pacer's cautious check (prompt + maximum completion). A wait shows the friendly countdown (5.5), never an error.
+  Requests per minute and per day never bind first.
 
 ### 15.3 What is cached or reused
 

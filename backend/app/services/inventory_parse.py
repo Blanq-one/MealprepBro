@@ -5,8 +5,10 @@ and checked for numeric fidelity: every quantity must appear in the note itself 
 "a", "dozen"), so an amount the model made up comes back as `needs_confirmation`. Excluded foods (beef) are
 flagged and can't be saved; held items can be, with a note that plans won't use them until you allow them.
 Pork is allowed in inventory (its cap applies to meals). You confirm the preview with POST /inventory/bulk.
+A rate-limit wait longer than the request can wait answers `waiting` with `retry_after_s` (step 2b.3b).
 """
 
+import math
 import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -21,6 +23,7 @@ from app.domain.enums import StorageLocation
 from app.domain.exclusions import ExclusionStatus
 from app.domain.units import UnitError, normalize_unit, to_base
 from app.llm.client import LLMClient
+from app.llm.errors import LLMRateLimitedError, LLMWaitTooLongError
 from app.llm.pacing import Deadline, SystemClock
 from app.llm.prompts import inventory_parse
 from app.llm.structured import LLMRunContext, StructuredSpec
@@ -197,6 +200,14 @@ def parse_note(session: Session, user_id: int, note: str, client: LLMClient, set
     )
     try:
         result = llm.generate(spec)
+    except (LLMWaitTooLongError, LLMRateLimitedError) as exc:  # a pause, never an error (FLOW_SPEC §5.5)
+        run.status, run.finished_at = "failed", datetime.now(UTC)
+        run.error = {"code": exc.code, "detail": str(exc)}
+        session.flush()
+        retry = max(1, math.ceil(exc.retry_after_s or 60))
+        return ParseOut(
+            run_id=run.id, llm_call_count=run.llm_call_count, items=[], status="waiting", retry_after_s=retry
+        )
     except Exception:
         run.status, run.finished_at = "failed", datetime.now(UTC)
         session.flush()

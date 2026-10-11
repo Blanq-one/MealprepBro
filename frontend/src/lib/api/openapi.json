@@ -1265,7 +1265,7 @@
     "type": "object"
    },
    "CookStreamEvent": {
-    "description": "One line of POST /cook/meal-now (application/x-ndjson): `started` (search and run ids), `progress`\nlines and a `heartbeat` every few seconds, `results` (the full ranked list, replacing the last one), then\none `result`. Step 2b.3b adds new ideas and `prefetched` (More ideas only).",
+    "description": "One line of POST /cook/meal-now (E2) and POST /cook/searches/{id}/more (E18), application/x-ndjson:\n`started` (search and run ids); `progress` lines (stage `generating` while new ideas are written,\n`waiting` with `wait_s` during a rate-limit wait, `prefetching` while More ideas writes the next batch);\na `heartbeat` every few seconds; `results` (the full ranked list, replacing the last one;\n`new_version_ids` are the ideas just added); `prefetched` (E18 only: the list as it will look after the\nnext More ideas tap, held by the app and never shown before); then one `result`.",
     "properties": {
      "cached": {
       "anyOf": [
@@ -4288,9 +4288,29 @@
       "title": "Llm Call Count",
       "type": "integer"
      },
+     "retry_after_s": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Retry After S"
+     },
      "run_id": {
       "title": "Run Id",
       "type": "integer"
+     },
+     "status": {
+      "default": "ok",
+      "enum": [
+       "ok",
+       "waiting"
+      ],
+      "title": "Status",
+      "type": "string"
      }
     },
     "required": [
@@ -4710,6 +4730,17 @@
        }
       ]
      },
+     "retry_after_s": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Retry After S"
+     },
      "run_id": {
       "title": "Run Id",
       "type": "integer"
@@ -4751,6 +4782,17 @@
        }
       ],
       "title": "Total Tokens"
+     },
+     "wait_s": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Wait S"
      }
     },
     "required": [
@@ -6927,6 +6969,154 @@
     "title": "SlotAllocationSetting",
     "type": "object"
    },
+   "StepsStreamEvent": {
+    "description": "One line of POST /recipe-versions/{id}/steps (E19): `started`, `progress` (`writing_steps`, `waiting`\nwith `wait_s`, `checking`), heartbeats, then one `result`: succeeded with the recipe page payload, waiting\nwith `retry_after_s` (try again then; never an error), or failed with the problem.",
+    "properties": {
+     "elapsed_s": {
+      "title": "Elapsed S",
+      "type": "number"
+     },
+     "event": {
+      "enum": [
+       "started",
+       "progress",
+       "heartbeat",
+       "result"
+      ],
+      "title": "Event",
+      "type": "string"
+     },
+     "llm_call_count": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Llm Call Count"
+     },
+     "message": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Message"
+     },
+     "pad": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Pad"
+     },
+     "problem": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/ProblemOut"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "retry_after_s": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Retry After S"
+     },
+     "run_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Run Id"
+     },
+     "stage": {
+      "anyOf": [
+       {
+        "enum": [
+         "writing_steps",
+         "waiting",
+         "checking"
+        ],
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Stage"
+     },
+     "status": {
+      "anyOf": [
+       {
+        "enum": [
+         "succeeded",
+         "waiting",
+         "failed"
+        ],
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Status"
+     },
+     "version": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/RecipeVersionOut"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "version_id": {
+      "title": "Version Id",
+      "type": "integer"
+     },
+     "wait_s": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Wait S"
+     }
+    },
+    "required": [
+     "event",
+     "version_id",
+     "elapsed_s"
+    ],
+    "title": "StepsStreamEvent",
+    "type": "object"
+   },
    "StorageLocation": {
     "enum": [
      "pantry",
@@ -8086,7 +8276,7 @@
   },
   "/api/v1/cook/meal-now": {
    "post": {
-    "description": "A meal now: ranked recipe cards for one meal, inside this request. The response is a stream of JSON\nlines (`CookStreamEvent`): `started` (search and run ids), `progress`, `results` (the full ranked list),\n`heartbeat` lines while it works, and one `result`. An identical repeat returns the stored result.",
+    "description": "A meal now: ranked recipe cards for one meal, inside this request. The response is a stream of JSON\nlines (`CookStreamEvent`): `started` (search and run ids), `progress`, `results` (the full ranked list),\n`heartbeat` lines while it works, and one `result`. With fewer than 6 good matches, one ideas call writes\nnew ideas, streamed into the list as a second `results` (a rate-limit wait is a `waiting` line with a\ncountdown, never an error). An identical repeat returns the stored result.",
     "operationId": "meal_now_api_v1_cook_meal_now_post",
     "requestBody": {
      "content": {
@@ -8129,7 +8319,7 @@
   },
   "/api/v1/cook/meals": {
    "post": {
-    "description": "Cook this: saves the recipe at N portions as a one-meal plan for today (never your current plan),\nwith its grocery list for anything to buy first. Tapping it again for the same search returns that plan\n(200).",
+    "description": "Cook this: saves the recipe at N portions as a one-meal plan for today (never your current plan),\nwith its grocery list for anything to buy first. Tapping it again for the same search returns that plan\n(200). A new idea gets its steps first (409 with `retry_after_s` when they can't be written right now).",
     "operationId": "cook_this_api_v1_cook_meals_post",
     "requestBody": {
      "content": {
@@ -8207,6 +8397,50 @@
      }
     },
     "summary": "Get Search",
+    "tags": [
+     "cook"
+    ]
+   }
+  },
+  "/api/v1/cook/searches/{search_id}/more": {
+   "post": {
+    "description": "More ideas (E18). The first tap in a search makes one ideas call; a later tap shows the batch held from\nthe last tap at once (`results`), or makes one ideas call when none is held. Every tap then writes the\nnext batch in the background and sends it as `prefetched`: keep it until the next tap, never show it\nbefore. A rate-limit wait is a `waiting` line, or a `partial` result with `retry_after_s`.",
+    "operationId": "more_ideas_api_v1_cook_searches__search_id__more_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "search_id",
+      "required": true,
+      "schema": {
+       "title": "Search Id",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CookStreamEvent"
+        }
+       },
+       "application/x-ndjson": {}
+      },
+      "description": "NDJSON event lines"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "More Ideas",
     "tags": [
      "cook"
     ]
@@ -9436,7 +9670,7 @@
   },
   "/api/v1/recipe-versions/{version_id}": {
    "get": {
-    "description": "A recipe version scaled to any number of portions: practical quantities, code-computed nutrition\nand cost, and the food-safety lines the app injects. With `search`, that search's pantry coverage and\nsubstitute lines for this recipe (the numbers stay those of the recipe as written).",
+    "description": "A recipe version scaled to any number of portions: practical quantities, code-computed nutrition\nand cost, and the food-safety lines the app injects. With `search`, that search's pantry coverage and\nsubstitute lines for this recipe (the numbers stay those of the recipe as written). A new idea's steps\nare empty until written (`steps_ready` false; POST .../steps writes them).",
     "operationId": "get_version_api_v1_recipe_versions__version_id__get",
     "parameters": [
      {
@@ -9524,6 +9758,102 @@
      }
     },
     "summary": "Get Version",
+    "tags": [
+     "recipes"
+    ]
+   }
+  },
+  "/api/v1/recipe-versions/{version_id}/steps": {
+   "post": {
+    "description": "E19: writes a new idea's steps the first time it is opened and saves them with the recipe (once).\nReturns at once when they exist; a second request for the same recipe waits for the call already running.\nThe result carries the recipe page payload (same query as GET), or `waiting` with `retry_after_s`.",
+    "operationId": "write_steps_api_v1_recipe_versions__version_id__steps_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "version_id",
+      "required": true,
+      "schema": {
+       "title": "Version Id",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "query",
+      "name": "portions",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "maximum": 40,
+         "minimum": 1,
+         "type": "integer"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Portions"
+      }
+     },
+     {
+      "in": "query",
+      "name": "portion_size",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "$ref": "#/components/schemas/PortionSize"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Portion Size"
+      }
+     },
+     {
+      "description": "a meal-now search: its coverage lines for this recipe",
+      "in": "query",
+      "name": "search",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "integer"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "a meal-now search: its coverage lines for this recipe",
+       "title": "Search"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/StepsStreamEvent"
+        }
+       },
+       "application/x-ndjson": {}
+      },
+      "description": "NDJSON event lines"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Write Steps",
     "tags": [
      "recipes"
     ]

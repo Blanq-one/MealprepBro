@@ -214,7 +214,10 @@ def line_context(coverage: Sequence[LineCoverage]) -> list[LineContextOut]:
 
 
 def badges(
-    item: PoolItem, saved_ids: frozenset[int], favorite_ids: frozenset[int] | None = None
+    item: PoolItem,
+    saved_ids: frozenset[int],
+    favorite_ids: frozenset[int] | None = None,
+    new_ids: frozenset[int] = frozenset(),
 ) -> list[Badge]:
     out: list[Badge] = []
     favorite = item.rank_input.is_favorite if favorite_ids is None else item.recipe.id in favorite_ids
@@ -222,6 +225,8 @@ def badges(
         out.append("favorite")
     if item.recipe.id in saved_ids:
         out.append("saved")
+    if item.version.id in new_ids:  # an idea just written for this search (C5)
+        out.append("new")
     if item.version.is_draft:
         out.append("draft")
     return out
@@ -237,6 +242,7 @@ def suggestion(
     portion_size: PortionSize,
     saved_ids: frozenset[int],
     categories: Mapping[int, DishCategory],
+    new_ids: frozenset[int] = frozenset(),
 ) -> RecipeSuggestionOut:
     uses, could_buy, missing, swaps = coverage_lines(item.rank_input.coverage)
     return RecipeSuggestionOut(
@@ -244,7 +250,7 @@ def suggestion(
         recipe_id=item.recipe.id,
         title=item.version.title,
         dish_category=categories[item.version.id].value,
-        badges=badges(item, saved_ids),
+        badges=badges(item, saved_ids, new_ids=new_ids),
         steps_ready=item.version.steps_status is None,
         portions=portions,
         portion_size=portion_size,

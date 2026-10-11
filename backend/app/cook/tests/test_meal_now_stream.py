@@ -1,6 +1,7 @@
-"""POST /cook/meal-now (E2), step 2b.3a: the stream's event order, cards equal to the recipe page (AC 1), the
-diet rules (AC 2), the cache (AC 3), the gap rule's outcome with no LLM call (AC 4), your pantry choices, and
-the recipe page's search context (E17)."""
+"""POST /cook/meal-now (E2): the stream's event order, cards equal to the recipe page (AC 1), the diet rules
+(AC 2), the cache (AC 3), your pantry choices, the recipe page's search context (E17), and from step 2b.3b the
+gap rule's ideas call: call counts with FakeLLM, the merge, no background batch from a search, failures as a
+note, and the diet rules for ideas."""
 
 from datetime import date, datetime
 from decimal import Decimal
@@ -15,6 +16,8 @@ from app.cook.tests.conftest import (
     add_recipe,
     add_stock,
     final,
+    idea,
+    ideas_reply,
     ingredient_id,
     meal_now,
     results,
@@ -28,9 +31,12 @@ from app.db.models import (
     PriceObservation,
     Product,
     Recipe,
+    RecipeStep,
+    RecipeVersion,
 )
 from app.domain.cost import money_display
 from app.domain.enums import StorageLocation
+from app.llm.fake import response
 
 DINNER_SEEDS = 25  # 6, plus the 19 dinner drafts of the step 2b.4 approval (M13)
 MEDIUM_DINNER_SEEDS = 15  # Wednesday is medium: your mood's recipes are the good matches (M10)
@@ -38,6 +44,10 @@ MEDIUM_DINNER_SEEDS = 15  # Wednesday is medium: your mood's recipes are the goo
 
 def count(session: Any, table: Any) -> int:
     return session.scalar(select(func.count()).select_from(table)) or 0
+
+
+def count_where(session: Any, table: Any, *where: Any) -> int:
+    return session.scalar(select(func.count()).select_from(table).where(*where)) or 0
 
 
 def test_the_stream_reports_stages_then_the_ranked_cards_then_one_result(api, seeded_db):
@@ -198,27 +208,186 @@ def test_changing_the_pantry_answers_settings_pool_or_prices_misses_the_cache(ap
 
 
 # ---------------- AC 4: the gap rule, and no LLM call ----------------
-def test_the_gap_rule_reports_ideas_needed_below_six_good_matches(api, seeded_db):
+def test_the_gap_rule_counts_good_matches_below_six(api, seeded_db):
     empty = final(meal_now(api, slot="dinner"))
     assert (empty["good_matches"], empty["ideas_needed"]) == (MEDIUM_DINNER_SEEDS, False)  # an empty pantry
+    assert empty["llm_call_count"] == 0 and NoLLM.calls == 0  # 6 or more good matches: no ideas call
     add_stock(seeded_db, "onion-yellow", 3, "count", location=StorageLocation.PANTRY)
-    thin = final(meal_now(api, slot="dinner"))
-    assert (thin["good_matches"], thin["ideas_needed"]) == (0, True)  # nothing uses your protein or carb
-    run = seeded_db.get(GenerationRun, thin["run_id"])
-    assert run.progress["ideas_needed"] is True and "2b.3b" in run.progress["generation"]
+    thin = meal_now(api, slot="dinner")
+    assert (final(thin)["good_matches"], final(thin)["ideas_needed"]) == (
+        0,
+        True,
+    )  # nothing uses your protein
+    # no LLM is set up in this test: the saved cards stay, with a note and status partial (never an error)
+    assert final(thin)["status"] == "partial" and final(thin)["notes"][0].startswith(
+        "New ideas aren't set up"
+    )
+    assert len(results(thin)) == DINNER_SEEDS and count(seeded_db, LlmCall) == 0
     api.patch("/api/v1/settings", json={"always_have": ["garlic", "ginger", "vegetable-oil", "onion-yellow"]})
     add_stock(seeded_db, "chicken-thigh-boneless-skinless", 2000)
     add_stock(seeded_db, "tomato", 6, "count", location=StorageLocation.PANTRY)
     add_stock(seeded_db, "flour-tortilla-small", 20, "count", location=StorageLocation.PANTRY)
     short = final(meal_now(api, slot="dinner"))
-    # the three gravies, the keema and the shakshuka use your chicken or tortillas, with at most two missing
-    # items: one short of the 6 the gap rule wants (M14)
-    assert (short["good_matches"], short["ideas_needed"]) == (5, True)
+    # the three gravies and the shakshuka use your chicken or tortillas, with at most two missing items (the
+    # keema's ground turkey is never swapped for your chicken thighs): short of the 6 the gap rule wants (M14)
+    assert (short["good_matches"], short["ideas_needed"]) == (4, True)
     add_stock(seeded_db, "rice-long-grain-white", 2000, location=StorageLocation.PANTRY)
-    enough = final(meal_now(api, slot="dinner"))  # rice brings in the chana masala and the salmon
-    assert (enough["good_matches"], enough["ideas_needed"]) == (7, False)
-    assert count(seeded_db, LlmCall) == 0 and NoLLM.calls == 0
-    assert all(e["llm_call_count"] == 0 and e["total_tokens"] == 0 for e in (empty, thin, short, enough))
+    add_stock(seeded_db, "egg-large", 12, "count")
+    add_stock(seeded_db, "chickpeas-canned", 500, location=StorageLocation.PANTRY)
+    enough = final(meal_now(api, slot="dinner"))  # rice, eggs and chickpeas bring in four more
+    assert (enough["good_matches"], enough["ideas_needed"]) == (8, False)
+    assert enough["status"] == "succeeded" and enough["notes"] == []
+
+
+# ---------------- new ideas (step 2b.3b) ----------------
+def thin_pantry(session: Any) -> None:
+    """A pantry no saved dinner uses as its protein or carb: every search wants ideas."""
+    add_stock(session, "onion-yellow", 3, "count", location=StorageLocation.PANTRY)
+
+
+def test_six_or_more_good_matches_make_no_call(api, llm, seeded_db):
+    fake = llm()
+    fake.fail_if_called = True
+    events = meal_now(api, slot="dinner")
+    assert final(events)["good_matches"] >= 6 and final(events)["llm_call_count"] == 0 and fake.calls == 0
+
+
+def test_fewer_make_exactly_one_ideas_call_merged_with_new_badges(api, llm, seeded_db):
+    thin_pantry(seeded_db)
+    fake = llm(ideas_reply("Garlic chicken spinach rice", "Lemon chicken rice bowl", "Chicken rice skillet"))
+    events = meal_now(api, slot="dinner")
+    kinds = [e["event"] for e in events if e["event"] != "heartbeat"]
+    assert kinds == ["started", "progress", "progress", "results", "progress", "results", "result"]
+    stages = [e["stage"] for e in events if e["event"] == "progress"]
+    assert stages == ["constraints", "candidates", "generating"]
+    assert fake.calls == 1 and "prefetched" not in kinds  # a search never starts a background batch
+    first, merged = [e for e in events if e["event"] == "results"]
+    assert len(first["suggestions"]) == DINNER_SEEDS and len(merged["suggestions"]) == DINNER_SEEDS + 3
+    new = {c["version_id"]: c for c in merged["suggestions"] if "new" in c["badges"]}
+    assert sorted(new) == merged["new_version_ids"] and len(new) == 3
+    assert all(not c["steps_ready"] for c in new.values())  # steps are written on first open
+    last = final(events)
+    assert last["status"] == "succeeded" and last["llm_call_count"] == 1
+    assert last["new_version_ids"] == sorted(new)
+    request = fake.requests[0]
+    assert request.reasoning_effort == "low" and request.schema_name == "RecipeIdeaBatch"
+    prompt = request.messages[1]["content"]
+    assert "use these (each idea uses at least one" in prompt and "onion" in prompt  # must use: your items
+    assert "chicken thigh, boneless skinless" not in prompt  # short names only
+    for version_id in new:
+        version = seeded_db.get(RecipeVersion, version_id)
+        assert version.steps_status == "pending" and version.prompt_version == "recipe_ideas/1"
+        assert count_where(seeded_db, RecipeStep, RecipeStep.recipe_version_id == version_id) == 0
+    stored = api.get(f"/api/v1/cook/searches/{last['search_id']}").json()
+    assert [c["version_id"] for c in stored["suggestions"]] == [
+        c["version_id"] for c in merged["suggestions"]
+    ]
+    exposures = seeded_db.scalars(
+        select(PlanCandidate).where(PlanCandidate.generation_run_id == last["run_id"])
+    ).all()
+    assert {r.recipe_version_id for r in exposures if r.source == "llm_new"} == set(new)
+
+
+def test_an_identical_repeat_after_ideas_makes_no_call_and_keeps_the_order(api, llm, seeded_db):
+    thin_pantry(seeded_db)
+    fake = llm(ideas_reply("Garlic chicken spinach rice", "Chicken rice skillet"))
+    first = meal_now(api, slot="dinner")
+    again = meal_now(api, slot="dinner")
+    assert fake.calls == 1 and final(again)["cached"] is True and final(again)["llm_call_count"] == 0
+    assert titles(results(again)) == titles(results(first))
+
+
+def test_an_llm_failure_keeps_the_saved_results_with_a_note(api, llm, seeded_db):
+    thin_pantry(seeded_db)
+    fake = llm(default=response("not json at all"))
+    events = meal_now(api, slot="dinner")
+    last = final(events)
+    assert last["status"] == "partial"
+    assert last["notes"] == ["I couldn't write new ideas just now. These are your saved ones."]
+    assert fake.calls == 3  # LLM_MAX_ATTEMPTS, then a graceful note: never a problem error
+    assert "problem" not in last and len(results(events)) == DINNER_SEEDS
+    assert [e["event"] for e in events].count("results") == 1  # nothing else changes on screen
+    assert count_where(seeded_db, RecipeVersion, RecipeVersion.steps_status == "pending") == 0
+    fake.default = None
+    fake.script.append(ideas_reply("Garlic chicken spinach rice"))
+    retry = meal_now(api, slot="dinner")  # a failed search is never served from the cache: it tries again
+    assert final(retry)["cached"] is False and final(retry)["status"] == "succeeded"
+
+
+def test_the_daily_guard_gives_the_back_tomorrow_note(api, llm, seeded_db):
+    thin_pantry(seeded_db)
+    seeded_db.add(
+        LlmCall(
+            purpose="x",
+            provider="fake",
+            model="fake-model",
+            structured_mode="strict",
+            prompt_version="v",
+            attempt=1,
+            request_messages=[],
+            outcome="ok",
+            prompt_tokens=149_000,
+            completion_tokens=500,
+        )
+    )
+    seeded_db.flush()
+    fake = llm(ideas_reply("Garlic chicken spinach rice"))
+    last = final(meal_now(api, slot="dinner"))
+    assert last["status"] == "partial"
+    assert last["notes"] == ["That's today's new-idea allowance; back tomorrow."]
+    assert fake.calls == 0
+
+
+def test_when_no_idea_passes_one_revision_is_made(api, llm, seeded_db):
+    thin_pantry(seeded_db)
+    beef = idea("Steak rice bowl", [("beef steak", 600, "g", "protein"), ("white rice", 300, "g", "carb")])
+    unknown = idea("Mystery stew", [("unicorn meat", 500, "g", "protein"), ("white rice", 300, "g", "carb")])
+    fake = llm(ideas_reply(beef, unknown), ideas_reply("Garlic chicken spinach rice"))
+    last = final(meal_now(api, slot="dinner"))
+    assert fake.calls == 2 and last["status"] == "succeeded" and len(last["new_version_ids"]) == 1
+    revision = fake.requests[1].messages[1]["content"]
+    assert "None of these ideas passed" in revision and "excluded" in revision and "unicorn meat" in revision
+    assert fake.requests[1].reasoning_effort == "low"
+    version = seeded_db.get(RecipeVersion, last["new_version_ids"][0])
+    assert version.prompt_version == "idea_revision/1"
+
+
+def test_one_passing_idea_means_no_revision(api, llm, seeded_db):
+    thin_pantry(seeded_db)
+    beef = idea("Steak rice bowl", [("beef steak", 600, "g", "protein"), ("white rice", 300, "g", "carb")])
+    fake = llm(ideas_reply(beef, "Garlic chicken spinach rice"))
+    last = final(meal_now(api, slot="dinner"))
+    assert fake.calls == 1 and len(last["new_version_ids"]) == 1
+
+
+def test_ideas_with_beef_held_items_or_a_used_up_pork_cap_are_dropped(api, llm, seeded_db):
+    pork = add_recipe(seeded_db, "Pork chop with rice", [("pork-chop-boneless", 400, "g", "protein")])
+    assert api.post("/api/v1/cook/meals", json={"version_id": pork.id, "slot": "dinner"}).status_code == 201
+    thin_pantry(seeded_db)
+    beef = idea("Steak rice bowl", [("beef steak", 600, "g", "protein"), ("white rice", 300, "g", "carb")])
+    held = idea("Pepperoni rice", [("pepperoni", 100, "g", "protein"), ("white rice", 300, "g", "carb")])
+    capped = idea("Bacon rice", [("bacon strips", 200, "g", "protein"), ("white rice", 300, "g", "carb")])
+    fake = llm(ideas_reply(beef, held, capped, "Garlic chicken spinach rice"))
+    events = meal_now(api, slot="dinner")
+    shown = titles(results(events))
+    assert "Garlic chicken spinach rice" in shown
+    assert not {"Steak rice bowl", "Pepperoni rice", "Bacon rice"} & set(shown)
+    call = seeded_db.scalars(select(LlmCall).where(LlmCall.purpose == "recipe_ideas")).one()
+    reasons = call.error_detail["idea_issues"]
+    assert "excluded" in " ".join(reasons["Steak rice bowl"])
+    assert "held" in " ".join(reasons["Pepperoni rice"])
+    assert "this week's allowance is used up" in " ".join(reasons["Bacon rice"])
+    assert fake.calls == 1
+
+
+def test_a_quick_search_drops_ideas_over_its_time_limit(api, llm, seeded_db):
+    thin_pantry(seeded_db)
+    slow = idea("Slow chicken rice", total=50)
+    fake = llm(ideas_reply(slow, idea("Quick chicken rice", total=25)))
+    events = meal_now(api, slot="dinner", goals=["quick"], time_limit_minutes=30)
+    assert "Quick chicken rice" in titles(results(events))
+    assert "Slow chicken rice" not in titles(results(events))
+    assert "at most 30 minutes in all" in fake.requests[0].messages[1]["content"]
 
 
 # ---------------- your pantry choices ----------------

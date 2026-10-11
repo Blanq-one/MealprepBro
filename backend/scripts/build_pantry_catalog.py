@@ -4,7 +4,9 @@ The catalog is reference data kept with the seed files:
   * culinary groups: a vegetable or herb is swapped only for another one of its group (J2);
   * foods with more than one form (fresh, frozen, canned, dried), each form its own ingredient (J5);
   * held items that come in versions, with the question to ask and its choices (J4);
-  * common US package sizes per ingredient (each form is its own ingredient), all estimates (J5).
+  * common US package sizes per ingredient (each form is its own ingredient), all estimates (J5);
+  * chicken cuts' bone and skin (M6), close matches (M7), and ground meat vs whole cuts (never swapped for
+    each other; 2b.4 fixes approval).
 
 Edit the tables below and run `uv run python scripts/build_pantry_catalog.py` from backend/ (it also writes
 the review sheet docs/review/pantry_catalog.md). The file is
@@ -132,6 +134,21 @@ CHICKEN_CUTS: list[tuple[str, str, str]] = [
     ("chicken-drumstick", "bone_in", "skin_on"),
     ("chicken-wing", "bone_in", "skin_on"),
     ("chicken-whole", "bone_in", "skin_on"),
+]
+
+# ---------------- ground meat vs whole cuts (2b.4 fixes approval): never swapped for each other ----------------
+# Ground swaps only with ground; a whole cut only with a whole cut of the same bone and skin. Pork and beef have
+# no skin to speak of, so their cuts are "skinless". Sausages, deli meats, fish and eggs are neither.
+MEAT_FORMS: list[tuple[str, str, str | None, str | None]] = [
+    ("ground-chicken", "ground", None, None),
+    ("ground-turkey-93", "ground", None, None),
+    ("ground-pork", "ground", None, None),
+    ("ground-beef-85", "ground", None, None),
+    *((slug, "whole_cut", bone, skin) for slug, bone, skin in CHICKEN_CUTS),
+    ("turkey-breast", "whole_cut", "boneless", "skinless"),
+    ("pork-chop-boneless", "whole_cut", "boneless", "skinless"),
+    ("pork-tenderloin", "whole_cut", "boneless", "skinless"),
+    ("beef-sirloin-steak", "whole_cut", "boneless", "skinless"),
 ]
 
 # ---------------- close matches, always labeled (M7): a name with no ingredient of its own ----------------
@@ -857,6 +874,9 @@ def build() -> dict[str, Any]:
             {"ingredient": slug, "bone": bone, "skin": skin} for slug, bone, skin in CHICKEN_CUTS
         ],
         "close_matches": [{"alias": alias, "ingredient": slug} for alias, slug in CLOSE_MATCHES],
+        "meat_forms": [
+            {"ingredient": slug, "kind": kind, "bone": bone, "skin": skin} for slug, kind, bone, skin in MEAT_FORMS
+        ],
     }
 
 
@@ -892,6 +912,21 @@ def review_sheet() -> str:
     out += [
         f"| {slug} | {bone.replace('_', '-')} | {skin.replace('_', '-')} |"
         for slug, bone, skin in CHICKEN_CUTS
+    ]
+    out += [
+        "",
+        "## Ground meat and whole cuts are never swapped for each other",
+        "",
+        "Ground swaps only with ground; a whole cut only with a whole cut of the same bone and skin;",
+        "neither ever stands in for, or is replaced by, anything else.",
+        "",
+        "| Ingredient | Kind | Bone | Skin |",
+        "|---|---|---|---|",
+    ]
+    out += [
+        f"| {slug} | {kind.replace('_', ' ')} | {(bone or '—').replace('_', '-')} | "
+        f"{(skin or '—').replace('_', '-')} |"
+        for slug, kind, bone, skin in MEAT_FORMS
     ]
     out += ["", "## Close matches, always labeled (M7)", "", "| You type | Closest match |", "|---|---|"]
     out += [f"| {alias} | {slug} |" for alias, slug in CLOSE_MATCHES]
