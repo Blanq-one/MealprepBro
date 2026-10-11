@@ -21,7 +21,7 @@ from app.domain.enums import CalorieMode
 from app.domain.nutrition import kcal_display
 from app.domain.packages import MAX_ABSORB_UP_SCALE
 from app.domain.scaling import ScalingError
-from app.domain.units import convert
+from app.domain.units import ConversionError, convert
 from app.planning.grocery_list import build_grocery
 from app.planning.problem import PlanningProblem
 from app.planning.rounded import RoundedBatch
@@ -45,6 +45,21 @@ class _Candidate:
 def _floor_to_unit(value: Decimal, unit: str) -> Decimal:
     """Whole grams / millilitres, never more than the package holds; counts stay exact."""
     return value.to_integral_value(rounding=ROUND_FLOOR) if unit in ("g", "ml") else value
+
+
+def _exact_need(problem: PlanningProblem, batch: RoundedBatch, ingredient_id: int) -> Decimal:
+    """What the batch's recipe lines of an ingredient come to at its scale before practical rounding, in the
+    ingredient's planning unit."""
+    plan = problem.ingredients[ingredient_id]
+    total = Decimal(0)
+    for line in problem.candidate(batch.version_id).lines:
+        if line.ingredient_id != ingredient_id or line.optional:
+            continue
+        try:
+            total += plan.to_planning(line.authored_quantity * batch.scale_factor, line.authored_unit)
+        except ConversionError:
+            return Decimal(0)
+    return total
 
 
 def absorption_pass(
@@ -71,7 +86,10 @@ def absorption_pass(
                 continue
             line = max(lines, key=lambda ln: ln.base_quantity)
             batch_need = sum((plan.to_planning(ln.base_quantity, ln.base_unit) for ln in lines), Decimal(0))
-            scale = (batch_need + remainder) / batch_need
+            # the scale is taken from the exact amounts, before practical rounding: the batch is re-rounded at
+            # it, and a line rounded up (3¼ cups shown as 3½) would otherwise land short of the package
+            exact = _exact_need(problem, batch, ingredient_id) or batch_need
+            scale = (batch_need + remainder) / exact
             if scale > MAX_ABSORB_UP_SCALE:
                 continue
             target = plan.to_planning(line.base_quantity, line.base_unit) + remainder

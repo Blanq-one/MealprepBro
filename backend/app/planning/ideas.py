@@ -2,10 +2,12 @@
 a one-line method, equipment and times; no steps). Used by meal now here and by meal prep, swap and grocery
 advice from step 2b.5.
 
-  size      code picks the count: the largest from 8 down to 5 whose prompt estimate + count × 360 + 300
+  size      code picks the count: the largest from 8 down to 5 whose prompt estimate + count × 480 + 300
             (reasoning) fits in 95% of the minute's limit; if even 5 don't fit, no call is made;
   check     every recipe check except the step checks (planning/recipe_validator.validate_idea), plus the
             request's own: the meal, the mood, the time limits, this week's used-up caps, complete nutrition;
+  times     an idea brings a task list (step 2b.9, FLOW_SPEC §20.1); code computes its active minutes (the
+            hands-on total) and total minutes (its own schedule), and saves the tasks with it;
   save      a passing idea becomes a recipe version with `steps_status = pending` and no steps (§13.4), so its
             numbers are code-computed and it ranks and plans like any saved recipe;
   revise    only when no idea in a batch passes: one `idea_revision/2` call with at most 3 failed ideas.
@@ -39,7 +41,9 @@ from app.planning.resolver import IngredientResolver
 from app.schemas.llm_recipe import RecipeIdea, RecipeIdeaBatch
 from app.services.calculations import LineInput, calculate
 
-PER_IDEA_TOKENS = 360  # measured in the 2b.3b live test: 8 ideas took 3,117 completion tokens (330 planned)
+# 2b.3b's live test: 8 ideas took 3,117 completion tokens (360 planned); 2b.9's, with task lists: 4,078 for 8
+# (about 470 an idea after the reasoning), so 480
+PER_IDEA_TOKENS = 480
 REASONING_TOKENS = 300
 MAX_IDEAS = 8
 MIN_IDEAS = 5
@@ -66,7 +70,7 @@ class IdeaRequest:
     vocabulary: tuple[str, ...]  # short names
     never_use: tuple[str, ...]
     max_active_minutes: int
-    max_total_minutes: int | None = None  # Quick
+    max_total_minutes: int | None = None  # Quick: ready within this many minutes
     kcal_per_portion: int | None = None
     must_use: tuple[str, ...] = ()
     may_buy: tuple[str, ...] = ()
@@ -76,6 +80,7 @@ class IdeaRequest:
     substitution_rules: tuple[str, ...] = ()
     # ingredients a frequency cap has used up this calendar week: label of the cap per ingredient id
     blocked: Mapping[int, str] = field(default_factory=dict)
+    max_kitchen_minutes: int | None = None  # meal prep: start to finish, to fit a cook day (step 2b.9)
 
     def context(self, count: int) -> IdeaContext:
         return IdeaContext(
@@ -95,6 +100,7 @@ class IdeaRequest:
             use_up=self.use_up,
             avoid_titles=self.avoid_titles,
             substitution_rules=self.substitution_rules,
+            max_kitchen_minutes=self.max_kitchen_minutes,
         )
 
 
@@ -183,9 +189,20 @@ class IdeaGenerator:
         if MOOD_ORDER[idea.mood] > MOOD_ORDER[req.mood]:
             errors.append(f"mood must be {req.mood.value} or simpler")
         if idea.active_minutes > req.max_active_minutes:
-            errors.append(f"active_minutes must be at most {req.max_active_minutes}")
+            errors.append(
+                f"its tasks add up to {idea.active_minutes} hands-on minutes; keep them to "
+                f"{req.max_active_minutes}"
+            )
         if req.max_total_minutes is not None and idea.total_minutes > req.max_total_minutes:
-            errors.append(f"total_minutes must be at most {req.max_total_minutes}")
+            errors.append(
+                f"its tasks take {idea.total_minutes} minutes until it's ready; make it ready within "
+                f"{req.max_total_minutes}"
+            )
+        if req.max_kitchen_minutes is not None and idea.kitchen_minutes > req.max_kitchen_minutes:
+            errors.append(
+                f"its tasks take {idea.kitchen_minutes} minutes start to finish; the longest cook day allows "
+                f"{req.max_kitchen_minutes}"
+            )
         if validated is not None:
             for line in validated.lines:
                 if (label := req.blocked.get(line.ingredient_id)) is not None:
@@ -366,6 +383,7 @@ class IdeaGenerator:
             equipment=[e.value for e in idea.equipment],
             freezer_friendly=idea.freezer_friendly,
             freeze_note=idea.freeze_note,
+            tasks=[t.model_dump(mode="json") for t in idea.tasks],
             content_hash=digest,
             prompt_version=prompt_version,
             source_llm_call_id=call_id,
@@ -411,9 +429,8 @@ def plan_idea_request(problem: PlanningProblem, gap: Gap, resolver: IngredientRe
     usable = allowed - never_favored - {i for i, d in resolver.data.items() if d.slug == "chapati"}
     cook_days = [d for d in c.days if d.is_cook_day]
     mood = min((d.mood for d in cook_days), key=lambda m: MOOD_ORDER[m], default=RecipeMood.SIMPLE)
-    minutes = min(
-        MOOD_MAX_ACTIVE_MINUTES[mood], max((d.cook_minutes_available for d in cook_days), default=30)
-    )
+    longest = max((d.cook_minutes_available for d in cook_days), default=30)  # start to finish (V11)
+    minutes = min(MOOD_MAX_ACTIVE_MINUTES[mood], longest)
     use_up = []
     for plan in problem.ingredients.values():
         for lot in plan.lots:
@@ -431,6 +448,7 @@ def plan_idea_request(problem: PlanningProblem, gap: Gap, resolver: IngredientRe
         vocabulary=tuple(sorted({resolver.short_name(i) for i in usable})),
         never_use=(BEEF_NEVER, *sorted({resolver.short_name(i) for i in resolver.data if i not in allowed})),
         max_active_minutes=minutes,
+        max_kitchen_minutes=longest,
         kcal_per_portion=c.slot_target(gap.slot).kcal,
         use_up=tuple(sorted(use_up)),
         avoid_titles=tuple(sorted(r.title for r in problem.candidates if gap.slot in r.meal_slots)),

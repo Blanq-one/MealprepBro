@@ -96,37 +96,57 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Pat the wings very dry and toss with the baking powder, smoked paprika, garlic powder, salt and pepper. Cut the sweet potatoes into wedges and toss with the oil."
+   "text": "Pat the wings very dry and toss with the baking powder, smoked paprika, garlic powder, salt and pepper. Cut the sweet potatoes into wedges and toss with the oil.",
+   "hands_on_minutes": 10,
+   "hands_off_minutes": 0
   },
   {
    "section": "air_fryer",
    "text": "Air fry the wedges at 400F for 16 to 18 minutes, shaking halfway; keep warm.",
    "duration_minutes": 18,
-   "appliance_temp_f": 400
+   "appliance_temp_f": 400,
+   "component": "wedges",
+   "equipment": "air_fryer",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 16
   },
   {
    "section": "air_fryer",
    "text": "Air fry the wings in one layer at 400F for 22 to 25 minutes, flipping halfway, until crisp and cooked through to the bone.",
    "duration_minutes": 25,
    "appliance_temp_f": 400,
-   "doneness_check_for": "chicken-wing"
+   "doneness_check_for": "chicken-wing",
+   "component": "wings",
+   "equipment": "air_fryer",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 23
   },
   {
    "section": "stovetop",
    "text": "Melt the butter with the hot sauce in a small pan and toss the wings in it.",
-   "duration_minutes": 2
+   "duration_minutes": 2,
+   "component": "wings",
+   "equipment": "stovetop",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0
   },
   {
    "section": "portioning",
-   "text": "Divide the wings and wedges among 4 containers."
+   "text": "Divide the wings and wedges among 4 containers.",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Cool, then refrigerate in the containers."
+   "text": "Cool, then refrigerate in the containers.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   },
   {
    "section": "reheating",
-   "text": "Reheat covered, stirring halfway, until hot all the way through."
+   "text": "Reheat covered, stirring halfway, until hot all the way through.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

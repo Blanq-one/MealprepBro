@@ -336,7 +336,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--slot", action="append", metavar="SLOT=KCAL", help="per-plan slot allocation (0 removes)"
     )
     plan.add_argument(
-        "--minutes", action="append", metavar="DAY=MIN", help="hands-on minutes for one weekday (mon=60)"
+        "--minutes",
+        action="append",
+        metavar="DAY=MIN",
+        help="start-to-finish minutes for one weekday (mon=90)",
     )
     plan.add_argument("--accept", action="store_true", help="make the new plan the week's active plan")
     plan.add_argument("--dry-run", action="store_true", help="print the plan but save nothing")

@@ -20,10 +20,10 @@
   {"ingredient": "vanilla-extract", "quantity": "1/2", "unit": "tsp", "role": "seasoning", "optional": true}
  ],
  "steps": [
-  {"section": "prep", "text": "Measure the protein powder, cocoa and milk into a mixing bowl."},
-  {"section": "no_cook", "text": "Whisk the protein powder, cocoa and milk into a smooth paste with no dry lumps."},
-  {"section": "no_cook", "text": "Fold the paste into the Greek yogurt with the vanilla until evenly chocolate."},
-  {"section": "portioning", "text": "Divide into 2 cups and chill at least 30 minutes before serving.", "duration_minutes": 30},
-  {"section": "storage", "text": "Cover the cups and refrigerate."}
+  {"section": "prep", "text": "Measure the protein powder, cocoa and milk into a mixing bowl.", "hands_on_minutes": 1, "hands_off_minutes": 0},
+  {"section": "no_cook", "text": "Whisk the protein powder, cocoa and milk into a smooth paste with no dry lumps.", "hands_on_minutes": 2, "hands_off_minutes": 0},
+  {"section": "no_cook", "text": "Fold the paste into the Greek yogurt with the vanilla until evenly chocolate.", "hands_on_minutes": 1, "hands_off_minutes": 0},
+  {"section": "portioning", "text": "Divide into 2 cups and chill at least 30 minutes before serving.", "duration_minutes": 30, "hands_on_minutes": 1, "hands_off_minutes": 30},
+  {"section": "storage", "text": "Cover the cups and refrigerate.", "hands_on_minutes": 0, "hands_off_minutes": 0}
  ]
 }

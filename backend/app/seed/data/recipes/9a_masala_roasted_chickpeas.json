@@ -68,25 +68,37 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Heat the oven to 400F. Drain the chickpeas and pat them very dry."
+   "text": "Heat the oven to 400F. Drain the chickpeas and pat them very dry.",
+   "hands_on_minutes": 4,
+   "hands_off_minutes": 0
   },
   {
    "section": "oven",
    "text": "Toss with the oil and roast on a sheet at 400F for 30 to 35 minutes, shaking twice, until crisp.",
    "duration_minutes": 35,
-   "appliance_temp_f": 400
+   "appliance_temp_f": 400,
+   "component": "chickpeas",
+   "equipment": "oven",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 32
   },
   {
    "section": "assembly",
-   "text": "Toss the hot chickpeas with the spices, salt and lime juice."
+   "text": "Toss the hot chickpeas with the spices, salt and lime juice.",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 0
   },
   {
    "section": "portioning",
-   "text": "Cool completely and divide into 4 small jars."
+   "text": "Cool completely and divide into 4 small jars.",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Keep at room temperature with the lids loose."
+   "text": "Keep at room temperature with the lids loose.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

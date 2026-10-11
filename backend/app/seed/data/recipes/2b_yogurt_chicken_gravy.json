@@ -8,7 +8,7 @@
  "flavor_tags": ["creamy", "tangy", "warm spices"],
  "base_servings": 4,
  "active_minutes": 35,
- "total_minutes": 80,
+ "total_minutes": 70,
  "equipment": ["stovetop"],
  "freezer_friendly": true,
  "freeze_note": "Freeze the gravy; warm the tortillas fresh when serving.",
@@ -30,14 +30,14 @@
   {"ingredient": "flour-tortilla-small", "quantity": "8", "unit": "count", "preparation": "2 per serving", "role": "carb", "component": "tortillas"}
  ],
  "steps": [
-  {"section": "prep", "text": "Cut the chicken into bite-size pieces. Thinly slice the onions. Grate the ginger and garlic."},
-  {"section": "marinate", "text": "Mix half the yogurt with half the garam masala, the turmeric, chili powder and salt. Coat the chicken and marinate at least 30 minutes, or overnight in the fridge.", "duration_minutes": 30},
-  {"section": "stovetop", "text": "Heat the oil over medium heat and cook the onions until golden, about 10 minutes. Add the ginger, garlic, cumin and tomato paste and cook 2 minutes.", "duration_minutes": 12},
-  {"section": "stovetop", "text": "Add the chicken with its marinade and the water. Cover and simmer 15 to 18 minutes, stirring now and then, until the chicken is cooked through.", "duration_minutes": 18, "doneness_check_for": "chicken-thigh-boneless-skinless"},
-  {"section": "stovetop", "text": "Take the pot off the heat for 1 minute, then stir in the remaining yogurt and garam masala so the yogurt doesn't split. Return to low heat for 2 minutes without boiling.", "duration_minutes": 3},
-  {"section": "assembly", "text": "Warm each tortilla on a dry pan about 30 seconds per side, like chapati."},
-  {"section": "portioning", "text": "Divide the gravy among 4 containers, with 2 tortillas per serving packed separately."},
-  {"section": "storage", "text": "Cool the gravy, then refrigerate. Keep the tortillas in their bag."},
-  {"section": "reheating", "text": "Reheat gently, stirring, so the yogurt sauce stays smooth. Warm the tortillas just before eating."}
+  {"section": "prep", "text": "Cut the chicken into bite-size pieces. Thinly slice the onions. Grate the ginger and garlic.", "component": "chicken", "hands_on_minutes": 10, "hands_off_minutes": 0},
+  {"section": "marinate", "text": "Mix half the yogurt with half the garam masala, the turmeric, chili powder and salt. Coat the chicken and marinate at least 30 minutes, or overnight in the fridge.", "duration_minutes": 30, "component": "chicken", "hands_on_minutes": 4, "hands_off_minutes": 30},
+  {"section": "stovetop", "text": "Heat the oil over medium heat and cook the onions until golden, about 10 minutes. Add the ginger, garlic, cumin and tomato paste and cook 2 minutes.", "duration_minutes": 12, "component": "gravy", "equipment": "stovetop", "hands_on_minutes": 10, "hands_off_minutes": 2},
+  {"section": "stovetop", "text": "Add the chicken with its marinade and the water. Cover and simmer 15 to 18 minutes, stirring now and then, until the chicken is cooked through.", "duration_minutes": 18, "doneness_check_for": "chicken-thigh-boneless-skinless", "equipment": "stovetop", "hands_on_minutes": 2, "hands_off_minutes": 16},
+  {"section": "stovetop", "text": "Take the pot off the heat for 1 minute, then stir in the remaining yogurt and garam masala so the yogurt doesn't split. Return to low heat for 2 minutes without boiling.", "duration_minutes": 3, "component": "gravy", "equipment": "stovetop", "hands_on_minutes": 3, "hands_off_minutes": 0},
+  {"section": "assembly", "text": "Warm each tortilla on a dry pan about 30 seconds per side, like chapati.", "component": "tortillas", "equipment": "stovetop", "hands_on_minutes": 4, "hands_off_minutes": 0},
+  {"section": "portioning", "text": "Divide the gravy among 4 containers, with 2 tortillas per serving packed separately.", "hands_on_minutes": 3, "hands_off_minutes": 0},
+  {"section": "storage", "text": "Cool the gravy, then refrigerate. Keep the tortillas in their bag.", "hands_on_minutes": 0, "hands_off_minutes": 0},
+  {"section": "reheating", "text": "Reheat gently, stirring, so the yogurt sauce stays smooth. Warm the tortillas just before eating.", "hands_on_minutes": 0, "hands_off_minutes": 0}
  ]
 }

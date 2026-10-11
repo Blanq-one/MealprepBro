@@ -104,34 +104,54 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Dice the onion and shred the romaine."
+   "text": "Dice the onion and shred the romaine.",
+   "hands_on_minutes": 4,
+   "hands_off_minutes": 0
   },
   {
    "section": "stovetop",
    "text": "Heat the oil in a skillet over medium-high heat. Cook the onion 3 minutes, add the turkey and spices and cook, breaking it up, until cooked through, about 7 minutes.",
    "duration_minutes": 10,
-   "doneness_check_for": "ground-turkey-93"
+   "doneness_check_for": "ground-turkey-93",
+   "component": "filling",
+   "equipment": "stovetop",
+   "hands_on_minutes": 9,
+   "hands_off_minutes": 1
   },
   {
    "section": "stovetop",
    "text": "Stir in the tomato sauce and simmer 5 minutes. Add the lime juice.",
-   "duration_minutes": 5
+   "duration_minutes": 5,
+   "component": "filling",
+   "equipment": "stovetop",
+   "hands_on_minutes": 1,
+   "hands_off_minutes": 4
   },
   {
    "section": "assembly",
-   "text": "Warm the corn tortillas in a dry pan until soft and lightly charred."
+   "text": "Warm the corn tortillas in a dry pan until soft and lightly charred.",
+   "component": "tortillas",
+   "equipment": "stovetop",
+   "hands_on_minutes": 4,
+   "hands_off_minutes": 0
   },
   {
    "section": "portioning",
-   "text": "Divide the filling among 4 containers, with 3 tortillas, romaine and salsa per serving."
+   "text": "Divide the filling among 4 containers, with 3 tortillas, romaine and salsa per serving.",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Cool, then refrigerate in the containers."
+   "text": "Cool, then refrigerate in the containers.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   },
   {
    "section": "reheating",
-   "text": "Reheat covered, stirring halfway, until hot all the way through."
+   "text": "Reheat covered, stirring halfway, until hot all the way through.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

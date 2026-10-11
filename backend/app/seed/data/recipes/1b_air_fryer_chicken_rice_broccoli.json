@@ -8,7 +8,7 @@
  "flavor_tags": ["smoky", "lemony"],
  "base_servings": 4,
  "active_minutes": 15,
- "total_minutes": 30,
+ "total_minutes": 40,
  "equipment": ["air_fryer", "stovetop"],
  "freezer_friendly": true,
  "freeze_note": "Freeze the chicken, rice and broccoli; make the yogurt-lemon sauce fresh.",
@@ -28,13 +28,13 @@
   {"ingredient": "lemon-juice", "quantity": "1", "unit": "tbsp", "role": "sauce", "component": "sauce"}
  ],
  "steps": [
-  {"section": "prep", "text": "Cut the chicken into even 1-inch-thick pieces. Toss with half the oil, the garlic powder, smoked paprika, cumin, 3/4 tsp of the salt and the pepper."},
-  {"section": "rice", "text": "Bring the water to a boil, add the rinsed rice and a pinch of salt, cover and simmer on low 15 minutes, then rest 10 minutes off the heat.", "duration_minutes": 25},
-  {"section": "air_fryer", "text": "Air fry the chicken in a single layer at 400F for 18 minutes, flipping at 9, until cooked through.", "duration_minutes": 18, "appliance_temp_f": 400, "doneness_check_for": "chicken-breast-boneless-skinless"},
-  {"section": "air_fryer", "text": "Toss the broccoli with the remaining oil and salt. Air fry at 400F for 8 to 10 minutes, shaking once, until the edges brown.", "duration_minutes": 10, "appliance_temp_f": 400},
-  {"section": "assembly", "text": "Stir the yogurt with the lemon juice and a pinch of salt for the sauce."},
-  {"section": "portioning", "text": "Divide the rice, chicken and broccoli among 4 containers, with the sauce in small cups."},
-  {"section": "storage", "text": "Cool, then refrigerate the containers."},
-  {"section": "reheating", "text": "Reheat covered, stirring halfway. Add the sauce after reheating."}
+  {"section": "prep", "text": "Cut the chicken into even 1-inch-thick pieces. Toss with half the oil, the garlic powder, smoked paprika, cumin, 3/4 tsp of the salt and the pepper.", "component": "chicken", "hands_on_minutes": 6, "hands_off_minutes": 0},
+  {"section": "rice", "text": "Bring the water to a boil, add the rinsed rice and a pinch of salt, cover and simmer on low 15 minutes, then rest 10 minutes off the heat.", "duration_minutes": 25, "component": "rice", "equipment": "stovetop", "hands_on_minutes": 2, "hands_off_minutes": 23},
+  {"section": "air_fryer", "text": "Air fry the chicken in a single layer at 400F for 18 minutes, flipping at 9, until cooked through.", "duration_minutes": 18, "appliance_temp_f": 400, "doneness_check_for": "chicken-breast-boneless-skinless", "component": "chicken", "equipment": "air_fryer", "hands_on_minutes": 2, "hands_off_minutes": 16},
+  {"section": "air_fryer", "text": "Toss the broccoli with the remaining oil and salt. Air fry at 400F for 8 to 10 minutes, shaking once, until the edges brown.", "duration_minutes": 10, "appliance_temp_f": 400, "component": "broccoli", "equipment": "air_fryer", "hands_on_minutes": 2, "hands_off_minutes": 8},
+  {"section": "assembly", "text": "Stir the yogurt with the lemon juice and a pinch of salt for the sauce.", "component": "sauce", "hands_on_minutes": 2, "hands_off_minutes": 0},
+  {"section": "portioning", "text": "Divide the rice, chicken and broccoli among 4 containers, with the sauce in small cups.", "hands_on_minutes": 3, "hands_off_minutes": 0},
+  {"section": "storage", "text": "Cool, then refrigerate the containers.", "hands_on_minutes": 0, "hands_off_minutes": 0},
+  {"section": "reheating", "text": "Reheat covered, stirring halfway. Add the sauce after reheating.", "hands_on_minutes": 0, "hands_off_minutes": 0}
  ]
 }

@@ -73,20 +73,28 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Slice the bananas. Stir the peanut butter with a splash of the milk until smooth."
+   "text": "Slice the bananas. Stir the peanut butter with a splash of the milk until smooth.",
+   "hands_on_minutes": 4,
+   "hands_off_minutes": 0
   },
   {
    "section": "no_cook",
-   "text": "Mix the oats, milk, yogurt, peanut butter, flaxseed, cinnamon and honey until even."
+   "text": "Mix the oats, milk, yogurt, peanut butter, flaxseed, cinnamon and honey until even.",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0
   },
   {
    "section": "portioning",
    "text": "Divide among 4 jars, top with the banana and chill overnight.",
-   "duration_minutes": 480
+   "duration_minutes": 480,
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 480
   },
   {
    "section": "storage",
-   "text": "Cover the jars and refrigerate."
+   "text": "Cover the jars and refrigerate.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

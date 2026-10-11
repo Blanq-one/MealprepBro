@@ -21,13 +21,13 @@
  "grocery_mode": "balanced",
  "equipment": ["stovetop", "oven", "air_fryer", "microwave"],
  "cook_schedule": [
-  {"weekday": "mon", "is_cook_day": true, "cook_minutes": 45, "mood": "medium"},
-  {"weekday": "tue", "is_cook_day": false, "cook_minutes": 0, "mood": "simple"},
-  {"weekday": "wed", "is_cook_day": true, "cook_minutes": 45, "mood": "medium"},
-  {"weekday": "thu", "is_cook_day": true, "cook_minutes": 45, "mood": "medium"},
-  {"weekday": "fri", "is_cook_day": false, "cook_minutes": 0, "mood": "simple"},
-  {"weekday": "sat", "is_cook_day": true, "cook_minutes": 45, "mood": "medium"},
-  {"weekday": "sun", "is_cook_day": true, "cook_minutes": 45, "mood": "medium"}
+  {"weekday": "mon", "is_cook_day": true, "cook_minutes": 90, "mood": "medium", "weeknight_minutes": 30},
+  {"weekday": "tue", "is_cook_day": false, "cook_minutes": 0, "mood": "simple", "weeknight_minutes": 30},
+  {"weekday": "wed", "is_cook_day": true, "cook_minutes": 90, "mood": "medium", "weeknight_minutes": 30},
+  {"weekday": "thu", "is_cook_day": true, "cook_minutes": 90, "mood": "medium", "weeknight_minutes": 30},
+  {"weekday": "fri", "is_cook_day": false, "cook_minutes": 0, "mood": "simple", "weeknight_minutes": 30},
+  {"weekday": "sat", "is_cook_day": true, "cook_minutes": 90, "mood": "medium", "weeknight_minutes": 30},
+  {"weekday": "sun", "is_cook_day": true, "cook_minutes": 90, "mood": "medium", "weeknight_minutes": 30}
  ],
  "leftover_fridge_days": 3,
  "excluded_diet_tags": ["beef"],

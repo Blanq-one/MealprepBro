@@ -73,25 +73,37 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Whisk the protein powder, flour, cocoa, baking powder and sugar. Whisk the eggs, milk and oil separately."
+   "text": "Whisk the protein powder, flour, cocoa, baking powder and sugar. Whisk the eggs, milk and oil separately.",
+   "hands_on_minutes": 4,
+   "hands_off_minutes": 0
   },
   {
    "section": "assembly",
-   "text": "Stir the wet into the dry until just smooth and divide among 4 greased mugs."
+   "text": "Stir the wet into the dry until just smooth and divide among 4 greased mugs.",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 0
   },
   {
    "section": "microwave",
    "text": "Microwave one mug at a time on high 60 to 75 seconds, until risen and set at the edges with a soft center.",
    "duration_minutes": 5,
-   "doneness_check_for": "egg-large"
+   "doneness_check_for": "egg-large",
+   "component": "cakes",
+   "equipment": "microwave",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 3
   },
   {
    "section": "portioning",
-   "text": "Serve one mug each, warm."
+   "text": "Serve one mug each, warm.",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Cool, then refrigerate in the containers."
+   "text": "Cool, then refrigerate in the containers.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

@@ -11,7 +11,8 @@ ideas pass got its optional freeze note (D127), and two designs were written for
 with four proposed steps before 2b.6 (2b.9–2b.12, §9) and open questions V1–V17 (FLOW_SPEC §21.3). **Both designs
 were approved 2026-10-11, including D127 (X1–X9, §12.1)**: F25–F32 approved, V1–V17 answered, and a new build order
 so new screens and a live link come sooner: **2b.9 → 2b.10 → 2b.7 → 2b.13 (deploy) → 2b.11 → 2b.12 → 2b.6 → 2b.8**.
-Step 2b.9 (cook-day schedule) started the same day.
+Step 2b.9 (cook-day schedule) was built the same day with D128–D142 (2b.9 outcome note, §9) and awaits your
+approval.
 **Source documents:** `CLAUDE.md` (build rules, wins on conflict), `docs/PRD.md` (product vision; "Primary user flow" at the top), `docs/FLOW_SPEC.md` (screens and backend work for Phase 2b).
 
 This plan covers Phases 0–6, plus Phase 2b. One phase per session; Phase 2b is split into build steps, one per session (§9). A phase or step is done only when its acceptance criteria are met, its tests pass, and the test output has been shown.
@@ -30,7 +31,7 @@ This plan covers Phases 0–6, plus Phase 2b. One phase per session; Phase 2b is
 | — | Pre-Phase 1 tasks | Done | 2026-10-08 | 2026-10-08 | Package-label data (tortillas, protein powder), USDA mapping review sheet (`docs/review/usda_mappings.md`), raw/dry/as-sold rule + check (§7.8), CLAUDE.md machine-boundaries rule. Round 2: FoodSafety.gov chart transcribed (53 rows, §7.2), top-25 mappings approved, tortilla renamed, Docker rule clarified, fresh-clone check made a per-phase step. |
 | 1 | Planning brain | Approved 2026-10-09; post-approval round done | 2026-10-08 | 2026-10-09 | First pass: 645 tests, fresh-clone check passed; D1–D13 and C1–C3 approved 2026-10-09. Fix-up round (C4–C8: budget per request with inventory/shop modes, cash vs food eaten, freeze-on-shopping-day and waste, 100 g protein floor, elapsed time): 705 tests pass (the opt-in live test skips), domain coverage 99%, ruff/mypy clean, fresh-clone check passed; deviations D14–D22 in the fix-up note. Approved 2026-10-09. Post-approval round (C9–C14: powder prices, stock-up items, shelf-life fix, regular chicken packs, two-week steady-state check, A3 hosting): 721 tests pass (the opt-in live test skips), domain coverage 99%; deviations D23–D28. |
 | 2 | Mobile PWA + cloud deploy (deploy prep only, K7) | Approved 2026-10-10 | 2026-10-09 | 2026-10-09 | Pre-work K2–K6 done; PWA, auth, shopping, Mark cooked, quick add, exposure log. 800 backend tests pass (2 opt-in skipped), 78 frontend tests; not deployed (your step, `docs/deploy.md`). Deviations D29–D43 in the Phase 2 outcome note (§9). |
-| 2b | Cook-first flow redesign | 2b.1 approved 2026-10-10 (D44–D53); 2b.2 approved 2026-10-10 (D54–D64, H1–H6); 2b.3a approved 2026-10-10 (D65–D76, J1–J6); 2b.4 approved 2026-10-10 (D77–D88, M1–M20); 2b.4 fixes approved 2026-10-10 (N1–N3); 2b.3b approved 2026-10-11 (D89–D101, P1–P8); pre-work P2–P7 done and approved 2026-10-11 (D102–D106, T1–T8); 2b.5 approved 2026-10-11 (D107–D126, U1); freeze note in the ideas pass done (D127, U2); designs for smart prep and parallel cooking approved 2026-10-11 (X1–X9; steps 2b.9–2b.13); 2b.9 started 2026-10-11 | 2026-10-10 | | `docs/FLOW_SPEC.md`; PRD "Primary user flow"; 14 build steps, built in the order 2b.1, 2b.2, 2b.3a, **2b.4, 2b.3b**, 2b.5, then **2b.9, 2b.10, 2b.7, 2b.13 (deploy), 2b.11, 2b.12, 2b.6, 2b.8** (H3, X8; §9); changes F1–F21 approved (FLOW_SPEC §16); decisions E1–E17 (§12.1). Two-stage generation added the same day (E15, E17; built in 2b.3b). **2b.1 (backend foundations):** 898 backend tests pass (2 opt-in skipped), 78 frontend tests, ruff/mypy clean; deviations D44–D53 in the 2b.1 outcome note (§9). **2b.2 (look, shell, onboarding, Settings, Pantry):** 180 frontend tests (78 before), 899 backend tests pass (2 opt-in skipped), type checks clean, static export builds; AA contrast tested, 375 px not yet checked on a device; deviations D54–D64 in the 2b.2 outcome note (§9). Footer fix H2 done before 2b.3a. **2b.3a (ranking and cards, no LLM calls):** 964 backend tests pass (2 opt-in skipped), 187 frontend tests, ruff, mypy and type check clean; deviations D65–D76 in the 2b.3a outcome note (§9). **2b.4 (A meal now: screens, with J2–J6):** 993 backend tests pass (2 opt-in skipped), 236 frontend tests, ruff, mypy and type check clean, static export builds; migration `0006_pantry_presets`; deviations D77–D88 in the 2b.4 outcome note (§9). **2b.4 fixes (M2–M13, M15, M17, M20):** 1056 backend tests pass (2 opt-in skipped), 244 frontend tests, ruff, mypy and type check clean; no migration; 37 new draft seed recipes (47 in all); solver shortlist; fixes outcome note (§9). **2b.3b (ideas, steps, More ideas, background batch, rate-limit waits, live test, screens; with N2, ground vs whole cuts):** 1132 backend tests pass (2 opt-in skipped), 263 frontend tests, ruff, mypy and type check clean, static export builds; no migration, no new dependency; the live Groq test ran (FLOW_SPEC §15.1); deviations D89–D101 in the 2b.3b outcome note (§9). **2b.3b approval pre-work (P2–P7):** 1143 backend tests pass with `--run-slow` (3 opt-in skipped); the default run is parallel and skips 6 `slow` tests (100 s, was about 20 min); 265 frontend tests; ruff, mypy and type check clean; no migration; new dev dependency pytest-xdist (approved); `LLM_IDEAS_MODEL` (20b by default in compose); deviations D102–D106 in 2b.3b's approval note (§9). **2b.5 (meal prep engine, with T2–T4):** 1218 backend tests pass with `--run-slow` (3 opt-in skipped), 266 (265 before) frontend tests; ruff, mypy and type check clean; migration `0007_recipe_freeze_note`; no new dependency; deviations D107–D126 in the 2b.5 outcome note (§9). **2b.5 approval (U1–U5):** the ideas pass carries an optional freeze note under the seeds' rules (D127): 1218 backend tests pass in the default run (9 skipped: 6 slow, 3 opt-in), ruff and mypy clean, no migration; FLOW_SPEC §19–§21 and the proposed steps 2b.9–2b.12 (§9) are written for your review. |
+| 2b | Cook-first flow redesign | 2b.1 approved 2026-10-10 (D44–D53); 2b.2 approved 2026-10-10 (D54–D64, H1–H6); 2b.3a approved 2026-10-10 (D65–D76, J1–J6); 2b.4 approved 2026-10-10 (D77–D88, M1–M20); 2b.4 fixes approved 2026-10-10 (N1–N3); 2b.3b approved 2026-10-11 (D89–D101, P1–P8); pre-work P2–P7 done and approved 2026-10-11 (D102–D106, T1–T8); 2b.5 approved 2026-10-11 (D107–D126, U1); freeze note in the ideas pass done (D127, U2); designs for smart prep and parallel cooking approved 2026-10-11 (X1–X9; steps 2b.9–2b.13); 2b.9 built 2026-10-11 (D128–D142), awaiting your approval | 2026-10-10 | | `docs/FLOW_SPEC.md`; PRD "Primary user flow"; 14 build steps, built in the order 2b.1, 2b.2, 2b.3a, **2b.4, 2b.3b**, 2b.5, then **2b.9, 2b.10, 2b.7, 2b.13 (deploy), 2b.11, 2b.12, 2b.6, 2b.8** (H3, X8; §9); changes F1–F21 approved (FLOW_SPEC §16); decisions E1–E17 (§12.1). Two-stage generation added the same day (E15, E17; built in 2b.3b). **2b.1 (backend foundations):** 898 backend tests pass (2 opt-in skipped), 78 frontend tests, ruff/mypy clean; deviations D44–D53 in the 2b.1 outcome note (§9). **2b.2 (look, shell, onboarding, Settings, Pantry):** 180 frontend tests (78 before), 899 backend tests pass (2 opt-in skipped), type checks clean, static export builds; AA contrast tested, 375 px not yet checked on a device; deviations D54–D64 in the 2b.2 outcome note (§9). Footer fix H2 done before 2b.3a. **2b.3a (ranking and cards, no LLM calls):** 964 backend tests pass (2 opt-in skipped), 187 frontend tests, ruff, mypy and type check clean; deviations D65–D76 in the 2b.3a outcome note (§9). **2b.4 (A meal now: screens, with J2–J6):** 993 backend tests pass (2 opt-in skipped), 236 frontend tests, ruff, mypy and type check clean, static export builds; migration `0006_pantry_presets`; deviations D77–D88 in the 2b.4 outcome note (§9). **2b.4 fixes (M2–M13, M15, M17, M20):** 1056 backend tests pass (2 opt-in skipped), 244 frontend tests, ruff, mypy and type check clean; no migration; 37 new draft seed recipes (47 in all); solver shortlist; fixes outcome note (§9). **2b.3b (ideas, steps, More ideas, background batch, rate-limit waits, live test, screens; with N2, ground vs whole cuts):** 1132 backend tests pass (2 opt-in skipped), 263 frontend tests, ruff, mypy and type check clean, static export builds; no migration, no new dependency; the live Groq test ran (FLOW_SPEC §15.1); deviations D89–D101 in the 2b.3b outcome note (§9). **2b.3b approval pre-work (P2–P7):** 1143 backend tests pass with `--run-slow` (3 opt-in skipped); the default run is parallel and skips 6 `slow` tests (100 s, was about 20 min); 265 frontend tests; ruff, mypy and type check clean; no migration; new dev dependency pytest-xdist (approved); `LLM_IDEAS_MODEL` (20b by default in compose); deviations D102–D106 in 2b.3b's approval note (§9). **2b.5 (meal prep engine, with T2–T4):** 1218 backend tests pass with `--run-slow` (3 opt-in skipped), 266 (265 before) frontend tests; ruff, mypy and type check clean; migration `0007_recipe_freeze_note`; no new dependency; deviations D107–D126 in the 2b.5 outcome note (§9). **2b.5 approval (U1–U5):** the ideas pass carries an optional freeze note under the seeds' rules (D127): 1218 backend tests pass in the default run (9 skipped: 6 slow, 3 opt-in), ruff and mypy clean, no migration; FLOW_SPEC §19–§21 and the proposed steps 2b.9–2b.12 (§9) are written for your review. **2b.9 (cook-day schedule):** 1353 backend tests pass in the default run (13 skipped: 8 slow, 2 perf, 3 opt-in), 1363 with `--run-slow` and the perf tests (3 opt-in skipped); 266 frontend tests; ruff, mypy and type check clean, static export builds; migration `0008_step_timing`; no new dependency; the live Groq test ran (8.3K tokens); deviations D128–D142 in the 2b.9 outcome note (§9). |
 | 3 | Feedback loop | Not started | | | Favorites moved to 2b. |
 | 4 | Daily overrides | Not started | | | |
 | 5 | Grocery intelligence | Not started | | | |
@@ -141,6 +142,7 @@ Mealbro/
 │       │   ├── constraint_builder.py · resolver.py · recipe_validator.py · candidates.py
 │       │   ├── rendering.py · post_solve.py · plan_validator.py · grocery_list.py · orchestrator.py
 │       │   ├── ideas.py · steps.py        # P2b (2b.3b): the ideas pass and steps on first open
+│       │   ├── timing.py                  # P2b (2b.9): each recipe's tasks for the cook-day schedule
 │       │   ├── solver/ (model.py · objective.py · absorption.py · diagnostics.py · supply.py (2b.11))
 │       │   ├── smart/                 # P2b (2b.11): the smart prep model, rounding, checks, persistence
 │       │   └── tests/
@@ -154,7 +156,7 @@ Mealbro/
 │       ├── grocery/                   # P5
 │       ├── ranking/                   # P6
 │       ├── api/ (deps.py · errors.py · routes/ · tests/)
-│       └── testing/ (factories.py · fixtures/{usda_subset/, label_values.json, llm_responses/ (P1)})
+│       └── testing/ (factories.py · ideas.py (2b.9) · fixtures/{usda_subset/, label_values.json, llm_responses/ (P1)})
 └── frontend/                          # P2
     ├── Dockerfile · package.json · tsconfig.json · next.config.ts · vitest.config.ts
     ├── public/ (icons/, sw.js)
@@ -2922,6 +2924,89 @@ the new order makes to them.*
 **Tests.** `domain/tests/test_cook_schedule.py`, `planning/tests/test_schedule_in_solver.py`,
 `seed/tests/test_step_timing.py`, `planning/tests/test_idea_tasks.py`, `planning/tests/test_steps_timing.py`, an
 opt-in timing test (a 6-dish day in under 50 ms).
+
+**2b.9 outcome (built 2026-10-11, awaiting your approval).** Every deliverable and acceptance criterion is met, with
+tests. 1363 backend tests pass with `--run-slow` and the perf tests (3 opt-in skipped; 9.5 min); the default run
+passes 1353 (13 skipped: 8 slow, 2 perf, 3 opt-in) in about 2 min 15 s; 266 frontend tests; ruff, mypy and the type
+check are clean and the static export builds. Migration `0008_step_timing`; no new dependency.
+
+What was built:
+- **The scheduler** (`domain/cook_schedule.py`): tasks from tagged steps, an idea's task list or an estimate
+  (V15); hands-on growth (V12) and capacity rounds (V13, V14); list scheduling with the order search; the
+  timeline; eating-day finish tasks on their own days (for 2b.11). FLOW_SPEC §20.6 lists the details decided while
+  building.
+- **Seeds:** every step of the 47 seeds tagged by hand, reviewable in `docs/review/seed_step_timing.md` (per seed
+  and per step). Every tagged hands-on total is within 5 minutes of its stated active minutes (none changed).
+- **Solver and validator:** start-to-finish limits per cook day (V11), the exact schedule after each solve with
+  cuts and re-solves, the time fix ("Monday needs about 1 h 1 min start to finish; you set 1 h", "Allow 1 h 5 min"
+  rounded up to 5), the validator's own schedule of the rounded plan (`COOK_TIME_OVER`).
+- **Ideas and steps:** `recipe_ideas/3` and `idea_revision/3` with the task list (active and total minutes
+  computed by code, the tasks saved on the version); `recipe_steps/2` with each step's component, appliance and
+  minutes, checked against the idea's tasks; the opt-in live test (`test_task_lists_token_report`): 8 of 8
+  ideas passed, 6.1K tokens for the ideas call and 2.2K for the steps call, 8.3K in all (FLOW_SPEC §21.2).
+- **API:** each day's `timeline` (`at_min`, `at_display`, `text`, `kind`, `minutes`, `equipment`, `estimated`,
+  plus `dish` and `cook_batch_id` for 2b.7's cooking mode) and `time_display`; `prep_order` is retired
+  (`domain/prep_order.py` and its test removed).
+- **Settings:** saved cook days doubled (at most 600) with `cook_time_note`, the default 90; `weeknight_minutes`
+  per day (V7, default 30), added now so 2b.7's Settings can show it.
+
+Decisions and deviations:
+- **D128. The order search** tries only the dish orders that change a tie (skipping orders that swap identical
+  batches) and stops at the lower bound, at most 720; a pass takes about 0.5 ms for 30 tasks, a 6-dish day well
+  under 50 ms (opt-in test).
+- **D129. The fridge isn't the kitchen:** a dish's last wait with no appliance in a no-cook, assembly or portioning
+  step (overnight oats, puddings) counts toward when it's ready, not toward the cook day. Without this,
+  overnight oats needed 8 hours of a cook day.
+- **D130. Steps into tasks:** a step joins the task before it only while that task is all hands-on (hands-on
+  stays at the start); storage and reheating steps aren't cook-day work.
+- **D131. Estimated timing (V15):** each appliance's steps are their own part, so appliances run side by side;
+  marinating belongs to the next cooking step that isn't the rice; steps with no duration share what's left of
+  the hands-on minutes. A recipe with no steps is its stated minutes as one task (with no appliance, its wait sets
+  in the fridge).
+- **D132. Batch size** reads the portion count (household and frozen extras included); the tagged minutes cover the
+  rounds the recipe's own servings need. Skillet or pot is decided per task as designed, so a curry's
+  onion-browning counts as a skillet: a couple of minutes more on big batches.
+- **D133. The solver's limits:** hands-on through the chord of the growth curve; per appliance, its tasks' minutes
+  (the stovetop over 4 burners), portions ÷ capacity rounds of hands-off time, and the oven's portion-minutes over
+  its 8 portions. A recipe fits a cook day when one meal's batch fits on its own (was: active ≤ the day's minutes).
+- **D134. Cuts** are a smallest over-set of (recipe, day, size) batches (the quickest dropped first), cut on that
+  day and on every cook day with no more minutes; a re-solve that finds no plan after a cut gives the time fix;
+  cuts carry across the shortlist tiers and into the orchestrator's re-solves.
+- **D135. Pairs kept apart before the first solve (for your approval):** pairs of batches that would run over a cook
+  day together at the most portions each could cook (one meal per day it could feed, up to the variety cap). If
+  that leaves no plan, the week is solved without them. Why: every cut costs a whole re-solve (25–90 s in tests);
+  the cold-start seed week went from 2 solves (about 60 s) to 1 (16 s). The cost: such a pair can't share a day
+  even as smaller batches, the same simplification the approved cuts make.
+- **D136. Seed totals:** 11 stated start-to-finish totals differed from their own schedule by more than 5 minutes
+  and now use it, rounded to 5: 1b 30 → 40, 2a 50 → 55, 2b 80 → 70, 7c 40 → 30, 7f 45 → 35, 8a 75 → 55, 8b 65 → 55,
+  8c 55 → 50, 8d 90 → 115, 8g 40 → 35, 8i 110 → 130. The tandoori drumsticks (an hour's marinade, then 40 minutes in
+  the oven) no longer fit a 90-minute day. The tags change every seed, so a re-seed adds 47 draft revisions (D107).
+- **D137. Ideas:** a task's `component` is nullable (shared), like a step's, where §19.8 had a string; an
+  appliance runs at most 4 hours and a wait with none up to 12; every listed appliance needs a task. Total minutes
+  are when it's ready (a last chill included); meal prep also checks start to finish against the longest cook day
+  (`max_kitchen_minutes`). The count rule uses the measured 480 tokens an idea. Ideas saved before this step have
+  no task list: their stated minutes stand in, and their steps aren't checked against tasks.
+- **D138. Steps:** the four fields are required on `recipe_steps/2` replies (`TimedStep`); the steps prompt lists
+  the idea's TASKS; `STEPS_MAX_COMPLETION` is 1,800. Phase 1's complete recipes (`POST /plans`) keep their prompt,
+  so their steps are estimated.
+- **D139. The plan view computes each cook day's schedule when the plan is read**, and the day's hands-on, start to
+  finish and fridge minutes come from it, also for plans made before this step.
+- **D140. Wording now:** the time fix, the pre-check (a meal with no recipe only because none fits the day's time
+  says the time fix, not "No dinner recipes"), the Settings summary ("1 h 30 min start to finish"), and in the
+  frontend the cook-day labels, onboarding W4 and the minutes stepper (up to 600). C1b and the weeknight setting's
+  screen stay in 2b.7.
+- **D141. Two fixes found while testing:** the package absorption scale now comes from the exact amounts (a
+  cup-rounded milk line came out 53 ml short and failed validation); the smallest top-up or budget is now the cost
+  of the cheapest plan that meets every other limit (the relaxed-limit solve took over 5 minutes with 90-minute
+  days; now about 25 s), which amends D126. Before a solve with a money limit, the cheapest plan's LP relaxation
+  (under a second) is a floor: when even it is over the limit, the week goes straight to that explanation.
+- **D142. Solve time:** with 90-minute days the weekly MILP has more ways to fill each day, so it's harder: a seed
+  week takes 16–45 s in tests (about 20 s before) and a cut costs a whole re-solve (production caps each solve at
+  30 s, so a plan with cuts can take a minute or two). Proving a tight budget impossible on a whole week takes the
+  MILP over 5 minutes, so that test now uses 3 days (K6). The two heaviest tests (a 7-cook-day week, the plan
+  stream's countdown) are marked `slow`; the fresh-clone check runs them.
+
+**Dev database.** Migrate to 0008 and re-seed (47 seed revisions); your cook days double (45 → 90).
 
 ##### 2b.10 Smart prep: data, storage and seed prep items (backend)
 

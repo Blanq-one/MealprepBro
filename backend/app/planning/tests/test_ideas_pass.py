@@ -33,6 +33,7 @@ from app.schemas.llm_recipe import RecipeIdea, RecipeIdeaBatch
 from app.schemas.seed import SeedRecipe
 from app.services.ingredient_data import load_by_slug
 from app.services.settings import current_user
+from app.testing.ideas import idea_tasks
 from app.testing.llm import FakeClock, make_settings
 
 
@@ -43,8 +44,7 @@ def idea(title: str = "Garlic chicken spinach rice", **changes: object) -> dict[
         "meal_slots": ["dinner"],
         "mood": "simple",
         "base_servings": 4,
-        "active_minutes": 20,
-        "total_minutes": 30,
+        "tasks": idea_tasks(),
         "equipment": ["stovetop"],
         "freezer_friendly": True,
         "ingredients": [
@@ -140,7 +140,7 @@ def test_a_passing_idea_is_saved_without_steps(seeded_db):
     (version_id,) = outcome.created
     version = seeded_db.get(RecipeVersion, version_id)
     assert version.steps_status == "pending" and version.description.startswith("Sear the chicken")
-    assert version.prompt_version == "recipe_ideas/2" and version.created_by == "llm"
+    assert version.prompt_version == "recipe_ideas/3" and version.created_by == "llm"
     data = load_by_slug(seeded_db)
     lines = seeded_db.scalars(
         select(RecipeIngredient.ingredient_id).where(RecipeIngredient.recipe_version_id == version_id)
@@ -167,8 +167,8 @@ def test_the_idea_checks(seeded_db, changes, expected):
 def test_quick_and_caps_are_the_requests_own_checks(seeded_db):
     gen = generator(seeded_db, FakeLLMClient())
     data = load_by_slug(seeded_db)
-    slow = RecipeIdea.model_validate(idea(total_minutes=45))
-    assert "total_minutes must be at most 30" in gen.check(slow, request(max_total_minutes=30))[1]
+    slow = RecipeIdea.model_validate(idea(tasks=idea_tasks(20, 45)))
+    assert any("make it ready within 30" in e for e in gen.check(slow, request(max_total_minutes=30))[1])
     capped = request(blocked={data["chicken-thigh-boneless-skinless"].id: "Chicken test cap"})
     errors = gen.check(RecipeIdea.model_validate(idea()), capped)[1]
     assert any("this week's allowance is used up" in e for e in errors)

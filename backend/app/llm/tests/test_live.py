@@ -306,3 +306,75 @@ def test_ideas_model_comparison(seeded_db):
         print("\nCOMPARE " + json.dumps(row))
     print("\nCOMPARISON " + json.dumps(rows))
     assert sum(r["tokens"] for r in rows) < 40_000
+
+
+# ---------------- task lists and step timing (step 2b.9) ----------------
+def test_task_lists_token_report(seeded_db):
+    """One ideas call with task lists (recipe_ideas/3) and one steps call with each step's timing
+    (recipe_steps/2): tokens per idea, the pass rate, and whether the steps match the idea's tasks. About 2
+    calls, under 20K tokens. Run alone: RUN_LIVE_LLM_TESTS=1 uv run pytest -m live_llm -s -k task_lists"""
+    settings = get_settings()
+    user = current_user(seeded_db)
+    client = make_client(settings)
+    clock = SystemClock()
+    thighs = seeded_db.scalars(
+        select(Ingredient.id).where(Ingredient.slug == "chicken-thigh-boneless-skinless")
+    )
+    add_lot(seeded_db, user.id, LotInput(thighs.one(), Decimal(700), "g", StorageLocation.FRIDGE))
+    answers = CookAnswers(mode="now", slot=MealSlot.DINNER, goals=["high_protein"])
+    user_settings = load_settings(seeded_db, user.id)
+    query = answers_mod.resolve(answers, user_settings, datetime.now(ZoneInfo(user.timezone)))
+    pool = load_pool(seeded_db, user.id, user_settings, query)
+    resolver = IngredientResolver(seeded_db, user.id)
+    req = meal_now_request(
+        seeded_db,
+        user.id,
+        user_settings,
+        query,
+        pool,
+        resolver=resolver,
+        on_screen=[card["title"] for card in rank_pool(seeded_db, pool, query).cards],
+    )
+    run = GenerationRun(user_id=user.id, purpose="meal_now", status="running")
+    seeded_db.add(run)
+    seeded_db.flush()
+    ctx = LLMRunContext(client, seeded_db, settings, run.id, clock, deadline=Deadline.after(clock, 240))
+    ideas = IdeaGenerator(seeded_db, user.id, ctx, resolver)
+    size = ideas.size(req)
+    outcome = ideas.generate(req, revise=False)
+    idea_rows = calls(seeded_db, "recipe_ideas")
+    findings: dict[str, Any] = {
+        "ideas": report(
+            "ideas with tasks",
+            idea_rows,
+            schema_chars(RecipeIdeaBatch),
+            f"asked={size.count} passed={len(outcome.passed)} dropped={json.dumps(outcome.dropped)[:600]}",
+        )
+    }
+    counted = next((r for r in idea_rows if r.completion_tokens), None)
+    if counted is not None:
+        returned = ((counted.error_detail or {}).get("ideas") or {}).get("returned") or size.count
+        findings["completion_per_idea"] = round((counted.completion_tokens or 0) / max(returned, 1))
+    assert outcome.passed, outcome.dropped
+    writer = StepsWriter(
+        seeded_db,
+        user.id,
+        lambda r: LLMRunContext(
+            client, seeded_db, settings, r.id, clock, deadline=Deadline.after(clock, 240)
+        ),
+        clock=clock,
+    )
+    steps = writer.write(outcome.passed[0])
+    findings["steps"] = report(
+        "steps with timing",
+        calls(seeded_db, "recipe_steps"),
+        schema_chars(RecipeSteps),
+        f"status={steps.status}",
+    )
+    tokens = sum(
+        (r.prompt_tokens or 0) + (r.completion_tokens or 0) for r in seeded_db.scalars(select(LlmCall))
+    )
+    findings["tokens"] = tokens
+    print("\nTASKS FINDINGS " + json.dumps(findings))
+    assert tokens < 20_000
+    assert steps.status == "ready", steps.error

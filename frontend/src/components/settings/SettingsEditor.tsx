@@ -119,7 +119,7 @@ export const EDITORS: Record<string, Editor> = {
   },
   cook_minutes: {
     title: "Time per cook day",
-    why: "Hands-on minutes. Simmering and chilling don't count against your time.",
+    why: "Your time in the kitchen, start to finish. Dishes cook side by side, so a day fits more than its recipes one after another.",
     fields: ["cook_schedule"],
     invalid: (s) => every(s.cook_schedule.every((d) => inRange(d.cook_minutes, COOK_MINUTES.min, COOK_MINUTES.max)), "Fix the minutes for each cook day."),
   },

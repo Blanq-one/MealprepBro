@@ -86,37 +86,57 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Heat the oven to 400F. Cut the broccoli into florets and mince the garlic."
+   "text": "Heat the oven to 400F. Cut the broccoli into florets and mince the garlic.",
+   "hands_on_minutes": 5,
+   "hands_off_minutes": 0
   },
   {
    "section": "rice",
    "text": "Bring 540 ml of water to a boil, add the rinsed rice, cover and simmer on low 15 minutes. Rest off the heat 10 minutes, then fluff.",
-   "duration_minutes": 25
+   "duration_minutes": 25,
+   "component": "rice",
+   "equipment": "stovetop",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 23
   },
   {
    "section": "oven",
    "text": "Toss the broccoli with 2 tbsp of the oil and half the salt and roast at 400F for 10 minutes.",
    "duration_minutes": 10,
-   "appliance_temp_f": 400
+   "appliance_temp_f": 400,
+   "component": "tray",
+   "equipment": "oven",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 10
   },
   {
    "section": "oven",
    "text": "Add the salmon to the pan, brush with the remaining oil, the lemon juice and garlic, season, and roast 12 to 14 minutes, until it flakes easily.",
    "duration_minutes": 14,
    "appliance_temp_f": 400,
-   "doneness_check_for": "salmon"
+   "doneness_check_for": "salmon",
+   "component": "tray",
+   "equipment": "oven",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 12
   },
   {
    "section": "portioning",
-   "text": "Divide the rice, broccoli and salmon among 4 containers; top with parsley."
+   "text": "Divide the rice, broccoli and salmon among 4 containers; top with parsley.",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Cool, then refrigerate in the containers."
+   "text": "Cool, then refrigerate in the containers.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   },
   {
    "section": "reheating",
-   "text": "Reheat covered at medium power until hot all the way through."
+   "text": "Reheat covered at medium power until hot all the way through.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

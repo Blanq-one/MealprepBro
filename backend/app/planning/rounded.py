@@ -42,11 +42,11 @@ class RoundedBatch:
     nudge: Decimal  # the solver's fine-tuning multiplier
     absorption_scale: Decimal  # 1 unless the batch was scaled up to use a whole package (R5)
     scale_factor: Decimal  # applied to the authored quantities: portions × size × nudge × absorption / base
-    planned_minutes: int  # hands-on minutes
+    planned_minutes: int  # hands-on minutes for this batch's portions (step 2b.9: they grow with them)
     lines: tuple[RoundedLine, ...]
     per_portion: Mapping[str, Decimal]  # from the rounded lines
     absorbed_ingredient_id: int | None = None
-    total_minutes: int = 0  # start to finish, as the recipe states it
+    total_minutes: int = 0  # start to finish for this batch on its own (its schedule, step 2b.9)
     no_cook: bool = False  # no cooking equipment: its waiting time is chilling or soaking in the fridge
 
     @property
@@ -242,8 +242,10 @@ class PlanTotals:
     store_cents: Mapping[int, int]
     hands_on_minutes: Mapping[date, int]
     meals: int
-    elapsed_minutes: Mapping[date, int] = field(default_factory=dict)  # per cook day, start to finish
-    chill_minutes: Mapping[date, int] = field(default_factory=dict)  # longest fridge wait (no-cook recipes)
+    # per cook day, start to finish: the day's schedule (step 2b.9)
+    elapsed_minutes: Mapping[date, int] = field(default_factory=dict)
+    # per cook day, the longest last wait in the fridge (overnight oats), after you leave the kitchen
+    chill_minutes: Mapping[date, int] = field(default_factory=dict)
     protein_target_g: int = 0  # per day
 
     def to_json(self) -> dict[str, Any]:

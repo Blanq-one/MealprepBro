@@ -3,6 +3,7 @@ something you can measure, and the batch's per-portion nutrition recomputed from
 
 from decimal import ROUND_HALF_UP, Decimal
 
+from app.domain.cook_schedule import dish_alone
 from app.domain.scaling import MAX_SCALE_FACTOR, ScalingError, scale_line
 from app.domain.units import convert, to_base
 from app.planning.problem import PlanningProblem, size_multiplier
@@ -87,6 +88,8 @@ def round_batch(
         )
     counted = [(ln.ingredient_id, ln.base_quantity, ln.base_unit) for ln in lines if not ln.optional]
     totals = nutrition_of(counted, problem.ingredients)
+    # the batch on its own (step 2b.9): hands-on grows with its portions, big batches take extra rounds
+    alone = dish_alone(recipe.schedule_timing, recipe.base_servings, solved.portions)
     per_portion = {code: value / Decimal(solved.portions) for code, value in totals.amounts.items()}
     return RoundedBatch(
         version_id=solved.version_id,
@@ -98,10 +101,10 @@ def round_batch(
         nudge=solved.nudge,
         absorption_scale=absorption,
         scale_factor=factor,
-        planned_minutes=recipe.active_minutes,
+        planned_minutes=alone.hands_on,
         lines=tuple(lines),
         per_portion=per_portion,
         absorbed_ingredient_id=absorbed[0] if absorbed is not None else None,
-        total_minutes=recipe.total_minutes,
+        total_minutes=alone.elapsed,
         no_cook=not recipe.equipment,
     )

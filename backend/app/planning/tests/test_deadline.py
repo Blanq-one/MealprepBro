@@ -125,4 +125,5 @@ def test_the_solver_time_limit_never_outlasts_the_budget(seeded_db, monkeypatch)
         clock,
         plan_time_budget_seconds=200,
     )
-    assert limits == [8]  # 10 s left: cut to what's left, minus a 2 s margin
+    # 10 s left: cut to what's left, minus a 2 s margin (a cut re-solve, step 2b.9, gets the same)
+    assert limits and set(limits) == {8}

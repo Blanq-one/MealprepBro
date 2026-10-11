@@ -9,12 +9,14 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.models import Nutrient, Recipe, RecipeIngredient, RecipeStep, RecipeVersion
+from app.domain.cook_schedule import DishTiming
 from app.domain.enums import Equipment, MealSlot, RecipeMood
 from app.domain.exclusions import ExclusionStatus
 from app.domain.food_safety import SafetyCategory
 from app.planning.loader import load_ingredient_plans, version_lines
 from app.planning.problem import IngredientPlan, RecipeLine
 from app.planning.rendering import StepInput
+from app.planning.timing import version_timing
 from app.schemas.constraints import PlanConstraints, ResolvedFrequencyCap
 from app.services.exclusions import diet_status
 from app.services.ingredient_data import load_ingredients
@@ -37,6 +39,8 @@ class RefRecipe:
     lines: tuple[RecipeLine, ...]
     steps: tuple[StepInput, ...]
     preparations: Mapping[int, str | None] = field(default_factory=dict)  # recipe_ingredient id -> text
+    # step 2b.9: its tasks for the cook-day schedule (None = only its stated minutes)
+    timing: DishTiming | None = None
 
 
 @dataclass(frozen=True)
@@ -55,11 +59,13 @@ def load_recipes(session: Session, version_ids: Iterable[int]) -> dict[int, RefR
         return {}
     lines = version_lines(session, ids)
     steps: dict[int, list[StepInput]] = {i: [] for i in ids}
+    rows: dict[int, list[RecipeStep]] = {i: [] for i in ids}
     for step in session.scalars(
         select(RecipeStep)
         .where(RecipeStep.recipe_version_id.in_(ids))
         .order_by(RecipeStep.recipe_version_id, RecipeStep.position)
     ):
+        rows[step.recipe_version_id].append(step)
         steps[step.recipe_version_id].append(
             StepInput(
                 step.section,
@@ -94,6 +100,7 @@ def load_recipes(session: Session, version_ids: Iterable[int]) -> dict[int, RefR
             lines=tuple(lines.get(version.id, [])),
             steps=tuple(steps[version.id]),
             preparations=preps[version.id],
+            timing=version_timing(version, rows[version.id]),
         )
     return out
 

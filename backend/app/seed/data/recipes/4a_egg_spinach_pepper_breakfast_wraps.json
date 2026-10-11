@@ -25,12 +25,12 @@
   {"ingredient": "flour-tortilla-small", "quantity": "8", "unit": "count", "preparation": "2 per serving", "role": "carb"}
  ],
  "steps": [
-  {"section": "prep", "text": "Dice the bell pepper and onion and roughly chop the spinach. Whisk the eggs with the milk, salt and pepper."},
-  {"section": "stovetop", "text": "Heat the oil in a large nonstick pan over medium heat. Cook the pepper and onion until soft, 4 to 5 minutes. Add the spinach and stir until wilted, about 1 minute.", "duration_minutes": 6},
-  {"section": "stovetop", "text": "Pour in the eggs and stir gently until fully set with no runny egg left, 3 to 4 minutes.", "duration_minutes": 4, "doneness_check_for": "egg-large"},
-  {"section": "assembly", "text": "Warm the tortillas on a dry pan about 30 seconds per side. Spoon the filling down the middle and roll them up tightly."},
-  {"section": "portioning", "text": "Pack 2 wraps per container. To freeze, wrap each one in foil first."},
-  {"section": "storage", "text": "Cool completely, then refrigerate or freeze."},
-  {"section": "reheating", "text": "Reheat in short microwave bursts, turning once, until hot throughout. From frozen, thaw overnight in the fridge first."}
+  {"section": "prep", "text": "Dice the bell pepper and onion and roughly chop the spinach. Whisk the eggs with the milk, salt and pepper.", "hands_on_minutes": 7, "hands_off_minutes": 0},
+  {"section": "stovetop", "text": "Heat the oil in a large nonstick pan over medium heat. Cook the pepper and onion until soft, 4 to 5 minutes. Add the spinach and stir until wilted, about 1 minute.", "duration_minutes": 6, "component": "filling", "equipment": "stovetop", "hands_on_minutes": 6, "hands_off_minutes": 0},
+  {"section": "stovetop", "text": "Pour in the eggs and stir gently until fully set with no runny egg left, 3 to 4 minutes.", "duration_minutes": 4, "doneness_check_for": "egg-large", "component": "filling", "equipment": "stovetop", "hands_on_minutes": 4, "hands_off_minutes": 0},
+  {"section": "assembly", "text": "Warm the tortillas on a dry pan about 30 seconds per side. Spoon the filling down the middle and roll them up tightly.", "equipment": "stovetop", "hands_on_minutes": 5, "hands_off_minutes": 0},
+  {"section": "portioning", "text": "Pack 2 wraps per container. To freeze, wrap each one in foil first.", "hands_on_minutes": 2, "hands_off_minutes": 0},
+  {"section": "storage", "text": "Cool completely, then refrigerate or freeze.", "hands_on_minutes": 0, "hands_off_minutes": 0},
+  {"section": "reheating", "text": "Reheat in short microwave bursts, turning once, until hot throughout. From frozen, thaw overnight in the fridge first.", "hands_on_minutes": 0, "hands_off_minutes": 0}
  ]
 }

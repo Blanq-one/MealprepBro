@@ -77,25 +77,38 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Finely dice the onion and tomato."
+   "text": "Finely dice the onion and tomato.",
+   "component": "topping",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0
   },
   {
    "section": "stovetop",
    "text": "Lower the eggs into boiling water and cook 10 minutes, then cool them in cold water.",
    "duration_minutes": 10,
-   "doneness_check_for": "egg-large"
+   "doneness_check_for": "egg-large",
+   "component": "eggs",
+   "equipment": "stovetop",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 15
   },
   {
    "section": "assembly",
-   "text": "Peel and quarter the eggs; top with the onion, tomato, lemon juice, spices, salt and cilantro."
+   "text": "Peel and quarter the eggs; top with the onion, tomato, lemon juice, spices, salt and cilantro.",
+   "hands_on_minutes": 5,
+   "hands_off_minutes": 0
   },
   {
    "section": "portioning",
-   "text": "Serve 2 eggs per person."
+   "text": "Serve 2 eggs per person.",
+   "hands_on_minutes": 1,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Refrigerate the boiled eggs in their shells."
+   "text": "Refrigerate the boiled eggs in their shells.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

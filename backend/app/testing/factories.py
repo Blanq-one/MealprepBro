@@ -296,6 +296,7 @@ def reference(p: PlanningProblem, **overrides: Any) -> ReferenceData:
             freezer_friendly=r.freezer_friendly,
             lines=r.lines,
             steps=(),
+            timing=r.schedule_timing,
         )
         for r in p.candidates
     }

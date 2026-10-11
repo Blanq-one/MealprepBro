@@ -92,30 +92,44 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Heat the oven to 425F. Cut the potatoes into wedges and trim the green beans. Pat the chicken dry."
+   "text": "Heat the oven to 425F. Cut the potatoes into wedges and trim the green beans. Pat the chicken dry.",
+   "hands_on_minutes": 7,
+   "hands_off_minutes": 0
   },
   {
    "section": "assembly",
-   "text": "Toss the potatoes with half the oil and seasoning and spread on a large sheet pan. Rub the chicken with the rest and nestle it skin side up among the potatoes."
+   "text": "Toss the potatoes with half the oil and seasoning and spread on a large sheet pan. Rub the chicken with the rest and nestle it skin side up among the potatoes.",
+   "hands_on_minutes": 4,
+   "hands_off_minutes": 0
   },
   {
    "section": "oven",
    "text": "Roast at 425F for 25 minutes. Add the green beans, toss them in the pan juices and roast 15 to 20 minutes more, until the skin is crisp and the chicken is cooked through to the bone.",
    "duration_minutes": 45,
    "appliance_temp_f": 425,
-   "doneness_check_for": "chicken-thigh-bone-in-skin-on"
+   "doneness_check_for": "chicken-thigh-bone-in-skin-on",
+   "component": "tray",
+   "equipment": "oven",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 42
   },
   {
    "section": "portioning",
-   "text": "Divide among 4 containers; squeeze the lemon over."
+   "text": "Divide among 4 containers; squeeze the lemon over.",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Cool, then refrigerate in the containers."
+   "text": "Cool, then refrigerate in the containers.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   },
   {
    "section": "reheating",
-   "text": "Reheat covered, stirring halfway, until hot all the way through."
+   "text": "Reheat covered, stirring halfway, until hot all the way through.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

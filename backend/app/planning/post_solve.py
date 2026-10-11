@@ -15,6 +15,7 @@ from dataclasses import dataclass, replace
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
 
+from app.domain.cook_schedule import DaySchedule
 from app.domain.nutrition import kcal_display
 from app.domain.scaling import ScalingError
 from app.planning.costing import cost_summary
@@ -32,6 +33,7 @@ from app.planning.rounding import round_batch
 from app.planning.snap import snap_batches
 from app.planning.solver.absorption import absorption_pass
 from app.planning.solver.model import SolvedBatch, SolverSolution
+from app.planning.timing import day_schedules, planned_batch
 
 _PROTEIN = Decimal("0.1")
 
@@ -160,6 +162,20 @@ def meals_from(solution: SolverSolution, batches: Sequence[RoundedBatch]) -> tup
     return tuple(out)
 
 
+def cook_day_schedules(problem: PlanningProblem, batches: Sequence[RoundedBatch]) -> dict[date, DaySchedule]:
+    """Each cook day's schedule for the plan's batches (FLOW_SPEC §20.3)."""
+    pairs = []
+    for b in batches:
+        recipe = problem.candidate(b.version_id)
+        pairs.append(
+            (
+                b.cook_on,
+                planned_batch(recipe, b.portion_size.value, b.portions),
+            )
+        )
+    return day_schedules(pairs)
+
+
 def plan_totals(
     problem: PlanningProblem,
     batches: Sequence[RoundedBatch],
@@ -172,15 +188,7 @@ def plan_totals(
     for meal in meals:
         day_kcal[meal.eat_on] += meal.kcal
         day_protein[meal.eat_on] += meal.protein_g
-    minutes: dict[date, int] = defaultdict(int)
-    waiting: dict[date, int] = defaultdict(int)  # the longest cooking wait (simmer, bake) on the day
-    chill: dict[date, int] = defaultdict(int)  # the longest fridge wait of a no-cook recipe
-    for batch in batches:
-        minutes[batch.cook_on] += batch.planned_minutes
-        if batch.no_cook:
-            chill[batch.cook_on] = max(chill[batch.cook_on], batch.passive_minutes)
-        else:
-            waiting[batch.cook_on] = max(waiting[batch.cook_on], batch.passive_minutes)
+    schedules = cook_day_schedules(problem, batches)
     cook_days = [d.day for d in c.days if d.is_cook_day]
     return PlanTotals(
         day_kcal=day_kcal,
@@ -191,11 +199,14 @@ def plan_totals(
         cost_complete=grocery.complete,
         unpriced=grocery.unpriced,
         store_cents=dict(grocery.store_cents),
-        hands_on_minutes={d: minutes.get(d, 0) for d in cook_days},
+        hands_on_minutes={d: schedules[d].hands_on if d in schedules else 0 for d in cook_days},
         meals=len(meals),
-        # hands-on work back to back, with the longest wait at the end: an upper estimate
-        elapsed_minutes={d: minutes.get(d, 0) + waiting.get(d, 0) for d in cook_days},
-        chill_minutes={d: chill[d] for d in cook_days if chill.get(d)},
+        elapsed_minutes={d: schedules[d].elapsed if d in schedules else 0 for d in cook_days},
+        chill_minutes={
+            d: schedules[d].fridge_minutes
+            for d in cook_days
+            if d in schedules and schedules[d].fridge_minutes
+        },
         protein_target_g=c.daily_protein_target_g,
     )
 

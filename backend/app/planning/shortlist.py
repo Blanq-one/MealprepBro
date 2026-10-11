@@ -110,14 +110,16 @@ def score_pool(
 def quickest(
     pool: Sequence[CandidateRecipe], problem: PlanningProblem, scores: Mapping[int, Decimal]
 ) -> list[CandidateRecipe]:
-    """The meal's quickest recipe, and the quickest one the strictest cook day's mood allows (ties by score).
-    Never-favored and disliked recipes only when nothing else is there."""
+    """The meal's quickest recipe, and the quickest one the strictest cook day's mood allows (ties by score):
+    start to finish for one meal's batch on its own (step 2b.9, V11). Never-favored and disliked recipes only
+    when nothing else is there."""
     usable = [x for x in pool if not (x.never_favored or x.has_disliked)] or list(pool)
     moods = [MOOD_ORDER[d.mood] for d in problem.constraints.days if d.is_cook_day]
     strictest = min(moods, default=max(MOOD_ORDER.values()))
+    minutes = {x.version_id: x.minutes_alone(problem.constraints.household_size) for x in usable}
 
     def key(x: CandidateRecipe) -> tuple[int, Decimal, int]:
-        return (x.active_minutes, -scores[x.version_id], x.version_id)
+        return (minutes[x.version_id], -scores[x.version_id], x.version_id)
 
     out = [min(usable, key=key)]
     allowed = [x for x in usable if MOOD_ORDER[x.mood] <= strictest]

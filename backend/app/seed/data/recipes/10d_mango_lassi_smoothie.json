@@ -56,19 +56,27 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Peel the mangoes and mash the flesh to a smooth purée with a fork or potato masher."
+   "text": "Peel the mangoes and mash the flesh to a smooth purée with a fork or potato masher.",
+   "hands_on_minutes": 6,
+   "hands_off_minutes": 0
   },
   {
    "section": "no_cook",
-   "text": "Whisk the mango purée with the yogurt, milk, honey and cardamom until smooth and frothy."
+   "text": "Whisk the mango purée with the yogurt, milk, honey and cardamom until smooth and frothy.",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0
   },
   {
    "section": "portioning",
-   "text": "Pour into 3 glasses."
+   "text": "Pour into 3 glasses.",
+   "hands_on_minutes": 1,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Refrigerate any extra in a sealed jar and shake before drinking."
+   "text": "Refrigerate any extra in a sealed jar and shake before drinking.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

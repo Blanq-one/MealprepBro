@@ -15,6 +15,9 @@ from app.db.models import (
     MealPlan,
     PlanBatchIngredient,
     PlanCookBatch,
+    Recipe,
+    RecipeFavorite,
+    RecipeIngredient,
 )
 from app.domain.cost import round_cents
 from app.domain.enums import MealSlot
@@ -133,6 +136,16 @@ def _plan_with_olive_oil_always_on_hand(session):
     user = current_user(session)
     settings = load_settings(session, user.id).model_copy(update={"always_have": ["olive-oil"]})
     save_settings(session, user.id, settings)
+    # the seeds that cook with olive oil are favorites, so the week surely uses it (which recipes win
+    # otherwise changes with the library and the time rules)
+    oil = session.scalars(select(Ingredient.id).where(Ingredient.slug == "olive-oil")).one()
+    with_oil = session.scalars(
+        select(Recipe.id)
+        .join(RecipeIngredient, RecipeIngredient.recipe_version_id == Recipe.default_version_id)
+        .where(Recipe.user_id == user.id, RecipeIngredient.ingredient_id == oil)
+    ).all()
+    session.add_all(RecipeFavorite(user_id=user.id, recipe_id=rid) for rid in set(with_oil))
+    session.flush()
     o = Orchestrator(session, user.id, llm_client=None, settings=make_settings(), clock=FakeClock())
     out = o.run(PlanRequest(week_start=WEEK, days=3, allow_llm=False))
     assert out.status == "succeeded", out.error

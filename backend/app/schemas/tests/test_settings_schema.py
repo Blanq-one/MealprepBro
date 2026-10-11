@@ -19,7 +19,9 @@ def _with(**changes):
 def test_defaults_validate():
     settings = UserSettings.model_validate(DEFAULTS)
     assert settings.cook_day(Weekday.TUE).is_cook_day is False
-    assert settings.cook_day(Weekday.MON).cook_minutes == 45
+    assert settings.cook_day(Weekday.MON).cook_minutes == 90  # start to finish (V11, step 2b.9)
+    assert {d.weeknight_minutes for d in settings.cook_schedule} == {30}
+    assert settings.cook_time_note is False
 
 
 @pytest.mark.parametrize(

@@ -88,30 +88,44 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Heat the oven to 350F and oil a 12-cup muffin pan. Chop the spinach, dice the pepper and slice the green onions."
+   "text": "Heat the oven to 350F and oil a 12-cup muffin pan. Chop the spinach, dice the pepper and slice the green onions.",
+   "hands_on_minutes": 7,
+   "hands_off_minutes": 0
   },
   {
    "section": "assembly",
-   "text": "Whisk the eggs, egg whites, milk, garlic powder, salt and pepper. Divide the vegetables among the cups and pour the egg mixture over them."
+   "text": "Whisk the eggs, egg whites, milk, garlic powder, salt and pepper. Divide the vegetables among the cups and pour the egg mixture over them.",
+   "hands_on_minutes": 5,
+   "hands_off_minutes": 0
   },
   {
    "section": "oven",
    "text": "Bake at 350F for 20 to 22 minutes, until puffed and set in the center.",
    "duration_minutes": 22,
    "appliance_temp_f": 350,
-   "doneness_check_for": "egg-large"
+   "doneness_check_for": "egg-large",
+   "component": "cups",
+   "equipment": "oven",
+   "hands_on_minutes": 1,
+   "hands_off_minutes": 22
   },
   {
    "section": "portioning",
-   "text": "Cool 5 minutes, then pack 3 cups per serving."
+   "text": "Cool 5 minutes, then pack 3 cups per serving.",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Cool, then refrigerate in the containers."
+   "text": "Cool, then refrigerate in the containers.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   },
   {
    "section": "reheating",
-   "text": "Reheat covered, stirring halfway, until hot all the way through."
+   "text": "Reheat covered, stirring halfway, until hot all the way through.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

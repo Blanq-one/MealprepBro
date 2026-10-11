@@ -19,6 +19,7 @@ from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any, Literal
 
+from app.domain.cook_schedule import fallback_timing, minutes_text
 from app.domain.cook_time import mood_allows
 from app.domain.enums import CalorieMode, MealSlot, PlanningMode
 from app.domain.food_safety import IngredientSafety, doneness_requirement
@@ -37,6 +38,7 @@ from app.planning.recipe_math import nutrition_of
 from app.planning.reference import ReferenceData, RefRecipe
 from app.planning.rendering import LineInput, RenderInput, render
 from app.planning.rounded import ABSORBED, RoundedBatch, RoundedPlan
+from app.planning.timing import day_schedules, dish_batch
 from app.schemas.constraints import VARIETY_CAPPED_SLOTS, ResolvedDailyCap
 
 QTY_TOLERANCE = Decimal("0.001")
@@ -300,20 +302,36 @@ def validate_plan(plan: RoundedPlan, ref: ReferenceData, *, scope: Scope = "week
                 for v in check_text(text):
                     errors.append(Issue("PROSE_FILTER", f"{recipe.title}: {v.message}"))
 
-    # ---- hands-on minutes per cook day ----
-    minutes: dict[date, int] = defaultdict(int)
+    # ---- cook-day time, start to finish: each cook day's exact schedule (step 2b.9, V11) ----
+    pairs = []
     for batch in plan.batches:
         recipe = ref.recipes.get(batch.version_id)
-        if recipe is not None:
-            minutes[batch.cook_on] += recipe.active_minutes
-    for day, used in sorted(minutes.items()):
-        if day in days and used > days[day].cook_minutes_available:
+        if recipe is None:
+            continue
+        timing = recipe.timing or fallback_timing(recipe.active_minutes, recipe.active_minutes)
+        pairs.append(
+            (
+                batch.cook_on,
+                dish_batch(
+                    batch.version_id,
+                    batch.portion_size.value,
+                    title=recipe.title,
+                    timing=timing,
+                    base_servings=recipe.base_servings,
+                    portions=batch.portions,
+                ),
+            )
+        )
+    for day, schedule in day_schedules(pairs).items():
+        if day in days and schedule.elapsed > days[day].cook_minutes_available:
+            have = days[day].cook_minutes_available
             errors.append(
                 Issue(
                     "COOK_TIME_OVER",
-                    f"{_day(day)} needs {used} hands-on minutes; you have {days[day].cook_minutes_available}",
+                    f"{_day(day)} needs about {minutes_text(schedule.elapsed)} start to finish; you have "
+                    f"{minutes_text(have)}",
                     day=day,
-                    amount=used - days[day].cook_minutes_available,
+                    amount=schedule.elapsed - have,
                 )
             )
 

@@ -71,24 +71,37 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Slice the strawberries and chop the almonds."
+   "text": "Slice the strawberries and chop the almonds.",
+   "hands_on_minutes": 4,
+   "hands_off_minutes": 0
   },
   {
    "section": "stovetop",
    "text": "Toast the oats and almonds in a dry pan over medium heat, stirring, until fragrant, 4 minutes. Cool.",
-   "duration_minutes": 4
+   "duration_minutes": 4,
+   "component": "crunch",
+   "equipment": "stovetop",
+   "hands_on_minutes": 4,
+   "hands_off_minutes": 0
   },
   {
    "section": "no_cook",
-   "text": "Whisk the protein powder with the milk into a paste and stir it into the yogurt."
+   "text": "Whisk the protein powder with the milk into a paste and stir it into the yogurt.",
+   "component": "yogurt",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0
   },
   {
    "section": "portioning",
-   "text": "Layer the yogurt and strawberries in 4 jars; pack the oat-almond crunch and honey separately."
+   "text": "Layer the yogurt and strawberries in 4 jars; pack the oat-almond crunch and honey separately.",
+   "hands_on_minutes": 4,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Refrigerate the jars."
+   "text": "Refrigerate the jars.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

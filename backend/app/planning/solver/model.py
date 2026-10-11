@@ -11,8 +11,9 @@ Decisions:
     cash you hand over (whole packages are exact on the grocery list);
   * inventory used (open packages and expiring lots are rewarded).
 
-Hard constraints: every slot filled once, no recipe twice a day, the weekly variety cap on meals, cook
-minutes, calorie limits per mode, the protein floor per mode, the purchase limit (shop-mode budget on
+Hard constraints: every slot filled once, no recipe twice a day, the weekly variety cap on meals, cook-day
+time (step 2b.9: linear limits every schedule must meet; solve.py schedules each day exactly), calorie limits
+per mode, the protein floor per mode, the purchase limit (shop-mode budget on
 regular groceries, or inventory-mode top-up on everything), frequency caps per Monday–Sunday week (what your
 other plans already used counts), portion requests, supply ≥ need, daily amount caps (protein powder at most
 2 scoops a day, counting every meal), and "Use what I have" buying only your could-buy items.
@@ -45,6 +46,12 @@ from typing import Any
 
 import pulp
 
+from app.domain.cook_schedule import (
+    BURNERS,
+    CAPACITY,
+    GROWTH_EXPONENT,
+    capacity,
+)
 from app.domain.cook_time import mood_allows
 from app.domain.enums import CalorieMode, MealSlot, PortionSize
 from app.domain.frequency_caps import week_monday
@@ -114,6 +121,9 @@ class SolverSolution:
     day_kcal: Mapping[date, Decimal]  # raw, unrounded kcal per day
     stores_used: frozenset[int]
     estimated_purchase_cents: int
+    # step 2b.9: the batch sets whose exact schedule ran over their cook day, cut on the way to this plan
+    # (the orchestrator keeps them for its re-solves)
+    schedule_cuts: frozenset[frozenset[tuple[int, date, str]]] = frozenset()
 
 
 @dataclass(frozen=True)
@@ -135,6 +145,10 @@ class Diagnostic:
 @dataclass(frozen=True)
 class SolverInfeasible:
     diagnostics: tuple[Diagnostic, ...]
+    # step 2b.9: a plan fits every other limit, but some cook days' exact schedules still run over after the
+    # cut re-solves; the diagnostics are the time fix ("Allow 1 h 35 min on Sunday")
+    from_schedule: bool = False
+    schedule_cuts: frozenset[frozenset[tuple[int, date, str]]] = frozenset()  # the cuts it took
 
 
 SolverResult = SolverSolution | SolverInfeasible
@@ -188,13 +202,15 @@ def batch_plan(problem: PlanningProblem) -> list[_Batch]:
     sizes = sorted(set(needed.values()), key=lambda z: z.value)
     batches: list[_Batch] = []
     forbidden = problem.tightening.forbidden
+    # start to finish for one meal's batch on its own: a cook day shorter than that can't take the recipe
+    alone = {r.version_id: r.minutes_alone(c.household_size) for r in problem.candidates}
     for recipe in sorted(problem.candidates, key=lambda r: r.version_id):
         for cook in c.days:
             if not cook.is_cook_day or not mood_allows(cook.mood, recipe.mood):
                 continue
             if (recipe.version_id, cook.day) in forbidden:
                 continue
-            if recipe.active_minutes > cook.cook_minutes_available:
+            if alone[recipe.version_id] > cook.cook_minutes_available:
                 continue
             for size in sizes:
                 targets = tuple(
@@ -208,6 +224,43 @@ def batch_plan(problem: PlanningProblem) -> list[_Batch]:
                 if targets:
                     batches.append(_Batch(len(batches), recipe, cook.day, size, targets))
     return batches
+
+
+def _hands_on_floor(b: _Batch, portions: Any, made: Any, most: int) -> Any:
+    """A linear lower bound on a batch's hands-on minutes: hands-on × (portions ÷ base servings)^0.6 is
+    concave, so the chord from the base servings to the most portions the batch could have stays below it
+    (and below the base itself for smaller batches, which never drop below it)."""
+    hands = b.recipe.schedule_timing.hands_on
+    base = b.recipe.base_servings
+    if most <= base:
+        return hands * made
+    slope = ((most / base) ** GROWTH_EXPONENT - 1) / (most - base)
+    return hands * (1 - slope * base) * made + hands * slope * portions
+
+
+def _appliance_floors(
+    day_batches: list[_Batch], portions: Any, y: Mapping[int, pulp.LpVariable]
+) -> dict[str, tuple[list[Any], list[Any]]]:
+    """Per appliance, two lower bounds on its busy minutes (each must fit the day): the tasks' own minutes
+    (the stovetop's over its 4 burners), and the rounds a big batch needs (portions ÷ capacity rounds of
+    hands-off time). The oven holds several tasks, so it counts portion-minutes over its capacity instead."""
+    out: dict[str, tuple[list[Any], list[Any]]] = defaultdict(lambda: ([], []))
+    for b in day_batches:
+        base = b.recipe.base_servings
+        for task in b.recipe.schedule_timing.tasks:
+            if task.equipment is None:
+                continue
+            fixed, per_portion = out[task.equipment]
+            cap = capacity(task)
+            minutes = task.hands_on + task.hands_off
+            if task.equipment == "oven":
+                per_portion.append(minutes / CAPACITY["oven"] * portions(b))
+                continue
+            fixed.append(minutes * y[b.index])
+            if cap is not None and task.equipment != "stovetop" and task.hands_off:
+                base_rounds = -(-base // cap)
+                per_portion.append(task.hands_off / (cap * base_rounds) * portions(b))
+    return dict(out)
 
 
 def amount_per_portion(problem: PlanningProblem, ingredient_id: int, unit: str) -> dict[int, float]:
@@ -418,14 +471,33 @@ def build_model(
             extra = slack("cap", (cap.label, monday)) if elastic else 0
             prob += pulp.lpSum(members) <= allowance + extra, f"cap_{ci}_{wi}"
 
-    # ---- hands-on cook minutes per cook day ----
+    # ---- cook-day time, start to finish (step 2b.9, FLOW_SPEC §20.3): linear limits every schedule must
+    # meet. solve.py then schedules each cook day exactly and cuts a set of batches that runs over ----
+    def most_portions(b: _Batch) -> int:
+        return household * len(b.targets) + (MAX_FROZEN_EXTRAS if b.index in frozen else 0)
+
     for d in c.days:
         day_batches = [b for b in batches if b.cook_on == d.day]
         if not day_batches:
             continue
-        used = pulp.lpSum(b.recipe.active_minutes * y[b.index] for b in day_batches)
         extra = slack("time", d.day) if elastic else 0
-        prob += used <= d.cook_minutes_available + extra, f"minutes_{d.day:%m%d}"
+        limit = d.cook_minutes_available + extra
+        tag = f"{d.day:%m%d}"
+        prob += (
+            pulp.lpSum(_hands_on_floor(b, portions(b), y[b.index], most_portions(b)) for b in day_batches)
+            <= limit,
+            f"minutes_{tag}",
+        )
+        for appliance, (fixed, rounds) in sorted(_appliance_floors(day_batches, portions, y).items()):
+            share = BURNERS if appliance == "stovetop" else 1
+            if fixed:
+                prob += pulp.lpSum(fixed) <= share * limit, f"busy_{appliance}_{tag}"
+            if rounds:
+                prob += pulp.lpSum(rounds) <= limit, f"rounds_{appliance}_{tag}"
+    for n, cut in enumerate(sorted(problem.tightening.schedule_cuts, key=sorted)):
+        members = [b for b in batches if (b.recipe.version_id, b.cook_on, b.size.value) in cut]
+        if len(members) == len(cut):
+            prob += pulp.lpSum(y[b.index] for b in members) <= len(cut) - 1, f"schedule_cut_{n}"
 
     # ---- calories (from the unrounded recipe lines; the validator re-checks the rounded values) ----
     t = problem.tightening
@@ -731,7 +803,9 @@ def build_model(
         )
 
     if cheapest:  # the cost, and fewer batches to break ties
-        prob += -pulp.lpSum(objective_cost) / 100 - 0.01 * pulp.lpSum(y.values())
+        # the cash the limit covers counts too (a stock-up item's whole pack isn't in the cost above), so the
+        # plan's limited cash is its real minimum (the smallest top-up, step 2b.9)
+        prob += -pulp.lpSum(objective_cost) / 100 - 0.001 * limited_cost / 100 - 0.01 * pulp.lpSum(y.values())
         return _Model(
             prob,
             batches,

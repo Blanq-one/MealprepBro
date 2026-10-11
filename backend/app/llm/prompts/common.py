@@ -67,7 +67,11 @@ deal, sale), internal food temperatures, how many days food keeps, or health cla
 6. method is one plain line saying how it's cooked.
 7. equipment lists every appliance the cooking needs, chosen only from the available equipment; pots, \
 pans, sheet pans and knives aren't equipment.
-8. active_minutes is hands-on time; total_minutes also includes waiting (simmering, chilling, soaking).
+8. tasks lists the cooking work in order, one task per part of the dish and appliance: component is the \
+part it works on ("rice", "chicken"), or null for shared prep, assembly and portioning; equipment is the \
+appliance it occupies, or null for hands-only work and waiting; hands_on_minutes is time you're busy \
+(chopping, stirring, loading), hands_off_minutes time it runs on its own (simmering, baking, marinating, \
+chilling). The app works out the recipe's times from the tasks.
 9. freezer_friendly is true when the cooked dish freezes and reheats well (rice dishes, curries, gravies, \
 cooked meats), false when it is mostly fresh, raw or creamy (salads, yogurt sauces, puddings). When it \
 freezes well but part of it is best fresh, freeze_note is one line saying what to freeze and what to make \
@@ -89,7 +93,11 @@ marinating and chilling times are welcome.
 name; the app adds the safe temperature.
 5. Never write calories, nutrient amounts or claims, prices or cost words, internal food temperatures or \
 thermometer checks, how many days food keeps, or health claims.
-6. Reply with JSON only."""
+6. Every step also gives component (the part of the dish, named as in TASKS; null for shared prep, \
+assembly and portioning), equipment (the appliance it occupies, from the listed equipment; null for \
+hands-only work and waiting), hands_on_minutes and hands_off_minutes. For each part of the dish, its steps' \
+minutes add up to its TASKS line. Storage and reheating steps take 0 and 0.
+7. Reply with JSON only."""
 
 
 @dataclass(frozen=True)
@@ -105,7 +113,7 @@ class IdeaContext:
     equipment: tuple[str, ...]
     vocabulary: tuple[str, ...]
     never_use: tuple[str, ...]
-    max_total_minutes: int | None = None  # Quick
+    max_total_minutes: int | None = None  # Quick: ready within this many minutes
     kcal_per_portion: int | None = None  # a rough size guide only; the app computes the real numbers
     must_use: tuple[str, ...] = ()  # meal now: your items, open packages and soonest-expiring first
     may_buy: tuple[str, ...] = ()  # meal now: your "could buy" items
@@ -113,6 +121,7 @@ class IdeaContext:
     use_up: tuple[str, ...] = ()  # meal prep: lots to use up
     avoid_titles: tuple[str, ...] = ()
     substitution_rules: tuple[str, ...] = ()
+    max_kitchen_minutes: int | None = None  # meal prep: start to finish, to fit a cook day (step 2b.9)
 
 
 def equipment_line(equipment: tuple[str, ...]) -> str:

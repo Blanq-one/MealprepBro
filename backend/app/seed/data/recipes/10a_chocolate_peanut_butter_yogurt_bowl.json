@@ -60,19 +60,27 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Slice the banana. Warm the peanut butter for 10 seconds so it drizzles."
+   "text": "Slice the banana. Warm the peanut butter for 10 seconds so it drizzles.",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 0
   },
   {
    "section": "no_cook",
-   "text": "Whisk the protein powder, cocoa and milk into a paste, then whisk it into the yogurt until smooth."
+   "text": "Whisk the protein powder, cocoa and milk into a paste, then whisk it into the yogurt until smooth.",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 0
   },
   {
    "section": "portioning",
-   "text": "Divide among 3 bowls, swirl in the peanut butter and top with the banana."
+   "text": "Divide among 3 bowls, swirl in the peanut butter and top with the banana.",
+   "hands_on_minutes": 1,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Refrigerate the yogurt base covered; add the banana when serving."
+   "text": "Refrigerate the yogurt base covered; add the banana when serving.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

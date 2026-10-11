@@ -4,14 +4,16 @@ one-line method, equipment and times, and no steps."""
 from app.llm.client import Message
 from app.llm.prompts.common import IDEA_RULES, IdeaContext, equipment_line, ingredient_lists
 
-PROMPT_VERSION = "recipe_ideas/2"  # /2: the optional freeze note (2b.5 approval)
+PROMPT_VERSION = "recipe_ideas/3"  # /2: the optional freeze note (2b.5 approval); /3: the task list (2b.9)
 PURPOSE = "recipe_ideas"
 
 
 def request_lines(ctx: IdeaContext) -> list[str]:
     minutes = f"at most {ctx.max_active_minutes} hands-on minutes"
+    if ctx.max_kitchen_minutes is not None:
+        minutes += f", at most {ctx.max_kitchen_minutes} minutes start to finish"
     if ctx.max_total_minutes is not None:
-        minutes += f", at most {ctx.max_total_minutes} minutes in all"
+        minutes += f", ready within {ctx.max_total_minutes} minutes"
     lines = [
         f"- mood: {ctx.mood} ({minutes})",
         f'- base_servings: {ctx.base_servings}; meal_slots must include "{ctx.slot}"',

@@ -272,7 +272,7 @@ export function CookMinutesControl({ settings, onChange }: Props) {
     return (
       <>
         <Stepper
-          label="Hands-on minutes"
+          label="Minutes, start to finish"
           value={shared ?? (cookDays[0] as CookDay).cook_minutes}
           unit="min per cook day"
           {...COOK_MINUTES}

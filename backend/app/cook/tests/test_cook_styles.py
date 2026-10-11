@@ -82,8 +82,9 @@ def test_a_whole_week_of_lunch_and_dinner_on_one_big_cook_day(api: Any, seeded_d
     if counts["spoil"]:
         expected.append(f"{counts['spoil']} may spoil")
     assert notes["display"] == " · ".join(expected)
-    if len(plan["batches"]) > 1 and today["prep_order"]:
-        assert today["prep_order"][0].startswith("1. Start ")
+    if plan["batches"]:  # the cook day's timeline (step 2b.9), from 0:00 to Done
+        assert today["timeline"][0]["at_display"] == "0:00" and today["timeline"][-1]["text"] == "Done"
+        assert today["time_display"].startswith("about ")
 
 
 def test_too_few_minutes_on_the_big_day_gives_the_time_fix(api: Any, seeded_db: Session) -> None:

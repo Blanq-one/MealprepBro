@@ -7,7 +7,7 @@ from app.llm.client import Message
 from app.llm.prompts.common import IDEA_RULES, IdeaContext, equipment_line, ingredient_lists
 from app.llm.prompts.recipe_ideas import request_lines
 
-PROMPT_VERSION = "idea_revision/2"  # /2: the optional freeze note (2b.5 approval)
+PROMPT_VERSION = "idea_revision/3"  # /2: the optional freeze note (2b.5 approval); /3: tasks (2b.9)
 PURPOSE = "idea_revision"
 
 

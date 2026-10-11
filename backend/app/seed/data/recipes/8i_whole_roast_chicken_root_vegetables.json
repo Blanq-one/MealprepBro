@@ -14,7 +14,7 @@
  ],
  "base_servings": 6,
  "active_minutes": 30,
- "total_minutes": 110,
+ "total_minutes": 130,
  "equipment": [
   "oven"
  ],
@@ -111,35 +111,52 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Heat the oven to 425F. Pat the chicken dry. Cut the vegetables into large chunks. Mash the butter with the crushed garlic, thyme, paprika and half the salt and pepper."
+   "text": "Heat the oven to 425F. Pat the chicken dry. Cut the vegetables into large chunks. Mash the butter with the crushed garlic, thyme, paprika and half the salt and pepper.",
+   "hands_on_minutes": 12,
+   "hands_off_minutes": 0
   },
   {
    "section": "assembly",
-   "text": "Rub the butter under and over the skin. Put the lemon halves and whole garlic inside the bird and tie the legs. Toss the vegetables with the oil and the rest of the salt and pepper in a roasting pan and set the chicken on top."
+   "text": "Rub the butter under and over the skin. Put the lemon halves and whole garlic inside the bird and tie the legs. Toss the vegetables with the oil and the rest of the salt and pepper in a roasting pan and set the chicken on top.",
+   "hands_on_minutes": 10,
+   "hands_off_minutes": 0
   },
   {
    "section": "oven",
    "text": "Roast at 425F for 70 to 85 minutes, until the skin is deep golden and the juices run clear at the thigh.",
    "duration_minutes": 85,
    "appliance_temp_f": 425,
-   "doneness_check_for": "chicken-whole"
+   "doneness_check_for": "chicken-whole",
+   "component": "chicken",
+   "equipment": "oven",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 83
   },
   {
    "section": "assembly",
    "text": "Rest the chicken 15 minutes before carving.",
-   "duration_minutes": 15
+   "duration_minutes": 15,
+   "component": "chicken",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 15
   },
   {
    "section": "portioning",
-   "text": "Carve and divide the chicken and vegetables among 6 containers."
+   "text": "Carve and divide the chicken and vegetables among 6 containers.",
+   "hands_on_minutes": 8,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Cool, then refrigerate in the containers."
+   "text": "Cool, then refrigerate in the containers.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   },
   {
    "section": "reheating",
-   "text": "Reheat covered, stirring halfway, until hot all the way through."
+   "text": "Reheat covered, stirring halfway, until hot all the way through.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

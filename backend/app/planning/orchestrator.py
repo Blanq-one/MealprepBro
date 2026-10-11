@@ -23,7 +23,7 @@ candidate-exposure log (plan_candidate), one row per recipe offered to the solve
 import logging
 import math
 from collections.abc import Callable, Iterable
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Any
@@ -386,14 +386,28 @@ class Orchestrator:
         else:
             tiers = (SHORTLIST_PER_SLOT, SHORTLIST_WIDER, None)
         tried: set[int] = set()
+        too_long: SolverInfeasible | None = None
         for per_slot in tiers:
             short = problem if per_slot is None else shortlist(problem, per_slot)
+            if too_long is not None:  # the batch sets that ran over still do: the wider try starts with them
+                short = short.with_tightening(Tightening(schedule_cuts=too_long.schedule_cuts))
             if len(short.candidates) in tried:
                 continue
             tried.add(len(short.candidates))
             result = self._solve_exactly(short)
             if isinstance(result, SolverSolution):
+                if too_long is not None:
+                    result = replace(result, schedule_cuts=result.schedule_cuts | too_long.schedule_cuts)
                 return result
+            if result.from_schedule:
+                cuts = result.schedule_cuts | (
+                    too_long.schedule_cuts if too_long is not None else frozenset()
+                )
+                too_long = replace(too_long or result, schedule_cuts=cuts)
+        # every other limit fits, but the cook days' exact schedules run over (step 2b.9): that is the fix to
+        # offer, and the elastic solve (linear limits only) can't see it
+        if too_long is not None:
+            return too_long
         # a money shortfall is explained from the narrow shortlist, which always holds each meal's cheapest
         # recipes (T2): on the wider one the elastic solve took 4–5 minutes on a pantry-only week (2b.5, D126)
         per_slot = SHORTLIST_PER_SLOT if problem.constraints.has_purchase_limit else SHORTLIST_WIDER
@@ -460,6 +474,7 @@ class Orchestrator:
             except EmptyCandidatePoolError as exc:
                 result = SolverInfeasible((Diagnostic("EMPTY_CANDIDATE_POOL", str(exc)),))
             if isinstance(result, SolverSolution):
+                problem = problem.with_tightening(Tightening(schedule_cuts=result.schedule_cuts))
                 break
             slots = sorted({d.slot for d in result.diagnostics if d.slot is not None}, key=lambda s: s.value)
             if generator is None or out_of_time or not slots or rounds >= MAX_TARGETED_ROUNDS:
@@ -575,4 +590,5 @@ class Orchestrator:
                         ),
                     ),
                 )
+            problem = problem.with_tightening(Tightening(schedule_cuts=resolved.schedule_cuts))
             result = resolved

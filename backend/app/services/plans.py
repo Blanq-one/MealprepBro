@@ -25,13 +25,12 @@ from app.db.models import (
     Product,
     Recipe,
     RecipeIngredient,
-    RecipeStep,
     RecipeVersion,
     Store,
 )
+from app.domain.cook_schedule import DaySchedule, DishTiming, minutes_text, timeline
 from app.domain.cost import money_display
 from app.domain.enums import MealSlot
-from app.domain.prep_order import PrepBatch, prep_order
 from app.domain.units import GRAMS_PER_UNIT, ML_PER_UNIT
 from app.llm.client import LLMClient
 from app.llm.errors import LLMConfigError
@@ -41,6 +40,7 @@ from app.planning.persistence import SINGLE, PlanNotFoundError, accept_plan
 from app.planning.problem import IngredientPlan
 from app.planning.recipe_math import nutrition_of
 from app.planning.rounded import FreezeInstruction, meal_key
+from app.planning.timing import day_schedules, dish_batch, load_timings
 from app.schemas.plans import (
     BatchOut,
     CostsOut,
@@ -58,6 +58,7 @@ from app.schemas.plans import (
     PrepNoteOut,
     PrepNotesOut,
     StoreTotalOut,
+    TimelineLineOut,
 )
 from app.services import plan_view as view
 from app.services.dishes import dish_categories
@@ -326,7 +327,7 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
         for b in batches
     }
     freeze = _freeze_instructions(totals)
-    sections = _step_sections(session, [b.recipe_version_id for b in batches])
+    schedules, lines = _cook_days(batches, versions, load_timings(session, [v for v, _ in versions.values()]))
     days_out = []
     for spec in c["days"]:
         day = date.fromisoformat(spec["day"])
@@ -380,9 +381,9 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
                 kcal=totals["day_kcal"].get(day.isoformat(), 0),
                 kcal_target=spec["kcal_target"],
                 protein_g=Decimal(totals["day_protein_g"].get(day.isoformat(), "0")),
-                hands_on_minutes=totals["hands_on_minutes"].get(day.isoformat(), 0),
-                elapsed_minutes=totals["elapsed_minutes"].get(day.isoformat(), 0),
-                chill_minutes=totals["chill_minutes"].get(day.isoformat(), 0),
+                hands_on_minutes=schedules[day].hands_on if day in schedules else 0,
+                elapsed_minutes=schedules[day].elapsed if day in schedules else 0,
+                chill_minutes=schedules[day].fridge_minutes if day in schedules else 0,
                 cook_minutes_available=spec["cook_minutes_available"],
                 meals=meals_out,
                 cook_note=cook_note(cooked),
@@ -397,18 +398,8 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
                     if split[b.id][1]
                 ],
                 thaw_notes=thaw,
-                prep_order=prep_order(
-                    [
-                        PrepBatch(
-                            title=versions[b.recipe_version_id][0].title,
-                            active_minutes=versions[b.recipe_version_id][0].active_minutes,
-                            total_minutes=versions[b.recipe_version_id][0].total_minutes,
-                            equipment=frozenset(versions[b.recipe_version_id][0].equipment),
-                            sections=sections.get(b.recipe_version_id, ()),
-                        )
-                        for b in today_batches
-                    ]
-                ),
+                timeline=lines.get(day, []),
+                time_display=_time_display(schedules[day]) if day in schedules else None,
             )
         )
     stores = {s.id: s.name for s in session.scalars(select(Store))}
@@ -471,7 +462,7 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
         cost_complete=totals["cost_complete"],
         cost_note=f"Incomplete: no price yet for {', '.join(unpriced)}" if unpriced else None,
         store_totals=store_totals,
-        cooking_minutes_total=sum(totals["hands_on_minutes"].values()),
+        cooking_minutes_total=sum(s.hands_on for s in schedules.values()),
         meals_count=totals["meals"],
         protein_g_week=week_protein,
         protein_g_per_day=(week_protein / n_days).quantize(Decimal("0.1"), ROUND_HALF_UP),
@@ -567,16 +558,54 @@ def _freeze_instructions(totals: dict[str, Any]) -> list[FreezeInstruction]:
     ]
 
 
-def _step_sections(session: Session, version_ids: list[int]) -> dict[int, tuple[str, ...]]:
-    """Each recipe's step sections in order (the prep order reads them)."""
-    out: dict[int, list[str]] = defaultdict(list)
-    for version_id, section in session.execute(
-        select(RecipeStep.recipe_version_id, RecipeStep.section)
-        .where(RecipeStep.recipe_version_id.in_(version_ids))
-        .order_by(RecipeStep.recipe_version_id, RecipeStep.position)
-    ).tuples():
-        out[version_id].append(section)
-    return {k: tuple(v) for k, v in out.items()}
+def _cook_days(
+    batches: list[PlanCookBatch],
+    versions: dict[int, tuple[RecipeVersion, Recipe]],
+    timings: dict[int, DishTiming],
+) -> tuple[dict[date, DaySchedule], dict[date, list[TimelineLineOut]]]:
+    """Each cook day's schedule and timeline (step 2b.9), from the plan's batches and their recipes' tasks."""
+    pairs = []
+    batch_ids: dict[tuple[date, str], int] = {}
+    for b in batches:
+        version = versions[b.recipe_version_id][0]
+        batch = dish_batch(
+            b.recipe_version_id,
+            b.portion_size,
+            title=version.title,
+            timing=timings[b.recipe_version_id],
+            base_servings=version.base_servings,
+            portions=b.portions,
+        )
+        pairs.append((b.cook_on, batch))
+        batch_ids[(b.cook_on, batch.key)] = b.id
+    schedules = day_schedules(pairs)
+    lines: dict[date, list[TimelineLineOut]] = {}
+    for day, schedule in schedules.items():
+        out = []
+        for line in timeline(schedule):
+            dish = schedule.dishes[line.dish] if line.dish is not None else None
+            out.append(
+                TimelineLineOut(
+                    at_min=line.at_min,
+                    at_display=line.at_display,
+                    text=line.text,
+                    kind=line.kind,
+                    minutes=line.minutes,
+                    equipment=line.equipment,
+                    estimated=line.estimated,
+                    dish=dish.title if dish is not None else None,
+                    cook_batch_id=batch_ids[(day, dish.key)] if dish is not None else None,
+                )
+            )
+        lines[day] = out
+    return schedules, lines
+
+
+def _time_display(schedule: DaySchedule) -> str:
+    """'about 1 h start to finish · 35 min hands-on'."""
+    return (
+        f"about {minutes_text(schedule.elapsed)} start to finish · {minutes_text(schedule.hands_on)} hands-on"
+    )
 
 
 def accept(

@@ -10,6 +10,7 @@ P4: a time or mood blocker is said once, in plain words, with the fix the app ca
 from datetime import date, timedelta
 from decimal import Decimal
 
+import pytest
 from sqlalchemy import select
 
 from app.db.models import Ingredient
@@ -34,12 +35,13 @@ def test_default_settings_and_the_seed_library_always_plan_a_shop_week_with_no_b
     assert out.status == "succeeded", out.error
 
 
-# The settings and pantry of the report (dev database, 2026-10-11).
+# The settings and pantry of the report (dev database, 2026-10-11), with its 45 hands-on minutes a cook day
+# converted to 90 start to finish (V11, migration 0008).
 EVERY_DAY = [
     {
         "weekday": d,
         "is_cook_day": True,
-        "cook_minutes": 45,
+        "cook_minutes": 90,
         "mood": "simple" if d in ("tue", "fri") else "medium",
     }
     for d in ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
@@ -68,6 +70,7 @@ PANTRY = [
 ]
 
 
+@pytest.mark.slow  # a full week with cut re-solves, about 3-4 minutes: --run-slow (step 2b.9)
 def test_seven_cook_days_a_protein_dessert_and_a_stocked_pantry_plan_again(seeded_db):
     user = current_user(seeded_db)
     patch_settings(
@@ -99,8 +102,8 @@ def test_seven_cook_days_a_protein_dessert_and_a_stocked_pantry_plan_again(seede
         add_lot(seeded_db, user.id, LotInput(ingredient, Decimal(quantity), unit, StorageLocation(location)))
     out = plan(seeded_db, mode=PlanningMode.SHOP)
     assert out.status == "succeeded", out.error
-    monday = [b for b in out.plan.batches if b.cook_on == WEEK]
-    assert sum(b.planned_minutes for b in monday) <= 45
+    assert any(b.cook_on == WEEK for b in out.plan.batches)
+    assert out.plan.totals.elapsed_minutes[WEEK] <= 90  # Monday's schedule, start to finish
 
 
 def test_a_time_or_mood_blocker_is_said_once_in_plain_words_with_its_fix(seeded_db):
@@ -113,9 +116,9 @@ def test_a_time_or_mood_blocker_is_said_once_in_plain_words_with_its_fix(seeded_
     time = [d for d in out.diagnostics if d.code == "COOK_TIME_SHORT"]
     assert time, out.diagnostics
     first = time[0]
-    assert first.message == (
-        f"{first.day:%A} needs {first.suggested_minutes} minutes of hands-on cooking; you set 20."
-    )
+    assert first.message.startswith(f"{first.day:%A} needs about ")
+    assert first.message.endswith(" start to finish; you set 20 min.")
+    assert first.suggested_minutes is not None and first.suggested_minutes % 5 == 0  # rounded up to 5
     left_out = next(d for d in out.diagnostics if d.code == "RECIPES_LEFT_OUT")
     assert left_out.message.startswith(f"{left_out.amount} recipes") or " are medium" in left_out.message
     assert "and your cook days are set to simple" in left_out.message

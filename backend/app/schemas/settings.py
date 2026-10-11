@@ -40,8 +40,12 @@ class _Strict(BaseModel):
 class CookDaySetting(_Strict):
     weekday: Weekday
     is_cook_day: bool
-    cook_minutes: int = Field(ge=0, le=600)  # start-to-finish, all cooking that day combined (Q7)
+    # start to finish, all cooking that day combined, checked against the day's schedule (V11, step 2b.9)
+    cook_minutes: int = Field(ge=0, le=600)
     mood: RecipeMood
+    # the weeknight time for finish tasks on an eating day (V7, step 2b.9; used by smart prep from 2b.11),
+    # start to finish; every day has one, cook days too
+    weeknight_minutes: int = Field(default=30, ge=0, le=240)
 
     @model_validator(mode="after")
     def _minutes(self) -> Self:
@@ -134,6 +138,9 @@ class UserSettings(_Strict):
     # how much of one ingredient a day, counting every meal (M16, step 2b.5); a field with a default, so
     # settings saved before it get protein powder's cap
     daily_amount_caps: list[DailyAmountCapSetting] = Field(default_factory=_default_daily_caps, max_length=10)
+    # V11 (step 2b.9): your saved cook-day minutes were doubled when they started to mean start to finish;
+    # Settings shows a one-time note while this is true (2b.7)
+    cook_time_note: bool = False
 
     @field_validator("leftover_fridge_days")
     @classmethod

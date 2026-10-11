@@ -14,7 +14,7 @@
  ],
  "base_servings": 4,
  "active_minutes": 25,
- "total_minutes": 90,
+ "total_minutes": 115,
  "equipment": [
   "oven",
   "stovetop"
@@ -130,40 +130,63 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Slash the drumsticks to the bone in 2 or 3 places. Grate the garlic, ginger and cucumber; chop the mint."
+   "text": "Slash the drumsticks to the bone in 2 or 3 places. Grate the garlic, ginger and cucumber; chop the mint.",
+   "component": "chicken",
+   "hands_on_minutes": 10,
+   "hands_off_minutes": 0
   },
   {
    "section": "marinate",
    "text": "Mix the whole-milk yogurt, lemon juice, garlic, ginger, paprika, chili powder, garam masala, half the cumin, oil and 1 1/4 tsp of the salt. Coat the drumsticks and marinate at least 1 hour.",
-   "duration_minutes": 60
+   "duration_minutes": 60,
+   "component": "chicken",
+   "hands_on_minutes": 4,
+   "hands_off_minutes": 60
   },
   {
    "section": "rice",
    "text": "Bring 540 ml of water to a boil, add the rinsed rice, cover and simmer on low 15 minutes. Rest off the heat 10 minutes, then fluff.",
-   "duration_minutes": 25
+   "duration_minutes": 25,
+   "component": "rice",
+   "equipment": "stovetop",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 23
   },
   {
    "section": "oven",
    "text": "Roast on a rack over a lined sheet at 425F for 35 to 40 minutes, turning once, until charred and cooked through to the bone.",
    "duration_minutes": 40,
    "appliance_temp_f": 425,
-   "doneness_check_for": "chicken-drumstick"
+   "doneness_check_for": "chicken-drumstick",
+   "component": "chicken",
+   "equipment": "oven",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 37
   },
   {
    "section": "assembly",
-   "text": "Stir the Greek yogurt with the cucumber, mint, the remaining cumin and salt for the raita."
+   "text": "Stir the Greek yogurt with the cucumber, mint, the remaining cumin and salt for the raita.",
+   "component": "raita",
+   "hands_on_minutes": 4,
+   "hands_off_minutes": 0
   },
   {
    "section": "portioning",
-   "text": "Divide the rice and drumsticks among 4 containers; pack the raita separately."
+   "text": "Divide the rice and drumsticks among 4 containers; pack the raita separately.",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Cool, then refrigerate in the containers."
+   "text": "Cool, then refrigerate in the containers.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   },
   {
    "section": "reheating",
-   "text": "Reheat covered, stirring halfway, until hot all the way through."
+   "text": "Reheat covered, stirring halfway, until hot all the way through.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

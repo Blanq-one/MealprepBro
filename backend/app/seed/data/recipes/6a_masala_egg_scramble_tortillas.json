@@ -92,34 +92,54 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Chop the onion and tomatoes, mince the jalapeño and beat the eggs with the salt."
+   "text": "Chop the onion and tomatoes, mince the jalapeño and beat the eggs with the salt.",
+   "hands_on_minutes": 4,
+   "hands_off_minutes": 0
   },
   {
    "section": "stovetop",
    "text": "Heat the oil in a skillet over medium heat. Cook the onion and jalapeño until soft, about 4 minutes, then add the tomatoes, turmeric and chili powder and cook 3 minutes more.",
-   "duration_minutes": 7
+   "duration_minutes": 7,
+   "component": "scramble",
+   "equipment": "stovetop",
+   "hands_on_minutes": 6,
+   "hands_off_minutes": 1
   },
   {
    "section": "stovetop",
    "text": "Pour in the eggs and stir gently until softly set and no liquid egg remains, 3 to 4 minutes.",
    "duration_minutes": 4,
-   "doneness_check_for": "egg-large"
+   "doneness_check_for": "egg-large",
+   "component": "scramble",
+   "equipment": "stovetop",
+   "hands_on_minutes": 4,
+   "hands_off_minutes": 0
   },
   {
    "section": "assembly",
-   "text": "Warm each tortilla on a dry pan about 30 seconds per side, like chapati."
+   "text": "Warm each tortilla on a dry pan about 30 seconds per side, like chapati.",
+   "component": "tortillas",
+   "equipment": "stovetop",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 0
   },
   {
    "section": "portioning",
-   "text": "Divide the scramble among 4 plates with 2 tortillas each, topped with cilantro."
+   "text": "Divide the scramble among 4 plates with 2 tortillas each, topped with cilantro.",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Cool, then refrigerate in the containers."
+   "text": "Cool, then refrigerate in the containers.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   },
   {
    "section": "reheating",
-   "text": "Reheat covered, stirring halfway, until hot all the way through."
+   "text": "Reheat covered, stirring halfway, until hot all the way through.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

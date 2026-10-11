@@ -21,6 +21,7 @@ from app.llm.client import LLMResponse
 from app.llm.fake import FakeLLMClient, Scripted, response
 from app.services.inventory import LotInput, add_lot
 from app.services.settings import current_user
+from app.testing.ideas import idea_tasks
 from app.testing.llm import FakeClock, make_settings
 
 ZONE = ZoneInfo("America/New_York")
@@ -108,8 +109,10 @@ def idea(
     equipment: tuple[str, ...] = ("stovetop",),
     servings: int = 4,
     method: str = "Sear the chicken, simmer the rice, and wilt the spinach on top",
+    tasks: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    """One idea as the LLM writes it (RecipeIdea), by default a dinner that passes every check."""
+    """One idea as the LLM writes it (RecipeIdea), by default a dinner that passes every check. Its task list
+    gives `active` hands-on minutes and `total` until it's ready (step 2b.9: code computes both)."""
     lines = lines or [
         ("chicken thigh", 600, "g", "protein"),
         ("white rice", 300, "g", "carb"),
@@ -125,8 +128,7 @@ def idea(
         "meal_slots": list(slots),
         "mood": mood,
         "base_servings": servings,
-        "active_minutes": active,
-        "total_minutes": total,
+        "tasks": tasks if tasks is not None else idea_tasks(active, total, equipment),
         "equipment": list(equipment),
         "freezer_friendly": True,
         "ingredients": [{"name": n, "quantity": q, "unit": u, "role": r} for n, q, u, r in lines],
@@ -140,17 +142,32 @@ def ideas_reply(*titles_or_ideas: str | dict[str, Any], **kwargs: Any) -> LLMRes
 
 
 def step(
-    section: str, text: str, *, minutes: int | None = None, temp: int | None = None, check: str | None = None
+    section: str,
+    text: str,
+    *,
+    minutes: int | None = None,
+    temp: int | None = None,
+    check: str | None = None,
+    component: str | None = None,
+    equipment: str | None = None,
+    on: int | None = None,
+    off: int = 0,
 ) -> dict[str, Any]:
+    """A step as the steps pass writes it, with its timing (step 2b.9): hands-on defaults to its minutes."""
     return {
         "section": section,
         "text": text,
         "duration_minutes": minutes,
         "appliance_temp_f": temp,
         "doneness_check_for": check,
+        "component": component,
+        "equipment": equipment,
+        "hands_on_minutes": on if on is not None else (minutes or 0),
+        "hands_off_minutes": off,
     }
 
 
+# the default idea's steps, matching its tasks (shared 5 + 5, chicken 8 on the stove, rice 2 + 18)
 GOOD_STEPS = [
     step("prep", "Cut the chicken thigh into bite-size pieces and mince the garlic.", minutes=5),
     step(
@@ -159,12 +176,20 @@ GOOD_STEPS = [
         "salt.",
         minutes=8,
         check="chicken thigh",
+        component="chicken",
+        equipment="stovetop",
     ),
     step(
-        "rice", "Simmer the white rice in the water, covered, for 15 minutes, then let it rest.", minutes=20
+        "rice",
+        "Simmer the white rice in the water, covered, for 15 minutes, then let it rest.",
+        minutes=20,
+        component="rice",
+        equipment="stovetop",
+        on=2,
+        off=18,
     ),
     step(
-        "assembly", "Stir the spinach into the hot rice until it wilts, then top with the chicken.", minutes=2
+        "assembly", "Stir the spinach into the hot rice until it wilts, then top with the chicken.", minutes=3
     ),
     step("portioning", "Divide into 4 containers.", minutes=2),
 ]

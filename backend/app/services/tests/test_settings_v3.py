@@ -114,7 +114,7 @@ def test_preview_of_valid_settings_has_summary_lines_and_saves_nothing(client, s
         lines["meals"]
         == "Breakfast 400 · Lunch 550 · Dinner 650 · Protein dessert 200 (1,800 of 1,800 kcal planned)"
     )
-    assert lines["cook_days"] == "Mon, Wed, Thu, Sat, Sun · 45 min hands-on"
+    assert lines["cook_days"] == "Mon, Wed, Thu, Sat, Sun · 1 h 30 min start to finish"
     assert lines["equipment"] == "Stovetop, Oven, Air fryer, Microwave"
     assert lines["stores"] == "1 Stop & Shop · 2 Price Rite"
     assert lines["food_rules"] == "Beef: never · Pork: up to 1 meal a week · 10 held, 0 allowed"
@@ -148,7 +148,7 @@ def test_summary_lines_follow_the_settings(seeded_db):
     lines = {line.key: line.value for line in service.settings_summary(seeded_db, user.id, s)}
     assert lines["people"] == "1 person" and lines["budget"] == "No limit"
     assert lines["targets"] == "1,800 kcal · no protein target"
-    assert lines["cook_days"] == "Mon 30 min, Wed 45 min, Thu 45 min, Sat 45 min, Sun 45 min"
+    assert lines["cook_days"] == "Mon 30 min, Wed 1 h 30 min, Thu 1 h 30 min, Sat 1 h 30 min, Sun 1 h 30 min"
     assert lines["food_rules"].startswith("Beef: never · ") and "Pork" not in lines["food_rules"]
     assert lines["always_have"] == "Nothing yet"
 

@@ -122,35 +122,53 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Grate the garlic. Slice the tomatoes and cucumber and shred the romaine."
+   "text": "Grate the garlic. Slice the tomatoes and cucumber and shred the romaine.",
+   "component": "salad",
+   "hands_on_minutes": 8,
+   "hands_off_minutes": 0
   },
   {
    "section": "marinate",
    "text": "Toss the chicken with 2 tbsp of the oil, the lemon juice, two-thirds of the garlic, the spices and 1 tsp of the salt. Marinate at least 30 minutes.",
-   "duration_minutes": 30
+   "duration_minutes": 30,
+   "component": "chicken",
+   "hands_on_minutes": 4,
+   "hands_off_minutes": 30
   },
   {
    "section": "oven",
    "text": "Roast on a lined sheet at 425F for 22 to 25 minutes, until browned and cooked through. Rest 5 minutes, then slice thinly.",
    "duration_minutes": 25,
    "appliance_temp_f": 425,
-   "doneness_check_for": "chicken-thigh-boneless-skinless"
+   "doneness_check_for": "chicken-thigh-boneless-skinless",
+   "component": "chicken",
+   "equipment": "oven",
+   "hands_on_minutes": 6,
+   "hands_off_minutes": 25
   },
   {
    "section": "assembly",
-   "text": "Stir the yogurt with the remaining garlic, oil and salt. Warm the pitas."
+   "text": "Stir the yogurt with the remaining garlic, oil and salt. Warm the pitas.",
+   "hands_on_minutes": 5,
+   "hands_off_minutes": 0
   },
   {
    "section": "portioning",
-   "text": "Pack the chicken in 4 containers with a pita, the salad and the garlic yogurt on the side."
+   "text": "Pack the chicken in 4 containers with a pita, the salad and the garlic yogurt on the side.",
+   "hands_on_minutes": 4,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Cool, then refrigerate in the containers."
+   "text": "Cool, then refrigerate in the containers.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   },
   {
    "section": "reheating",
-   "text": "Reheat covered, stirring halfway, until hot all the way through."
+   "text": "Reheat covered, stirring halfway, until hot all the way through.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

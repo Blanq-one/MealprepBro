@@ -742,7 +742,7 @@ def test_thirty_candidates_seven_days_four_slots_solve_quickly():
         candidates.append(
             f.recipe(300 + i, f"Dessert {i}", [P], [f.line(4, rnd.randint(420, 520))], ing, base=2, active=5)
         )
-    p = f.problem(f.constraints(), candidates, ing)
+    p = f.problem(f.constraints(cook_minutes=90), candidates, ing)  # start to finish (V11, step 2b.9)
     limit_s = get_settings().solver_time_limit_seconds
     started = time.monotonic()
     s = ok(solve(p, time_limit_s=limit_s))

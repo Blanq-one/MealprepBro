@@ -4,14 +4,14 @@ Pure: the caller passes your settings and today's date. Anything you didn't answ
 
   how much      "N portions of a meal" is that meal on N days in a row from the start day; "by days" is the
                 meals you picked on each of those days. Other meals in your settings are left out.
-  how to cook   one big cook day (everything that day, with its own hands-on minutes, up to 600); a few
+  how to cook   one big cook day (everything that day, with its own start-to-finish minutes, up to 600); a few
                 sessions (the days you pick, each with its minutes); same dish, many portions (one recipe for
                 each meal, cooked on the day you pick, the weekly 5-portion cap lifted, F22); mix it up (your
                 cook days and the variety rule)
   goals         High protein: protein first and the capped protein reward (E11); High carb, Iron rich: the
                 nutrition priority (two goals: primary and secondary in tap order); Low calorie: 85% of each
-                meal's calories (§18 Q1); Cheap: the cheapest grocery mode; Quick: hands-on minutes per cook
-                day at most N; mood: every cook day's mood
+                meal's calories (§18 Q1); Cheap: the cheapest grocery mode; Quick: every cook day ready within
+                N minutes, start to finish (V11); mood: every cook day's mood
   your pantry   items turned off aren't used; "have it" items count for this plan (with an amount: that much;
                 without one: enough); "could buy" items are the only purchases in "Use what I have", and a
                 small preference on a shopping list
@@ -103,8 +103,8 @@ def _amount(prep: PrepAmount, settings: UserSettings) -> tuple[int, tuple[MealSl
 def _cook_days(
     prep: PrepAmount, settings: UserSettings, start: date, days: int, today: date
 ) -> tuple[list[DayOverride], dict[date, int]]:
-    """The cook style's days and hands-on minutes (C1b). Returns the day overrides and every cook day with its
-    minutes (before Quick and mood)."""
+    """The cook style's days and start-to-finish minutes (C1b, V11). Returns the day overrides and every cook
+    day with its minutes (before Quick and mood)."""
     plan_days = [start + timedelta(days=i) for i in range(days)]
     schedule = {d: settings.cook_day(WEEKDAYS[d.weekday()]) for d in plan_days}
     if prep.cook_style == "mix":
@@ -126,7 +126,7 @@ def _cook_days(
             f"{outside[0]:%a} {outside[0].day} isn't one."
         )
     if all(minutes == 0 for minutes in chosen.values()):
-        raise PrepAnswersError("Give your cook day some hands-on minutes.")
+        raise PrepAnswersError("Give your cook day some time.")
     overrides = [
         DayOverride(day=d, is_cook_day=chosen.get(d, 0) > 0, cook_minutes=chosen.get(d, 0)) for d in plan_days
     ]
@@ -136,7 +136,7 @@ def _cook_days(
 def _with_goals(
     overrides: list[DayOverride], cook: dict[date, int], answers: CookAnswers
 ) -> list[DayOverride]:
-    """Quick (hands-on minutes per cook day at most N) and the mood, on every cook day."""
+    """Quick (every cook day ready within N minutes, start to finish) and the mood, on every cook day."""
     quick = (answers.time_limit_minutes or QUICK_DEFAULT_MINUTES) if GoalTile.QUICK in answers.goals else None
     if quick is None and answers.mood is None:
         return overrides

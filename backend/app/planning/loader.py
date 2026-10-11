@@ -11,6 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.models import InventoryItem, Product, Recipe, RecipeIngredient, RecipeVersion
+from app.domain.cook_schedule import DishTiming, dish_alone
 from app.domain.cook_time import mood_allows
 from app.domain.enums import Equipment, MealSlot, PlanningMode, RecipeMood
 from app.domain.fridge_life import fridge_life
@@ -26,6 +27,7 @@ from app.planning.problem import (
     RecipeLine,
 )
 from app.planning.recipe_math import cost_per_portion, need_per_portion, recipe_per_portion
+from app.planning.timing import load_timings
 from app.schemas.constraints import ExtraLot, PlanConstraints
 from app.services.ingredient_data import IngredientData, load_ingredients
 from app.services.pricing import StorePrice, active_stores, current_prices
@@ -204,10 +206,15 @@ def load_ingredient_plans(
     return plans
 
 
-def _cook_day_fits(c: PlanConstraints, mood: RecipeMood, active_minutes: int) -> bool:
+def minutes_alone(c: PlanConstraints, timing: DishTiming, base_servings: int) -> int:
+    """Start to finish for the smallest batch the week could cook (one meal for everyone), on its own."""
+    return dish_alone(timing, base_servings, c.household_size).elapsed
+
+
+def _cook_day_fits(c: PlanConstraints, mood: RecipeMood, minutes: int) -> bool:
+    """A cook day whose mood allows the recipe and whose start-to-finish minutes fit it (V11)."""
     return any(
-        d.is_cook_day and mood_allows(d.mood, mood) and active_minutes <= d.cook_minutes_available
-        for d in c.days
+        d.is_cook_day and mood_allows(d.mood, mood) and minutes <= d.cook_minutes_available for d in c.days
     )
 
 
@@ -223,6 +230,7 @@ def build_problem(
     if pairs is None:
         pairs = candidate_versions(session, user_id)
     lines = version_lines(session, [v.id for _, v in pairs])
+    timings = load_timings(session, [v for _, v in pairs])
     ingredient_ids = {line.ingredient_id for ls in lines.values() for line in ls}
     plans = load_ingredient_plans(
         session,
@@ -273,8 +281,10 @@ def build_problem(
                 reasons.append(f"incomplete nutrition: {profile.name} has no {', '.join(missing_core)}")
                 codes.append("nutrition_incomplete")
         mood = RecipeMood(version.mood)
+        timing = timings[version.id]
+        alone = minutes_alone(c, timing, version.base_servings)
         blocker: str | None = None
-        if not _cook_day_fits(c, mood, version.active_minutes):
+        if not _cook_day_fits(c, mood, alone):
             days = [d for d in c.days if d.is_cook_day and mood_allows(d.mood, mood)]
             if not days:
                 blocker = "mood"
@@ -285,8 +295,8 @@ def build_problem(
                 blocker = "minutes"
                 longest = max(d.cook_minutes_available for d in days)
                 reasons.append(
-                    f"it needs {version.active_minutes} minutes of hands-on cooking; your longest cook day "
-                    f"for it allows {longest}"
+                    f"it takes about {alone} minutes start to finish; your longest cook day for it allows "
+                    f"{longest}"
                 )
             codes.append("time")
         for line in counted:
@@ -329,6 +339,7 @@ def build_problem(
                     blocker=blocker,
                     mood=mood,
                     active_minutes=version.active_minutes,
+                    minutes_needed=alone,
                 )
             )
             continue
@@ -357,6 +368,7 @@ def build_problem(
                 is_favorite=recipe.id in c.favorite_recipe_ids,
                 has_disliked=bool(ids & c.disliked_ingredient_ids),
                 uses_preferred=bool(ids & c.preferred_ingredient_ids),
+                timing=timing,
             )
         )
     return PlanningProblem(

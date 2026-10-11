@@ -97,35 +97,54 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Slice the sausage, dice the pepper and onion, and beat the eggs with the salt and pepper."
+   "text": "Slice the sausage, dice the pepper and onion, and beat the eggs with the salt and pepper.",
+   "hands_on_minutes": 7,
+   "hands_off_minutes": 0
   },
   {
    "section": "stovetop",
    "text": "Heat the oil in a large skillet over medium-high heat. Brown the sausage with the pepper, onion and smoked paprika, 6 to 8 minutes, until the sausage is cooked through.",
    "duration_minutes": 8,
-   "doneness_check_for": "chicken-sausage"
+   "doneness_check_for": "chicken-sausage",
+   "component": "filling",
+   "equipment": "stovetop",
+   "hands_on_minutes": 7,
+   "hands_off_minutes": 1
   },
   {
    "section": "stovetop",
    "text": "Lower the heat, pour in the eggs and stir until softly set with no liquid egg left, about 3 minutes.",
    "duration_minutes": 3,
-   "doneness_check_for": "egg-large"
+   "doneness_check_for": "egg-large",
+   "component": "filling",
+   "equipment": "stovetop",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0
   },
   {
    "section": "assembly",
-   "text": "Warm the tortillas, spoon in the filling and roll them up tightly."
+   "text": "Warm the tortillas, spoon in the filling and roll them up tightly.",
+   "equipment": "stovetop",
+   "hands_on_minutes": 6,
+   "hands_off_minutes": 0
   },
   {
    "section": "portioning",
-   "text": "Wrap 2 burritos per serving. Pack the salsa separately."
+   "text": "Wrap 2 burritos per serving. Pack the salsa separately.",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Cool, then refrigerate in the containers."
+   "text": "Cool, then refrigerate in the containers.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   },
   {
    "section": "reheating",
-   "text": "Reheat in a dry skillet or the microwave until hot all the way through, then add the salsa."
+   "text": "Reheat in a dry skillet or the microwave until hot all the way through, then add the salsa.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

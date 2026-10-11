@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
 
+from app.domain.cook_schedule import DishTiming, dish_alone, fallback_timing, no_appliance
 from app.domain.enums import Equipment, MealSlot, PortionSize, RecipeMood
 from app.domain.fridge_life import FridgeLife
 from app.domain.nutrition import NutritionProfile
@@ -56,6 +57,21 @@ class CandidateRecipe:
     is_favorite: bool = False
     has_disliked: bool = False
     uses_preferred: bool = False  # uses a could-buy item (a shopping list's small preference, step 2b.5)
+    # step 2b.9: the recipe's tasks for the cook-day schedule (an idea's own, tagged steps, or estimated);
+    # None = only its stated minutes (a recipe built without steps, e.g. in tests)
+    timing: DishTiming | None = None
+
+    @property
+    def schedule_timing(self) -> DishTiming:
+        return self.timing or fallback_timing(
+            self.active_minutes,
+            self.total_minutes or self.active_minutes,
+            no_cook=no_appliance(e.value for e in self.equipment),
+        )
+
+    def minutes_alone(self, portions: int) -> int:
+        """Start to finish for a batch of this recipe on its own (its components side by side)."""
+        return dish_alone(self.schedule_timing, self.base_servings, max(portions, 1)).elapsed
 
     @property
     def kcal(self) -> Decimal:
@@ -166,6 +182,7 @@ class ExcludedRecipe:
     blocker: str | None = None
     mood: RecipeMood | None = None
     active_minutes: int | None = None
+    minutes_needed: int | None = None  # step 2b.9: start to finish for its smallest batch, on its own
 
 
 @dataclass(frozen=True)
@@ -195,6 +212,9 @@ class Tightening:
     amount_ceiling: Mapping[tuple[int, date], Decimal] = field(default_factory=dict)
     # (recipe version, cook day) batches left out: their rounding steps can't land inside your limits
     forbidden: frozenset[tuple[int, date]] = frozenset()
+    # step 2b.9: sets of (recipe version, cook day, portion size) batches whose exact schedule ran over that
+    # cook day's minutes; a plan may cook at most all but one of each set together (FLOW_SPEC §20.3)
+    schedule_cuts: frozenset[frozenset[tuple[int, date, str]]] = frozenset()
 
     def merged(self, other: "Tightening") -> "Tightening":
         def add[K, V: (int, Decimal)](a: Mapping[K, V], b: Mapping[K, V], zero: V) -> dict[K, V]:
@@ -217,6 +237,7 @@ class Tightening:
             {**self.protein_scale, **other.protein_scale},
             add(self.amount_ceiling, other.amount_ceiling, Decimal(0)),
             self.forbidden | other.forbidden,
+            self.schedule_cuts | other.schedule_cuts,
         )
 
 

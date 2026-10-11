@@ -41,7 +41,7 @@ def test_default_week_follows_your_schedule():
         if not d.is_cook_day:
             assert d.cook_minutes_available == 0
         else:
-            assert d.cook_minutes_available == 45 and d.mood is RecipeMood.MEDIUM
+            assert d.cook_minutes_available == 90 and d.mood is RecipeMood.MEDIUM
     assert c.calorie_mode is CalorieMode.WEEKLY and c.weekly_kcal_target == 12600
     assert [d.kcal_target for d in c.days] == [1800] * 7
     assert c.store_ids == (1, 2) and c.store_split_min_savings_cents == 500

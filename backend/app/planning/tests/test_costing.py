@@ -106,6 +106,7 @@ def test_hands_on_and_start_to_finish_minutes_per_cook_day():
     )
     t = plan.totals
     assert t.hands_on_minutes == {MON: 60}
-    # hands-on back to back, then the longest simmer (the stew's 45 min); the oats chill in the fridge
-    assert t.elapsed_minutes == {MON: 60 + 45}
+    # the day's schedule (step 2b.9): the stew (35 hands-on) simmers while the curry (20) is made, then
+    # the curry's 30 minutes; the oats are mixed meanwhile and set in the fridge after you've left
+    assert t.elapsed_minutes == {MON: 35 + 20 + 30}
     assert t.chill_minutes == {MON: 480}

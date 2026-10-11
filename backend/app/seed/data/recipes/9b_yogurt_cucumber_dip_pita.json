@@ -76,19 +76,27 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Grate the cucumber and squeeze out the liquid. Grate the garlic and chop the mint."
+   "text": "Grate the cucumber and squeeze out the liquid. Grate the garlic and chop the mint.",
+   "hands_on_minutes": 5,
+   "hands_off_minutes": 0
   },
   {
    "section": "no_cook",
-   "text": "Stir the yogurt, cucumber, garlic, lemon juice, mint and salt; drizzle with the oil."
+   "text": "Stir the yogurt, cucumber, garlic, lemon juice, mint and salt; drizzle with the oil.",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0
   },
   {
    "section": "portioning",
-   "text": "Divide the dip into 4 containers with a pita, cut in wedges, each."
+   "text": "Divide the dip into 4 containers with a pita, cut in wedges, each.",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Refrigerate the dip; keep the pita in its bag."
+   "text": "Refrigerate the dip; keep the pita in its bag.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

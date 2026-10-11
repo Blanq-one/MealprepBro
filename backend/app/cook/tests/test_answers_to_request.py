@@ -71,10 +71,10 @@ def test_one_big_cook_day_cooks_everything_that_day_with_its_own_minutes():
         TODAY,
     )
     cook = [(o.day, o.is_cook_day, o.cook_minutes) for o in plan.request.day_overrides]
-    assert cook[0] == (TODAY, True, 300)  # well above the usual 45
+    assert cook[0] == (TODAY, True, 300)  # well above the usual 90
     assert all(not is_cook and minutes == 0 for _, is_cook, minutes in cook[1:])
     default = resolve_prep(answers({**_big("today"), "cook_minutes": None}), SETTINGS, TODAY)
-    assert default.request.day_overrides[0].cook_minutes == 45  # Wednesday's own minutes
+    assert default.request.day_overrides[0].cook_minutes == 90  # Wednesday's own minutes
 
 
 def _big(day: str) -> dict[str, Any]:

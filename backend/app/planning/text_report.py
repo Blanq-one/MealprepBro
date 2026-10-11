@@ -123,11 +123,11 @@ def format_plan(
         cooked = [b for b in plan.batches if b.cook_on == spec.day]
         head = f"{spec.day:%a}".upper() + f" {spec.day:%b} {spec.day.day}"
         if spec.is_cook_day:
-            used = t.hands_on_minutes.get(spec.day, 0)
+            elapsed = t.elapsed_minutes.get(spec.day, 0)
             cook_list = ", ".join(f"{b.title} x{b.portions}" for b in cooked) or "nothing"
-            timing = f"{used} of {spec.cook_minutes_available} hands-on min"
+            timing = f"{elapsed} of {spec.cook_minutes_available} min start to finish"
             if cooked:
-                timing += f", about {_minutes(t.elapsed_minutes.get(spec.day, 0))} start to finish"
+                timing += f", {_minutes(t.hands_on_minutes.get(spec.day, 0))} hands-on"
             if chill := t.chill_minutes.get(spec.day, 0):
                 timing += f", then up to {_minutes(chill)} in the fridge"
             lines.append(f"{head} | cook day ({timing}): {cook_list}")

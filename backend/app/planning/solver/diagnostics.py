@@ -7,12 +7,14 @@ be bought (inventory mode: exactly what's missing from your inventory).
 """
 
 from collections import defaultdict
+from dataclasses import replace
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
 
 import pulp
 
-from app.domain.cook_time import MOOD_ORDER
+from app.domain.cook_schedule import minutes_text, round_up_5
+from app.domain.cook_time import MOOD_ORDER, mood_allows
 from app.domain.enums import CalorieMode, MealSlot, PlanningMode, RecipeMood
 from app.planning.problem import ExcludedRecipe, PlanningProblem
 from app.planning.solver.model import (
@@ -21,14 +23,23 @@ from app.planning.solver.model import (
     _Model,
     batch_plan,
     build_model,
+    extract,
     run_solver,
 )
+from app.planning.timing import day_schedules, planned_batch
 from app.schemas.constraints import PlanConstraints
 
 SLACK_TOLERANCE = 0.5
 # The elastic solves stop within 1 penalty point of the best: 10 cents of a top-up (which is rounded up to
 # whole dollars anyway), 1 kcal, a fifth of a minute; proving the last cent is wasted work (2b.5).
 EXPLAIN_GAP_ABS = 1.0
+# The smallest top-up or budget is the cost of the cheapest plan that meets every other limit (step 2b.9): the
+# cheapest-plan model finds it far faster than relaxing the limit (with 90-minute cook days that took over 5
+# minutes on a pantry-only week). It stops within 2% or 50 cents; the suggestion is rounded up to whole
+# dollars.
+MONEY_GAP_REL = 0.02
+MONEY_GAP_ABS_DOLLARS = 0.5
+OPEN_LIMIT_CENTS = 10**9  # a limit nothing reaches, so what the limit covers is still counted
 MIN_LISTED = {"g": 5.0, "ml": 5.0, "count": 0.25}
 
 
@@ -171,7 +182,9 @@ def left_out_diagnostic(
     if slow:
         longest = max((d.cook_minutes_available for d in cook_days), default=0)
         parts.append(
-            _recipes_that(len(slow), f"need more than the {longest} minutes of hands-on cooking a day allows")
+            _recipes_that(
+                len(slow), f"need more than the {longest} minutes start to finish a cook day allows"
+            )
         )
     unpriced: dict[str, int] = defaultdict(int)
     other: dict[str, int] = defaultdict(int)
@@ -220,6 +233,10 @@ def precheck(problem: PlanningProblem) -> tuple[Diagnostic, ...]:
     slots = sorted({s for d in c.days for s in d.slots}, key=lambda s: list(MealSlot).index(s))
     for slot in slots:
         if not any(slot in r.meal_slots for r in problem.candidates):
+            if (fix := _slot_time_fix(problem, slot)) is not None:
+                if fix not in out:
+                    out.append(fix)
+                continue
             why = _reasons_for_slot(problem.excluded, slot)
             detail = f" Left out: {' | '.join(why)}." if why else ""
             out.append(
@@ -232,36 +249,66 @@ def precheck(problem: PlanningProblem) -> tuple[Diagnostic, ...]:
     cook_days = [d for d in c.days if d.is_cook_day]
     if not batch_plan(problem):
         most = max((d.cook_minutes_available for d in cook_days), default=0)
-        shortest = min((r.active_minutes for r in problem.candidates), default=0)
+        shortest = min((r.minutes_alone(c.household_size) for r in problem.candidates), default=0)
         out.append(
             Diagnostic(
                 "COOK_TIME_TOO_SHORT",
-                f"No recipe fits any cook day: the most hands-on time on a cook day is {most} minutes, "
-                "and the "
-                f"quickest recipe needs {shortest}.",
+                f"No recipe fits any cook day: the longest cook day has {minutes_text(most)} start to "
+                f"finish, and the quickest recipe needs {minutes_text(shortest)}.",
                 amount=shortest - most,
+                suggested_minutes=round_up_5(shortest),
             )
         )
     if out:
-        held = held_diagnostic(problem.excluded)
-        if held is not None:
-            out.append(held)
+        out += [d for d in _left_out(problem) if d not in out]
     return tuple(out)
+
+
+def _slot_time_fix(problem: PlanningProblem, slot: MealSlot) -> Diagnostic | None:
+    """A meal with no recipe only because none fits a cook day's time or mood (step 2b.9: the start-to-finish
+    filter can leave a short day none): the time fix for its quickest recipe, said once (P4); the mood fix
+    comes with the left-out summary."""
+    c = problem.constraints
+    blocked = [e for e in problem.excluded if slot in e.meal_slots]
+    if not blocked or any(set(e.codes) != {"time"} for e in blocked):
+        return None
+    slow = [e for e in blocked if e.blocker == "minutes" and e.minutes_needed]
+    if not slow:
+        return None
+    quickest = min(slow, key=lambda e: (e.minutes_needed or 0, e.version_id))
+    needed = quickest.minutes_needed or 0
+    days = [
+        d for d in c.days if d.is_cook_day and (quickest.mood is None or mood_allows(d.mood, quickest.mood))
+    ]
+    day = max(
+        days or [d for d in c.days if d.is_cook_day],
+        key=lambda d: (d.cook_minutes_available, -d.day.toordinal()),
+    )
+    return Diagnostic(
+        "COOK_TIME_SHORT",
+        f"{weekday(c, day.day)} needs about {minutes_text(needed)} start to finish; you set "
+        f"{minutes_text(day.cook_minutes_available)}.",
+        day=day.day,
+        amount=needed - day.cook_minutes_available,
+        suggested_minutes=round_up_5(needed),
+    )
 
 
 def explain(problem: PlanningProblem, *, time_limit_s: int = 20) -> tuple[Diagnostic, ...]:
     """Relax hard limits and report the ones that had to give. With a purchase limit, first relax only that:
     if every other limit can be met, the money is the only thing in the way, and the report says exactly
     what the cheapest such plan costs and buys (instead of trading a few dollars for a few minutes)."""
-    if problem.constraints.purchase_limit_cents is not None:
-        money_only = build_model(problem, elastic=True)
-        for kind, group in money_only.slacks.items():
-            if kind != "budget":
-                for var in group.values():
-                    var.upBound = 0
-        status = run_solver(money_only, time_limit_s, 0.0, EXPLAIN_GAP_ABS)
+    c = problem.constraints
+    if c.purchase_limit_cents is not None:
+        unlimited = replace(
+            problem, constraints=c.model_copy(update={"purchase_limit_cents": OPEN_LIMIT_CENTS})
+        )
+        cheapest = build_model(unlimited, cheapest=True)
+        status = run_solver(cheapest, time_limit_s, MONEY_GAP_REL, MONEY_GAP_ABS_DOLLARS)
         if status in (pulp.LpSolutionOptimal, pulp.LpSolutionIntegerFeasible):
-            return _report(problem, money_only)
+            needed = round(float(pulp.value(cheapest.limited_cost) or 0))
+            if needed > c.purchase_limit_cents:
+                return (_money_diagnostic(problem, cheapest, needed), *_left_out(problem))
     model = build_model(problem, elastic=True)
     status = run_solver(model, time_limit_s, 0.0, EXPLAIN_GAP_ABS)
     if status not in (pulp.LpSolutionOptimal, pulp.LpSolutionIntegerFeasible):
@@ -273,6 +320,21 @@ def explain(problem: PlanningProblem, *, time_limit_s: int = 20) -> tuple[Diagno
             ),
         )
     return _report(problem, model)
+
+
+def _elapsed_by_day(problem: PlanningProblem, model: _Model) -> dict[date, int]:
+    """Start to finish per cook day of a solved (relaxed) model's batches, by their exact schedule."""
+    solution = extract(problem, model, pulp.LpSolutionIntegerFeasible)
+    pairs = []
+    for b in solution.batches:
+        recipe = problem.candidate(b.version_id)
+        pairs.append(
+            (
+                b.cook_on,
+                planned_batch(recipe, b.portion_size.value, b.portions),
+            )
+        )
+    return {day: s.elapsed for day, s in day_schedules(pairs).items()}
 
 
 def _report(problem: PlanningProblem, model: _Model) -> tuple[Diagnostic, ...]:
@@ -348,17 +410,20 @@ def _report(problem: PlanningProblem, model: _Model) -> tuple[Diagnostic, ...]:
                     code, f"The week would be {n:,} kcal {label} its limit of {limit:,} kcal.", amount=n
                 )
             )
+    elapsed = _elapsed_by_day(problem, model) if model.slacks.get("time") else {}
     for day, var in model.slacks.get("time", {}).items():
         if amount(var) > SLACK_TOLERANCE:
-            n = round(amount(var))
             have = c.day(day).cook_minutes_available
+            # the relaxed plan's own schedule for that day (step 2b.9), at least what its limits gave
+            needed = max(have + round(amount(var)), elapsed.get(day, 0))
             out.append(
                 Diagnostic(
                     "COOK_TIME_SHORT",
-                    f"{weekday(c, day)} needs {have + n} minutes of hands-on cooking; you set {have}.",
+                    f"{weekday(c, day)} needs about {minutes_text(needed)} start to finish; you set "
+                    f"{minutes_text(have)}.",
                     day=day,
-                    amount=n,
-                    suggested_minutes=have + n,
+                    amount=needed - have,
+                    suggested_minutes=round_up_5(needed),
                 )
             )
     target = c.daily_protein_target_g
@@ -388,41 +453,8 @@ def _report(problem: PlanningProblem, model: _Model) -> tuple[Diagnostic, ...]:
         )
     budget = model.slacks.get("budget", {}).get("budget")
     if budget is not None and amount(budget) > SLACK_TOLERANCE:
-        cents = round(amount(budget))
-        purchase_limit = c.purchase_limit_cents
-        assert purchase_limit is not None
-        needed = purchase_limit + cents
-        gap = shopping_gap(problem, model)
-        if c.planning_mode is PlanningMode.INVENTORY:
-            start = (
-                "Your inventory doesn't cover this week"
-                if purchase_limit == 0
-                else f"Your inventory plus a {_money(purchase_limit)} top-up doesn't cover this week"
-            )
-            message = f"{start}. The smallest top-up that makes a plan is about {_money(needed)}."
-            out.append(
-                Diagnostic(
-                    "INVENTORY_SHORT",
-                    message,
-                    amount=cents,
-                    suggested_cents=_whole_dollars(needed),
-                    items=_gap_items(gap),
-                )
-            )
-        else:
-            message = (
-                f"The cheapest plan that fits costs about {_money(needed)} in regular groceries, "
-                f"{_money(cents)} over your budget of {_money(purchase_limit)}."
-            )
-            out.append(
-                Diagnostic(
-                    "BUDGET_SHORT",
-                    message,
-                    amount=cents,
-                    suggested_cents=_whole_dollars(needed),
-                    items=_gap_items(gap),
-                )
-            )
+        assert c.purchase_limit_cents is not None
+        out.append(_money_diagnostic(problem, model, c.purchase_limit_cents + round(amount(budget))))
     for (label, monday), var in model.slacks.get("cap", {}).items():
         if amount(var) > SLACK_TOLERANCE:
             used = c.cap_used(monday, label)
@@ -459,9 +491,40 @@ def _report(problem: PlanningProblem, model: _Model) -> tuple[Diagnostic, ...]:
                 "INFEASIBLE", "No plan fits all limits at once (the solver timed out narrowing it down)."
             )
         )
+    return (*out, *_left_out(problem))
+
+
+def _left_out(problem: PlanningProblem) -> tuple[Diagnostic, ...]:
+    """Held items, or else why recipes are missing from the pool."""
     held = held_diagnostic(problem.excluded)
     if held is not None:
-        out.append(held)
-    elif (left_out := left_out_diagnostic(problem.excluded, c)) is not None:
-        out.append(left_out)
-    return tuple(out)
+        return (held,)
+    left_out = left_out_diagnostic(problem.excluded, problem.constraints)
+    return (left_out,) if left_out is not None else ()
+
+
+def _money_diagnostic(problem: PlanningProblem, model: _Model, needed: int) -> Diagnostic:
+    """The money a plan needs (`needed` cents, what the limit covers) against your limit, with what it would
+    buy."""
+    c = problem.constraints
+    purchase_limit = c.purchase_limit_cents
+    assert purchase_limit is not None
+    cents = needed - purchase_limit
+    items = _gap_items(shopping_gap(problem, model))
+    if c.planning_mode is PlanningMode.INVENTORY:
+        start = (
+            "Your inventory doesn't cover this week"
+            if purchase_limit == 0
+            else f"Your inventory plus a {_money(purchase_limit)} top-up doesn't cover this week"
+        )
+        message = f"{start}. The smallest top-up that makes a plan is about {_money(needed)}."
+        return Diagnostic(
+            "INVENTORY_SHORT", message, amount=cents, suggested_cents=_whole_dollars(needed), items=items
+        )
+    message = (
+        f"The cheapest plan that fits costs about {_money(needed)} in regular groceries, "
+        f"{_money(cents)} over your budget of {_money(purchase_limit)}."
+    )
+    return Diagnostic(
+        "BUDGET_SHORT", message, amount=cents, suggested_cents=_whole_dollars(needed), items=items
+    )

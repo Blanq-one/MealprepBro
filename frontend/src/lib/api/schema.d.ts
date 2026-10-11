@@ -1334,6 +1334,11 @@ export interface components {
             is_cook_day: boolean;
             mood: components["schemas"]["RecipeMood"];
             weekday: components["schemas"]["Weekday"];
+            /**
+             * Weeknight Minutes
+             * @default 30
+             */
+            weeknight_minutes: number;
         };
         /**
          * CookHomeOut
@@ -1646,12 +1651,14 @@ export interface components {
             kcal_target: number;
             /** Meals */
             meals: components["schemas"]["MealOut"][];
-            /** Prep Order */
-            prep_order?: string[];
             /** Protein G */
             protein_g: string;
             /** Thaw Notes */
             thaw_notes?: string[];
+            /** Time Display */
+            time_display?: string | null;
+            /** Timeline */
+            timeline?: components["schemas"]["TimelineLineOut"][];
         };
         /**
          * DayOverride
@@ -3596,6 +3603,36 @@ export interface components {
             name: string;
             substitute: components["schemas"]["SubstituteOut"];
         };
+        /**
+         * TimelineLineOut
+         * @description One line of a cook day's timeline (FLOW_SPEC §20.4), templated by code; times from the schedule.
+         */
+        TimelineLineOut: {
+            /** At Display */
+            at_display: string;
+            /** At Min */
+            at_min: number;
+            /** Cook Batch Id */
+            cook_batch_id?: number | null;
+            /** Dish */
+            dish?: string | null;
+            /** Equipment */
+            equipment?: string | null;
+            /**
+             * Estimated
+             * @default false
+             */
+            estimated: boolean;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "hands_on" | "runs" | "wait" | "preheat" | "done";
+            /** Minutes */
+            minutes: number;
+            /** Text */
+            text: string;
+        };
         /** TodayMealOut */
         TodayMealOut: {
             /** Cook Batch Id */
@@ -3654,6 +3691,11 @@ export interface components {
             calorie_mode: components["schemas"]["CalorieMode"];
             /** Cook Schedule */
             cook_schedule: components["schemas"]["CookDaySetting"][];
+            /**
+             * Cook Time Note
+             * @default false
+             */
+            cook_time_note: boolean;
             /** Daily Amount Caps */
             daily_amount_caps?: components["schemas"]["DailyAmountCapSetting"][];
             /**

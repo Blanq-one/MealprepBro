@@ -21,7 +21,7 @@ class DayOverride(_Strict):
 
     day: date
     is_cook_day: bool | None = None
-    cook_minutes: int | None = Field(default=None, ge=0, le=600)  # hands-on minutes
+    cook_minutes: int | None = Field(default=None, ge=0, le=600)  # start to finish (V11, step 2b.9)
     mood: RecipeMood | None = None
 
 
@@ -142,6 +142,20 @@ class MealOut(BaseModel):
     source_display: str | None = None
 
 
+class TimelineLineOut(BaseModel):
+    """One line of a cook day's timeline (FLOW_SPEC §20.4), templated by code; times from the schedule."""
+
+    at_min: int  # minutes from the start
+    at_display: str  # "0:12"
+    text: str  # "Chicken into the oven at 425°F (25 min)"
+    kind: Literal["hands_on", "runs", "wait", "preheat", "done"]
+    minutes: int  # hands-on minutes for hands-on work; the whole task for work that runs or waits
+    equipment: str | None = None
+    estimated: bool = False  # the recipe's steps carry no timing tags; the times are estimates (V15)
+    dish: str | None = None  # the batch's recipe title; None for preheating and Done
+    cook_batch_id: int | None = None  # opens that dish's steps (cooking mode, 2b.7)
+
+
 class DayOut(BaseModel):
     day: date
     is_cook_day: bool
@@ -149,9 +163,9 @@ class DayOut(BaseModel):
     kcal_target: int
     protein_g: Decimal
     hands_on_minutes: int
-    elapsed_minutes: int  # start to finish (an upper estimate: hands-on work back to back + longest wait)
-    chill_minutes: int  # the longest fridge wait of a no-cook recipe cooked that day (0 = none)
-    cook_minutes_available: int
+    elapsed_minutes: int  # start to finish: the day's schedule (step 2b.9)
+    chill_minutes: int  # the longest last wait in the fridge (overnight oats), after you leave the kitchen
+    cook_minutes_available: int  # start to finish (V11)
     meals: list[MealOut]
     # Phase 2b
     cook_note: str  # "Cook: Chicken over rice (5 portions)" or "Nothing to cook, eating prepped meals"
@@ -161,7 +175,10 @@ class DayOut(BaseModel):
     freeze_steps: list[str] = Field(default_factory=list)  # the shopping day: raw protein to freeze today
     freeze_today: list[str] = Field(default_factory=list)  # a cook day: "Freeze 2 portions of … once cooled."
     thaw_notes: list[str] = Field(default_factory=list)  # "Thaw tomorrow's lunch (…) in the fridge tonight."
-    prep_order: list[str] = Field(default_factory=list)  # "1. Start … first: it goes in the oven", …
+    # step 2b.9: the cook day's timeline (it replaces the prep order) and its header line, "about 1 h start
+    # to finish · 35 min hands-on"
+    timeline: list[TimelineLineOut] = Field(default_factory=list)
+    time_display: str | None = None
 
 
 class BatchOut(BaseModel):

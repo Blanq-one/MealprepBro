@@ -13,6 +13,15 @@ def make_solver(*, time_limit_s: int, gap_rel: float, gap_abs: float) -> pulp.Lp
     return pulp.PULP_CBC_CMD(msg=False, timeLimit=time_limit_s, gapRel=gap_rel, gapAbs=gap_abs, threads=1)
 
 
+def solve_relaxation(prob: pulp.LpProblem, *, time_limit_s: int) -> int:
+    """Solve the LP relaxation in place (every integer treated as continuous); returns PuLP's status."""
+    if pulp.HiGHS().available():
+        solver: pulp.LpSolver = pulp.HiGHS(msg=False, timeLimit=time_limit_s, mip=False, threads=1)
+    else:
+        solver = pulp.PULP_CBC_CMD(msg=False, timeLimit=time_limit_s, mip=False, threads=1)
+    return int(prob.solve(solver))
+
+
 def solve_milp(prob: pulp.LpProblem, *, time_limit_s: int, gap_rel: float, gap_abs: float) -> int:
     """Solve in place; returns PuLP's solution status (optimal, integer-feasible, infeasible, none)."""
     prob.solve(make_solver(time_limit_s=time_limit_s, gap_rel=gap_rel, gap_abs=gap_abs))

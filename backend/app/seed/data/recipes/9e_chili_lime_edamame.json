@@ -49,24 +49,35 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Put the frozen edamame in a microwave-safe bowl with 2 tbsp of water and cover."
+   "text": "Put the frozen edamame in a microwave-safe bowl with 2 tbsp of water and cover.",
+   "hands_on_minutes": 1,
+   "hands_off_minutes": 0
   },
   {
    "section": "microwave",
    "text": "Microwave on high 4 to 5 minutes, stirring halfway, until hot. Drain.",
-   "duration_minutes": 5
+   "duration_minutes": 5,
+   "equipment": "microwave",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 4
   },
   {
    "section": "assembly",
-   "text": "Toss with the lime juice, chili powder and salt."
+   "text": "Toss with the lime juice, chili powder and salt.",
+   "hands_on_minutes": 1,
+   "hands_off_minutes": 0
   },
   {
    "section": "portioning",
-   "text": "Divide among 4 containers."
+   "text": "Divide among 4 containers.",
+   "hands_on_minutes": 1,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Cool, then refrigerate in the containers."
+   "text": "Cool, then refrigerate in the containers.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

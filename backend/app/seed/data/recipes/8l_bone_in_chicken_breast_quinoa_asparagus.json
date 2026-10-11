@@ -99,37 +99,58 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Heat the oven to 400F. Rub the chicken with 2 tbsp of the oil, the lemon juice, garlic, oregano, paprika and most of the salt and pepper. Trim the asparagus."
+   "text": "Heat the oven to 400F. Rub the chicken with 2 tbsp of the oil, the lemon juice, garlic, oregano, paprika and most of the salt and pepper. Trim the asparagus.",
+   "component": "chicken",
+   "hands_on_minutes": 8,
+   "hands_off_minutes": 0
   },
   {
    "section": "oven",
    "text": "Roast the chicken skin side up at 400F for 35 to 40 minutes, until golden and cooked through to the bone.",
    "duration_minutes": 40,
    "appliance_temp_f": 400,
-   "doneness_check_for": "chicken-breast-bone-in-skin-on"
+   "doneness_check_for": "chicken-breast-bone-in-skin-on",
+   "component": "chicken",
+   "equipment": "oven",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 38
   },
   {
    "section": "stovetop",
    "text": "Meanwhile simmer the quinoa in the broth, covered, 15 minutes; rest 5 minutes and fluff.",
-   "duration_minutes": 20
+   "duration_minutes": 20,
+   "component": "quinoa",
+   "equipment": "stovetop",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 17
   },
   {
    "section": "oven",
    "text": "For the last 12 minutes, roast the asparagus tossed with the remaining oil and salt alongside the chicken.",
    "duration_minutes": 12,
-   "appliance_temp_f": 400
+   "appliance_temp_f": 400,
+   "component": "asparagus",
+   "equipment": "oven",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 10
   },
   {
    "section": "portioning",
-   "text": "Slice the chicken off the bone and divide it with the quinoa and asparagus among 4 containers."
+   "text": "Slice the chicken off the bone and divide it with the quinoa and asparagus among 4 containers.",
+   "hands_on_minutes": 5,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Cool, then refrigerate in the containers."
+   "text": "Cool, then refrigerate in the containers.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   },
   {
    "section": "reheating",
-   "text": "Reheat covered, stirring halfway, until hot all the way through."
+   "text": "Reheat covered, stirring halfway, until hot all the way through.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

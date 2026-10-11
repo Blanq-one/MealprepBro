@@ -31,14 +31,14 @@
   {"ingredient": "flour-tortilla-small", "quantity": "8", "unit": "count", "preparation": "2 per serving", "role": "carb", "component": "tortillas"}
  ],
  "steps": [
-  {"section": "prep", "text": "Cut the chicken into bite-size pieces. Chop the onion and tomatoes. Grate the ginger and garlic."},
-  {"section": "stovetop", "text": "Wilt the spinach in a large pot with a splash of water, about 2 minutes. Cool slightly, then chop finely.", "duration_minutes": 3},
-  {"section": "stovetop", "text": "Heat the oil over medium heat. Cook the onion until golden, about 8 minutes. Add the ginger and garlic for 1 minute, then the tomatoes, turmeric, chili powder, cumin, coriander and salt; cook until soft, about 6 minutes.", "duration_minutes": 15},
-  {"section": "stovetop", "text": "Add the chicken and water, cover and simmer about 15 minutes, until the chicken is cooked through.", "duration_minutes": 15, "doneness_check_for": "chicken-thigh-boneless-skinless"},
-  {"section": "stovetop", "text": "Stir in the chopped spinach and garam masala and simmer 3 minutes.", "duration_minutes": 3},
-  {"section": "assembly", "text": "Warm each tortilla on a dry pan about 30 seconds per side, like chapati."},
-  {"section": "portioning", "text": "Divide the gravy among 4 containers, with 2 tortillas per serving packed separately."},
-  {"section": "storage", "text": "Cool the gravy, then refrigerate. Keep the tortillas in their bag."},
-  {"section": "reheating", "text": "Reheat the gravy covered, stirring halfway. Warm the tortillas just before eating."}
+  {"section": "prep", "text": "Cut the chicken into bite-size pieces. Chop the onion and tomatoes. Grate the ginger and garlic.", "component": "gravy", "hands_on_minutes": 9, "hands_off_minutes": 0},
+  {"section": "stovetop", "text": "Wilt the spinach in a large pot with a splash of water, about 2 minutes. Cool slightly, then chop finely.", "duration_minutes": 3, "component": "spinach", "equipment": "stovetop", "hands_on_minutes": 4, "hands_off_minutes": 1},
+  {"section": "stovetop", "text": "Heat the oil over medium heat. Cook the onion until golden, about 8 minutes. Add the ginger and garlic for 1 minute, then the tomatoes, turmeric, chili powder, cumin, coriander and salt; cook until soft, about 6 minutes.", "duration_minutes": 15, "component": "gravy", "equipment": "stovetop", "hands_on_minutes": 10, "hands_off_minutes": 5},
+  {"section": "stovetop", "text": "Add the chicken and water, cover and simmer about 15 minutes, until the chicken is cooked through.", "duration_minutes": 15, "doneness_check_for": "chicken-thigh-boneless-skinless", "component": "gravy", "equipment": "stovetop", "hands_on_minutes": 2, "hands_off_minutes": 13},
+  {"section": "stovetop", "text": "Stir in the chopped spinach and garam masala and simmer 3 minutes.", "duration_minutes": 3, "equipment": "stovetop", "hands_on_minutes": 1, "hands_off_minutes": 2},
+  {"section": "assembly", "text": "Warm each tortilla on a dry pan about 30 seconds per side, like chapati.", "component": "tortillas", "equipment": "stovetop", "hands_on_minutes": 4, "hands_off_minutes": 0},
+  {"section": "portioning", "text": "Divide the gravy among 4 containers, with 2 tortillas per serving packed separately.", "hands_on_minutes": 3, "hands_off_minutes": 0},
+  {"section": "storage", "text": "Cool the gravy, then refrigerate. Keep the tortillas in their bag.", "hands_on_minutes": 0, "hands_off_minutes": 0},
+  {"section": "reheating", "text": "Reheat the gravy covered, stirring halfway. Warm the tortillas just before eating.", "hands_on_minutes": 0, "hands_off_minutes": 0}
  ]
 }

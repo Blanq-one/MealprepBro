@@ -23,7 +23,7 @@ const SIZE_LABELS: Record<string, string> = { small: "Small", normal: "Normal", 
 function cookMinutesValue(s: UserSettings): string {
   const minutes = new Set(s.cook_schedule.filter((d) => d.is_cook_day).map((d) => d.cook_minutes));
   if (minutes.size === 0) return "No cook days";
-  return minutes.size === 1 ? `${minutesLabel([...minutes][0] as number)} hands-on` : "Different each day";
+  return minutes.size === 1 ? `${minutesLabel([...minutes][0] as number)} start to finish` : "Different each day";
 }
 
 function moodsValue(s: UserSettings): string {

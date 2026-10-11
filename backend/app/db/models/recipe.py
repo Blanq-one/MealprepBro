@@ -95,6 +95,10 @@ class RecipeVersion(Base):
     # Phase 2b (0007, step 2b.5): how to freeze a recipe that freezes well ("freeze the chicken and rice;
     # make the yogurt sauce fresh"); NULL = no note
     freeze_note: Mapped[str | None] = mapped_column(Text)
+    # Phase 2b (0008, step 2b.9): an idea's task list (FLOW_SPEC §20.1: component, equipment, hands-on and
+    # hands-off minutes, appliance temperature); its active and total minutes are computed from it. NULL = not
+    # an idea, or an idea saved before 2b.9
+    tasks: Mapped[list[dict[str, Any]] | None] = mapped_column(JSONB)
 
 
 class RecipeIngredient(Base):
@@ -125,7 +129,14 @@ class RecipeIngredient(Base):
 
 class RecipeStep(Base):
     __tablename__ = "recipe_step"
-    __table_args__ = (UniqueConstraint("recipe_version_id", "position"),)
+    __table_args__ = (
+        UniqueConstraint("recipe_version_id", "position"),
+        CheckConstraint(
+            "(hands_on_minutes IS NULL OR hands_on_minutes >= 0) AND "
+            "(hands_off_minutes IS NULL OR hands_off_minutes >= 0)",
+            name="timing_not_negative",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
     recipe_version_id: Mapped[int] = mapped_column(
@@ -137,3 +148,10 @@ class RecipeStep(Base):
     duration_minutes: Mapped[int | None] = mapped_column(SmallInteger)
     appliance_temp_f: Mapped[int | None] = mapped_column(SmallInteger)
     doneness_check_ingredient_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("ingredient.id"))
+    # Phase 2b (0008, step 2b.9, FLOW_SPEC §20.1): the part of the dish it works on (NULL = shared: prep for
+    # everything, assembly, portioning), the appliance it occupies (NULL = hands only, or waiting), and its
+    # hands-on and hands-off minutes. NULL minutes = not tagged: the scheduler estimates them (V15)
+    component: Mapped[str | None] = mapped_column(Text)
+    equipment: Mapped[str | None] = mapped_column(Text)
+    hands_on_minutes: Mapped[int | None] = mapped_column(SmallInteger)
+    hands_off_minutes: Mapped[int | None] = mapped_column(SmallInteger)

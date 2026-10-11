@@ -109,25 +109,37 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Chop the cilantro, mint and jalapeño as finely as you can and stir them into the yogurt with the lime juice and a pinch of salt for the chutney. Slice the onion and cut the cucumber."
+   "text": "Chop the cilantro, mint and jalapeño as finely as you can and stir them into the yogurt with the lime juice and a pinch of salt for the chutney. Slice the onion and cut the cucumber.",
+   "hands_on_minutes": 10,
+   "hands_off_minutes": 0
   },
   {
    "section": "stovetop",
    "text": "Heat a little oil in a skillet over medium heat. Pour in 1 beaten egg with a pinch of salt and garam masala, lay a tortilla on top and cook until the egg sets, about 1 minute; flip and cook 30 seconds. Repeat for each roll.",
    "duration_minutes": 16,
-   "doneness_check_for": "egg-large"
+   "doneness_check_for": "egg-large",
+   "component": "rolls",
+   "equipment": "stovetop",
+   "hands_on_minutes": 14,
+   "hands_off_minutes": 2
   },
   {
    "section": "assembly",
-   "text": "Fill each roll with onion, cucumber and chutney, egg side in, and roll up."
+   "text": "Fill each roll with onion, cucumber and chutney, egg side in, and roll up.",
+   "hands_on_minutes": 4,
+   "hands_off_minutes": 0
   },
   {
    "section": "portioning",
-   "text": "Serve 2 rolls per person."
+   "text": "Serve 2 rolls per person.",
+   "hands_on_minutes": 1,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Cool, then refrigerate in the containers."
+   "text": "Cool, then refrigerate in the containers.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

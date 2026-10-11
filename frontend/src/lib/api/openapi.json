@@ -1025,6 +1025,13 @@
      },
      "weekday": {
       "$ref": "#/components/schemas/Weekday"
+     },
+     "weeknight_minutes": {
+      "default": 30,
+      "maximum": 240.0,
+      "minimum": 0.0,
+      "title": "Weeknight Minutes",
+      "type": "integer"
      }
     },
     "required": [
@@ -1945,13 +1952,6 @@
       "title": "Meals",
       "type": "array"
      },
-     "prep_order": {
-      "items": {
-       "type": "string"
-      },
-      "title": "Prep Order",
-      "type": "array"
-     },
      "protein_g": {
       "title": "Protein G",
       "type": "string"
@@ -1961,6 +1961,24 @@
        "type": "string"
       },
       "title": "Thaw Notes",
+      "type": "array"
+     },
+     "time_display": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Time Display"
+     },
+     "timeline": {
+      "items": {
+       "$ref": "#/components/schemas/TimelineLineOut"
+      },
+      "title": "Timeline",
       "type": "array"
      }
     },
@@ -7692,6 +7710,85 @@
     "title": "SwapLineOut",
     "type": "object"
    },
+   "TimelineLineOut": {
+    "description": "One line of a cook day's timeline (FLOW_SPEC \u00a720.4), templated by code; times from the schedule.",
+    "properties": {
+     "at_display": {
+      "title": "At Display",
+      "type": "string"
+     },
+     "at_min": {
+      "title": "At Min",
+      "type": "integer"
+     },
+     "cook_batch_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cook Batch Id"
+     },
+     "dish": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Dish"
+     },
+     "equipment": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Equipment"
+     },
+     "estimated": {
+      "default": false,
+      "title": "Estimated",
+      "type": "boolean"
+     },
+     "kind": {
+      "enum": [
+       "hands_on",
+       "runs",
+       "wait",
+       "preheat",
+       "done"
+      ],
+      "title": "Kind",
+      "type": "string"
+     },
+     "minutes": {
+      "title": "Minutes",
+      "type": "integer"
+     },
+     "text": {
+      "title": "Text",
+      "type": "string"
+     }
+    },
+    "required": [
+     "at_min",
+     "at_display",
+     "text",
+     "kind",
+     "minutes"
+    ],
+    "title": "TimelineLineOut",
+    "type": "object"
+   },
    "TodayMealOut": {
     "properties": {
      "cook_batch_id": {
@@ -7868,6 +7965,11 @@
       "minItems": 7,
       "title": "Cook Schedule",
       "type": "array"
+     },
+     "cook_time_note": {
+      "default": false,
+      "title": "Cook Time Note",
+      "type": "boolean"
      },
      "daily_amount_caps": {
       "items": {

@@ -120,6 +120,7 @@ def plan(api: Any) -> list[dict[str, Any]]:
     return [json.loads(line) for line in reply.text.splitlines() if line.strip()]
 
 
+@pytest.mark.slow  # a full week with cut re-solves, about 3-4 minutes: --run-slow (step 2b.9)
 def test_the_plan_stream_shows_the_wait_as_a_countdown(api, llm, llm_clock, monkeypatch):
     monkeypatch.setattr(orchestrator, "SystemClock", lambda: llm_clock)
     llm(LLMRateLimitedError("slow down", retry_after_s=20), fixture_response("drinks_batch.json"))

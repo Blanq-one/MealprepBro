@@ -20,10 +20,10 @@
   {"ingredient": "vanilla-extract", "quantity": "1/2", "unit": "tsp", "role": "seasoning", "optional": true}
  ],
  "steps": [
-  {"section": "prep", "text": "Set out 2 jars with lids and measure the milk, protein powder and cocoa."},
-  {"section": "no_cook", "text": "Whisk the protein powder and cocoa into the milk until smooth, then whisk in the vanilla."},
-  {"section": "no_cook", "text": "Stir in the chia seeds, wait 5 minutes, then stir again to break up any clumps.", "duration_minutes": 5},
-  {"section": "portioning", "text": "Divide between the 2 jars, seal and chill at least 2 hours, or overnight, until thick.", "duration_minutes": 120},
-  {"section": "storage", "text": "Keep the jars sealed in the fridge."}
+  {"section": "prep", "text": "Set out 2 jars with lids and measure the milk, protein powder and cocoa.", "hands_on_minutes": 1, "hands_off_minutes": 0},
+  {"section": "no_cook", "text": "Whisk the protein powder and cocoa into the milk until smooth, then whisk in the vanilla.", "hands_on_minutes": 2, "hands_off_minutes": 0},
+  {"section": "no_cook", "text": "Stir in the chia seeds, wait 5 minutes, then stir again to break up any clumps.", "duration_minutes": 5, "hands_on_minutes": 1, "hands_off_minutes": 5},
+  {"section": "portioning", "text": "Divide between the 2 jars, seal and chill at least 2 hours, or overnight, until thick.", "duration_minutes": 120, "hands_on_minutes": 1, "hands_off_minutes": 120},
+  {"section": "storage", "text": "Keep the jars sealed in the fridge.", "hands_on_minutes": 0, "hands_off_minutes": 0}
  ]
 }

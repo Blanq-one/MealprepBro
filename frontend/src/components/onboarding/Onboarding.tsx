@@ -342,7 +342,7 @@ export function Onboarding({ step, navigate, onDone, online }: { step: Step; nav
       );
     case "cooking":
       return (
-        <QuestionScreen title="When do you cook?" why="On other days you'll eat what you cooked earlier. Simmering and chilling don't count against your time." {...common}>
+        <QuestionScreen title="When do you cook?" why="On other days you'll eat what you cooked earlier. The time is start to finish, with dishes cooking side by side." {...common}>
           <CookDaysControl settings={s} onChange={update} fallbackMinutes={fallbackMinutes.current} />
           <CookMinutesControl settings={s} onChange={update} />
           <FieldMessages messages={errors.cook_schedule} />

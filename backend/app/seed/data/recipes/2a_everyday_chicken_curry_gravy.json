@@ -8,7 +8,7 @@
  "flavor_tags": ["warm spices", "onion-tomato"],
  "base_servings": 4,
  "active_minutes": 35,
- "total_minutes": 50,
+ "total_minutes": 55,
  "equipment": ["stovetop"],
  "freezer_friendly": true,
  "freeze_note": "Freeze the gravy; warm the tortillas fresh when serving.",
@@ -31,14 +31,14 @@
   {"ingredient": "flour-tortilla-small", "quantity": "8", "unit": "count", "preparation": "2 per serving", "role": "carb", "component": "tortillas"}
  ],
  "steps": [
-  {"section": "prep", "text": "Cut the chicken into bite-size pieces. Finely chop the onions and tomatoes. Grate the ginger and garlic together into a paste."},
-  {"section": "stovetop", "text": "Heat the oil in a heavy pot over medium heat. Cook the onions, stirring often, until deep golden, 10 to 12 minutes.", "duration_minutes": 12},
-  {"section": "stovetop", "text": "Add the ginger-garlic paste and cook 1 minute. Add the tomatoes, turmeric, chili powder, coriander, cumin and salt; cook until the tomatoes break down and the oil separates, about 8 minutes.", "duration_minutes": 9},
-  {"section": "stovetop", "text": "Add the chicken and stir to coat. Pour in the water, cover and simmer 15 to 18 minutes, stirring now and then, until the chicken is cooked through.", "duration_minutes": 18, "doneness_check_for": "chicken-thigh-boneless-skinless"},
-  {"section": "stovetop", "text": "Stir in the garam masala and simmer 2 minutes more. Finish with chopped cilantro.", "duration_minutes": 2},
-  {"section": "assembly", "text": "Warm each tortilla on a dry pan about 30 seconds per side, like chapati."},
-  {"section": "portioning", "text": "Divide the gravy among 4 containers. Keep 2 tortillas per serving wrapped separately."},
-  {"section": "storage", "text": "Cool the gravy, then refrigerate. Keep the tortillas in their bag."},
-  {"section": "reheating", "text": "Reheat the gravy covered, stirring halfway. Warm the tortillas just before eating."}
+  {"section": "prep", "text": "Cut the chicken into bite-size pieces. Finely chop the onions and tomatoes. Grate the ginger and garlic together into a paste.", "component": "gravy", "hands_on_minutes": 10, "hands_off_minutes": 0},
+  {"section": "stovetop", "text": "Heat the oil in a heavy pot over medium heat. Cook the onions, stirring often, until deep golden, 10 to 12 minutes.", "duration_minutes": 12, "component": "gravy", "equipment": "stovetop", "hands_on_minutes": 10, "hands_off_minutes": 2},
+  {"section": "stovetop", "text": "Add the ginger-garlic paste and cook 1 minute. Add the tomatoes, turmeric, chili powder, coriander, cumin and salt; cook until the tomatoes break down and the oil separates, about 8 minutes.", "duration_minutes": 9, "component": "gravy", "equipment": "stovetop", "hands_on_minutes": 6, "hands_off_minutes": 3},
+  {"section": "stovetop", "text": "Add the chicken and stir to coat. Pour in the water, cover and simmer 15 to 18 minutes, stirring now and then, until the chicken is cooked through.", "duration_minutes": 18, "doneness_check_for": "chicken-thigh-boneless-skinless", "component": "gravy", "equipment": "stovetop", "hands_on_minutes": 2, "hands_off_minutes": 16},
+  {"section": "stovetop", "text": "Stir in the garam masala and simmer 2 minutes more. Finish with chopped cilantro.", "duration_minutes": 2, "component": "gravy", "equipment": "stovetop", "hands_on_minutes": 2, "hands_off_minutes": 0},
+  {"section": "assembly", "text": "Warm each tortilla on a dry pan about 30 seconds per side, like chapati.", "component": "tortillas", "equipment": "stovetop", "hands_on_minutes": 4, "hands_off_minutes": 0},
+  {"section": "portioning", "text": "Divide the gravy among 4 containers. Keep 2 tortillas per serving wrapped separately.", "hands_on_minutes": 3, "hands_off_minutes": 0},
+  {"section": "storage", "text": "Cool the gravy, then refrigerate. Keep the tortillas in their bag.", "hands_on_minutes": 0, "hands_off_minutes": 0},
+  {"section": "reheating", "text": "Reheat the gravy covered, stirring halfway. Warm the tortillas just before eating.", "hands_on_minutes": 0, "hands_off_minutes": 0}
  ]
 }

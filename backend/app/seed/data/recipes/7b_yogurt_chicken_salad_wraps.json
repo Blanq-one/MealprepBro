@@ -96,25 +96,38 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Dice the celery and red onion. Shred the romaine."
+   "text": "Dice the celery and red onion. Shred the romaine.",
+   "component": "salad",
+   "hands_on_minutes": 6,
+   "hands_off_minutes": 0
   },
   {
    "section": "stovetop",
    "text": "Cover the chicken with cold salted water, bring to a simmer and cook gently 12 to 15 minutes, until cooked through. Cool, then shred.",
    "duration_minutes": 15,
-   "doneness_check_for": "chicken-breast-boneless-skinless"
+   "doneness_check_for": "chicken-breast-boneless-skinless",
+   "component": "chicken",
+   "equipment": "stovetop",
+   "hands_on_minutes": 4,
+   "hands_off_minutes": 20
   },
   {
    "section": "assembly",
-   "text": "Stir the yogurt, lemon juice, mustard, salt and pepper; fold in the chicken, celery and onion."
+   "text": "Stir the yogurt, lemon juice, mustard, salt and pepper; fold in the chicken, celery and onion.",
+   "hands_on_minutes": 4,
+   "hands_off_minutes": 0
   },
   {
    "section": "portioning",
-   "text": "Pack the chicken salad in 4 containers, with the romaine and 2 tortillas per serving on the side."
+   "text": "Pack the chicken salad in 4 containers, with the romaine and 2 tortillas per serving on the side.",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Cool, then refrigerate in the containers."
+   "text": "Cool, then refrigerate in the containers.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

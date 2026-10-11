@@ -21,11 +21,11 @@
   {"ingredient": "banana", "quantity": "1/2", "unit": "count", "preparation": "sliced, for topping", "role": "fruit", "optional": true}
  ],
  "steps": [
-  {"section": "prep", "text": "Set out a jar with a lid. Slice the banana only when serving."},
-  {"section": "no_cook", "text": "Whisk the protein powder into the milk until smooth."},
-  {"section": "no_cook", "text": "Stir in the Greek yogurt, oats and chia seeds until evenly combined."},
-  {"section": "portioning", "text": "Spoon into the jar, seal and refrigerate overnight so the oats soften."},
-  {"section": "assembly", "text": "Stir, then top with sliced banana when serving."},
-  {"section": "storage", "text": "Keep the jar sealed in the fridge."}
+  {"section": "prep", "text": "Set out a jar with a lid. Slice the banana only when serving.", "hands_on_minutes": 1, "hands_off_minutes": 0},
+  {"section": "no_cook", "text": "Whisk the protein powder into the milk until smooth.", "hands_on_minutes": 1, "hands_off_minutes": 0},
+  {"section": "no_cook", "text": "Stir in the Greek yogurt, oats and chia seeds until evenly combined.", "hands_on_minutes": 2, "hands_off_minutes": 0},
+  {"section": "portioning", "text": "Spoon into the jar, seal and refrigerate overnight so the oats soften.", "hands_on_minutes": 1, "hands_off_minutes": 480},
+  {"section": "assembly", "text": "Stir, then top with sliced banana when serving.", "hands_on_minutes": 0, "hands_off_minutes": 0},
+  {"section": "storage", "text": "Keep the jar sealed in the fridge.", "hands_on_minutes": 0, "hands_off_minutes": 0}
  ]
 }

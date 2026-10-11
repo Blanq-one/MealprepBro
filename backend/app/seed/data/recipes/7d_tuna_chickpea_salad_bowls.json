@@ -90,19 +90,27 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Drain the tuna and chickpeas. Dice the cucumber, tomatoes and onion; chop the parsley."
+   "text": "Drain the tuna and chickpeas. Dice the cucumber, tomatoes and onion; chop the parsley.",
+   "hands_on_minutes": 9,
+   "hands_off_minutes": 0
   },
   {
    "section": "no_cook",
-   "text": "Whisk the lemon juice, olive oil, salt and pepper. Toss everything else together."
+   "text": "Whisk the lemon juice, olive oil, salt and pepper. Toss everything else together.",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0
   },
   {
    "section": "portioning",
-   "text": "Divide among 3 containers with the dressing in a small jar."
+   "text": "Divide among 3 containers with the dressing in a small jar.",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Refrigerate; dress just before eating."
+   "text": "Refrigerate; dress just before eating.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

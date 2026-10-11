@@ -21,6 +21,7 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from decimal import Decimal
 
+from app.domain.cook_schedule import APPLIANCES
 from app.domain.cook_time import mood_time_error
 from app.domain.enums import Equipment, InstructionSection, RecipeMood
 from app.domain.food_safety import IngredientSafety, doneness_requirement
@@ -76,6 +77,11 @@ class ResolvedStep:
     appliance_temp_f: int | None
     doneness_check_ingredient_id: int | None
     added_by_app: bool = False
+    # step 2b.9: the step's timing, when the steps pass wrote it (FLOW_SPEC §20.1)
+    component: str | None = None
+    equipment: str | None = None
+    hands_on_minutes: int | None = None
+    hands_off_minutes: int | None = None
 
 
 @dataclass(frozen=True)
@@ -205,15 +211,31 @@ def _prose(texts: Iterable[str]) -> list[str]:
     return [v.message for text in texts for v in check_text(text)]
 
 
+def idea_task_errors(idea: RecipeIdea) -> list[str]:
+    """The task list against the equipment list (step 2b.9): every appliance a task uses is listed, and every
+    listed appliance has a task."""
+    listed = {e.value for e in idea.equipment}
+    used = {t.equipment.value for t in idea.tasks if t.equipment is not None}
+    errors = []
+    if extra := sorted(used - listed):
+        errors.append(f"tasks use {', '.join(extra)}, which isn't in equipment; add it there")
+    if unused := sorted((listed & set(APPLIANCES)) - used):
+        errors.append(
+            f"equipment lists {', '.join(unused)}, but no task uses it; give it a task or remove it"
+        )
+    return errors
+
+
 def validate_idea(
     idea: RecipeIdea, resolver: IngredientResolver, equipment: frozenset[Equipment]
 ) -> tuple[ValidatedIdea | None, list[str]]:
     """Every recipe check except the step checks: names, units and the as-sold rule, exclusions and held
-    items, plausible amounts, equipment, hands-on time for the mood, and the prose filter on the title, the
-    method and the freeze note. (Complete nutrition, caps and the request's own limits are checked by the
-    caller.)"""
+    items, plausible amounts, equipment and the task list, hands-on time for the mood (from the tasks), and
+    the prose filter on the title, the method and the freeze note. (Complete nutrition, caps and the
+    request's own limits are checked by the caller.)"""
     lines, _, errors = check_lines(idea.ingredients, idea.base_servings, resolver)
     errors += _basics(idea.equipment, equipment, idea.mood, idea.active_minutes)
+    errors += idea_task_errors(idea)
     errors += _prose([idea.title, idea.method, idea.freeze_note or ""])
     if errors:
         return None, list(dict.fromkeys(errors))
@@ -262,9 +284,18 @@ def validate_generated(
                 )
             else:
                 doneness_id = res.ingredient_id
+        tagged = getattr(step, "equipment", None)
         steps.append(
             ResolvedStep(
-                step.section.value, step.text, step.duration_minutes, step.appliance_temp_f, doneness_id
+                step.section.value,
+                step.text,
+                step.duration_minutes,
+                step.appliance_temp_f,
+                doneness_id,
+                component=getattr(step, "component", None),
+                equipment=tagged.value if tagged is not None else None,
+                hands_on_minutes=getattr(step, "hands_on_minutes", None),
+                hands_off_minutes=getattr(step, "hands_off_minutes", None),
             )
         )
     if errors:
@@ -296,6 +327,7 @@ def validate_generated(
         ]
         at = (cooking[-1] + 1) if cooking else len(steps)
         section = steps[cooking[-1]].section if cooking else InstructionSection.PREP.value
+        timed = any(s.hands_on_minutes is not None for s in steps)  # the app's step takes no time of its own
         steps.insert(
             at,
             ResolvedStep(
@@ -305,6 +337,8 @@ def validate_generated(
                 None,
                 target.ingredient_id,
                 added_by_app=True,
+                hands_on_minutes=0 if timed else None,
+                hands_off_minutes=0 if timed else None,
             ),
         )
         appended = True

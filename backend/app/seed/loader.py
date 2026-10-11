@@ -665,6 +665,10 @@ def _add_seed_version(
                 doneness_check_ingredient_id=data[step.doneness_check_for].id
                 if step.doneness_check_for
                 else None,
+                component=step.component,
+                equipment=step.equipment.value if step.equipment else None,
+                hands_on_minutes=step.hands_on_minutes,
+                hands_off_minutes=step.hands_off_minutes,
             )
         )
     session.flush()

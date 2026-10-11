@@ -14,7 +14,7 @@
  ],
  "base_servings": 4,
  "active_minutes": 20,
- "total_minutes": 40,
+ "total_minutes": 35,
  "equipment": [
   "stovetop"
  ],
@@ -119,35 +119,55 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Peel and devein the shrimp if needed. Chop the onion and tomatoes; grate the ginger and garlic."
+   "text": "Peel and devein the shrimp if needed. Chop the onion and tomatoes; grate the ginger and garlic.",
+   "hands_on_minutes": 6,
+   "hands_off_minutes": 0
   },
   {
    "section": "rice",
    "text": "Bring 540 ml of water to a boil, add the rinsed rice, cover and simmer on low 15 minutes. Rest off the heat 10 minutes, then fluff.",
-   "duration_minutes": 25
+   "duration_minutes": 25,
+   "component": "rice",
+   "equipment": "stovetop",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 23
   },
   {
    "section": "stovetop",
    "text": "Heat the oil in a pan over medium heat. Cook the onion until soft, 6 minutes, then the ginger, garlic and spices for 1 minute. Add the tomatoes and cook until they break down, 5 minutes.",
-   "duration_minutes": 12
+   "duration_minutes": 12,
+   "component": "curry",
+   "equipment": "stovetop",
+   "hands_on_minutes": 8,
+   "hands_off_minutes": 4
   },
   {
    "section": "stovetop",
    "text": "Stir in the coconut milk and salt and simmer 5 minutes. Add the shrimp and cook until pink and opaque, 3 to 4 minutes. Squeeze in the lime.",
    "duration_minutes": 9,
-   "doneness_check_for": "shrimp"
+   "doneness_check_for": "shrimp",
+   "component": "curry",
+   "equipment": "stovetop",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 6
   },
   {
    "section": "portioning",
-   "text": "Divide the rice and curry among 4 containers; top with cilantro."
+   "text": "Divide the rice and curry among 4 containers; top with cilantro.",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Cool, then refrigerate in the containers."
+   "text": "Cool, then refrigerate in the containers.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   },
   {
    "section": "reheating",
-   "text": "Reheat covered, stirring halfway, until hot all the way through."
+   "text": "Reheat covered, stirring halfway, until hot all the way through.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

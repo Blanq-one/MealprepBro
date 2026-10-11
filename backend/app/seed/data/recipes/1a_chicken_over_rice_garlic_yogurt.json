@@ -32,14 +32,14 @@
   {"ingredient": "tomato", "quantity": "2", "unit": "count", "preparation": "medium, diced", "role": "vegetable", "component": "salad"}
  ],
  "steps": [
-  {"section": "prep", "text": "Cut the chicken thighs into large pieces. Mince the garlic. Chop the romaine and dice the tomatoes."},
-  {"section": "marinate", "text": "Toss the chicken with the olive oil, half the lemon juice, two-thirds of the garlic, the cumin, coriander, paprika, turmeric, oregano, 1 tsp of the salt and the pepper. Marinate at least 15 minutes, or overnight in the fridge.", "duration_minutes": 15},
-  {"section": "rice", "text": "Bring the broth to a boil, add the rinsed rice, cover and simmer on low 15 minutes. Rest off the heat 10 minutes, then fluff with a fork.", "duration_minutes": 25},
-  {"section": "stovetop", "text": "Heat a large skillet over medium-high heat. Sear the chicken in batches, 5 to 6 minutes per side, until browned and cooked through.", "duration_minutes": 12, "doneness_check_for": "chicken-thigh-boneless-skinless"},
-  {"section": "stovetop", "text": "Rest the chicken 5 minutes, then slice it.", "duration_minutes": 5},
-  {"section": "assembly", "text": "Stir the yogurt with the remaining lemon juice, garlic and salt to make the sauce."},
-  {"section": "portioning", "text": "Divide the rice and chicken among 4 containers. Pack the sauce and the romaine-tomato salad separately so they stay fresh."},
-  {"section": "storage", "text": "Cool the chicken and rice, then refrigerate."},
-  {"section": "reheating", "text": "Reheat the chicken and rice covered, stirring halfway. Add the sauce and salad after reheating."}
+  {"section": "prep", "text": "Cut the chicken thighs into large pieces. Mince the garlic. Chop the romaine and dice the tomatoes.", "component": "chicken", "hands_on_minutes": 10, "hands_off_minutes": 0},
+  {"section": "marinate", "text": "Toss the chicken with the olive oil, half the lemon juice, two-thirds of the garlic, the cumin, coriander, paprika, turmeric, oregano, 1 tsp of the salt and the pepper. Marinate at least 15 minutes, or overnight in the fridge.", "duration_minutes": 15, "component": "chicken", "hands_on_minutes": 3, "hands_off_minutes": 15},
+  {"section": "rice", "text": "Bring the broth to a boil, add the rinsed rice, cover and simmer on low 15 minutes. Rest off the heat 10 minutes, then fluff with a fork.", "duration_minutes": 25, "component": "rice", "equipment": "stovetop", "hands_on_minutes": 2, "hands_off_minutes": 23},
+  {"section": "stovetop", "text": "Heat a large skillet over medium-high heat. Sear the chicken in batches, 5 to 6 minutes per side, until browned and cooked through.", "duration_minutes": 12, "doneness_check_for": "chicken-thigh-boneless-skinless", "component": "chicken", "equipment": "stovetop", "hands_on_minutes": 8, "hands_off_minutes": 4},
+  {"section": "stovetop", "text": "Rest the chicken 5 minutes, then slice it.", "duration_minutes": 5, "component": "chicken", "hands_on_minutes": 2, "hands_off_minutes": 5},
+  {"section": "assembly", "text": "Stir the yogurt with the remaining lemon juice, garlic and salt to make the sauce.", "component": "sauce", "hands_on_minutes": 3, "hands_off_minutes": 0},
+  {"section": "portioning", "text": "Divide the rice and chicken among 4 containers. Pack the sauce and the romaine-tomato salad separately so they stay fresh.", "hands_on_minutes": 4, "hands_off_minutes": 0},
+  {"section": "storage", "text": "Cool the chicken and rice, then refrigerate.", "hands_on_minutes": 0, "hands_off_minutes": 0},
+  {"section": "reheating", "text": "Reheat the chicken and rice covered, stirring halfway. Add the sauce and salad after reheating.", "hands_on_minutes": 0, "hands_off_minutes": 0}
  ]
 }

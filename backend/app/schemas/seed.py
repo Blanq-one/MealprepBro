@@ -7,6 +7,7 @@ from typing import Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from app.domain.cook_schedule import MAX_HANDS_ON, MAX_WAIT, OFF_DAY_SECTIONS, step_timing_errors
 from app.domain.enums import (
     Equipment,
     IngredientCategory,
@@ -259,6 +260,16 @@ class SeedRecipeStep(_Strict):
     duration_minutes: int | None = Field(default=None, ge=0, le=720)
     appliance_temp_f: int | None = Field(default=None, ge=150, le=550)
     doneness_check_for: str | None = None  # ingredient slug; the app inserts the safe temperature
+    # step timing, tagged by hand on every seed step (step 2b.9, FLOW_SPEC §20.1): the part of the dish it
+    # works on (unset = shared: prep for everything, assembly, portioning), the appliance it occupies (unset =
+    # hands only, or waiting), its hands-on and hands-off minutes. Storage and reheating steps are 0 and 0.
+    component: str | None = Field(default=None, min_length=1, max_length=30)
+    equipment: Equipment | None = None
+    hands_on_minutes: int = Field(ge=0, le=MAX_HANDS_ON)
+    hands_off_minutes: int = Field(ge=0, le=MAX_WAIT)
+
+
+SEED_HANDS_ON_TOLERANCE = 5  # a seed's tagged hands-on total vs its stated active minutes (2b.9 AC 2)
 
 
 class SeedRecipe(_Strict):
@@ -307,6 +318,25 @@ class SeedRecipe(_Strict):
                 raise ValueError(
                     f"doneness check for '{step.doneness_check_for}', which is not an ingredient"
                 )
+        equipment = [e.value for e in self.equipment]
+        for n, step in enumerate(self.steps, start=1):
+            errors = step_timing_errors(
+                step.section.value,
+                step.equipment.value if step.equipment else None,
+                step.hands_on_minutes,
+                step.hands_off_minutes,
+                equipment,
+            )
+            if step.section.value in OFF_DAY_SECTIONS and (step.hands_on_minutes or step.hands_off_minutes):
+                errors.append("storage and reheating steps take 0 and 0 minutes (not cook-day work)")
+            if errors:
+                raise ValueError(f"step {n}: {'; '.join(errors)}")
+        hands_on = sum(s.hands_on_minutes for s in self.steps)
+        if abs(hands_on - self.active_minutes) > SEED_HANDS_ON_TOLERANCE:
+            raise ValueError(
+                f"the steps' hands-on minutes add up to {hands_on}, more than {SEED_HANDS_ON_TOLERANCE} from "
+                f"active_minutes ({self.active_minutes}); revise one of them"
+            )
         return self
 
 

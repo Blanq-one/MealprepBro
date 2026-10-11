@@ -2136,6 +2136,30 @@ Sunday · about 1 h start to finish · 35 min hands-on
 - Seeds: every step tagged; each seed's hands-on total within 5 minutes of its stated active minutes.
 - Speed: a 6-dish day schedules in under 50 ms (opt-in timing test).
 
+### 20.6 As built (step 2b.9)
+
+Details the design left open, as decided while building (BUILD_PLAN 2b.9 outcome, D128–D142):
+- **The fridge isn't the kitchen.** A dish's last wait with no appliance, in a no-cook, assembly or portioning
+  step (overnight oats setting, a pudding chilling), runs after you leave: it counts toward when the food is
+  ready, not toward the cook day's start-to-finish minutes. Overnight oats take 5 minutes of a cook day.
+- **Storage and reheating steps aren't cook-day work** (tagged 0 and 0 on the seeds).
+- **Merging steps into tasks** stops once a task has hands-off time, so a task's hands-on minutes always come
+  first; the step with the waiting or running time names the task (a prep step plus a marinade is "Marinate").
+- **Estimated timing (V15):** each appliance's steps form their own part of the dish, so different appliances run
+  side by side; marinating belongs to the next cooking step that isn't the rice; steps without a duration share
+  what's left of the recipe's hands-on minutes. A recipe with no steps at all is its stated minutes as one task.
+- **Batch size and capacity** read the batch's portion count (everyone eating, frozen extras included); the tagged
+  minutes already cover the rounds the recipe's own servings need (4 mug cakes, 2 at a time).
+- **The order search** tries only the dish orders that change a tie, skipping orders that just swap two
+  identical batches, and stops at the lower bound; at most 720.
+- **In the solver:** before the first solve, pairs of batches that would run over a cook day together at the most
+  portions each could cook are kept off the same day (if that leaves no plan, the week is solved without them);
+  after each solve, a day over its minutes is cut on that day and on every cook day with no more minutes. When
+  the cuts leave no plan, the answer is the time fix.
+- **An idea's task** may have no part (`component` null = shared), like a step; its waits run up to 12 hours with
+  no appliance, an appliance at most 4 hours. An idea's total minutes are when it's ready (a last chill
+  included); meal prep also checks its start-to-finish minutes against the longest cook day.
+
 ---
 
 ## 21. Build order, LLM tokens and open questions for §19–§20
@@ -2181,6 +2205,16 @@ Measured today (§15.1): an ideas call ≈ 4.7K (1.5K prompt + 3.1K for 8 ideas)
   8K, so opening a new idea right after usually doesn't wait.
 - The task lists and steps' fields get re-measured in 2b.9's opt-in live test (under 20K tokens), and the count rule
   uses what it finds.
+- **Measured in 2b.9 (2026-10-11, `test_task_lists_token_report`, strict, both calls on `openai/gpt-oss-120b`:
+  outside compose `LLM_IDEAS_MODEL` is unset; the app in compose sends ideas to 20b):**
+  - an ideas call with task lists: 2,028 prompt + 4,078 completion = 6.1K for 8 ideas, all 8 passing the checks
+    (about 470 completion tokens an idea after the reasoning, so the count rule now uses 480; 8 ideas still fit:
+    2.0K + 8 × 480 + 300 ≈ 6.2K of 7.6K);
+  - a steps call with each step's timing: 1,039 + 1,160 = 2.2K, matching the idea's tasks on the first try;
+  - the run: 8.3K tokens in all.
+  - So an ideas call then a steps call is about 8.3K, a little over one minute's 8K: opening a new idea right
+    after a search can wait a few seconds (the countdown), where the estimate expected none. A typical day is
+    about 8K instead of 7K.
 
 ### 21.3 Open questions (each with my recommended default)
 

@@ -101,36 +101,56 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Dice the sweet potatoes, onion and pepper. Mince the garlic."
+   "text": "Dice the sweet potatoes, onion and pepper. Mince the garlic.",
+   "hands_on_minutes": 8,
+   "hands_off_minutes": 0
   },
   {
    "section": "stovetop",
    "text": "Heat the oil in a large skillet over medium-high heat. Cook the sweet potato, covered, stirring now and then, until tender and browned, about 12 minutes.",
-   "duration_minutes": 12
+   "duration_minutes": 12,
+   "component": "hash",
+   "equipment": "stovetop",
+   "hands_on_minutes": 4,
+   "hands_off_minutes": 8
   },
   {
    "section": "stovetop",
    "text": "Push the potatoes aside, add the turkey, onion, pepper, garlic and spices and cook, breaking up the meat, until the turkey is cooked through, 7 to 8 minutes.",
    "duration_minutes": 8,
-   "doneness_check_for": "ground-turkey-93"
+   "doneness_check_for": "ground-turkey-93",
+   "component": "hash",
+   "equipment": "stovetop",
+   "hands_on_minutes": 7,
+   "hands_off_minutes": 1
   },
   {
    "section": "stovetop",
    "text": "Fry the eggs in a separate pan until the whites are set.",
    "duration_minutes": 4,
-   "doneness_check_for": "egg-large"
+   "doneness_check_for": "egg-large",
+   "component": "eggs",
+   "equipment": "stovetop",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 1
   },
   {
    "section": "portioning",
-   "text": "Divide the hash among 4 plates and top each with an egg."
+   "text": "Divide the hash among 4 plates and top each with an egg.",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Cool, then refrigerate in the containers."
+   "text": "Cool, then refrigerate in the containers.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   },
   {
    "section": "reheating",
-   "text": "Reheat covered, stirring halfway, until hot all the way through."
+   "text": "Reheat covered, stirring halfway, until hot all the way through.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

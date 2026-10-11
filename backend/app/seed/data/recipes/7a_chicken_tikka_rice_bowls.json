@@ -124,40 +124,63 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Cut the chicken into large chunks. Grate the garlic and ginger. Dice the cucumber and red onion."
+   "text": "Cut the chicken into large chunks. Grate the garlic and ginger. Dice the cucumber and red onion.",
+   "component": "chicken",
+   "hands_on_minutes": 10,
+   "hands_off_minutes": 0
   },
   {
    "section": "marinate",
    "text": "Mix the yogurt, lemon juice, garlic, ginger, spices, oil and 1 tsp of the salt; coat the chicken and marinate at least 30 minutes.",
-   "duration_minutes": 30
+   "duration_minutes": 30,
+   "component": "chicken",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 30
   },
   {
    "section": "rice",
    "text": "Bring 540 ml of water to a boil, add the rinsed rice, cover and simmer on low 15 minutes. Rest off the heat 10 minutes, then fluff.",
-   "duration_minutes": 25
+   "duration_minutes": 25,
+   "component": "rice",
+   "equipment": "stovetop",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 23
   },
   {
    "section": "air_fryer",
    "text": "Air fry the chicken in one layer at 400F for 14 to 16 minutes, turning once, until charred at the edges and cooked through.",
    "duration_minutes": 16,
    "appliance_temp_f": 400,
-   "doneness_check_for": "chicken-thigh-boneless-skinless"
+   "doneness_check_for": "chicken-thigh-boneless-skinless",
+   "component": "chicken",
+   "equipment": "air_fryer",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 14
   },
   {
    "section": "assembly",
-   "text": "Toss the cucumber and onion with the remaining salt."
+   "text": "Toss the cucumber and onion with the remaining salt.",
+   "component": "salad",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 0
   },
   {
    "section": "portioning",
-   "text": "Divide the rice and chicken among 4 containers. Pack the salad separately."
+   "text": "Divide the rice and chicken among 4 containers. Pack the salad separately.",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Cool, then refrigerate in the containers."
+   "text": "Cool, then refrigerate in the containers.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   },
   {
    "section": "reheating",
-   "text": "Reheat covered, stirring halfway, until hot all the way through."
+   "text": "Reheat covered, stirring halfway, until hot all the way through.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

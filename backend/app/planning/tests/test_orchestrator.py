@@ -117,16 +117,16 @@ def test_full_week_becomes_active_and_validator_recomputation_matches_stored_tot
 
 
 def test_a_drink_slot_with_too_little_monday_time_is_explained(seeded_db):
-    # (with the M13 library the default 45 minutes fit a Monday with a drink, so Monday gets 25; every
-    # eligible recipe is tried before no plan fits, P3, so the quickest Monday needs 40)
+    # (with the M13 library the default minutes fit a Monday with a drink, so Monday gets 25; every eligible
+    # recipe is tried before no plan fits, P3; the quickest Monday takes about 52 minutes start to finish)
     monday_25 = [DayOverride(day=WEEK, cook_minutes=25)]
     client = FakeLLMClient([fixture_response("drinks_batch.json")])
     out = run(seeded_db, client, slot_kcal=WITH_DRINK, day_overrides=monday_25)
     assert out.status == "infeasible"
     assert any(
         d.code == "COOK_TIME_SHORT"
-        and d.message == "Monday needs 40 minutes of hands-on cooking; you set 25."
-        and d.suggested_minutes == 40
+        and d.message == "Monday needs about 52 min start to finish; you set 25 min."
+        and d.suggested_minutes == 55  # start to finish, rounded up to 5 (step 2b.9)
         for d in out.diagnostics
     )
 
@@ -250,9 +250,17 @@ def test_an_unpriced_regular_item_with_and_without_a_budget(seeded_db, budget_ce
     unprice(seeded_db, "greek-yogurt-nonfat")
     out = run(seeded_db, None, budget_cents=budget_cents, allow_llm=False)
     if budget_cents is not None:
-        assert out.status == "infeasible"
-        text = " ".join(d.message for d in out.diagnostics)
-        assert "recipes use Greek yogurt, plain nonfat, which has no price at your stores" in text
+        # the yogurt recipes are left out, and why is said: in the plan's notes, or (when the week no longer
+        # fits the budget without them) in the diagnostics
+        if out.status == "succeeded":
+            text = " ".join(out.notes)
+            used = {b.title for b in out.plan.batches}
+            assert not used & {n.split(":")[0].removeprefix("Left out ") for n in out.notes}
+        else:
+            assert out.status == "infeasible"
+            text = " ".join(d.message for d in out.diagnostics)
+            assert "recipes use Greek yogurt, plain nonfat" in text
+        assert "Greek yogurt, plain nonfat" in text and "has no price at your stores" in text
         assert "so your budget can't be checked" in text
     else:
         assert out.status == "succeeded", out.error
@@ -287,11 +295,13 @@ def test_inventory_mode_with_an_empty_fridge_explains_exactly_what_is_missing(se
 @pytest.mark.slow  # one of the heaviest solver tests: --run-slow (2b.3b approval, P6)
 def test_shop_budget_too_low_for_the_seed_week_says_what_the_cheapest_plan_costs(seeded_db):
     add_powder(seeded_db)  # with the powder in stock, the budget can be checked
-    out = run(seeded_db, None, budget_cents=3000, allow_llm=False)
+    # three days (K6: re-solving tests use small weeks; with 90-minute cook days, proving that a 7-day week
+    # has no plan within $30 takes the MILP over 5 minutes, step 2b.9)
+    out = run(seeded_db, None, budget_cents=1000, days=SHORT_WEEK, allow_llm=False)
     assert out.status == "infeasible"
     (short,) = [d for d in out.diagnostics if d.code == "BUDGET_SHORT"]
-    assert "over your budget of $30.00" in short.message and short.amount > 0
-    assert short.items and short.suggested_cents is not None and short.suggested_cents >= 3000 + short.amount
+    assert "over your budget of $10.00" in short.message and short.amount > 0
+    assert short.items and short.suggested_cents is not None and short.suggested_cents >= 1000 + short.amount
 
 
 def test_the_seed_week_meets_the_protein_target_and_reports_its_money(seeded_db):

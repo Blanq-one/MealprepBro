@@ -72,24 +72,34 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Slice the strawberries. Chill a bowl for whipping the cream."
+   "text": "Slice the strawberries. Chill a bowl for whipping the cream.",
+   "hands_on_minutes": 4,
+   "hands_off_minutes": 0
   },
   {
    "section": "no_cook",
-   "text": "Whisk the protein powder, cocoa and milk to a paste and stir it into the yogurt with the honey and vanilla."
+   "text": "Whisk the protein powder, cocoa and milk to a paste and stir it into the yogurt with the honey and vanilla.",
+   "hands_on_minutes": 5,
+   "hands_off_minutes": 0
   },
   {
    "section": "no_cook",
-   "text": "Whip the cream to soft peaks and fold it gently into the chocolate yogurt."
+   "text": "Whip the cream to soft peaks and fold it gently into the chocolate yogurt.",
+   "hands_on_minutes": 7,
+   "hands_off_minutes": 0
   },
   {
    "section": "portioning",
    "text": "Layer the mousse and strawberries in 4 glasses and chill at least 1 hour.",
-   "duration_minutes": 60
+   "duration_minutes": 60,
+   "hands_on_minutes": 4,
+   "hands_off_minutes": 60
   },
   {
    "section": "storage",
-   "text": "Cover the glasses and refrigerate."
+   "text": "Cover the glasses and refrigerate.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

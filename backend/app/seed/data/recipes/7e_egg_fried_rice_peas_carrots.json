@@ -85,35 +85,55 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Dice the carrots, slice the green onions, mince the garlic and beat the eggs."
+   "text": "Dice the carrots, slice the green onions, mince the garlic and beat the eggs.",
+   "component": "vegetables",
+   "hands_on_minutes": 6,
+   "hands_off_minutes": 0
   },
   {
    "section": "rice",
    "text": "Cook the rice: bring 540 ml of water to a boil, add the rice, cover and simmer on low 15 minutes. Spread it out to cool.",
-   "duration_minutes": 25
+   "duration_minutes": 25,
+   "component": "rice",
+   "equipment": "stovetop",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 32
   },
   {
    "section": "stovetop",
    "text": "Heat half the vegetable oil in a wok or large skillet over high heat. Scramble the eggs until set with no liquid left, then set aside.",
    "duration_minutes": 3,
-   "doneness_check_for": "egg-large"
+   "doneness_check_for": "egg-large",
+   "component": "vegetables",
+   "equipment": "stovetop",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0
   },
   {
    "section": "stovetop",
    "text": "Add the remaining oil, the carrots and garlic and stir-fry 3 minutes. Add the rice, peas and soy sauce and fry until hot and starting to crisp, 5 minutes. Fold in the eggs, green onions and sesame oil.",
-   "duration_minutes": 8
+   "duration_minutes": 8,
+   "equipment": "stovetop",
+   "hands_on_minutes": 8,
+   "hands_off_minutes": 0
   },
   {
    "section": "portioning",
-   "text": "Divide among 4 containers."
+   "text": "Divide among 4 containers.",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Cool, then refrigerate in the containers."
+   "text": "Cool, then refrigerate in the containers.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   },
   {
    "section": "reheating",
-   "text": "Reheat covered, stirring halfway, until hot all the way through."
+   "text": "Reheat covered, stirring halfway, until hot all the way through.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

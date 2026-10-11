@@ -218,7 +218,7 @@ def _cook_days_line(settings: UserSettings) -> str:
     minutes = {d.cook_minutes for d in days}
     if len(minutes) == 1:
         names = ", ".join(WEEKDAY_LABELS[d.weekday] for d in days)
-        return f"{names} · {_minutes(minutes.pop())} hands-on"
+        return f"{names} · {_minutes(minutes.pop())} start to finish"  # V11 (step 2b.9)
     return ", ".join(f"{WEEKDAY_LABELS[d.weekday]} {_minutes(d.cook_minutes)}" for d in days)
 
 

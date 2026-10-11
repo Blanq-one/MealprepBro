@@ -14,7 +14,7 @@
  ],
  "base_servings": 4,
  "active_minutes": 20,
- "total_minutes": 45,
+ "total_minutes": 35,
  "equipment": [
   "stovetop"
  ],
@@ -128,34 +128,55 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Rinse the lentils. Chop the onion and tomatoes, slice the garlic and grate the ginger."
+   "text": "Rinse the lentils. Chop the onion and tomatoes, slice the garlic and grate the ginger.",
+   "component": "dal",
+   "hands_on_minutes": 6,
+   "hands_off_minutes": 0
   },
   {
    "section": "stovetop",
    "text": "Simmer the lentils with the water, turmeric and tomatoes, partly covered, stirring now and then, until soft and creamy, about 25 minutes. Stir in the salt.",
-   "duration_minutes": 25
+   "duration_minutes": 25,
+   "component": "dal",
+   "equipment": "stovetop",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 22
   },
   {
    "section": "rice",
    "text": "Bring 540 ml of water to a boil, add the rinsed rice, cover and simmer on low 15 minutes. Rest off the heat 10 minutes, then fluff.",
-   "duration_minutes": 25
+   "duration_minutes": 25,
+   "component": "rice",
+   "equipment": "stovetop",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 23
   },
   {
    "section": "stovetop",
    "text": "For the tadka, heat the ghee in a small pan. Add the cumin seeds until they crackle, then the onion until golden, then the garlic, ginger and chili powder for 1 minute. Pour it over the dal with the garam masala.",
-   "duration_minutes": 10
+   "duration_minutes": 10,
+   "component": "tadka",
+   "equipment": "stovetop",
+   "hands_on_minutes": 9,
+   "hands_off_minutes": 0
   },
   {
    "section": "portioning",
-   "text": "Divide the dal and rice among 4 containers; top with cilantro."
+   "text": "Divide the dal and rice among 4 containers; top with cilantro.",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Cool, then refrigerate in the containers."
+   "text": "Cool, then refrigerate in the containers.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   },
   {
    "section": "reheating",
-   "text": "Reheat covered, stirring halfway, until hot all the way through."
+   "text": "Reheat covered, stirring halfway, until hot all the way through.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

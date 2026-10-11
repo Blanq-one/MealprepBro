@@ -195,7 +195,15 @@ def test_cooking_the_week_leaves_exactly_the_plans_expected_remainder(api, week,
     )
     assert left == expected  # exactly what the grocery list said would be left of the packages
     if recorded:
-        assert left == recorded and chicken["ingredient_id"] in opened_on  # an open-package lot
+        assert left == recorded
+        # an open-package lot, or (when the week has no use for it within its fridge life) frozen on
+        # shopping day as its own unopened lot
+        remainder = seeded_db.scalars(
+            select(InventoryItem).where(
+                InventoryItem.ingredient_id == chicken["ingredient_id"], InventoryItem.status == "active"
+            )
+        ).all()
+        assert chicken["ingredient_id"] in opened_on or all(lot.location == "freezer" for lot in remainder)
     consumed = seeded_db.scalars(select(InventoryEvent).where(InventoryEvent.reason == "cook_consume")).all()
     assert consumed and all(e.cook_batch_id is not None and e.delta_quantity < 0 for e in consumed)
     again = api.post(f"/api/v1/cook-batches/{batches[0].id}/cooked", json={})

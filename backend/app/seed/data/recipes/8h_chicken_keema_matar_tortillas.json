@@ -128,34 +128,54 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Chop the onions and tomatoes; grate the ginger and garlic."
+   "text": "Chop the onions and tomatoes; grate the ginger and garlic.",
+   "hands_on_minutes": 8,
+   "hands_off_minutes": 0
   },
   {
    "section": "stovetop",
    "text": "Heat the oil in a wide pan over medium heat. Cook the onions until golden, 10 minutes, then the ginger, garlic and spices for 1 minute.",
-   "duration_minutes": 11
+   "duration_minutes": 11,
+   "component": "keema",
+   "equipment": "stovetop",
+   "hands_on_minutes": 10,
+   "hands_off_minutes": 1
   },
   {
    "section": "stovetop",
    "text": "Add the ground chicken and cook, breaking it up, until no pink remains, 6 minutes. Add the tomatoes, peas and salt and cook until the tomatoes melt in and the chicken is cooked through, about 8 minutes. Finish with the garam masala.",
    "duration_minutes": 14,
-   "doneness_check_for": "ground-chicken"
+   "doneness_check_for": "ground-chicken",
+   "component": "keema",
+   "equipment": "stovetop",
+   "hands_on_minutes": 8,
+   "hands_off_minutes": 6
   },
   {
    "section": "assembly",
-   "text": "Warm each tortilla on a dry pan about 30 seconds per side, like chapati."
+   "text": "Warm each tortilla on a dry pan about 30 seconds per side, like chapati.",
+   "component": "tortillas",
+   "equipment": "stovetop",
+   "hands_on_minutes": 4,
+   "hands_off_minutes": 0
   },
   {
    "section": "portioning",
-   "text": "Divide the keema among 4 containers. Keep 2 tortillas per serving wrapped separately."
+   "text": "Divide the keema among 4 containers. Keep 2 tortillas per serving wrapped separately.",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Cool, then refrigerate in the containers."
+   "text": "Cool, then refrigerate in the containers.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   },
   {
    "section": "reheating",
-   "text": "Reheat covered, stirring halfway, until hot all the way through."
+   "text": "Reheat covered, stirring halfway, until hot all the way through.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

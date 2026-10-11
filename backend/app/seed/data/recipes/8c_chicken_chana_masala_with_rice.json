@@ -14,7 +14,7 @@
  ],
  "base_servings": 4,
  "active_minutes": 30,
- "total_minutes": 55,
+ "total_minutes": 50,
  "equipment": [
   "stovetop"
  ],
@@ -134,35 +134,55 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Cut the chicken. Chop the onion, grate the ginger and garlic, drain the chickpeas."
+   "text": "Cut the chicken. Chop the onion, grate the ginger and garlic, drain the chickpeas.",
+   "hands_on_minutes": 10,
+   "hands_off_minutes": 0
   },
   {
    "section": "rice",
    "text": "Bring 540 ml of water to a boil, add the rinsed rice, cover and simmer on low 15 minutes. Rest off the heat 10 minutes, then fluff.",
-   "duration_minutes": 25
+   "duration_minutes": 25,
+   "component": "rice",
+   "equipment": "stovetop",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 23
   },
   {
    "section": "stovetop",
    "text": "Heat the oil in a heavy pot over medium heat. Cook the onion until deep golden, 10 minutes. Add the ginger, garlic, cumin, coriander, turmeric and chili powder for 1 minute.",
-   "duration_minutes": 11
+   "duration_minutes": 11,
+   "component": "curry",
+   "equipment": "stovetop",
+   "hands_on_minutes": 10,
+   "hands_off_minutes": 1
   },
   {
    "section": "stovetop",
    "text": "Add the tomatoes and salt and cook until thick, 8 minutes. Add the chicken and chickpeas, cover and simmer until the chicken is cooked through, about 15 minutes. Stir in the garam masala and lemon juice.",
    "duration_minutes": 23,
-   "doneness_check_for": "chicken-thigh-boneless-skinless"
+   "doneness_check_for": "chicken-thigh-boneless-skinless",
+   "component": "curry",
+   "equipment": "stovetop",
+   "hands_on_minutes": 5,
+   "hands_off_minutes": 18
   },
   {
    "section": "portioning",
-   "text": "Divide the rice and curry among 4 containers; top with cilantro."
+   "text": "Divide the rice and curry among 4 containers; top with cilantro.",
+   "hands_on_minutes": 4,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Cool, then refrigerate in the containers."
+   "text": "Cool, then refrigerate in the containers.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   },
   {
    "section": "reheating",
-   "text": "Reheat covered, stirring halfway, until hot all the way through."
+   "text": "Reheat covered, stirring halfway, until hot all the way through.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

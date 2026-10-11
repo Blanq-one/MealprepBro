@@ -14,7 +14,7 @@
  ],
  "base_servings": 4,
  "active_minutes": 25,
- "total_minutes": 40,
+ "total_minutes": 30,
  "equipment": [
   "stovetop"
  ],
@@ -108,35 +108,56 @@
  "steps": [
   {
    "section": "prep",
-   "text": "Dice the chicken and toss it with the chili powder, cumin, garlic powder and salt. Drain and rinse the beans."
+   "text": "Dice the chicken and toss it with the chili powder, cumin, garlic powder and salt. Drain and rinse the beans.",
+   "component": "chicken",
+   "hands_on_minutes": 7,
+   "hands_off_minutes": 0
   },
   {
    "section": "rice",
    "text": "Bring 540 ml of water to a boil, add the rinsed rice, cover and simmer on low 15 minutes. Rest off the heat 10 minutes, then fluff.",
-   "duration_minutes": 25
+   "duration_minutes": 25,
+   "component": "rice",
+   "equipment": "stovetop",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 23
   },
   {
    "section": "stovetop",
    "text": "Heat the oil in a large skillet over medium-high heat and cook the chicken until browned and cooked through, 8 to 10 minutes. Squeeze in the lime juice.",
    "duration_minutes": 10,
-   "doneness_check_for": "chicken-breast-boneless-skinless"
+   "doneness_check_for": "chicken-breast-boneless-skinless",
+   "component": "chicken",
+   "equipment": "stovetop",
+   "hands_on_minutes": 8,
+   "hands_off_minutes": 2
   },
   {
    "section": "stovetop",
    "text": "Warm the beans and corn in the same pan, 3 minutes.",
-   "duration_minutes": 3
+   "duration_minutes": 3,
+   "component": "chicken",
+   "equipment": "stovetop",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 1
   },
   {
    "section": "portioning",
-   "text": "Divide the rice, chicken, beans and corn among 4 containers. Pack the salsa and romaine separately."
+   "text": "Divide the rice, chicken, beans and corn among 4 containers. Pack the salsa and romaine separately.",
+   "hands_on_minutes": 4,
+   "hands_off_minutes": 0
   },
   {
    "section": "storage",
-   "text": "Cool, then refrigerate in the containers."
+   "text": "Cool, then refrigerate in the containers.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   },
   {
    "section": "reheating",
-   "text": "Reheat covered, stirring halfway, until hot all the way through."
+   "text": "Reheat covered, stirring halfway, until hot all the way through.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0
   }
  ]
 }

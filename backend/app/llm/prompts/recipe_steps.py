@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from app.llm.client import Message
 from app.llm.prompts.common import STEP_RULES, equipment_line
 
-PROMPT_VERSION = "recipe_steps/1"
+PROMPT_VERSION = "recipe_steps/2"  # /2: each step's timing, matching the idea's tasks (2b.9)
 PURPOSE = "recipe_steps"
 
 
@@ -22,6 +22,7 @@ class StepsContext:
     total_minutes: int
     equipment: tuple[str, ...]
     ingredients: Sequence[str]  # "chicken thigh 680 g", in short names with the stored amounts
+    tasks: Sequence[str] = ()  # "rice (stovetop): 2 min hands-on, 23 min hands-off", the idea's task list
 
 
 def build_messages(ctx: StepsContext) -> tuple[Message, ...]:
@@ -35,6 +36,7 @@ def build_messages(ctx: StepsContext) -> tuple[Message, ...]:
             f"- equipment: {equipment_line(ctx.equipment)}",
             "",
             f"INGREDIENTS (for {ctx.base_servings} servings): " + "; ".join(ctx.ingredients),
+            *(["", "TASKS: " + "; ".join(ctx.tasks)] if ctx.tasks else []),
         ]
     )
     return ({"role": "system", "content": STEP_RULES}, {"role": "user", "content": user})
