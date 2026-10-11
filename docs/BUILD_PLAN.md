@@ -2938,7 +2938,7 @@ opt-in timing test (a 6-dish day in under 50 ms).
 
 **Acceptance criteria**
 1. "Lunch and dinner Mon–Thu, cooking Sunday" from the seeds:
-   - every cooked item feeds at least 2 meals and no portion is past its window;
+   - every prep batch feeds at least 2 meals and no portion is past its window;
    - every day meets its calories and protein;
    - it uses one cook session when one fits;
    - marinated items are finished within their window or frozen;

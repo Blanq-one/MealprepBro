@@ -1712,8 +1712,9 @@ Five items, one cook session, every item in at least two meals, five different m
   assemble, dress). It counts as that day's hands-on time and is scheduled on that day (§20.3).
 - **Assembly:** a meal built from prep items plus fresh **add-ons** (a tortilla, sliced peppers, a spoon of hot
   sauce), e.g. "Roasted chicken over flavored rice".
-- **Every existing recipe is also a prep item:** a dish stored cooked (or as it is stored today), eaten as a
-  one-item assembly. So smart prep can use the whole library from day one, breakfasts, snacks and desserts included.
+- **Every dish also works as a prep item:** stored cooked (or as it is stored today) and eaten as a one-item
+  assembly; its kind stays `dish`. So smart prep can use the whole library from day one, breakfasts, snacks and
+  desserts included.
 
 ### 19.3 Data model
 
@@ -1864,7 +1865,7 @@ unchanged, and both models use it.
 - Every meal filled once; its portions drawn exactly; each batch's yield = its draws + its frozen extras, so no
   cooked food is left over to spoil.
 - Windows and freezer rules (§19.4).
-- Each cooked batch feeds at least 2 meals (V4).
+- Each prep batch feeds at least 2 meals (V4), whatever state it stops in.
 - Variety: an assembly at most once a day and 3 times a week (V5).
 - Calories and protein per day (strict or weekly mode, as today), the capped protein reward, daily amount caps,
   frequency caps per Monday–Sunday week (a meal counts when any of its items has a member), the purchase limit,
@@ -1893,7 +1894,7 @@ plus its add-ons. The validator checks that rounded plan:
 - draws within each batch's window for its stop state, and frozen draws only from stages that freeze;
 - no stored partly cooked protein;
 - yields equal draws + frozen extras;
-- at least 2 uses per cooked batch;
+- at least 2 uses per prep batch;
 - finish tasks within their days.
 
 The re-solve loop tightens per item as it does per recipe today.
@@ -2042,7 +2043,7 @@ tasks come from its tagged steps; an idea's are the idea's own.
   |---|---|---|
   | Oven | 8 | two sheet pans; tasks whose temperatures are within 25°F can share it (V14) |
   | Air fryer | 4 | one basket |
-  | Stovetop | 4 burners | a skillet sears 4 portions per round; a pot holds 12 |
+  | Stovetop | 4 burners | a skillet sears 4 portions per round, a pot holds 12; a mostly hands-on task (searing, stir-frying) counts as a skillet, a mostly hands-off one (simmering) as a pot |
   | Rice cooker | 10 | |
   | Pressure cooker | 8 | |
   | Slow cooker | 10 | |
@@ -2191,7 +2192,7 @@ Measured today (§15.1): an ideas call ≈ 4.7K (1.5K prompt + 3.1K for 8 ideas)
 | V8 | **Which cook days** does smart prep use? | Your cook days in the plan's range (or the days you pick on C1b), as few of them as fit |
 | V9 | **Breakfasts, snacks and desserts** in smart prep | Whole dishes as today (one-item assemblies); split items only where seeds or ideas have them |
 | V10 | **Assembly names** | Composed by code from the items (§19.5); an LLM-written assembly may keep its own title; renaming comes with Phase 3's editing |
-| V11 | **Start to finish replaces hands-on for a cook day's minutes** (as you asked; this reverses C1 of 2026-10-08). 45 minutes start to finish is tight: most seeds take 30–60 minutes on their own | One number per cook day, "time in the kitchen, start to finish", checked against the schedule; hands-on is shown but not limited (the mood still limits each recipe's hands-on). The default becomes 90 min, and your saved cook days double (45 → 90, at most 600) with a one-time note in Settings. Quick means "ready within N minutes, start to finish"; One big cook day's stepper is the same start-to-finish time |
+| V11 | **Start to finish replaces hands-on for a cook day's minutes** (as you asked; this reverses C1 of 2026-10-08). 45 minutes start to finish is tight: most lunch and dinner seeds take 35–75 minutes start to finish on their own | One number per cook day, "time in the kitchen, start to finish", checked against the schedule; hands-on is shown but not limited (the mood still limits each recipe's hands-on). The default becomes 90 min, and your saved cook days double (45 → 90, at most 600) with a one-time note in Settings. Quick means "ready within N minutes, start to finish"; One big cook day's stepper is the same start-to-finish time |
 | V12 | **How fast hands-on grows** with batch size | base × (portions ÷ base servings)^0.6: doubling adds about half, quadrupling about 130% |
 | V13 | **Equipment capacity** | The §20.2 table as code constants; a size choice per appliance in Settings → Equipment goes to the backlog |
 | V14 | **Oven sharing** | Two dishes share the oven when their portions fit (8) and their temperatures are within 25°F |
