@@ -48,7 +48,10 @@ function Week() {
     setAccepting(true);
     setAcceptError(null);
     try {
-      plan.setData(await api<PlanSummary>(`/api/v1/plans/${summary.id}/accept`, { method: "POST" }));
+      // This screen always replaced the week's plan; the "Replace your current plan?" sheet comes with 2b.7.
+      plan.setData(
+        await api<PlanSummary>(`/api/v1/plans/${summary.id}/accept?replace_overlapping=true`, { method: "POST" }),
+      );
     } catch (error) {
       setAcceptError(error);
     } finally {

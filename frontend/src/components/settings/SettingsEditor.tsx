@@ -48,7 +48,7 @@ import {
   SplitThresholdControl,
   StoresControl,
 } from "./Controls";
-import { CapsControl, PreferencesEditor } from "./DietEditors";
+import { CapsControl, DailyCapsControl, PreferencesEditor } from "./DietEditors";
 import { usePreview } from "./usePreview";
 
 type Editor = {
@@ -151,6 +151,16 @@ export const EDITORS: Record<string, Editor> = {
     why: "I'll only suggest shopping at a second store when it saves at least this much that week.",
     fields: ["store_split_min_savings_cents"],
   },
+  daily_amount_caps: {
+    title: "Daily caps",
+    why: "How much a day, counting every meal. Plans keep to the usual amount when another plan fits, and never go over the most.",
+    fields: ["daily_amount_caps"],
+    invalid: (s) =>
+      every(
+        (s.daily_amount_caps ?? []).every((c) => c.usual <= c.maximum && c.maximum > 0),
+        "The usual amount can't be more than the most.",
+      ),
+  },
   frequency_caps: {
     title: "Frequency caps",
     why: "At most this many meals a week. Capped foods are never favored.",
@@ -205,6 +215,8 @@ function control(field: string, s: UserSettings, onChange: Change, extra: { pend
       return <SplitThresholdControl settings={s} onChange={onChange} />;
     case "frequency_caps":
       return <CapsControl settings={s} onChange={onChange} />;
+    case "daily_amount_caps":
+      return <DailyCapsControl settings={s} onChange={onChange} />;
     default:
       return null;
   }

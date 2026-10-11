@@ -6,26 +6,26 @@
  "mood": "simple",
  "cuisine": null,
  "flavor_tags": ["chocolate", "creamy"],
- "base_servings": 2,
+ "base_servings": 1,
  "active_minutes": 5,
  "total_minutes": 485,
  "equipment": [],
  "freezer_friendly": false,
- "draft_note": "Draft quantities: adjust them in the app. Not plannable until the powder's carbs and fat per scoop are filled in (A2).",
+ "draft_note": "Draft quantities: adjust them in the app. One jar with 1 scoop of powder (revised 2026-10-11: no portion uses more than 1 scoop).",
  "ingredients": [
-  {"ingredient": "rolled-oats", "quantity": "80", "unit": "g", "role": "carb"},
-  {"ingredient": "protein-powder-double-chocolate", "quantity": "2", "unit": "scoop", "role": "protein"},
-  {"ingredient": "milk-2", "quantity": "300", "unit": "ml", "role": "dairy"},
-  {"ingredient": "greek-yogurt-nonfat", "quantity": "100", "unit": "g", "role": "dairy"},
-  {"ingredient": "chia-seeds", "quantity": "12", "unit": "g", "role": "other"},
-  {"ingredient": "banana", "quantity": "1", "unit": "count", "preparation": "sliced, for topping", "role": "fruit", "optional": true}
+  {"ingredient": "rolled-oats", "quantity": "35", "unit": "g", "role": "carb"},
+  {"ingredient": "protein-powder-double-chocolate", "quantity": "1", "unit": "scoop", "role": "protein"},
+  {"ingredient": "milk-2", "quantity": "120", "unit": "ml", "role": "dairy"},
+  {"ingredient": "greek-yogurt-nonfat", "quantity": "60", "unit": "g", "role": "dairy"},
+  {"ingredient": "chia-seeds", "quantity": "5", "unit": "g", "role": "other"},
+  {"ingredient": "banana", "quantity": "1/2", "unit": "count", "preparation": "sliced, for topping", "role": "fruit", "optional": true}
  ],
  "steps": [
-  {"section": "prep", "text": "Set out 2 jars with lids. Slice the banana only when serving."},
+  {"section": "prep", "text": "Set out a jar with a lid. Slice the banana only when serving."},
   {"section": "no_cook", "text": "Whisk the protein powder into the milk until smooth."},
   {"section": "no_cook", "text": "Stir in the Greek yogurt, oats and chia seeds until evenly combined."},
-  {"section": "portioning", "text": "Divide between the 2 jars, seal and refrigerate overnight so the oats soften."},
+  {"section": "portioning", "text": "Spoon into the jar, seal and refrigerate overnight so the oats soften."},
   {"section": "assembly", "text": "Stir, then top with sliced banana when serving."},
-  {"section": "storage", "text": "Keep the jars sealed in the fridge."}
+  {"section": "storage", "text": "Keep the jar sealed in the fridge."}
  ]
 }

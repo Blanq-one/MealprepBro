@@ -15,8 +15,10 @@ from app.domain.exclusions import ExclusionStatus
 from app.domain.frequency_caps import ResolvedCap
 from app.schemas.constraints import (
     CalorieTolerance,
+    CapWeekUse,
     DaySpec,
     PlanConstraints,
+    ResolvedDailyCap,
     ResolvedFrequencyCap,
     SlotTarget,
 )
@@ -37,6 +39,7 @@ class DietInputs:
     disliked_ids: frozenset[int] = frozenset()
     favorite_recipe_ids: frozenset[int] = frozenset()
     always_have_ids: frozenset[int] = frozenset()  # settings "Always have" and water, resolved to ids
+    daily_caps: tuple[ResolvedDailyCap, ...] = ()  # settings daily amount caps, resolved (step 2b.5)
 
 
 def build_constraints(
@@ -45,9 +48,14 @@ def build_constraints(
     diet: DietInputs,
     store_ids_by_name: Mapping[str, int],
     other_store_ids: Sequence[int] = (),
+    *,
+    cap_week_use: Sequence[CapWeekUse] = (),
+    lots_off_lot_ids: frozenset[int] = frozenset(),
 ) -> PlanConstraints:
     """`store_ids_by_name`: your grocery stores; `other_store_ids`: sources for items they don't carry
-    (protein powder at "Other"), always appended after your store order."""
+    (protein powder at "Other"), always appended after your store order. `cap_week_use`: what your other
+    plans already count toward each cap per calendar week; `lots_off_lot_ids`: the lots of the pantry items
+    turned off for this request (Mark cooked never takes from them)."""
     allocations = {a.slot: a.kcal for a in settings.slot_allocations}
     for slot, kcal in request.slot_kcal.items():
         if kcal == 0:
@@ -108,9 +116,14 @@ def build_constraints(
         if cap.max_meals_per_week > 0  # a cap of 0 is an exclusion, already in `excluded`
     )
     if request.mode is PlanningMode.INVENTORY:
-        limit: int | None = request.topup_cents or 0
+        # "Use what I have" with could-buy items and no limit buys them freely; otherwise a top-up (0 = none)
+        limit: int | None = request.topup_cents
+        if limit is None and not request.only_buy_could_buy:
+            limit = 0
     else:
         limit = request.budget_cents
+    could_buy = frozenset(request.could_buy) - excluded
+    have = frozenset(request.have_unlimited) | {lot.ingredient_id for lot in request.extra_lots}
     protein = (
         request.protein_target_g if request.protein_target_g is not None else settings.daily_protein_target_g
     )
@@ -135,7 +148,7 @@ def build_constraints(
             slot_targets=tuple(SlotTarget(slot=s, kcal=allocations[s]) for s in slots),
             nutrition_priority=primary,
             secondary_priority=secondary,
-            grocery_mode=settings.grocery_mode,
+            grocery_mode=request.grocery_mode or settings.grocery_mode,
             daily_protein_target_g=protein,
             planning_mode=request.mode,
             purchase_limit_cents=limit,
@@ -152,8 +165,18 @@ def build_constraints(
             frequency_caps=caps,
             disliked_ingredient_ids=diet.disliked_ids - excluded,
             favorite_recipe_ids=diet.favorite_recipe_ids,
-            always_have_ingredient_ids=diet.always_have_ids,
+            always_have_ingredient_ids=diet.always_have_ids | frozenset(request.have_unlimited),
+            lots_off_ingredient_ids=frozenset(request.pantry_off) - have,
+            lots_off_lot_ids=lots_off_lot_ids,
+            household_size=request.household_size or settings.household_size,
+            max_portions_per_recipe=request.max_portions_per_recipe or 5,
             region_code=settings.region_code,
+            protein_reward=request.protein_reward,
+            allowed_purchase_ingredient_ids=could_buy if request.only_buy_could_buy else None,
+            preferred_ingredient_ids=frozenset() if request.only_buy_could_buy else could_buy,
+            extra_lots=tuple(request.extra_lots),
+            cap_week_use=tuple(cap_week_use),
+            daily_amount_caps=diet.daily_caps,
         )
     except ValueError as exc:
         raise ConstraintError(str(exc)) from exc

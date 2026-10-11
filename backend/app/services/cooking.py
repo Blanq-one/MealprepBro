@@ -44,6 +44,7 @@ from app.services.calculations import calculate
 from app.services.errors import ConflictError
 from app.services.ingredient_data import IngredientData, load_ingredients
 from app.services.inventory import consume
+from app.services.plan_view import portion_split
 from app.services.plans import amount_display
 from app.services.recipes import VersionView, shown_in
 from app.services.settings import load_settings
@@ -327,7 +328,7 @@ def batch_view(session: Session, user_id: int, batch_id: int) -> BatchView:
         shown,
         meals,
         _package_notes(session, plan, version.title, rows, data),
-        _freeze_notes(plan, version.title, batch.cook_on),
+        _freeze_notes(plan, version, batch, meals),
     )
 
 
@@ -363,12 +364,26 @@ def _package_notes(
     return notes
 
 
-def _freeze_notes(plan: MealPlan, title: str, cook_on: date) -> list[str]:
+def _freeze_notes(
+    plan: MealPlan, version: RecipeVersion, batch: PlanCookBatch, meals: list[PlanMeal]
+) -> list[str]:
+    """Raw food frozen on shopping day for this batch, then the batch's own portions that go in the freezer
+    with the recipe's freeze note (step 2b.5)."""
     out = []
     for f in plan.totals.get("freeze", []):
-        if f.get("recipe") == title and f.get("use_on") == cook_on.isoformat():
+        if f.get("recipe") == version.title and f.get("use_on") == batch.cook_on.isoformat():
             amount = amount_display(Decimal(f["quantity"]), f["unit"])
             out.append(
                 f"{f['name']} ({amount}) was frozen on shopping day: thaw it in the fridge the night before."
             )
+    household = int(plan.constraints.get("household_size", 1))
+    _, freezer = portion_split(
+        batch.portions, sum(1 for m in meals if m.from_freezer), household, batch.portions_to_freeze
+    )
+    if freezer:
+        text = (
+            f"{freezer} of the {batch.portions} portions go in the freezer once cooled; thaw each in the "
+            "fridge the night before."
+        )
+        out.append(f"{text} {version.freeze_note}" if version.freeze_note else text)
     return out

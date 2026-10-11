@@ -22,13 +22,13 @@ from typing import Any, Literal
 from app.domain.cook_time import mood_allows
 from app.domain.enums import CalorieMode, MealSlot, PlanningMode
 from app.domain.food_safety import IngredientSafety, doneness_requirement
-from app.domain.frequency_caps import Meal, cap_violations
+from app.domain.frequency_caps import Meal, weekly_cap_violations
 from app.domain.frequency_caps import ResolvedCap as DomainCap
 from app.domain.nutrition import kcal_display
 from app.domain.quantities import format_fraction
 from app.domain.scaling import scale_line
 from app.domain.text_rules import check_text
-from app.domain.units import grams_of, to_base
+from app.domain.units import convert, grams_of, to_base
 from app.planning.costing import cost_summary
 from app.planning.grocery_list import build_grocery
 from app.planning.perishables import freeze_instructions
@@ -37,7 +37,7 @@ from app.planning.recipe_math import nutrition_of
 from app.planning.reference import ReferenceData, RefRecipe
 from app.planning.rendering import LineInput, RenderInput, render
 from app.planning.rounded import ABSORBED, RoundedBatch, RoundedPlan
-from app.schemas.constraints import VARIETY_CAPPED_SLOTS
+from app.schemas.constraints import VARIETY_CAPPED_SLOTS, ResolvedDailyCap
 
 QTY_TOLERANCE = Decimal("0.001")
 _PROTEIN = Decimal("0.1")
@@ -56,8 +56,11 @@ RESOLVABLE = frozenset(
         "PROTEIN_DAY_UNDER_TARGET",
         "PROTEIN_WEEK_UNDER_TARGET",
         "PURCHASE_LIMIT_OVER",
+        "PURCHASE_NOT_ALLOWED",  # rounding spilled past your stock in "Use what I have" (step 2b.5)
+        "DAILY_AMOUNT_OVER",  # rounding pushed a day past a daily amount cap (step 2b.5)
     }
 )
+AMOUNT_TOLERANCE = Decimal("0.01")
 
 
 @dataclass(frozen=True)
@@ -120,6 +123,15 @@ def _day(d: date) -> str:
 
 def _money(cents: int) -> str:
     return f"${cents / 100:,.2f}"
+
+
+def _cap_amount(amount: Decimal, cap: ResolvedDailyCap) -> str:
+    """'2 scoops (62 g)' for a cap with a display unit, else '62 g'."""
+    base = f"{amount.quantize(Decimal(1), ROUND_HALF_UP)} {cap.unit}"
+    if cap.display_unit and cap.unit_size:
+        n = (amount / cap.unit_size).quantize(Decimal("0.1"), ROUND_HALF_UP).normalize()
+        return f"{n:f} {cap.display_unit}{'' if n == 1 else 's'} ({base})"
+    return base
 
 
 def _expected_lines(batch: RoundedBatch, recipe: RefRecipe, ref: ReferenceData) -> list[tuple[int, Decimal]]:
@@ -220,6 +232,14 @@ def validate_plan(plan: RoundedPlan, ref: ReferenceData, *, scope: Scope = "week
             )
         if missing := sorted(recipe.equipment - c.equipment):
             errors.append(Issue("EQUIPMENT_UNAVAILABLE", f"{recipe.title} needs {', '.join(missing)}"))
+        if batch.portions_to_freeze and not recipe.freezer_friendly:
+            errors.append(
+                Issue(
+                    "FREEZER_NOT_FRIENDLY",
+                    f"{recipe.title} doesn't freeze well, so its {batch.portions_to_freeze} extra portions "
+                    "can't go in the freezer",
+                )
+            )
         expected_scale = (
             Decimal(batch.portions)
             * size_multiplier(batch.portion_size)
@@ -304,7 +324,7 @@ def validate_plan(plan: RoundedPlan, ref: ReferenceData, *, scope: Scope = "week
     day_protein: dict[date, Decimal] = {d: Decimal(0) for d in days}
     recipe_days: dict[tuple[int, date], int] = defaultdict(int)
     meals_per_recipe: dict[int, int] = defaultdict(int)
-    cap_meals: list[Meal] = []
+    cap_meals: list[tuple[date, Meal]] = []
     for meal in plan.meals:
         filled[(meal.eat_on, meal.slot)] += 1
         if meal.batch_index >= len(plan.batches):
@@ -330,6 +350,15 @@ def validate_plan(plan: RoundedPlan, ref: ReferenceData, *, scope: Scope = "week
                     "FRIDGE_WINDOW",
                     f"{_day(meal.eat_on)} {meal.slot.value}: cooked {age} days earlier, beyond the "
                     f"{c.leftover_fridge_days}-day fridge window, and not frozen",
+                    day=meal.eat_on,
+                )
+            )
+        if meal.from_freezer and recipe is not None and not recipe.freezer_friendly:
+            errors.append(
+                Issue(
+                    "FREEZER_NOT_FRIENDLY",
+                    f"{_day(meal.eat_on)} {meal.slot.value}: {recipe.title} comes from the freezer, but it "
+                    "doesn't freeze well",
                     day=meal.eat_on,
                 )
             )
@@ -360,9 +389,12 @@ def validate_plan(plan: RoundedPlan, ref: ReferenceData, *, scope: Scope = "week
             if meal.slot in VARIETY_CAPPED_SLOTS:
                 meals_per_recipe[recipe.version_id] += 1
             cap_meals.append(
-                Meal(
-                    f"{_day(meal.eat_on)} {meal.slot.value.replace('_', ' ')} ({recipe.title})",
-                    frozenset(ln.ingredient_id for ln in recipe.lines),
+                (
+                    meal.eat_on,
+                    Meal(
+                        f"{_day(meal.eat_on)} {meal.slot.value.replace('_', ' ')} ({recipe.title})",
+                        frozenset(ln.ingredient_id for ln in recipe.lines),
+                    ),
                 )
             )
     for spec in c.days:
@@ -502,10 +534,45 @@ def validate_plan(plan: RoundedPlan, ref: ReferenceData, *, scope: Scope = "week
         DomainCap(cap.label, cap.member_ingredient_ids, cap.max_meals_per_week, cap.never_favor)
         for cap in ref.caps
     ]
-    for violation in cap_violations(caps, cap_meals):
+    week_use = {(u.week_start, u.label): u.used for u in c.cap_week_use}
+    for violation in weekly_cap_violations(caps, cap_meals, week_use):
         errors.append(
             Issue("FREQUENCY_CAP_EXCEEDED", violation.message, details={"meals": list(violation.meals)})
         )
+
+    # ---- daily amount caps (M16): every meal that day, your portion, from the rounded lines ----
+    for dcap in c.daily_amount_caps:
+        plan_ = ref.ingredients.get(dcap.ingredient_id)
+        if plan_ is None:
+            continue
+        per_portion: dict[int, Decimal] = {}
+        for index, batch in enumerate(plan.batches):
+            total = sum(
+                (
+                    convert(ln.base_quantity, ln.base_unit, dcap.unit, plan_.units)
+                    for ln in batch.lines
+                    if ln.ingredient_id == dcap.ingredient_id and not ln.optional
+                ),
+                Decimal(0),
+            )
+            if total > 0:
+                per_portion[index] = total / Decimal(batch.portions)
+        day_amount: dict[date, Decimal] = defaultdict(Decimal)
+        for meal in plan.meals:
+            day_amount[meal.eat_on] += per_portion.get(meal.batch_index, Decimal(0))
+        for day, amount in sorted(day_amount.items()):
+            excess = amount - dcap.maximum
+            if excess > AMOUNT_TOLERANCE:
+                errors.append(
+                    Issue(
+                        "DAILY_AMOUNT_OVER",
+                        f"{_day(day)} has {_cap_amount(amount, dcap)} of {dcap.label.lower()}, over your "
+                        f"daily maximum of {_cap_amount(dcap.maximum, dcap)}",
+                        day=day,
+                        amount=int(excess.to_integral_value(ROUND_HALF_UP)) or 1,
+                        details={"ingredient_id": dcap.ingredient_id, "over": str(excess)},
+                    )
+                )
 
     # ---- groceries: coverage, inventory, budget ----
     grocery = build_grocery(c, plan.batches, ref.ingredients)
@@ -534,6 +601,18 @@ def validate_plan(plan: RoundedPlan, ref: ReferenceData, *, scope: Scope = "week
                         "INGREDIENT_NOT_COVERED",
                         f"{item.name}: need {item.needed} {item.unit}, have {item.inventory_used} + "
                         f"buying {bought[item.ingredient_id]}",
+                    )
+                )
+    if c.allowed_purchase_ingredient_ids is not None:  # "Use what I have": only your could-buy items
+        for item in plan.grocery.items:
+            buys = (item.kind == "buy" and (item.bought or item.to_buy) > 0) or item.kind == "unpriced"
+            if buys and not c.may_buy(item.ingredient_id):
+                errors.append(
+                    Issue(
+                        "PURCHASE_NOT_ALLOWED",
+                        f"{item.name} isn't one of your could-buy items, but the plan would buy "
+                        f"{_qty(item.to_buy, item.unit)}",
+                        details={"ingredient_id": item.ingredient_id},
                     )
                 )
     if grocery.total_cents != plan.grocery.total_cents or plan.totals.cost_cents != grocery.total_cents:

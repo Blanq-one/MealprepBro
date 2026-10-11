@@ -70,7 +70,7 @@ def test_a_plan_request_streams_progress_and_ends_with_the_finished_plan(api, se
 
 
 def test_a_heartbeat_keeps_a_quiet_stream_alive(seeded_db, monkeypatch):
-    def slow_run(session, run, request, client_factory, *, on_progress=None):
+    def slow_run(session, run, request, client_factory, *, on_progress=None, **_):
         time.sleep(0.3)
         run.status = "infeasible"
         error = {"title": "No plan fits this week", "status": 422, "detail": "nothing fits"}

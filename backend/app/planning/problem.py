@@ -55,6 +55,7 @@ class CandidateRecipe:
     never_favored: bool = False  # contains a member of a never-favored frequency cap (pork components)
     is_favorite: bool = False
     has_disliked: bool = False
+    uses_preferred: bool = False  # uses a could-buy item (a shopping list's small preference, step 2b.5)
 
     @property
     def kcal(self) -> Decimal:
@@ -189,6 +190,11 @@ class Tightening:
     inventory_holdback: Mapping[int, Decimal] = field(default_factory=dict)
     kcal_scale: Mapping[int, Decimal] = field(default_factory=dict)  # default 1 (see kcal_bias)
     protein_scale: Mapping[int, Decimal] = field(default_factory=dict)
+    # base units to take off a daily amount cap's maximum on a day, by (ingredient, day), after rounding
+    # pushed that day over it
+    amount_ceiling: Mapping[tuple[int, date], Decimal] = field(default_factory=dict)
+    # (recipe version, cook day) batches left out: their rounding steps can't land inside your limits
+    forbidden: frozenset[tuple[int, date]] = frozenset()
 
     def merged(self, other: "Tightening") -> "Tightening":
         def add[K, V: (int, Decimal)](a: Mapping[K, V], b: Mapping[K, V], zero: V) -> dict[K, V]:
@@ -209,6 +215,8 @@ class Tightening:
             add(self.inventory_holdback, other.inventory_holdback, Decimal(0)),
             {**self.kcal_scale, **other.kcal_scale},
             {**self.protein_scale, **other.protein_scale},
+            add(self.amount_ceiling, other.amount_ceiling, Decimal(0)),
+            self.forbidden | other.forbidden,
         )
 
 

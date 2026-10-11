@@ -13,7 +13,13 @@ Decisions:
 
 Hard constraints: every slot filled once, no recipe twice a day, the weekly variety cap on meals, cook
 minutes, calorie limits per mode, the protein floor per mode, the purchase limit (shop-mode budget on
-regular groceries, or inventory-mode top-up on everything), frequency caps, portion requests, supply ≥ need.
+regular groceries, or inventory-mode top-up on everything), frequency caps per Monday–Sunday week (what your
+other plans already used counts), portion requests, supply ≥ need, daily amount caps (protein powder at most
+2 scoops a day, counting every meal), and "Use what I have" buying only your could-buy items.
+
+Phase 2b (step 2b.5): a meal is household_size equal portions from one batch; calorie, protein and daily
+amount limits are for your portion, purchases for everyone. The High protein tile adds a protein reward per
+day, capped at 1.5 × the target (E11). A day above a daily cap's usual amount costs a penalty.
 The secondary store carries a fixed charge equal to the split threshold, so it is used only when it
 saves at least that much (R4); items your primary store doesn't price (protein powder at "Other") are
 bought where they are priced, with no charge. The grocery list re-checks the rule on the rounded plan.
@@ -41,12 +47,14 @@ import pulp
 
 from app.domain.cook_time import mood_allows
 from app.domain.enums import CalorieMode, MealSlot, PortionSize
+from app.domain.frequency_caps import week_monday
+from app.domain.scaling import MAX_SCALE_FACTOR
+from app.domain.units import ConversionError, convert
 from app.planning.problem import CandidateRecipe, PlanningProblem, size_multiplier
 from app.planning.solver.backend import solve_milp
 from app.planning.solver.objective import nutrient_score, weights_for
 from app.schemas.constraints import VARIETY_CAPPED_SLOTS
 
-BIG_PORTIONS = 21  # upper bound on portions per batch (need sizing only)
 MAX_FROZEN_EXTRAS = 20
 SLOT_DEAD_ZONE = 0.15  # deviation within ±15% of a slot target is free
 MULTIPLIER_STEP = Decimal("0.001")
@@ -56,6 +64,7 @@ ROUNDING_MARGIN_DAY_KCAL = 5
 ROUNDING_MARGIN_WEEK_KCAL = 20
 ROUNDING_MARGIN_DAY_PROTEIN_G = 1
 ROUNDING_MARGIN_WEEK_PROTEIN_G = 3
+PROTEIN_REWARD_PER_G = 0.02  # the High protein tile: points per gram of a day's protein, up to its cap
 # A perishable package with more than this share left over counts as "opened for a sliver of it".
 SMALL_FRACTION_LEFT = 0.75
 # Package counts are integers only for perishable packs of at least this price (chicken trays, big yogurt
@@ -178,9 +187,12 @@ def batch_plan(problem: PlanningProblem) -> list[_Batch]:
     needed = {(d.day, s): c.portion_size_for(d.day, s) for d in c.days for s in d.slots}
     sizes = sorted(set(needed.values()), key=lambda z: z.value)
     batches: list[_Batch] = []
+    forbidden = problem.tightening.forbidden
     for recipe in sorted(problem.candidates, key=lambda r: r.version_id):
         for cook in c.days:
             if not cook.is_cook_day or not mood_allows(cook.mood, recipe.mood):
+                continue
+            if (recipe.version_id, cook.day) in forbidden:
                 continue
             if recipe.active_minutes > cook.cook_minutes_available:
                 continue
@@ -196,6 +208,27 @@ def batch_plan(problem: PlanningProblem) -> list[_Batch]:
                 if targets:
                     batches.append(_Batch(len(batches), recipe, cook.day, size, targets))
     return batches
+
+
+def amount_per_portion(problem: PlanningProblem, ingredient_id: int, unit: str) -> dict[int, float]:
+    """Per candidate that uses it: one portion's amount of an ingredient (counted lines, at multiplier 1), in
+    `unit` (a daily amount cap's base unit)."""
+    plan = problem.ingredients.get(ingredient_id)
+    out: dict[int, float] = {}
+    if plan is None:
+        return out
+    for r in problem.candidates:
+        amount = Decimal(0)
+        for line in r.lines:
+            if line.ingredient_id != ingredient_id or line.optional:
+                continue
+            try:
+                amount += convert(line.quantity, line.unit, unit, plan.units)
+            except ConversionError:
+                continue
+        if amount > 0:
+            out[r.version_id] = _f(amount / r.base_servings)
+    return out
 
 
 def _median_costs(problem: PlanningProblem) -> dict[MealSlot, Decimal]:
@@ -300,17 +333,23 @@ def build_model(
         by_slot[(e, s)].append((b, var, scaled[key]))
         by_recipe_day[(b.recipe.version_id, e)].append(var)
 
+    household = c.household_size  # a meal is this many portions; frozen extras are single portions
+
     def portions(b: _Batch) -> Any:
-        terms: list[Any] = [xv for xv, _ in by_batch[b.index]]
+        terms: list[Any] = [household * xv for xv, _ in by_batch[b.index]]
         if b.index in frozen:
             terms.append(frozen[b.index])
         return pulp.lpSum(terms)
 
     def scaled_portions(b: _Batch) -> Any:
-        terms: list[Any] = [sv for _, sv in by_batch[b.index]]
+        terms: list[Any] = [household * sv for _, sv in by_batch[b.index]]
         if b.index in frozen:
             terms.append(frozen[b.index])
         return pulp.lpSum(terms)
+
+    # upper bound on one batch's portions (need sizing only): a recipe is eaten at most once a day, by
+    # everyone, plus the extras it may freeze
+    big_portions = household * len(c.days) + (MAX_FROZEN_EXTRAS if wants_frozen else 0)
 
     slacks: dict[str, dict[Any, pulp.LpVariable]] = defaultdict(dict)
 
@@ -328,6 +367,13 @@ def build_model(
         if b.index in frozen:
             prob += frozen[b.index] <= MAX_FROZEN_EXTRAS * y[b.index], f"frozen_on_{b.index}"
         prob += portions(b) >= y[b.index], f"batch_nonempty_{b.index}"
+        # a batch scales its recipe at most MAX_SCALE_FACTOR times (practical rounding refuses more)
+        most = (household * len(b.targets) + (MAX_FROZEN_EXTRAS if b.index in frozen else 0)) * hi
+        if most * _f(b.size_multiplier) > _f(MAX_SCALE_FACTOR) * b.recipe.base_servings:
+            prob += (
+                scaled_portions(b) * _f(b.size_multiplier) <= _f(MAX_SCALE_FACTOR) * b.recipe.base_servings,
+                f"scale_max_{b.index}",
+            )
 
     # ---- every planned slot filled exactly once ----
     for d in c.days:
@@ -356,16 +402,21 @@ def build_model(
             extra = slack("variety", vid) if elastic else 0
             prob += pulp.lpSum(vars_) <= c.max_portions_per_recipe + extra, f"variety_{vid}"
 
-    # ---- frequency caps (meals eaten from batches containing a member) ----
+    # ---- frequency caps (meals eaten from batches containing a member), per Monday–Sunday week, after what
+    # your other plans already count that week (F7) ----
+    weeks = sorted({week_monday(d.day) for d in c.days})
     for ci, cap in enumerate(c.frequency_caps):
-        members = [
-            var
-            for (bi, _e, _s), var in x.items()
-            if batches[bi].recipe.ingredient_ids & cap.member_ingredient_ids
-        ]
-        if members:
-            extra = slack("cap", cap.label) if elastic else 0
-            prob += pulp.lpSum(members) <= cap.max_meals_per_week + extra, f"cap_{ci}"
+        for wi, monday in enumerate(weeks):
+            members = [
+                var
+                for (bi, e, _s), var in x.items()
+                if week_monday(e) == monday and batches[bi].recipe.ingredient_ids & cap.member_ingredient_ids
+            ]
+            if not members:
+                continue
+            allowance = max(cap.max_meals_per_week - c.cap_used(monday, cap.label), 0)
+            extra = slack("cap", (cap.label, monday)) if elastic else 0
+            prob += pulp.lpSum(members) <= allowance + extra, f"cap_{ci}_{wi}"
 
     # ---- hands-on cook minutes per cook day ----
     for d in c.days:
@@ -403,10 +454,12 @@ def build_model(
         week = pulp.lpSum(day_kcal.values())
         over = slack("week_over", "week") if elastic else 0
         under = slack("week_under", "week") if elastic else 0
-        week_max = c.weekly_kcal_target - ROUNDING_MARGIN_WEEK_KCAL - t.week_ceiling
-        week_min = (
-            c.weekly_kcal_target * (1 - tol.weekly_under_pct / 100) + ROUNDING_MARGIN_WEEK_KCAL + t.week_floor
-        )
+        # a short plan (2 lunches) has a narrow window between the 97% floor and the target: the margins
+        # take at most a quarter of it each, so they never close it (step 2b.5)
+        window = c.weekly_kcal_target * tol.weekly_under_pct / 100
+        margin = min(ROUNDING_MARGIN_WEEK_KCAL, window / 4)
+        week_max = c.weekly_kcal_target - margin - t.week_ceiling
+        week_min = c.weekly_kcal_target - window + margin + t.week_floor
         prob += week <= week_max + over, "kcal_week_max"
         prob += week >= week_min - under, "kcal_week_min"
 
@@ -435,6 +488,40 @@ def build_model(
             floor = c.week_protein_target_g + ROUNDING_MARGIN_WEEK_PROTEIN_G + _f(t.protein_week_floor)
             short = slack("protein_week", "week") if elastic else 0
             prob += pulp.lpSum(day_protein.values()) >= floor - short, "protein_week_min"
+    # the High protein tile (E11): each day's protein (your portion) earns a reward up to 1.5 × the target;
+    # maximizing a capped linear term keeps it exact, with no integer variables
+    protein_reward: list[Any] = []
+    if c.protein_reward and not elastic:
+        for d in c.days:
+            earned = pulp.LpVariable(f"pr_{d.day:%m%d}", lowBound=0, upBound=c.protein_reward_cap_g)
+            prob += earned <= day_protein[d.day], f"protein_reward_{d.day:%m%d}"
+            protein_reward.append(earned)
+
+    # ---- daily amount caps (M16): an ingredient's amount per day for your portion, counting every meal ----
+    amount_over: list[Any] = []
+    for dcap in c.daily_amount_caps:
+        amounts = amount_per_portion(problem, dcap.ingredient_id, dcap.unit)
+        if not amounts:
+            continue
+        unit = _f(dcap.unit_size or dcap.usual or dcap.maximum)
+        for d in c.days:
+            terms = [
+                amounts[b.recipe.version_id] * _f(b.size_multiplier) * sv
+                for s in d.slots
+                for b, _xv, sv in by_slot[(d.day, s)]
+                if b.recipe.version_id in amounts
+            ]
+            if not terms:
+                continue
+            day_amount = pulp.lpSum(terms)
+            tag = f"{dcap.ingredient_id}_{d.day:%m%d}"
+            ceiling = _f(dcap.maximum) - _f(t.amount_ceiling.get((dcap.ingredient_id, d.day), 0))
+            extra = slack("amount", (dcap.label, d.day)) if elastic else 0
+            prob += day_amount <= ceiling + extra, f"amount_max_{tag}"
+            if not elastic and not cheapest:
+                over = pulp.LpVariable(f"amount_over_{tag}", lowBound=0)
+                prob += over >= day_amount - _f(dcap.usual), f"amount_usual_{tag}"
+                amount_over.append(over * (1 / unit))
 
     # ---- portion requests ----
     for ri, req in enumerate(c.portion_requests):
@@ -485,7 +572,7 @@ def build_model(
         if plan.unlimited:
             continue
         need = pulp.lpSum(coef * scaled_portions(b) for coef, b in need_terms[ingredient_id])
-        max_need = sum(coef * BIG_PORTIONS * hi for coef, _ in need_terms[ingredient_id])
+        max_need = sum(coef * big_portions * hi for coef, _ in need_terms[ingredient_id])
         offers = [o for o in plan.offers if o.store_id in stores]
         open_avail = _f(plan.available_where(opened=True))
         exp_avail = _f(
@@ -518,6 +605,9 @@ def build_model(
                     if label in ("open", "exp"):
                         inventory_bonus.append(var * (1 / avail))
         limited = c.limit_covers(plan.stock_up)
+        if not c.may_buy(ingredient_id):  # "Use what I have": only your could-buy items are bought
+            prob += inventory >= need, f"not_allowed_from_inventory_{ingredient_id}"
+            continue
         if not offers:
             if limited:
                 prob += inventory >= need, f"unpriced_from_inventory_{ingredient_id}"
@@ -618,6 +708,7 @@ def build_model(
             "protein_week": 2,
             "cap": 200,
             "variety": 200,
+            "amount": 50,
         }
         # a tiny cost term, so the purchases inside the limit are the cheapest ones too (the diagnostics list
         # what would have to be bought)
@@ -680,6 +771,8 @@ def build_model(
                 )
             if r.is_favorite:
                 per_meal += w.preference
+            if r.uses_preferred:  # a could-buy item on a shopping list: a small preference
+                per_meal += w.could_buy
         else:
             per_meal -= w.never_favored_tiebreak
             if s in medians and r.cost_cents_per_portion is not None:
@@ -717,6 +810,8 @@ def build_model(
     objective.extend(w.inventory_use * term for term in inventory_bonus)
     objective.extend(-w.cost_per_dollar * term for term in inventory_charge)
     objective.extend(-w.batch * y[b.index] for b in batches)
+    objective.extend(PROTEIN_REWARD_PER_G * earned for earned in protein_reward)
+    objective.extend(-w.daily_amount_over * over for over in amount_over)
     prob += pulp.lpSum(objective)
     return _Model(
         prob,
@@ -760,9 +855,8 @@ def extract(
         raw = Decimal(str(_value(model.nudge[b.index]))) if b.index in model.nudge else Decimal(1)
         nudge = raw.quantize(MULTIPLIER_STEP, rounding=ROUND_HALF_UP)
         batch_index = len(batches)
-        batches.append(
-            SolvedBatch(b.recipe.version_id, b.cook_on, b.size, nudge, len(eaten) + extras, extras)
-        )
+        portions = c.household_size * len(eaten) + extras
+        batches.append(SolvedBatch(b.recipe.version_id, b.cook_on, b.size, nudge, portions, extras))
         for e, s in eaten:
             meals.append(SolvedMeal(e, s, batch_index, (e - b.cook_on).days > c.leftover_fridge_days))
     meals.sort(key=lambda m: (m.eat_on, list(MealSlot).index(m.slot)))

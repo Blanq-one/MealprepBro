@@ -63,8 +63,16 @@ def get_plan(plan_id: int, session: DbSession, user: CurrentUser) -> PlanSummary
 
 
 @router.post("/plans/{plan_id}/accept", response_model=PlanSummaryOut)
-def accept_plan(plan_id: int, session: DbSession, user: CurrentUser) -> PlanSummaryOut:
-    out = service.accept(session, user.id, plan_id)
+def accept_plan(
+    plan_id: int,
+    session: DbSession,
+    user: CurrentUser,
+    replace_overlapping: bool = Query(default=False),
+) -> PlanSummaryOut:
+    """Make a draft your current plan. If active plans overlap its days, the answer is 409 with
+    `overlapping` (each plan's id, days, meals and the "Replace your current plan (…)?" question) unless
+    `replace_overlapping=true`, which replaces them."""
+    out = service.accept(session, user.id, plan_id, replace_overlapping=replace_overlapping)
     session.commit()
     return out
 

@@ -168,6 +168,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/cook/meal-prep": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Meal Prep
+         * @description Meal prep (E4): your answers become a plan, inside this request. The response is a stream of JSON
+         *     lines (`PlanStreamEvent`): `started` (the run id), `progress` lines with the building steps (constraints,
+         *     candidates, generating, waiting with `wait_s`, solving, pricing, validating), heartbeats, and one `result`
+         *     with the draft plan (kind `meal_prep`) or the problem. Answers that can't form a plan are a 422 before
+         *     the stream starts.
+         */
+        post: operations["meal_prep_api_v1_cook_meal_prep_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/cook/meals": {
         parameters: {
             query?: never;
@@ -594,7 +618,12 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Accept Plan */
+        /**
+         * Accept Plan
+         * @description Make a draft your current plan. If active plans overlap its days, the answer is 409 with
+         *     `overlapping` (each plan's id, days, meals and the "Replace your current plan (…)?" question) unless
+         *     `replace_overlapping=true`, which replaces them.
+         */
         post: operations["accept_plan_api_v1_plans__plan_id__accept_post"];
         delete?: never;
         options?: never;
@@ -1090,6 +1119,23 @@ export interface components {
             cost_display?: string | null;
             /** Dish Category */
             dish_category: string;
+            /** Freeze Note */
+            freeze_note?: string | null;
+            /**
+             * Freezer Friendly
+             * @default false
+             */
+            freezer_friendly: boolean;
+            /**
+             * Freezer Portions
+             * @default 0
+             */
+            freezer_portions: number;
+            /**
+             * Fridge Portions
+             * @default 0
+             */
+            fridge_portions: number;
             /** Id */
             id: number;
             /** Planned Minutes */
@@ -1100,6 +1146,11 @@ export interface components {
             portion_size: string;
             /** Portions */
             portions: number;
+            /**
+             * Portions Display
+             * @default
+             */
+            portions_display: string;
             /** Portions To Freeze */
             portions_to_freeze: number;
             /** Recipe Version Id */
@@ -1541,6 +1592,27 @@ export interface components {
             /** Unit */
             unit: string;
         };
+        /**
+         * DailyAmountCapSetting
+         * @description A per-day amount cap for one ingredient (M16, step 2b.5): like a frequency cap, but counting how much
+         *     you eat in a day, every meal included. Days above `usual` are avoided when another plan fits; `maximum` is
+         *     never exceeded.
+         */
+        DailyAmountCapSetting: {
+            /** Ingredient */
+            ingredient: string;
+            /** Label */
+            label: string;
+            /** Maximum */
+            maximum: number;
+            /**
+             * Unit
+             * @default g
+             */
+            unit: string;
+            /** Usual */
+            usual: number;
+        };
         /** DayOut */
         DayOut: {
             /** Chill Minutes */
@@ -1560,6 +1632,10 @@ export interface components {
             day: string;
             /** Elapsed Minutes */
             elapsed_minutes: number;
+            /** Freeze Steps */
+            freeze_steps?: string[];
+            /** Freeze Today */
+            freeze_today?: string[];
             /** Hands On Minutes */
             hands_on_minutes: number;
             /** Is Cook Day */
@@ -1570,8 +1646,12 @@ export interface components {
             kcal_target: number;
             /** Meals */
             meals: components["schemas"]["MealOut"][];
+            /** Prep Order */
+            prep_order?: string[];
             /** Protein G */
             protein_g: string;
+            /** Thaw Notes */
+            thaw_notes?: string[];
         };
         /**
          * DayOverride
@@ -1684,6 +1764,19 @@ export interface components {
             status: "have" | "could_buy";
             /** Unit */
             unit?: string | null;
+        };
+        /**
+         * ExtraLot
+         * @description A "have it" item from this request (meal prep, with the amount you picked): stock this plan may use,
+         *     never written to your pantry (FLOW_SPEC §13.3).
+         */
+        ExtraLot: {
+            /** Ingredient Id */
+            ingredient_id: number;
+            /** Quantity */
+            quantity: number | string;
+            /** Unit */
+            unit: string;
         };
         /** FieldErrorOut */
         FieldErrorOut: {
@@ -2270,6 +2363,14 @@ export interface components {
             /** Recipe Version Id */
             recipe_version_id: number;
             slot: components["schemas"]["MealSlot"];
+            /** Source Display */
+            source_display?: string | null;
+            /**
+             * Storage
+             * @default fresh
+             * @enum {string}
+             */
+            storage: "fresh" | "fridge" | "freezer";
             /** Title */
             title: string;
         };
@@ -2480,6 +2581,11 @@ export interface components {
              */
             budget_cents?: number | null;
             calorie_mode?: components["schemas"]["CalorieMode"] | null;
+            /**
+             * Could Buy
+             * @description ingredient ids you'd happily buy
+             */
+            could_buy?: number[];
             /** Day Overrides */
             day_overrides?: components["schemas"]["DayOverride"][];
             /**
@@ -2487,11 +2593,49 @@ export interface components {
              * @default 7
              */
             days: number;
+            /**
+             * Extra Lots
+             * @description have it, for this plan only
+             */
+            extra_lots?: components["schemas"]["ExtraLot"][];
+            grocery_mode?: components["schemas"]["GroceryMode"] | null;
+            /**
+             * Have Unlimited
+             * @description have it, no amount: enough
+             */
+            have_unlimited?: number[];
+            /**
+             * Household Size
+             * @description None = your settings
+             */
+            household_size?: number | null;
+            /**
+             * Max Portions Per Recipe
+             * @description None = 5 (Q14)
+             */
+            max_portions_per_recipe?: number | null;
             /** @default shop */
             mode: components["schemas"]["PlanningMode"];
             nutrition_priority?: components["schemas"]["NutritionPriority"] | null;
+            /**
+             * Only Buy Could Buy
+             * @description Use what I have: buy only the could-buys
+             * @default false
+             */
+            only_buy_could_buy: boolean;
+            /**
+             * Pantry Off
+             * @description pantry items not for this plan
+             */
+            pantry_off?: number[];
             /** Portion Requests */
             portion_requests?: components["schemas"]["PortionRequest"][];
+            /**
+             * Protein Reward
+             * @description High protein: reward up to 1.5 × the target
+             * @default false
+             */
+            protein_reward: boolean;
             /**
              * Protein Target G
              * @description daily floor; 0 = none
@@ -2582,6 +2726,13 @@ export interface components {
             freeze: components["schemas"]["FreezeOut"][];
             /** Generation Run Id */
             generation_run_id: number | null;
+            /** Header */
+            header?: string | null;
+            /**
+             * Household Size
+             * @default 1
+             */
+            household_size: number;
             /** Id */
             id: number;
             /** Kcal Planned Week */
@@ -2599,6 +2750,7 @@ export interface components {
             /** Nutrition Focus */
             nutrition_focus: string;
             planning_mode: components["schemas"]["PlanningMode"];
+            prep_notes?: components["schemas"]["PrepNotesOut"] | null;
             /** Protein G Per Day */
             protein_g_per_day: string;
             /** Protein G Week */
@@ -2717,6 +2869,28 @@ export interface components {
              * @default today
              */
             start: ("today" | "tomorrow") | string;
+        };
+        /** PrepNoteOut */
+        PrepNoteOut: {
+            /** Day */
+            day?: string | null;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "freeze" | "freeze_portions" | "spoil";
+            /** Text */
+            text: string;
+        };
+        /**
+         * PrepNotesOut
+         * @description The plan view's one Prep notes row (H4): "3 to freeze · 4 may spoil", with its items for the sheet.
+         */
+        PrepNotesOut: {
+            /** Display */
+            display: string;
+            /** Items */
+            items: components["schemas"]["PrepNoteOut"][];
         };
         /**
          * PresetOut
@@ -3041,6 +3215,8 @@ export interface components {
             equipment: string[];
             /** Flavor Tags */
             flavor_tags: string[];
+            /** Freeze Note */
+            freeze_note?: string | null;
             /** Freezer Friendly */
             freezer_friendly: boolean;
             /** Heme Note */
@@ -3478,6 +3654,8 @@ export interface components {
             calorie_mode: components["schemas"]["CalorieMode"];
             /** Cook Schedule */
             cook_schedule: components["schemas"]["CookDaySetting"][];
+            /** Daily Amount Caps */
+            daily_amount_caps?: components["schemas"]["DailyAmountCapSetting"][];
             /**
              * Daily Band Kcal
              * @default 150
@@ -3901,6 +4079,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CookStreamEvent"];
+                    "application/x-ndjson": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    meal_prep_api_v1_cook_meal_prep_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CookAnswers-Input"];
+            };
+        };
+        responses: {
+            /** @description NDJSON event lines */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanStreamEvent"];
                     "application/x-ndjson": unknown;
                 };
             };
@@ -4645,7 +4857,9 @@ export interface operations {
     };
     accept_plan_api_v1_plans__plan_id__accept_post: {
         parameters: {
-            query?: never;
+            query?: {
+                replace_overlapping?: boolean;
+            };
             header?: never;
             path: {
                 plan_id: number;

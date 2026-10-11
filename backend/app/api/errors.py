@@ -16,7 +16,7 @@ from app.domain.quantities import QuantityParseError
 from app.domain.scaling import ScalingError
 from app.domain.units import InvalidQuantityError, UnitError
 from app.planning.constraint_builder import ConstraintError
-from app.planning.persistence import PlanNotFoundError
+from app.planning.persistence import PlanNotFoundError, PlanOverlapError
 from app.services.calculations import CalculationError
 from app.services.cooking import CookingError
 from app.services.errors import ConflictError
@@ -99,6 +99,23 @@ def install_error_handlers(app: FastAPI) -> None:
         if isinstance(exc, StepsNotReadyError):  # never an error page: try again at retry_after_s
             return problem(
                 409, "The steps aren't written yet", str(exc), code=exc.code, retry_after_s=exc.retry_after_s
+            )
+        if isinstance(exc, PlanOverlapError):  # the "Replace your current plan?" sheet
+            return problem(
+                409,
+                "This plan overlaps your current plan",
+                str(exc),
+                code="plan_overlap",
+                overlapping=[
+                    {
+                        "plan_id": o.plan_id,
+                        "start": o.start.isoformat(),
+                        "end": o.end.isoformat(),
+                        "meals": o.meals,
+                        "message": o.message,
+                    }
+                    for o in exc.overlapping
+                ],
             )
         return problem(409, "Conflict", str(exc))
 

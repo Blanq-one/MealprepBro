@@ -11,7 +11,10 @@ applies every hard filter first (diet rules, equipment, mood and hands-on time t
 
 Each meal's shortlist always starts with its quickest recipe, and the quickest one your strictest cook day's
 mood allows (P3): the first day of a week cooks every one of its meals itself, so a shortlist of slow recipes
-could miss a short cook day that the library fits easily.
+could miss a short cook day that the library fits easily. With a money limit (a budget, or inventory mode's
+top-up) it also keeps the meal's cheapest recipe by cost per portion and the cheapest by what it costs to buy
+today (whole packages of what your pantry doesn't cover), since the planner stops at the wider shortlist then
+(D102 follow-up, approved 2026-10-11).
 
 Each candidate is scored within its meal, every term scaled 0–1 across that meal's pool, ties by version id:
   nutrition   your priority per kcal (protein, carbs, or iron with heme counted twice; none for balanced)
@@ -26,6 +29,7 @@ Never favored (pork components, CLAUDE.md) and disliked recipes rank last: they 
 a meal has fewer recipes than the limit, and the frequency caps still apply in the solver.
 """
 
+import math
 from collections.abc import Mapping, Sequence
 from dataclasses import replace
 from decimal import Decimal
@@ -33,6 +37,7 @@ from decimal import Decimal
 from app.domain.cook_time import MOOD_ORDER
 from app.domain.enums import GroceryMode, MealSlot, NutritionPriority
 from app.planning.problem import CandidateRecipe, IngredientPlan, PlanningProblem
+from app.schemas.constraints import VARIETY_CAPPED_SLOTS
 
 SHORTLIST_PER_SLOT = 3  # lunch and dinner share most recipes, so a week shortlists about 8–12
 SHORTLIST_WIDER = 6  # the second try when the shortlist can't make a plan
@@ -121,6 +126,69 @@ def quickest(
     return out
 
 
+def meal_portions(problem: PlanningProblem, slot: MealSlot) -> int:
+    """The portions one recipe would cook for a meal this plan: every day that has the meal (the weekly
+    variety cap for meals), for everyone eating."""
+    c = problem.constraints
+    days = sum(1 for d in c.days if slot in d.slots)
+    if slot in VARIETY_CAPPED_SLOTS:
+        days = min(days, c.max_portions_per_recipe)
+    return max(days, 1) * c.household_size
+
+
+def buy_today_cents(x: CandidateRecipe, problem: PlanningProblem, portions: int) -> Decimal | None:
+    """What cooking `portions` of a recipe costs to buy today: whole packages (the cheapest way at your
+    stores) of what your pantry doesn't cover, counting only what the money limit covers. None when
+    something it would buy has no price."""
+    c = problem.constraints
+    total = Decimal(0)
+    for ingredient_id, per_portion in x.need_per_portion.items():
+        plan = problem.ingredients.get(ingredient_id)
+        if plan is None or plan.unlimited or not c.limit_covers(plan.stock_up):
+            continue
+        rest = per_portion * portions - plan.available
+        if rest <= 0:
+            continue
+        options = [
+            Decimal(math.ceil(rest / o.package_amount) * o.package_cents)
+            if o.package_amount is not None and o.package_cents is not None
+            else rest * o.cents_per_unit
+            for o in plan.offers
+            if o.store_id in c.store_ids
+        ]
+        if not options:
+            return None
+        total += min(options)
+    return total
+
+
+def cheapest(
+    pool: Sequence[CandidateRecipe], problem: PlanningProblem, slot: MealSlot, scores: Mapping[int, Decimal]
+) -> list[CandidateRecipe]:
+    """With a money limit: the meal's cheapest recipe per portion and the cheapest to buy today (ties by
+    score). An unknown cost never counts as cheap. Never-favored and disliked recipes only when nothing else
+    is there."""
+    if not problem.constraints.has_purchase_limit:
+        return []
+    usable = [x for x in pool if not (x.never_favored or x.has_disliked)] or list(pool)
+    out: list[CandidateRecipe] = []
+    per_portion = [x for x in usable if x.cost_cents_per_portion is not None]
+    if per_portion:
+        out.append(
+            min(
+                per_portion,
+                key=lambda x: (x.cost_cents_per_portion, -scores[x.version_id], x.version_id),
+            )
+        )
+    portions = meal_portions(problem, slot)
+    today = [(cents, x) for x in usable if (cents := buy_today_cents(x, problem, portions)) is not None]
+    if today:
+        best = min(today, key=lambda t: (t[0], -scores[t[1].version_id], t[1].version_id))[1]
+        if best not in out:
+            out.append(best)
+    return out
+
+
 def shortlist(problem: PlanningProblem, per_slot: int = SHORTLIST_PER_SLOT) -> PlanningProblem:
     """The problem with each meal's best `per_slot` candidates (a recipe kept for any meal is kept for all its
     meals). The same problem when nothing needs cutting."""
@@ -140,11 +208,12 @@ def shortlist(problem: PlanningProblem, per_slot: int = SHORTLIST_PER_SLOT) -> P
             continue
         scores = score_pool(pool, problem, kcal)
         picked = [x for x in pool if x.version_id in keep][:per_slot]  # already kept for another meal
-        for fast in quickest(pool, problem, scores):  # so the shortest cook day can always be met
-            if fast not in picked:
-                picked.append(fast)
-                keep.add(fast.version_id)
-                used |= set(fast.need_per_portion)
+        # the shortest cook day can always be met, and a money limit always has the cheap options
+        for must in [*quickest(pool, problem, scores), *cheapest(pool, problem, slot, scores)]:
+            if must not in picked:
+                picked.append(must)
+                keep.add(must.version_id)
+                used |= set(must.need_per_portion)
         while len(picked) < per_slot:
             rest = [x for x in pool if x not in picked]
             best = min(

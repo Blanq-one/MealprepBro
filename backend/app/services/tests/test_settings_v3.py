@@ -105,6 +105,7 @@ def test_preview_of_valid_settings_has_summary_lines_and_saves_nothing(client, s
         "stores",
         "food_rules",
         "always_have",
+        "daily_caps",
     ]
     assert lines["people"] == "2 people"
     assert lines["budget"] == "$45.00 (a starting point)"
@@ -117,6 +118,7 @@ def test_preview_of_valid_settings_has_summary_lines_and_saves_nothing(client, s
     assert lines["equipment"] == "Stovetop, Oven, Air fryer, Microwave"
     assert lines["stores"] == "1 Stop & Shop · 2 Price Rite"
     assert lines["food_rules"] == "Beef: never · Pork: up to 1 meal a week · 10 held, 0 allowed"
+    assert lines["daily_caps"] == "Protein powder: usually 1 scoop a day, at most 2 scoops"
     assert lines["always_have"] == "salt, black pepper"
     assert preview["settings"]["household_size"] == 2
     assert load_settings(seeded_db, current_user(seeded_db).id).household_size == 1  # not saved

@@ -92,6 +92,9 @@ class RecipeVersion(Base):
     # Phase 2b (0005): NULL = has its steps; pending = an idea whose steps are written once, on first open
     # (used from step 2b.3b)
     steps_status: Mapped[str | None] = mapped_column(Text)
+    # Phase 2b (0007, step 2b.5): how to freeze a recipe that freezes well ("freeze the chicken and rice;
+    # make the yogurt sauce fresh"); NULL = no note
+    freeze_note: Mapped[str | None] = mapped_column(Text)
 
 
 class RecipeIngredient(Base):

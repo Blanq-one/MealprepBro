@@ -4,6 +4,7 @@ from your settings (planning/constraint_builder.py). The solver and the plan val
 import hashlib
 import json
 from datetime import date, timedelta
+from decimal import Decimal
 from typing import Any, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -72,6 +73,37 @@ class ResolvedFrequencyCap(_Frozen):
     never_favor: bool = True  # no nutrition / price / inventory-use bonus
 
 
+class CapWeekUse(_Frozen):
+    """Meals that already count toward a frequency cap in one Monday–Sunday week, from your other plans and
+    one-meal plans (FLOW_SPEC §13.3, F7): this plan gets what's left of that week's allowance."""
+
+    week_start: date  # the Monday
+    label: str
+    used: int = Field(ge=0)
+
+
+class ResolvedDailyCap(_Frozen):
+    """A daily amount cap (M16), resolved by code: how much of one ingredient you eat in a day, counting
+    every meal that day. Days above `usual` cost a penalty; `maximum` is never exceeded."""
+
+    label: str  # "Protein powder"
+    ingredient_id: int
+    unit: str  # the ingredient's base unit: g | ml | count
+    usual: Decimal = Field(ge=0)  # in `unit`
+    maximum: Decimal = Field(gt=0)
+    display_unit: str | None = None  # "scoop"
+    unit_size: Decimal | None = None  # base units in one display unit (31 g a scoop)
+
+
+class ExtraLot(_Frozen):
+    """A "have it" item from this request (meal prep, with the amount you picked): stock this plan may use,
+    never written to your pantry (FLOW_SPEC §13.3)."""
+
+    ingredient_id: int
+    quantity: Decimal = Field(gt=0)
+    unit: str = Field(min_length=1, max_length=20)
+
+
 class PortionRequest(_Frozen):
     """'Make 7 portions', 'I need lunch for Monday-Friday', 'make 10 and freeze half'."""
 
@@ -130,6 +162,16 @@ class PlanConstraints(_Frozen):
     household_size: int = Field(default=1, ge=1, le=8)
     max_portions_per_recipe: int = Field(default=5, ge=1, le=14)  # per week, VARIETY_CAPPED_SLOTS only
     region_code: str | None = None
+    # ---- step 2b.5 (meal prep) ----
+    # the High protein tile (F3, E11): each day's protein earns a reward up to 1.5 × the daily target
+    protein_reward: bool = False
+    # "Use what I have": the only ingredients this plan may buy (your could-buy items); None = anything
+    allowed_purchase_ingredient_ids: frozenset[int] | None = None
+    # could-buy items on a shopping list: a small preference, no rule
+    preferred_ingredient_ids: frozenset[int] = frozenset()
+    extra_lots: tuple[ExtraLot, ...] = ()  # "have it" items with an amount, for this request only
+    cap_week_use: tuple[CapWeekUse, ...] = ()  # other plans' meals toward each cap, per calendar week
+    daily_amount_caps: tuple[ResolvedDailyCap, ...] = ()  # e.g. protein powder: usually 1 scoop, at most 2
 
     @model_validator(mode="after")
     def _consistency(self) -> Self:
@@ -153,7 +195,11 @@ class PlanConstraints(_Frozen):
                 raise ValueError(f"nutrition priority '{p}' is not supported yet")
         if not any(d.is_cook_day for d in self.days):
             raise ValueError("at least one cook day is required")
-        if self.planning_mode is PlanningMode.INVENTORY and self.purchase_limit_cents is None:
+        if (
+            self.planning_mode is PlanningMode.INVENTORY
+            and self.purchase_limit_cents is None
+            and self.allowed_purchase_ingredient_ids is None
+        ):
             raise ValueError("inventory mode needs a purchase limit (the top-up allowance, 0 = buy nothing)")
         if not self.held_ingredient_ids <= self.excluded_ingredient_ids:
             raise ValueError("held ingredients must also be in excluded_ingredient_ids")
@@ -204,6 +250,20 @@ class PlanConstraints(_Frozen):
             return False
         return self.planning_mode is PlanningMode.INVENTORY or not stock_up
 
+    def may_buy(self, ingredient_id: int) -> bool:
+        """Whether this plan may buy an ingredient ("Use what I have" buys only your could-buy items)."""
+        allowed = self.allowed_purchase_ingredient_ids
+        return allowed is None or ingredient_id in allowed
+
+    def cap_used(self, week_start: date, label: str) -> int:
+        """Meals your other plans already count toward a cap in the week starting `week_start` (a Monday)."""
+        return sum(u.used for u in self.cap_week_use if u.week_start == week_start and u.label == label)
+
+    @property
+    def protein_reward_cap_g(self) -> int:
+        """E11/E16: each day's protein earns a reward up to 1.5 × the target (1.5 × 100 g with no target)."""
+        return int(Decimal("1.5") * (self.daily_protein_target_g or 100))
+
     def keep_horizon_days(self) -> int:
         """Food left at the end of the plan keeps if it is still good at the end of the next one."""
         return 2 * len(self.days)
@@ -226,8 +286,11 @@ class PlanConstraints(_Frozen):
             "always_have_ingredient_ids",
             "lots_off_ingredient_ids",
             "lots_off_lot_ids",
+            "preferred_ingredient_ids",
         ):
             data[key] = sorted(data[key])
+        if data["allowed_purchase_ingredient_ids"] is not None:
+            data["allowed_purchase_ingredient_ids"] = sorted(data["allowed_purchase_ingredient_ids"])
         for cap in data["frequency_caps"]:
             cap["member_ingredient_ids"] = sorted(cap["member_ingredient_ids"])
         return data

@@ -36,7 +36,7 @@ from app.domain.frequency_caps import ResolvedCap
 from app.domain.meat_forms import MeatForm
 from app.domain.nutrition import NutritionLine, line_amounts
 from app.domain.scaling import PORTION_MULTIPLIERS
-from app.domain.units import ConversionError, UnitError, to_base
+from app.domain.units import ConversionError, UnitError, convert, to_base
 from app.planning.inputs import diet_inputs
 from app.planning.loader import candidate_versions, load_ingredient_plans, version_lines
 from app.planning.problem import IngredientPlan, RecipeLine
@@ -256,7 +256,7 @@ def load_pool(
     if pairs is None:
         pairs = [(r, v) for r, v in candidate_versions(session, user_id) if query.slot.value in v.meal_slots]
     lines = version_lines(session, [v.id for _, v in pairs])
-    diet = diet_inputs(session, user_id, settings.always_have)
+    diet = diet_inputs(session, user_id, settings)
     order, store_names = store_ids(session, settings)
     lot_ids = set(
         session.scalars(
@@ -285,7 +285,9 @@ def load_pool(
         held=held,
         capped_out=capped_out,
         cap_used_up=used_up(diet.caps, cap_used),
+        daily_max={cap.ingredient_id: (cap.label, cap.maximum) for cap in diet.daily_caps},
     )
+    daily_units = {cap.ingredient_id: cap.unit for cap in diet.daily_caps}
     inputs = CoverageInputs(
         stock=stock,
         could_buy=query.could_buy,
@@ -338,6 +340,18 @@ def load_pool(
         )
         cost = cost_per_portion(scaled, query.store_order)
         ingredient_ids = frozenset(ln.ingredient_id for ln in recipe_lines)
+        capped: dict[int, Decimal] = {}
+        for result in calc.lines:
+            unit = daily_units.get(result.ingredient.id)
+            if unit is None or result.optional:
+                continue
+            try:
+                amount = convert(result.quantity, result.unit, unit, result.ingredient.units)
+            except ConversionError:
+                continue
+            capped[result.ingredient.id] = (
+                capped.get(result.ingredient.id, Decimal(0)) + amount / query.people
+            )
         heme = calc.per_portion.heme.heme_mg if calc.per_portion.heme else Decimal(0)
         items.append(
             PoolItem(
@@ -360,6 +374,7 @@ def load_pool(
                     is_favorite=recipe.id in diet.favorite_recipe_ids,
                     has_disliked=bool(ingredient_ids & diet.disliked_ids),
                     never_favored=bool(ingredient_ids & never_favored),
+                    capped_amounts=capped,
                 ),
             )
         )

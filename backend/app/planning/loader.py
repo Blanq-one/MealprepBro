@@ -4,7 +4,7 @@ left out keeps its reasons so the plan can say why.
 """
 
 from collections import defaultdict
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from decimal import ROUND_HALF_UP, Decimal
 
 from sqlalchemy import select
@@ -26,7 +26,7 @@ from app.planning.problem import (
     RecipeLine,
 )
 from app.planning.recipe_math import cost_per_portion, need_per_portion, recipe_per_portion
-from app.schemas.constraints import PlanConstraints
+from app.schemas.constraints import ExtraLot, PlanConstraints
 from app.services.ingredient_data import IngredientData, load_ingredients
 from app.services.pricing import StorePrice, active_stores, current_prices
 
@@ -130,10 +130,13 @@ def load_ingredient_plans(
     always_have_ids: frozenset[int] = frozenset(),
     *,
     lots_off_ids: frozenset[int] = frozenset(),
+    extra_lots: Sequence[ExtraLot] = (),
 ) -> dict[int, IngredientPlan]:
     """Ingredient data, offers at the given stores and active inventory lots, all in one planning unit per
     ingredient. Used by the problem loader and, separately, by the plan validator's own reload.
-    `lots_off_ids`: pantry items turned off for this request; their lots are left out."""
+    `lots_off_ids`: pantry items turned off for this request; their lots are left out. `extra_lots`: "have
+    it" items for this request only (step 2b.5), added as lots with negative ids (never in your pantry, so
+    Mark cooked never takes from them)."""
     ids = sorted(set(ingredient_ids))
     data = load_ingredients(session, ids)
     allowed = set(store_ids)
@@ -171,6 +174,14 @@ def load_ingredient_plans(
                     item.id, i, quantity, item.opened_on, item.expires_on, item.acquired_on, item.location
                 )
             )
+        for n, extra in enumerate(extra_lots, start=1):
+            if extra.ingredient_id != i:
+                continue
+            try:
+                quantity = convert(extra.quantity, extra.unit, unit, d.units)
+            except ConversionError:
+                continue
+            inventory.append(InventoryLot(-n, i, quantity))
         plans[i] = IngredientPlan(
             id=i,
             name=d.name,
@@ -220,6 +231,7 @@ def build_problem(
         c.store_ids,
         c.always_have_ingredient_ids,
         lots_off_ids=c.lots_off_ingredient_ids,
+        extra_lots=c.extra_lots,
     )
     data = load_ingredients(session, ingredient_ids)
     store_names = {s.id: s.name for s in active_stores(session) if s.id in c.store_ids}
@@ -344,6 +356,7 @@ def build_problem(
                 never_favored=bool(ids & never_favored_ids),
                 is_favorite=recipe.id in c.favorite_recipe_ids,
                 has_disliked=bool(ids & c.disliked_ingredient_ids),
+                uses_preferred=bool(ids & c.preferred_ingredient_ids),
             )
         )
     return PlanningProblem(

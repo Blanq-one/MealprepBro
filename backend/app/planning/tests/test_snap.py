@@ -10,8 +10,9 @@ from app.domain.enums import CalorieMode, MealSlot
 from app.planning import snap
 from app.planning.plan_validator import validate_plan
 from app.planning.post_solve import build_rounded_plan
-from app.planning.snap import snap_batches
-from app.planning.solver.model import SolvedBatch, SolvedMeal, SolverSolution
+from app.planning.problem import Tightening
+from app.planning.snap import snap_batches, stepiest_batch
+from app.planning.solver.model import SolvedBatch, SolvedMeal, SolverSolution, batch_plan
 from app.testing import factories as f
 
 THU = date(2026, 10, 15)
@@ -97,3 +98,19 @@ def test_a_rounded_plan_from_the_real_rounding_passes_the_validator():
     plan = build_rounded_plan(p, raw, absorb=False)
     assert validate_plan(plan, f.reference(p)).ok
     assert 1710 <= plan.totals.day_kcal[THU] <= 1800
+
+
+# ---------------- no combination fits: the re-solve leaves out the stepiest batch (2b.5) ----------------
+def test_the_stepiest_batch_is_the_whole_egg_one():
+    """One portion of the egg breakfast is one whole egg at any nudge (it can't move), the lunch moves in
+    10 kcal steps: when no nudge combination rounds into the limits, the egg batch is the one to leave out."""
+    p, raw = egg_day()
+    assert stepiest_batch(p, raw) == 0
+
+
+def test_a_left_out_batch_is_never_offered_again_on_that_day():
+    p, _ = egg_day()
+    assert any(b.recipe.version_id == 10 for b in batch_plan(p))
+    blocked = p.with_tightening(Tightening(forbidden=frozenset({(10, THU)})))
+    assert not any(b.recipe.version_id == 10 for b in batch_plan(blocked))
+    assert any(b.recipe.version_id == 20 for b in batch_plan(blocked))

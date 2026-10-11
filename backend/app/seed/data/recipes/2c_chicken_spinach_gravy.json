@@ -11,6 +11,7 @@
  "total_minutes": 45,
  "equipment": ["stovetop"],
  "freezer_friendly": true,
+ "freeze_note": "Freeze the gravy; warm the tortillas fresh when serving.",
  "draft_note": "Draft quantities: adjust them in the app. Freeze the gravy only.",
  "ingredients": [
   {"ingredient": "chicken-thigh-boneless-skinless", "quantity": "680", "unit": "g", "preparation": "bite-size pieces", "role": "protein", "component": "gravy"},

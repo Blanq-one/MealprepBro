@@ -26,6 +26,9 @@ from app.planning.solver.model import (
 from app.schemas.constraints import PlanConstraints
 
 SLACK_TOLERANCE = 0.5
+# The elastic solves stop within 1 penalty point of the best: 10 cents of a top-up (which is rounded up to
+# whole dollars anyway), 1 kcal, a fifth of a minute; proving the last cent is wasted work (2b.5).
+EXPLAIN_GAP_ABS = 1.0
 MIN_LISTED = {"g": 5.0, "ml": 5.0, "count": 0.25}
 
 
@@ -256,11 +259,11 @@ def explain(problem: PlanningProblem, *, time_limit_s: int = 20) -> tuple[Diagno
             if kind != "budget":
                 for var in group.values():
                     var.upBound = 0
-        status = run_solver(money_only, time_limit_s, 0.0, 0.0)
+        status = run_solver(money_only, time_limit_s, 0.0, EXPLAIN_GAP_ABS)
         if status in (pulp.LpSolutionOptimal, pulp.LpSolutionIntegerFeasible):
             return _report(problem, money_only)
     model = build_model(problem, elastic=True)
-    status = run_solver(model, time_limit_s, 0.0, 0.0)
+    status = run_solver(model, time_limit_s, 0.0, EXPLAIN_GAP_ABS)
     if status not in (pulp.LpSolutionOptimal, pulp.LpSolutionIntegerFeasible):
         return (
             Diagnostic(
@@ -420,10 +423,24 @@ def _report(problem: PlanningProblem, model: _Model) -> tuple[Diagnostic, ...]:
                     items=_gap_items(gap),
                 )
             )
-    for label, var in model.slacks.get("cap", {}).items():
+    for (label, monday), var in model.slacks.get("cap", {}).items():
+        if amount(var) > SLACK_TOLERANCE:
+            used = c.cap_used(monday, label)
+            elsewhere = f" ({used} already in your other plans that week)" if used else ""
+            out.append(
+                Diagnostic(
+                    "FREQUENCY_CAP",
+                    f"{label}: the limit for the week of {_day(monday)} would have to rise by "
+                    f"{round(amount(var))}{elsewhere}.",
+                    day=monday,
+                )
+            )
+    for (label, day), var in model.slacks.get("amount", {}).items():
         if amount(var) > SLACK_TOLERANCE:
             out.append(
-                Diagnostic("FREQUENCY_CAP", f"{label}: the limit would have to rise by {round(amount(var))}.")
+                Diagnostic(
+                    "DAILY_AMOUNT_CAP", f"{label} on {_day(day)} would go over your daily maximum.", day=day
+                )
             )
     for vid, var in model.slacks.get("variety", {}).items():
         if amount(var) > SLACK_TOLERANCE:

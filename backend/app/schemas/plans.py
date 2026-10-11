@@ -6,8 +6,8 @@ from typing import Any, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from app.domain.enums import CalorieMode, MealSlot, NutritionPriority, PlanningMode, RecipeMood
-from app.schemas.constraints import PortionRequest
+from app.domain.enums import CalorieMode, GroceryMode, MealSlot, NutritionPriority, PlanningMode, RecipeMood
+from app.schemas.constraints import ExtraLot, PortionRequest
 from app.schemas.inventory import InventoryLotOut
 from app.schemas.recipes import RecipeVersionOut
 
@@ -48,6 +48,16 @@ class PlanRequest(_Strict):
     topup_cents: int | None = Field(default=None, ge=0, description="inventory mode: allowance to buy")
     protein_target_g: int | None = Field(default=None, ge=0, le=400, description="daily floor; 0 = none")
     allow_llm: bool = True
+    # ---- step 2b.5 (meal prep; POST /plans accepts them too) ----
+    grocery_mode: GroceryMode | None = None  # None = your settings (Cheap = cheapest)
+    household_size: int | None = Field(default=None, ge=1, le=8, description="None = your settings")
+    protein_reward: bool = Field(default=False, description="High protein: reward up to 1.5 × the target")
+    could_buy: list[int] = Field(default_factory=list, description="ingredient ids you'd happily buy")
+    only_buy_could_buy: bool = Field(default=False, description="Use what I have: buy only the could-buys")
+    extra_lots: list[ExtraLot] = Field(default_factory=list, description="have it, for this plan only")
+    have_unlimited: list[int] = Field(default_factory=list, description="have it, no amount: enough")
+    pantry_off: list[int] = Field(default_factory=list, description="pantry items not for this plan")
+    max_portions_per_recipe: int | None = Field(default=None, ge=1, le=14, description="None = 5 (Q14)")
 
     @model_validator(mode="after")
     def _check(self) -> Self:
@@ -126,6 +136,10 @@ class MealOut(BaseModel):
     dish_category: str  # the app shows its icon
     cost_cents: int | None = None  # this meal's share of its batch's cost; None for plans made before 2b
     cost_display: str | None = None
+    # step 2b.5: where the portion comes from (fresh = cooked that day) and the row's line: "From the fridge,
+    # cooked Mon 12" / "From the freezer, cooked Mon 12 · thaw Fri 16 night"
+    storage: Literal["fresh", "fridge", "freezer"] = "fresh"
+    source_display: str | None = None
 
 
 class DayOut(BaseModel):
@@ -143,6 +157,11 @@ class DayOut(BaseModel):
     cook_note: str  # "Cook: Chicken over rice (5 portions)" or "Nothing to cook, eating prepped meals"
     cost_cents: int | None = None  # food eaten that day (its meals); None for plans made before 2b
     cost_display: str | None = None
+    # step 2b.5 (H4, H5): the day's own instructions
+    freeze_steps: list[str] = Field(default_factory=list)  # the shopping day: raw protein to freeze today
+    freeze_today: list[str] = Field(default_factory=list)  # a cook day: "Freeze 2 portions of … once cooled."
+    thaw_notes: list[str] = Field(default_factory=list)  # "Thaw tomorrow's lunch (…) in the fridge tonight."
+    prep_order: list[str] = Field(default_factory=list)  # "1. Start … first: it goes in the oven", …
 
 
 class BatchOut(BaseModel):
@@ -161,6 +180,25 @@ class BatchOut(BaseModel):
     dish_category: str
     cost_cents: int | None = None  # what the batch uses (its meals plus frozen extras); None before 2b
     cost_display: str | None = None
+    # step 2b.5: fridge and freezer portions ("5 portions (3 fridge, 2 freezer)"), "Freezes well" and how
+    fridge_portions: int = 0
+    freezer_portions: int = 0
+    portions_display: str = ""
+    freezer_friendly: bool = False
+    freeze_note: str | None = None
+
+
+class PrepNoteOut(BaseModel):
+    kind: Literal["freeze", "freeze_portions", "spoil"]  # raw food on shopping day | cooked portions | waste
+    text: str
+    day: date | None = None
+
+
+class PrepNotesOut(BaseModel):
+    """The plan view's one Prep notes row (H4): "3 to freeze · 4 may spoil", with its items for the sheet."""
+
+    display: str
+    items: list[PrepNoteOut]
 
 
 class StoreTotalOut(BaseModel):
@@ -242,6 +280,10 @@ class PlanSummaryOut(BaseModel):
     warnings: list[dict[str, Any]]
     notes: list[str]
     generation_run_id: int | None
+    # step 2b.5
+    prep_notes: PrepNotesOut | None = None  # None = nothing to freeze or that may spoil (no row)
+    header: str | None = None  # a meal-prep plan: "5 lunches · Wed 14 – Sun 18 · High protein · Simple"
+    household_size: int = 1
 
 
 class PlanListItemOut(BaseModel):

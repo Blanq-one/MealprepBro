@@ -47,7 +47,15 @@ BONUS_COMPONENTS = ("pantry_fit", "use_up", "favorite")  # zero for a never-favo
 PENALTY_COMPONENTS = ("missing", "could_buy", "goal:cheap")  # the pool's worst for a never-favored recipe
 
 # a filtered recipe's code, most important first (the exposure log names the first)
-FILTER_ORDER = ("held", "frequency_cap", "excluded", "equipment", "time", "nutrition_incomplete")
+FILTER_ORDER = (
+    "held",
+    "frequency_cap",
+    "excluded",
+    "daily_amount",
+    "equipment",
+    "time",
+    "nutrition_incomplete",
+)
 SECTION_ORDER = {"match": 0, "more_effort": 1, "simpler": 2}
 
 
@@ -70,6 +78,8 @@ class RankInput:
     is_favorite: bool = False
     has_disliked: bool = False
     never_favored: bool = False  # has a member of a never-favored frequency cap (pork components)
+    # one portion's amount of each daily-capped ingredient it uses, in the cap's base unit (step 2b.5)
+    capped_amounts: Mapping[int, Decimal] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -82,6 +92,8 @@ class Rules:
     capped_out: frozenset[int] = frozenset()  # members of a cap set to 0
     # caps whose allowance this calendar week is used up: label -> member ingredient ids
     cap_used_up: Mapping[str, frozenset[int]] = field(default_factory=dict)
+    # daily amount caps (M16): ingredient id -> (label, the day's maximum in its base unit)
+    daily_max: Mapping[int, tuple[str, Decimal]] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -127,6 +139,12 @@ def filter_reasons(c: RankInput, q: MealNowQuery, rules: Rules, names: Mapping[i
         if c.ingredient_ids & members:
             codes.append("frequency_cap")
             reasons.append(f"{label}: this week's allowance is used up")
+    for ingredient_id, amount in sorted(c.capped_amounts.items()):
+        if ingredient_id in rules.daily_max and amount > rules.daily_max[ingredient_id][1]:
+            codes.append("daily_amount")
+            reasons.append(
+                f"one portion has more {rules.daily_max[ingredient_id][0].lower()} than your daily maximum"
+            )
     if missing := sorted(e.value for e in c.equipment - rules.equipment):
         codes.append("equipment")
         reasons.append(f"needs {', '.join(missing)}")

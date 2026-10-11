@@ -2,7 +2,10 @@
 
 **Status:** v3, **approved** 2026-10-08 with the changes recorded in §12.1. Phase 0 approved. Phase 1 approved 2026-10-09 (with C1–C8 and D1–D22); a post-approval round (C9–C14, D23–D28) is done. A3 is answered in `docs/hosting.md`; the hosting decision changed at the Phase 2 kickoff to Vercel Hobby + Neon Free, $0/month (K1, §12.1). Phase 2 (PWA, deploy prep only) was approved 2026-10-10. **Phase 2b (cook-first redesign) was added and its spec approved 2026-10-10** (with changes E10–E13, §12.1): the spec is `docs/FLOW_SPEC.md` and the build steps are in §9. Step 2b.1 (backend foundations) was built and **approved 2026-10-10, including D44–D53**; step 2b.2 (look, shell, onboarding, Settings, Pantry) started the same day. **Addition (2026-10-10, E15–E17):** two-stage recipe generation (ideas for the cards, steps on first open, and after the first More ideas tap a background batch for later taps) to fit Groq's 8K tokens a minute; the target-0 fallback for the protein cap; and step 2b.3 split into 2b.3a (ranking and cards) and 2b.3b (ideas, steps, background batch). All approved. **Step 2b.2 was approved 2026-10-10, including D54–D64** (H1–H6, §12.1): a footer fix on question screens, a new build order (**2b.3a → 2b.4 → 2b.3b**, then 2b.5–2b.8, so the meal-now flow can be used before LLM ideas exist), notes for 2b.5 and 2b.7 (the plan view's Prep notes row; a "How do you want to cook?" step with four options) and a pre-deploy item (§12.4). Step 2b.3a (ranking and cards) was built the same day and **approved, including D65–D76** (J1–J6, §12.1: culinary groups for vegetable swaps, a Mark cooked fix, and three additions to 2b.4). Step 2b.4 (the meal-now screens, with J2–J6) was built the same day and **approved, including D77–D88** (M1–M20, §12.1); its follow-up fixes were built and committed on their own, and **approved 2026-10-10 (N1–N3, §12.1:
 the ground-vs-whole-cut swap rule and the mapping review)**. Step 2b.3b (LLM ideas, steps on first open, More ideas and the background batch, rate-limit waits, the live token test, and the screens that need ideas) was built 2026-10-11 with D89–D101 and **approved the same day (P1–P8, §12.1: fish and shellfish swap groups, a shortlist regression fix, a plainer time/mood message, an ideas-model speed check, faster tests, the ideas pass rate)**; the live findings are in FLOW_SPEC §15.1. The pre-work (P2–P7) was done 2026-10-11 with
-D102–D106 (2b.3b's approval note in §9); step 2b.5 waits on one storage question (the freeze note) asked there.
+D102–D106 (2b.3b's approval note in §9) and **approved the same day, including D102 and D105 (T1–T8, §12.1:
+the shortlist keeps each meal's cheapest recipe under a money limit, the freeze-note column, one scoop per
+portion, and two notes for 2b.6/2b.7)**. Step 2b.5 (meal prep engine) was built the same day with D107–D125
+(2b.5 outcome note, §9).
 **Source documents:** `CLAUDE.md` (build rules, wins on conflict), `docs/PRD.md` (product vision; "Primary user flow" at the top), `docs/FLOW_SPEC.md` (screens and backend work for Phase 2b).
 
 This plan covers Phases 0–6, plus Phase 2b. One phase per session; Phase 2b is split into build steps, one per session (§9). A phase or step is done only when its acceptance criteria are met, its tests pass, and the test output has been shown.
@@ -21,7 +24,7 @@ This plan covers Phases 0–6, plus Phase 2b. One phase per session; Phase 2b is
 | — | Pre-Phase 1 tasks | Done | 2026-10-08 | 2026-10-08 | Package-label data (tortillas, protein powder), USDA mapping review sheet (`docs/review/usda_mappings.md`), raw/dry/as-sold rule + check (§7.8), CLAUDE.md machine-boundaries rule. Round 2: FoodSafety.gov chart transcribed (53 rows, §7.2), top-25 mappings approved, tortilla renamed, Docker rule clarified, fresh-clone check made a per-phase step. |
 | 1 | Planning brain | Approved 2026-10-09; post-approval round done | 2026-10-08 | 2026-10-09 | First pass: 645 tests, fresh-clone check passed; D1–D13 and C1–C3 approved 2026-10-09. Fix-up round (C4–C8: budget per request with inventory/shop modes, cash vs food eaten, freeze-on-shopping-day and waste, 100 g protein floor, elapsed time): 705 tests pass (the opt-in live test skips), domain coverage 99%, ruff/mypy clean, fresh-clone check passed; deviations D14–D22 in the fix-up note. Approved 2026-10-09. Post-approval round (C9–C14: powder prices, stock-up items, shelf-life fix, regular chicken packs, two-week steady-state check, A3 hosting): 721 tests pass (the opt-in live test skips), domain coverage 99%; deviations D23–D28. |
 | 2 | Mobile PWA + cloud deploy (deploy prep only, K7) | Approved 2026-10-10 | 2026-10-09 | 2026-10-09 | Pre-work K2–K6 done; PWA, auth, shopping, Mark cooked, quick add, exposure log. 800 backend tests pass (2 opt-in skipped), 78 frontend tests; not deployed (your step, `docs/deploy.md`). Deviations D29–D43 in the Phase 2 outcome note (§9). |
-| 2b | Cook-first flow redesign | 2b.1 approved 2026-10-10 (D44–D53); 2b.2 approved 2026-10-10 (D54–D64, H1–H6); 2b.3a approved 2026-10-10 (D65–D76, J1–J6); 2b.4 approved 2026-10-10 (D77–D88, M1–M20); 2b.4 fixes approved 2026-10-10 (N1–N3); 2b.3b approved 2026-10-11 (D89–D101, P1–P8); pre-work P2–P7 done 2026-10-11 (D102–D106); 2b.5 not started | 2026-10-10 | | `docs/FLOW_SPEC.md`; PRD "Primary user flow"; 9 build steps, built in the order 2b.1, 2b.2, 2b.3a, **2b.4, 2b.3b**, 2b.5–2b.8 (H3; §9); changes F1–F21 approved (FLOW_SPEC §16); decisions E1–E17 (§12.1). Two-stage generation added the same day (E15, E17; built in 2b.3b). **2b.1 (backend foundations):** 898 backend tests pass (2 opt-in skipped), 78 frontend tests, ruff/mypy clean; deviations D44–D53 in the 2b.1 outcome note (§9). **2b.2 (look, shell, onboarding, Settings, Pantry):** 180 frontend tests (78 before), 899 backend tests pass (2 opt-in skipped), type checks clean, static export builds; AA contrast tested, 375 px not yet checked on a device; deviations D54–D64 in the 2b.2 outcome note (§9). Footer fix H2 done before 2b.3a. **2b.3a (ranking and cards, no LLM calls):** 964 backend tests pass (2 opt-in skipped), 187 frontend tests, ruff, mypy and type check clean; deviations D65–D76 in the 2b.3a outcome note (§9). **2b.4 (A meal now: screens, with J2–J6):** 993 backend tests pass (2 opt-in skipped), 236 frontend tests, ruff, mypy and type check clean, static export builds; migration `0006_pantry_presets`; deviations D77–D88 in the 2b.4 outcome note (§9). **2b.4 fixes (M2–M13, M15, M17, M20):** 1056 backend tests pass (2 opt-in skipped), 244 frontend tests, ruff, mypy and type check clean; no migration; 37 new draft seed recipes (47 in all); solver shortlist; fixes outcome note (§9). **2b.3b (ideas, steps, More ideas, background batch, rate-limit waits, live test, screens; with N2, ground vs whole cuts):** 1132 backend tests pass (2 opt-in skipped), 263 frontend tests, ruff, mypy and type check clean, static export builds; no migration, no new dependency; the live Groq test ran (FLOW_SPEC §15.1); deviations D89–D101 in the 2b.3b outcome note (§9). **2b.3b approval pre-work (P2–P7):** 1143 backend tests pass with `--run-slow` (3 opt-in skipped); the default run is parallel and skips 6 `slow` tests (100 s, was about 20 min); 265 frontend tests; ruff, mypy and type check clean; no migration; new dev dependency pytest-xdist (approved); `LLM_IDEAS_MODEL` (20b by default in compose); deviations D102–D106 in 2b.3b's approval note (§9). |
+| 2b | Cook-first flow redesign | 2b.1 approved 2026-10-10 (D44–D53); 2b.2 approved 2026-10-10 (D54–D64, H1–H6); 2b.3a approved 2026-10-10 (D65–D76, J1–J6); 2b.4 approved 2026-10-10 (D77–D88, M1–M20); 2b.4 fixes approved 2026-10-10 (N1–N3); 2b.3b approved 2026-10-11 (D89–D101, P1–P8); pre-work P2–P7 done and approved 2026-10-11 (D102–D106, T1–T8); 2b.5 built 2026-10-11 (D107–D126), awaiting approval | 2026-10-10 | | `docs/FLOW_SPEC.md`; PRD "Primary user flow"; 9 build steps, built in the order 2b.1, 2b.2, 2b.3a, **2b.4, 2b.3b**, 2b.5–2b.8 (H3; §9); changes F1–F21 approved (FLOW_SPEC §16); decisions E1–E17 (§12.1). Two-stage generation added the same day (E15, E17; built in 2b.3b). **2b.1 (backend foundations):** 898 backend tests pass (2 opt-in skipped), 78 frontend tests, ruff/mypy clean; deviations D44–D53 in the 2b.1 outcome note (§9). **2b.2 (look, shell, onboarding, Settings, Pantry):** 180 frontend tests (78 before), 899 backend tests pass (2 opt-in skipped), type checks clean, static export builds; AA contrast tested, 375 px not yet checked on a device; deviations D54–D64 in the 2b.2 outcome note (§9). Footer fix H2 done before 2b.3a. **2b.3a (ranking and cards, no LLM calls):** 964 backend tests pass (2 opt-in skipped), 187 frontend tests, ruff, mypy and type check clean; deviations D65–D76 in the 2b.3a outcome note (§9). **2b.4 (A meal now: screens, with J2–J6):** 993 backend tests pass (2 opt-in skipped), 236 frontend tests, ruff, mypy and type check clean, static export builds; migration `0006_pantry_presets`; deviations D77–D88 in the 2b.4 outcome note (§9). **2b.4 fixes (M2–M13, M15, M17, M20):** 1056 backend tests pass (2 opt-in skipped), 244 frontend tests, ruff, mypy and type check clean; no migration; 37 new draft seed recipes (47 in all); solver shortlist; fixes outcome note (§9). **2b.3b (ideas, steps, More ideas, background batch, rate-limit waits, live test, screens; with N2, ground vs whole cuts):** 1132 backend tests pass (2 opt-in skipped), 263 frontend tests, ruff, mypy and type check clean, static export builds; no migration, no new dependency; the live Groq test ran (FLOW_SPEC §15.1); deviations D89–D101 in the 2b.3b outcome note (§9). **2b.3b approval pre-work (P2–P7):** 1143 backend tests pass with `--run-slow` (3 opt-in skipped); the default run is parallel and skips 6 `slow` tests (100 s, was about 20 min); 265 frontend tests; ruff, mypy and type check clean; no migration; new dev dependency pytest-xdist (approved); `LLM_IDEAS_MODEL` (20b by default in compose); deviations D102–D106 in 2b.3b's approval note (§9). **2b.5 (meal prep engine, with T2–T4):** 1218 backend tests pass with `--run-slow` (3 opt-in skipped), 266 (265 before) frontend tests; ruff, mypy and type check clean; migration `0007_recipe_freeze_note`; no new dependency; deviations D107–D126 in the 2b.5 outcome note (§9). |
 | 3 | Feedback loop | Not started | | | Favorites moved to 2b. |
 | 4 | Daily overrides | Not started | | | |
 | 5 | Grocery intelligence | Not started | | | |
@@ -84,10 +87,11 @@ Mealbro/
 │   │   ├── 0004_pwa_and_exposure_log.py  # P2 (planned as 0002)
 │   │   ├── 0005_cook_flow.py          # P2b: favorites, saved, feedback_event, cook_search, meal_plan.kind, settings v3
 │   │   ├── 0006_pantry_presets.py     # P2b (2b.4, J5): inventory_item.quantity_is_estimate, container
-│   │   ├── 0007_feedback_loop.py      # P3 (planned as 0003)
-│   │   ├── 0008_daily_overrides.py    # P4 (planned as 0004)
-│   │   ├── 0009_grocery_intelligence.py  # P5 (planned as 0005)
-│   │   └── 0010_ranker.py             # P6 (planned as 0006)
+│   │   ├── 0007_recipe_freeze_note.py # P2b (2b.5, T3): recipe_version.freeze_note
+│   │   ├── 0008_feedback_loop.py      # P3 (planned as 0003)
+│   │   ├── 0009_daily_overrides.py    # P4 (planned as 0004)
+│   │   ├── 0010_grocery_intelligence.py  # P5 (planned as 0005)
+│   │   └── 0011_ranker.py             # P6 (planned as 0006)
 │   └── app/
 │       ├── main.py · config.py · cli.py
 │       ├── db/                        # P0: base (naming convention), session, types, models/
@@ -100,6 +104,7 @@ Mealbro/
 │       │   ├── text_rules.py          # P1: the narrow prose filter (§7.3)
 │       │   ├── dish_category.py       # P2b: deterministic dish-category classifier (FLOW_SPEC §4.4)
 │       │   ├── meat_forms.py · prompt_names.py   # P2b (2b.3b): ground vs whole cuts; short names for prompts
+│       │   ├── prep_order.py          # P2b (2b.5): a cook day's prep order
 │       │   ├── preferences.py         # P3
 │       │   ├── price_stats.py         # P5
 │       │   └── tests/
@@ -130,7 +135,8 @@ Mealbro/
 │       │   └── tests/
 │       ├── auth/                      # P2: single-user passphrase session
 │       ├── cook/                      # P2b: answers → requests, single-meal ranking, substitutes, search memory,
-│       │                              #      ideas and More ideas (2b.3b), grocery advice reasons
+│       │                              #      ideas and More ideas (2b.3b), grocery advice reasons,
+│       │                              #      prep.py · meal_prep.py (2b.5: meal-prep answers → plan request, E4)
 │       │                              #      (planning/pins.py: the swap's pinned re-solve)
 │       ├── feedback/ · preferences/ · substitutions/   # P3
 │       ├── overrides/                 # P4
@@ -178,10 +184,11 @@ Mealbro/
 | `0004_pwa_and_exposure_log` (planned as 0002) | 2 | plan_candidate (exposure log; starts with real use, can't be backfilled), login_attempt (rate limiting across serverless instances) | `price_observation.client_ref` (offline idempotency) |
 | `0005_cook_flow` | 2b | recipe_favorite and feedback_event (both pulled forward from P3, unchanged), recipe_saved, cook_search | `meal_plan.kind`; data: settings v3 |
 | `0006_pantry_presets` | 2b (2b.4, J5) | — | `inventory_item.quantity_is_estimate`, `inventory_item.container` |
-| `0007_feedback_loop` (planned as 0003) | 3 | prepared_portion, preference_profile | `plan_meal.prepared_portion_id`, `inventory_event.prepared_portion_id` + CHECK |
-| `0008_daily_overrides` (planned as 0004) | 4 | day_override, consumption_entry | — |
-| `0009_grocery_intelligence` (planned as 0005) | 5 | region, ingredient_seasonality, cart_session | `price_observation.cart_session_id` |
-| `0010_ranker` (planned as 0006) | 6 | ranker_model | — |
+| `0007_recipe_freeze_note` | 2b (2b.5, T3) | — | `recipe_version.freeze_note` |
+| `0008_feedback_loop` (planned as 0003) | 3 | prepared_portion, preference_profile | `plan_meal.prepared_portion_id`, `inventory_event.prepared_portion_id` + CHECK |
+| `0009_daily_overrides` (planned as 0004) | 4 | day_override, consumption_entry | — |
+| `0010_grocery_intelligence` (planned as 0005) | 5 | region, ingredient_seasonality, cart_session | `price_observation.cart_session_id` |
+| `0011_ranker` (planned as 0006) | 6 | ranker_model | — |
 
 ### 4.2a Table audit for `0001_initial` (2026-10-08)
 
@@ -533,6 +540,8 @@ recipe_version                                  -- IMMUTABLE once written (2b: a
   generation_run_id   bigint NULL FK→generation_run
   status              text NN DEFAULT 'active'
   created_at          timestamptz NN
+  -- 0005: steps_status text NULL · 0007 (2b.5): freeze_note text NULL ("freeze the chicken and rice; make the
+  -- yogurt sauce fresh")
   UQ (recipe_id, version_number) · IX (content_hash)
 
 recipe_ingredient
@@ -731,7 +740,10 @@ ALTER recipe_version ADD steps_status text NULL -- NULL = has its steps; pending
 ALTER inventory_item ADD quantity_is_estimate bool NULL  -- "Not sure": the usual package size, to correct later
 ALTER inventory_item ADD container text NULL             -- the preset's package ("bag", "head") for "your bag"
 
--- 0007_feedback_loop (Phase 3; planned as 0003) --------------------------------------
+-- 0007_recipe_freeze_note (Phase 2b, step 2b.5, T3) ----------------------------------
+ALTER recipe_version ADD freeze_note text NULL      -- how to freeze a recipe that freezes well; NULL = no note
+
+-- 0008_feedback_loop (Phase 3; planned as 0003) --------------------------------------
 prepared_portion                                -- cooked leftovers / frozen meal-prep portions
   id, user_id FK→app_user, recipe_version_id FK→recipe_version, cook_batch_id NULL FK→plan_cook_batch,
   portions smallint NN CHECK ≥ 0, portion_size text NN, location text NN (fridge | freezer),
@@ -744,21 +756,21 @@ ALTER plan_meal       ADD prepared_portion_id bigint NULL FK→prepared_portion
 ALTER inventory_event ADD prepared_portion_id bigint NULL FK→prepared_portion
 ALTER inventory_event ADD CHECK (inventory_item_id IS NOT NULL OR prepared_portion_id IS NOT NULL)
 
--- 0008_daily_overrides (Phase 4; planned as 0004) ------------------------------------
+-- 0009_daily_overrides (Phase 4; planned as 0004) ------------------------------------
 day_override        (id, meal_plan_id FK, day date NN, cook_minutes smallint NULL, mood text NULL,
                      slots text[] NN, reason text NULL, generation_run_id NULL FK, created_at)
 consumption_entry   (id, user_id FK, consumed_on date NN, slot text NULL, plan_meal_id NULL FK, description text NN,
                      kcal integer NN CHECK ≥ 0, protein_g numeric(8,2) NULL, source text NN (planned_meal | manual | parsed),
                      is_estimate bool NN, parsed_items jsonb NULL, created_at)
 
--- 0009_grocery_intelligence (Phase 5; planned as 0005) -------------------------------
+-- 0010_grocery_intelligence (Phase 5; planned as 0005) -------------------------------
 region                 (code text PK, name text NN)
 ingredient_seasonality (ingredient_id FK, region_code text FK→region.code, month smallint CHECK 1–12,
                         availability text NN (peak | available), source text NN, PK (ingredient_id, region_code, month))
 cart_session           (id, user_id FK, store_id NN FK→store, started_at, ended_at NULL, status text NN)
 ALTER price_observation ADD cart_session_id bigint NULL FK→cart_session
 
--- 0010_ranker (Phase 6; planned as 0006) ---------------------------------------------
+-- 0011_ranker (Phase 6; planned as 0006) ---------------------------------------------
 ranker_model (id, version integer NN UNIQUE, algorithm text NN, trained_at timestamptz NN, train_window jsonb NN,
               n_examples integer NN, feature_spec jsonb NN, weights jsonb NN, metrics jsonb NN,
               is_active bool NN DEFAULT false, created_at)   UQ partial (is_active) WHERE is_active
@@ -1040,6 +1052,15 @@ class PlanConstraints(_Frozen):
 - `always_have_ingredient_ids` (unlimited owned stock);
 - `pinned` (the swap's fixed meals and batches);
 - calendar-week cap allowances (`cap_used_by_week`, from other plans and one-meal plans).
+
+**As built in 2b.5:** `protein_reward`, `allowed_purchase_ingredient_ids` (None = anything may be bought),
+`preferred_ingredient_ids` (could-buy items on a shopping list), `extra_lots` ("have it" with an amount, this
+request only), `cap_week_use` (per Monday and cap label; the solver and validator count per calendar week) and
+`daily_amount_caps` (`ResolvedDailyCap`: ingredient, base unit, usual and maximum, display unit and its size).
+`PlanRequest` gains the matching optional fields (`grocery_mode`, `household_size`, `protein_reward`,
+`could_buy`, `only_buy_could_buy`, `extra_lots`, `have_unlimited`, `pantry_off`, `max_portions_per_recipe`);
+POST /plans keeps working unchanged. `UserSettings.daily_amount_caps` (M16) has a default (protein powder:
+usually 1 scoop, at most 2), so stored settings need no migration.
 
 `favorite_recipe_ids` is filled from `recipe_favorite`. `UserSettings` becomes version 3 (household size, Always have, default budget as a pre-fill only, onboarding flag; data migration in `0005_cook_flow`). Each addition is optional with a default, so existing callers and stored snapshots stay valid.
 
@@ -2422,6 +2443,14 @@ Decisions and deviations:
 `recipe_version.freeze_note` column (a migration; user versions and later LLM recipes can carry it) or the seed
 file only (no migration; seeds only). I recommend the column.
 
+**Pre-work approved 2026-10-11, including D102 and D105 (T1–T8, §12.1).** The D102 follow-up (T2) was built at
+the start of 2b.5: with a money limit each meal's shortlist keeps its cheapest recipe per portion and its
+cheapest to buy today (whole packages of what your pantry doesn't cover, for the portions one recipe would cook),
+alongside the quickest ones (`planning/shortlist.py`); tests in `test_shortlist.py`, including a budget week
+whose only plan uses a recipe ranked below the top 6, and an inventory week whose only plan uses the recipe the
+pantry covers (the dearest per portion at shop prices). The freeze-note column (T3) and the oats (T4) are in the
+2b.5 outcome note.
+
 #### 2b.4 A meal now: screens (frontend)
 
 *Reads FLOW_SPEC §5, §7 (C0, C2–C5, C7, C8). Built right after 2b.3a and before 2b.3b (H3), so it uses seed and saved recipes only.*
@@ -2667,6 +2696,122 @@ state).
 15. **Freezes well:** every seed has its reviewed value; an idea without the field fails the idea checks.
 
 **Tests.** `test_meal_prep_ideas.py` (one ideas call per uncovered slot, ideas in the solver, numbers unchanged after steps), `test_answers_to_request.py`, `test_household.py` (solver, validator, grocery), `test_protein_reward.py` (tile vs no tile; `test_reward_capped_at_1_5x_target`: the 1.5× plan beats the costlier 2× all-chicken plan, the term's per-day bound, below-cap monotonicity, weekly and strict modes), `test_could_buy_only.py`, `test_calendar_week_caps.py`, `test_accept_overlap.py`, a stage-order stream test. For H4 and H5: `test_cook_styles.py` (all four options, including a whole week on one big cook day and one dish for 8 portions), `test_fridge_freezer_days.py` (the per-day split and thaw lines), `test_freezes_well.py` (seed values, the idea field, the past-window rule in solver and validator), `test_big_day_time.py`, `test_prep_order.py`, `test_prep_notes.py`. K6 holds: small instances, no wall-clock dependence (the whole-week test uses a small seed pool so it solves to optimality).
+
+**2b.5 outcome (built 2026-10-11, awaiting approval).** Every deliverable and acceptance criterion is met, with
+tests; the pre-work follow-ups T2–T4 are in too. 1218 backend tests pass with `--run-slow` (3 opt-in
+skipped), 266 (265 before) frontend tests; ruff, mypy and the type check are clean; migration
+`0007_recipe_freeze_note`; no new dependency.
+
+What was built:
+- **Answers → plan request** (`app/cook/prep.py`): presets as portions or days, the start day, the four cook
+  styles (one big cook day with up to 600 minutes, a few sessions, same dish for many portions with the 5-portion
+  cap lifted (F22), mix it up), extra portions to freeze, pantry toggles, "have it" extras (with an amount: a
+  lot for this plan only; without one: enough), could-buy items (the only purchases in "Use what I have", a small
+  preference on a shopping list), the budget, the goals (High protein: priority and the capped reward; High
+  carb, Iron rich: the priorities in tap order; Low calorie: 85% of each meal; Cheap: cheapest grocery mode;
+  Quick: hands-on minutes per cook day) and the mood.
+- **`POST /cook/meal-prep`** (`app/cook/meal_prep.py`, E4): a 422 before the stream for answers that can't make a
+  plan; then the plan stream with the friendly building steps (constraints → candidates → generating → solving
+  → pricing → validating). The search is remembered for "Same as last time" (Cook home shows its line); Save to
+  pantry writes the lots first. Gaps use the ideas pass (`IdeaCandidates`, F20); `POST /plans` keeps
+  `candidate_generation/1`. The `pricing` stage is now a real stage before validation on every run.
+- **Household size** through the solver (a meal is h portions; frozen extras are single portions), the rounded
+  plan, the validator and the grocery list; limits stay per person.
+- **Overlap-aware accept** (E6): 409 with the overlapping plans and "Replace your current plan (Wed 14 – Fri 16,
+  3 meals)?" unless `replace_overlapping=true`.
+- **Calendar-week frequency caps** (F7): one cap constraint per Monday–Sunday week the plan touches, after what
+  your other plans and one-meal plans already count there; the validator counts the same way.
+- **Fridge and freezer per day**: each meal's `storage` and line ("From the freezer, cooked Wed 14 · thaw Sat 17
+  night"), the thaw note on the day before, "Freeze 1 portion of … once cooled" on the cook day, each batch's
+  fridge and freezer portions ("5 portions (4 fridge, 1 freezer)").
+- **Freezes well**: the seed review and 18 freeze notes (the `freeze_note` column, T3); the validator now also
+  refuses a frozen meal or frozen extras from a recipe that doesn't freeze well; ideas must carry the field.
+- **Prep order** (`domain/prep_order.py`): per cook day, batches that wait start first (chilling, marinating,
+  the oven, a cooker, rice, simmering), then hands-on ones "while the oven runs"; none for one batch or only
+  hands-on work.
+- **Plan view data** (H4): one `prep_notes` row ("3 to freeze · 4 may spoil") with its items; each shopping-day
+  freeze step also on that day (`freeze_steps`); "Nothing to cook, eating prepped meals" unchanged; the meal-prep
+  `header`.
+- **Daily amount caps** (M16): `UserSettings.daily_amount_caps` (protein powder usually 1 scoop, at most 2); the
+  solver never exceeds the maximum per day, counting every meal, and pays a penalty per scoop above the usual;
+  the validator checks the maximum; meal-now filters a single portion above it; Settings has a Daily caps row
+  under Diet with its editor.
+
+Decisions and deviations:
+- **D107. Seed revisions.** A changed seed file becomes a new draft version linked to the one it replaces, and
+  the default, unless your own version is the default (then nothing is added and the seed report says so).
+  Before, a changed file was only a warning, so the oats fix and the freezes-well review would never have
+  reached your database. A field added later (`freeze_note`) counts toward a seed's content only when set.
+  Your dev database got 19 revisions (the 18 freeze-note seeds and the oats). *My mistake, fixed:* the first
+  re-seed revised all 47 seeds (the new field changed every hash); I removed those 47 brand-new versions (no
+  plan or exposure used them) and re-seeded with the fixed hash.
+- **D108. The oats (T4).** The seed was 2 scoops for 2 jars, so 1 scoop a portion already; a recipe page opened
+  without a portion count shows the whole 2-jar recipe, which reads as 2 scoops. It is now a one-jar recipe:
+  35 g oats, 1 scoop, 120 ml milk, 60 g Greek yogurt, 5 g chia, ½ banana optional; 374 kcal and 39.6 g protein a
+  jar (was 408 kcal, 40.5 g), closer to your 325 kcal breakfast. Every seed has at most 1 scoop a portion (test).
+- **D109. Protein for some of your meals.** A meal-prep plan of some of your meals gets that share of your daily
+  protein target by their calories (5 lunches: 100 g × 550 / 1,800 = 31 g a day); "My usual week" keeps the
+  whole target. Without this, 5 lunches would be held to a whole day's protein. The 1.5× reward cap follows it.
+- **D110. Same dish with several meals** is one recipe per meal (never twice a day stays); the extra portions to
+  freeze go with the first meal.
+- **D111. Limits of the answers.** The cook day (big day, same dish, sessions) must be one of the plan's days;
+  "N portions of a meal" goes up to 14 (the plan's 14-day limit; the rest can be extra portions to freeze).
+  Both are 422s with the fix in words.
+- **D112. "Use what I have"** is inventory mode where only your could-buy items may be bought, with no money
+  limit unless one is sent; with no could-buy items it buys nothing. A "have it" item with an amount is a lot
+  for this plan only (never in your pantry, so Mark cooked doesn't take from it and may report it as short);
+  without an amount it counts as enough, like Always have for this plan.
+- **D113. Calendar-week caps.** Your other active plans count only when they don't overlap the new plan
+  (accepting it would replace those); one-meal plans count as in meal now (cooked, or planned for today or
+  later).
+- **D114. Household size** now comes from your settings for `POST /plans` too (it was always 1); yours is 1, so
+  nothing changes today.
+- **D115. Daily cap settings** are plain numbers (like the percentage settings), so the app keeps one settings
+  type; code reads them as exact decimals in grams. The penalty is 1 point per scoop a day above the usual (about
+  $2 in plan terms), so a second scoop needs a real reason; a rounding spill over the maximum is fixed by a
+  re-solve, like the calorie limits.
+- **D116. The protein reward** is 0.02 points per gram of a day's protein up to its cap (10 g ≈ $0.40).
+- **D117. Two engine fixes found while testing** (not in the plan):
+  - *A batch that can't round into the limits:* with eggs in stock, a 5-lunch big-day plan failed validation
+    three times: a 4-portion egg batch moves in whole-egg steps of about 190 kcal a week, wider than the
+    week's 82 kcal window, so no nudge could land it. When no nudge combination fits and a plain tightening re-solve already
+    failed, the second re-solve leaves the stiffest batch out of that cook day (`snap.stepiest_batch`,
+    `Tightening.forbidden`); that plan now succeeds.
+  - *Short plans:* the solver kept 20 kcal of rounding room on each side of the week's limits, wider than a
+    2-lunch plan's whole window (3% of 1,100 kcal), so it was infeasible by construction. Each margin is now at
+    most a quarter of the window.
+- **D118. Freeze notes for generated recipes.** The column is there for them, but the ideas prompt doesn't ask
+  for one yet (no prompt or token change); your own versions get theirs with Phase 3's editing.
+- **D119. The old plan screen** accepts with `replace_overlapping=true` (it always replaced the week's plan) until
+  2b.7's sheet.
+- **D120. The meal-prep header** ("5 lunches · Wed 14 – Sun 18 · High protein · Simple") is stored with the
+  search and returned with the plan.
+- **D121. Hands-on time per batch** doesn't grow with batch size (C1 unchanged): a 14-portion batch counts its
+  recipe's active minutes. If you want big batches to take longer, that's a rule to add.
+- **D122. The prep order** is per batch (which batch to start first), not per step across batches.
+- **D123. The freezes-well review** (H5): 18 seeds got a freeze note; the coconut shrimp curry now freezes well (a
+  curry gravy) with "reheat only once"; every other value stayed. The full table is in `test_freezes_well.py`.
+- **D124. Settings summary** gets its own "Daily caps" line (the Settings row shows it).
+- **D126. A money shortfall is explained from the narrow shortlist** (amends D102's first limit, **for your
+  approval**). The pantry-only inventory test's "what would it take" solve took 274–281 s on the wider
+  shortlist (139 s before this step: the new cheapest picks and the shrimp curry's freezer days made that
+  instance harder), right at the tests' 300 s guard; on the narrow shortlist, which now always holds each meal's
+  cheapest recipes (T2), it takes 37 s. The suggested top-up is a little higher: about $75.05 ("Allow a $76
+  top-up") instead of $69.96; it still always makes a plan. Time and mood blockers are still explained from the
+  wider shortlist. Two small related changes: the diagnostic solves stop within 1 penalty point of the best (10
+  cents of a top-up, already rounded up to whole dollars), and a batch's portion bound for need sizing is now
+  people × days (+20 only when extras are frozen), tighter than the old fixed 21.
+- **D125. Tests** (all the plan's files, with these names): `test_answers_to_request.py`,
+  `test_meal_prep_api.py` (AC 1, 2, 8, Same as last time, Save to pantry, a 2-lunch plan),
+  `test_cook_styles.py` (AC 10–13, the whole week on a 5-recipe pool), `test_meal_prep_ideas.py` (AC 9),
+  `test_accept_overlap.py` (AC 7), `test_household.py`, `test_protein_reward.py` (AC 3, 4, both calorie modes),
+  `test_could_buy_only.py` (AC 5), `test_calendar_week_caps.py` (AC 6), `test_daily_amount_caps.py` (with the
+  oats and pudding seed day), `test_daily_cap_card.py`, `test_freezes_well.py` (AC 15), `test_big_day_time.py`,
+  `test_prep_order.py` (AC 14), `test_plan_view.py` (fridge, freezer, thaw and the Prep notes row; the plan-level
+  checks are in the cook-style tests), `test_seed_revisions.py`, and the stepiest-batch tests in `test_snap.py`.
+
+**Dev database.** Migrated to 0007 and re-seeded (19 seed revisions). After pulling: `docker compose up -d
+backend` is enough (the code reloads).
 
 #### 2b.6 Swap (backend)
 
@@ -3215,6 +3360,19 @@ your instruction; real design decisions stop and wait):
 | P7 | Ideas pass rate | Ideas kept vs asked recorded in the LLM call log. |
 | P8 | Next | Then step 2b.5 (meal prep engine), with C1b's four cooking options, the freezes-well rules and A2 (M16: the daily amount cap for protein powder, usually 1 scoop, at most 2). If the pre-work plus 2b.5 doesn't fit one session, the pre-work is committed first and the step stops with what's left. |
 
+**2b.3b pre-work approval (2026-10-11).** You approved the pre-work, then:
+
+| # | Topic | Decision |
+|---|---|---|
+| T1 | Pre-work | Approved, including D102 and D105. |
+| T2 | D102 follow-up (done first) | With a budget or top-up, each meal's shortlist always keeps its cheapest eligible recipe, by cost per portion and by buy-today total, alongside the quickest ones, before widening. Test: the only plan that fits the budget uses a recipe ranked below the top 6. |
+| T3 | Freeze note | The nullable `recipe_version.freeze_note` column (migration), so your own recipe versions and generated recipes can carry it too. |
+| T4 | Protein powder per portion (fix now) | Chocolate protein overnight oats: 1 scoop, the other ingredients rebalanced to keep a reasonable breakfast. Every seed: no single portion uses more than 1 scoop by default. |
+| T5 | Meal slots | Snack recipes filling breakfast is fine, as long as the day stays within your calorie and protein targets. No change. |
+| T6 | Batch view (record now, build in 2b.7) | Each cook day lists every batch with its portion count and where each portion goes; each meal row shows its source ("cooked Mon" / "from freezer, cooked Mon, thaw Fri night"); "Left out" and freeze notes only behind Prep notes or "About this plan". FLOW_SPEC C6, F23. |
+| T7 | Not for me (record now, build in 2b.6/2b.7) | On recipe pages and meal rows, separate from Swap: hides the recipe from all future suggestions and plans, logs a feedback event, undone from "Hidden recipes" in Settings. Swap still replaces one meal. FLOW_SPEC C6, F24. |
+| T8 | Next | Step 2b.5 per this plan, with C1b's four options, the freezes-well rules and freeze notes, and A2 (the daily cap counting every meal that day), plus a test that oats and protein pudding on the same day respect the cap. |
+
 ### 12.2 Remaining questions (from applying your answers)
 
 - **Phase 2b questions:** all answered (FLOW_SPEC §18). None open.
@@ -3258,6 +3416,11 @@ Recorded so they aren't lost; each gets a phase when you schedule it.
 ---
 
 ## 13. Seed recipe library (DRAFTS: quantities for you to adjust)
+
+**Step 2b.5:** every seed's "freezes well" value was reviewed by hand (H5) and 18 carry a freeze note
+("Freeze the chicken and rice; make the garlic yogurt sauce and the salad fresh"); the coconut shrimp curry now
+freezes well (a curry gravy). A changed seed file becomes a new draft version (D107). No seed portion uses more
+than 1 scoop of protein powder (T4, tested).
 
 All seeds are loaded as `origin=seed`, `created_by=system`, `is_draft=true`. They are usable by the planner on cold start and shown with a "draft" badge. Editing one creates your confirmed version. **Quantities are raw/dry as purchased, for the stated base servings. Calories, macros and cost are computed by code in Phase 0 and deliberately not written here.** Full step text is written into the seed JSON in Phase 0 and passes the same prose filter and safety injection as LLM recipes. **10 versions in 5 families** (3b added in Phase 1, C2). No seed uses beef, a held (possible-beef) item or a pork component (R2). Defaults accepted (R6).
 
@@ -3305,7 +3468,7 @@ All seeds are loaded as `origin=seed`, `created_by=system`, `is_draft=true`. The
 
 **Family 5: Protein oats** (breakfast; R3)
 
-- **5a. Chocolate protein overnight oats.** Simple · no-cook · base 2 · ≈ 5 min + refrigerate overnight.
-  - *Ingredients:* old-fashioned rolled oats 80 g · protein powder, double chocolate 2 scoops · milk (2%) 300 ml · Greek yogurt, plain nonfat 100 g · chia seeds 12 g (USDA has no spoon measure for chia, so it's authored in grams) · banana 1 (optional, for topping).
-  - *Outline:* whisk powder into the milk until smooth; stir in yogurt, oats and chia; divide into 2 jars; refrigerate overnight; top with sliced banana when serving.
+- **5a. Chocolate protein overnight oats.** Simple · no-cook · base 1 (one jar; revised 2026-10-11, T4) · ≈ 5 min + refrigerate overnight.
+  - *Ingredients:* old-fashioned rolled oats 35 g · protein powder, double chocolate 1 scoop · milk (2%) 120 ml · Greek yogurt, plain nonfat 60 g · chia seeds 5 g (USDA has no spoon measure for chia, so it's authored in grams) · banana ½ (optional, for topping). Computed by code: 374 kcal, 39.6 g protein a jar (was 408 kcal and 40.5 g, also 1 scoop a jar, as a 2-jar recipe).
+  - *Outline:* whisk powder into the milk until smooth; stir in yogurt, oats and chia; spoon into the jar; refrigerate overnight; top with sliced banana when serving.
   - *Note:* nutrition complete from your package label (L1); cost pending until you give the powder's price.

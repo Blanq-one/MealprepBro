@@ -319,7 +319,7 @@ def cook_meal(
     asked = body.slot or (MealSlot(resolved["slot"]) if resolved.get("slot") else None)
     slot = choose_slot(asked, list(version.meal_slots), slot_from_clock(now))
     portions = body.portions or int(resolved.get("people") or settings.household_size)
-    diet = diet_inputs(session, user.id, settings.always_have)
+    diet = diet_inputs(session, user.id, settings)
     stores, _ = store_ids(session, settings)
     ingredient_ids = set(
         session.scalars(

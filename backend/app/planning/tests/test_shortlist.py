@@ -4,10 +4,12 @@ same shortlist."""
 
 from decimal import Decimal
 
-from app.domain.enums import MealSlot, RecipeMood
+from app.domain.enums import CalorieMode, MealSlot, PlanningMode, RecipeMood
 from app.planning import shortlist as sl
-from app.planning.problem import CandidateRecipe, IngredientPlan, PlanningProblem
+from app.planning.problem import CandidateRecipe, IngredientPlan, InventoryLot, PlanningProblem
 from app.planning.shortlist import shortlist
+from app.planning.solver.model import SolverSolution
+from app.planning.solver.solve import solve
 from app.testing import factories as f
 
 D = MealSlot.DINNER
@@ -106,3 +108,72 @@ def test_each_meal_always_keeps_its_quickest_recipe_and_one_its_strictest_day_al
     assert sorted(c.version_id for c in shortlist(medium_week, 3).candidates) == [1, 2, 4]
     with_simple = f.problem(f.constraints(slots={D: 650}, mood=RecipeMood.SIMPLE), cands, ing)
     assert sorted(c.version_id for c in shortlist(with_simple, 3).candidates) == [1, 4, 5]
+
+
+# ---------------- with a money limit: the cheap options are always kept (D102 follow-up) ----------------
+L = MealSlot.LUNCH
+SALMON_FILLET, WHITE_RICE, DRY_LENTILS = 11, 12, 13
+
+
+def money_week(budget_cents: int | None = None, *, pantry: bool = True, **kw: object) -> PlanningProblem:
+    """18 salmon lunches that score well (protein per kcal, right on the meal's calories) but cost $9 a
+    portion, and two that score worst: a cheap rice bowl and a lentil soup your pantry already covers (its
+    lentils are dear per gram, so only its buy-today total is cheap)."""
+    ing = {
+        SALMON_FILLET: f.food(
+            SALMON_FILLET, "salmon", 200, protein=25, offers=[f.offer(101, cents_per_unit="3")]
+        ),
+        WHITE_RICE: f.food(WHITE_RICE, "rice", 360, protein=7, offers=[f.offer(102, cents_per_unit="0.2")]),
+        DRY_LENTILS: f.food(
+            DRY_LENTILS,
+            "lentils",
+            360,
+            protein=9,
+            offers=[f.offer(103, cents_per_unit="5")],
+            lots=[InventoryLot(1, DRY_LENTILS, Decimal(2000))] if pantry else [],
+        ),
+    }
+    cands = [
+        f.recipe(100 + i, f"Salmon bowl {i}", [L], [f.line(SALMON_FILLET, 1200 + 2 * i)], ing, active=10)
+        for i in range(18)
+    ]
+    cands.append(f.recipe(200, "Rice bowl", [L], [f.line(WHITE_RICE, 640)], ing, active=20))
+    cands.append(f.recipe(201, "Lentil soup", [L], [f.line(DRY_LENTILS, 640)], ing, active=20))
+    c = f.constraints(
+        days=3,
+        slots={L: 600},
+        cook_weekdays=range(7),
+        calorie_mode=CalorieMode.STRICT_DAILY,
+        budget_cents=budget_cents,
+        **kw,  # type: ignore[arg-type]
+    )
+    if kw.get("mode") is PlanningMode.INVENTORY:
+        assert c.purchase_limit_cents == 0
+    return f.problem(c, cands, ing)
+
+
+def test_without_a_money_limit_the_cheap_lunches_rank_below_the_top_6():
+    kept = {c.title for c in shortlist(money_week(), 6).candidates}
+    assert "Rice bowl" not in kept and "Lentil soup" not in kept
+    assert len(kept) == 6
+
+
+def test_a_budget_keeps_the_cheapest_recipe_so_the_only_plan_that_fits_is_found():
+    # $5 for three lunches, nothing in the pantry: only the rice bowl fits ($0.32 a portion)
+    p = money_week(budget_cents=500, pantry=False)
+    for per_slot in (3, 6):
+        assert "Rice bowl" in {c.title for c in shortlist(p, per_slot).candidates}
+    result = solve(shortlist(p, 3), time_limit_s=30)
+    assert isinstance(result, SolverSolution), result
+    assert {result.batches[m.batch_index].version_id for m in result.meals} == {200}
+
+
+def test_a_top_up_keeps_the_recipe_cheapest_to_buy_today():
+    """Inventory mode with no top-up: only the lentil soup, which the pantry covers, can be cooked; per
+    portion at shop prices it's the dearest recipe of all, so only its buy-today total ($0) keeps it."""
+    p = money_week(mode=PlanningMode.INVENTORY, topup_cents=0)
+    kept = {c.title for c in shortlist(p, 3).candidates}
+    assert {"Rice bowl", "Lentil soup"} <= kept  # cheapest per portion, cheapest to buy today
+    result = solve(shortlist(p, 3), time_limit_s=30)
+    assert isinstance(result, SolverSolution), result
+    assert {result.batches[m.batch_index].version_id for m in result.meals} == {201}

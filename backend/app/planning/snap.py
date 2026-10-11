@@ -13,6 +13,7 @@ from collections import defaultdict
 from dataclasses import dataclass, replace
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
+from itertools import pairwise
 from typing import Any
 
 import pulp
@@ -60,6 +61,29 @@ def _planned_kcal(problem: PlanningProblem, batch: SolvedBatch) -> float:
     planned = recipe.kcal * size_multiplier(batch.portion_size) * batch.nudge
     planned = planned * t.kcal_scale.get(batch.version_id, Decimal(1)) + t.kcal_bias.get(batch.version_id, 0)
     return float(planned)
+
+
+def stepiest_batch(problem: PlanningProblem, solution: SolverSolution) -> int | None:
+    """When no nudge combination rounds into your limits, the batch most to blame: the one whose rounded
+    calories jump the most between neighbouring nudges (whole eggs, whole scoops), or can't move at all, times
+    the meals it feeds.
+    The re-solve leaves that recipe out of that cook day (2b.5: a 4-portion egg batch jumps about 190 kcal a
+    week, wider than the week's 82 kcal window)."""
+    grid = _grid(problem)
+    eaten: dict[int, int] = defaultdict(int)
+    for meal in solution.meals:
+        eaten[meal.batch_index] += 1
+    worst: tuple[int, int] | None = None  # (weighted jump, batch index)
+    for b, batch in enumerate(solution.batches):
+        if batch.portions_to_freeze:
+            continue
+        kcal = sorted({o.kcal for n in grid if (o := _option(problem, batch, n)) is not None})
+        # a batch that can't move at all (one whole egg whatever the nudge) is as stiff as its whole portion
+        step = max((hi - lo for lo, hi in pairwise(kcal)), default=kcal[0] if kcal else 0)
+        jump = step * eaten[b]
+        if jump and (worst is None or jump > worst[0]):
+            worst = (jump, b)
+    return worst[1] if worst is not None else None
 
 
 def snap_batches(problem: PlanningProblem, solution: SolverSolution) -> tuple[SolvedBatch, ...] | None:

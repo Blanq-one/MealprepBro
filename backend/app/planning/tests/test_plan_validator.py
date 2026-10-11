@@ -256,7 +256,7 @@ def test_two_pork_meals_under_a_cap_of_one():
     report = validate_plan(plan, f.reference(p))
     cap_errors = [e for e in report.errors if e.code == "FREQUENCY_CAP_EXCEEDED"]
     assert len(cap_errors) == 1
-    assert "2 meals this week, the limit is 1" in cap_errors[0].message
+    assert "2 meals in the week of Mon Oct 12, the limit is 1" in cap_errors[0].message
     assert len(cap_errors[0].details["meals"]) == 2
     assert all("Sausage rice" in m for m in cap_errors[0].details["meals"])
 

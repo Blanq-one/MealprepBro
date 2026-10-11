@@ -9,8 +9,9 @@ exclusion of its members; ingredients outside the cap (e.g. `pork_trace`) are un
 `never_favor` tells the Phase 1 solver to give members no nutrition, price or inventory-use bonus.
 """
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
+from datetime import date, timedelta
 from enum import StrEnum
 
 
@@ -64,13 +65,26 @@ class CapViolation:
     label: str
     max_meals_per_week: int
     meals: tuple[str, ...]
+    week_start: date | None = None  # the Monday, when the cap is counted per calendar week (F7)
+    already: int = 0  # meals your other plans already count that week
 
     @property
     def message(self) -> str:
+        when = (
+            "this week"
+            if self.week_start is None
+            else f"in the week of {self.week_start:%a %b} {self.week_start.day}"
+        )
+        others = f", plus {self.already} in your other plans" if self.already else ""
         return (
-            f"{self.label}: {len(self.meals)} meals this week, the limit is {self.max_meals_per_week} "
+            f"{self.label}: {len(self.meals)} meals {when}{others}, the limit is {self.max_meals_per_week} "
             f"({', '.join(self.meals)})"
         )
+
+
+def week_monday(day: date) -> date:
+    """The Monday of the Monday–Sunday week that contains `day` (the calendar week caps count in, Q6)."""
+    return day - timedelta(days=day.weekday())
 
 
 def cap_members(cap: FrequencyCap, ingredients: Iterable[CapIngredient]) -> frozenset[int]:
@@ -123,4 +137,24 @@ def cap_violations(resolved: Iterable[ResolvedCap], meals: Sequence[Meal]) -> tu
         counted = capped_meals(cap, meals)
         if len(counted) > cap.max_meals_per_week:
             violations.append(CapViolation(cap.label, cap.max_meals_per_week, counted))
+    return tuple(violations)
+
+
+def weekly_cap_violations(
+    resolved: Iterable[ResolvedCap],
+    meals: Sequence[tuple[date, Meal]],
+    used: Mapping[tuple[date, str], int],
+) -> tuple[CapViolation, ...]:
+    """Caps counted per Monday–Sunday week (F7): a plan's meals in each week, plus the meals your other plans
+    and one-meal plans already count there (`used`, by (Monday, label))."""
+    resolved = list(resolved)
+    weeks = sorted({week_monday(day) for day, _ in meals})
+    violations = []
+    for monday in weeks:
+        in_week = [meal for day, meal in meals if week_monday(day) == monday]
+        for cap in resolved:
+            counted = capped_meals(cap, in_week)
+            already = used.get((monday, cap.label), 0)
+            if counted and len(counted) + already > cap.max_meals_per_week:
+                violations.append(CapViolation(cap.label, cap.max_meals_per_week, counted, monday, already))
     return tuple(violations)

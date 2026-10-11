@@ -15,7 +15,7 @@ A failing idea is dropped, with its reasons logged on the call (CLAUDE.md rule 5
 import hashlib
 import json
 import math
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
@@ -25,12 +25,15 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.models import LlmCall, Recipe, RecipeIngredient, RecipeVersion
-from app.domain.cook_time import MOOD_ORDER
+from app.domain.cook_time import MOOD_MAX_ACTIVE_MINUTES, MOOD_ORDER
 from app.domain.enums import Equipment, MealSlot, RecipeMood, RecipeOrigin
+from app.domain.exclusions import ExclusionStatus
 from app.llm.errors import LLMError, LLMOutputError
 from app.llm.prompts import idea_revision, recipe_ideas
 from app.llm.prompts.common import IdeaContext
 from app.llm.structured import LLMRunContext, StructuredSpec
+from app.planning.candidates import BASE_SERVINGS, TORTILLA_RULE, Gap
+from app.planning.problem import PlanningProblem
 from app.planning.recipe_validator import ValidatedIdea, validate_idea
 from app.planning.resolver import IngredientResolver
 from app.schemas.llm_recipe import RecipeIdea, RecipeIdeaBatch
@@ -390,3 +393,67 @@ class IdeaGenerator:
         recipe.default_version_id = version.id
         self.session.flush()
         return version.id, True
+
+
+BEEF_NEVER = "beef and anything made from beef (broth, stock, tallow, bouillon, bovine gelatin)"
+
+
+def plan_idea_request(problem: PlanningProblem, gap: Gap, resolver: IngredientResolver) -> IdeaRequest:
+    """What an ideas call asks for to fill a meal-prep (or swap, grocery advice) gap (§13.5): the meal, the
+    strictest cook day's mood, the longest hands-on time that mood and your cook days allow, your equipment,
+    the lots to use up and the titles to avoid, with the full allowed vocabulary in short names (as
+    candidate_generation/1 sends it). Pork components (never favored) stay out of the vocabulary."""
+    c = problem.constraints
+    statuses = resolver.statuses
+    never_favored = {i for cap in c.frequency_caps if cap.never_favor for i in cap.member_ingredient_ids}
+    allowed = {i for i, s in statuses.items() if s.status is ExclusionStatus.ALLOWED}
+    usable = allowed - never_favored - {i for i, d in resolver.data.items() if d.slug == "chapati"}
+    cook_days = [d for d in c.days if d.is_cook_day]
+    mood = min((d.mood for d in cook_days), key=lambda m: MOOD_ORDER[m], default=RecipeMood.SIMPLE)
+    minutes = min(
+        MOOD_MAX_ACTIVE_MINUTES[mood], max((d.cook_minutes_available for d in cook_days), default=30)
+    )
+    use_up = []
+    for plan in problem.ingredients.values():
+        for lot in plan.lots:
+            if lot.id > 0 and (lot.opened or (lot.expires_on is not None and lot.expires_on <= c.week_end)):
+                tag = "open package" if lot.opened else f"expires {lot.expires_on}"
+                use_up.append(
+                    f"{resolver.short_name(plan.id)} (about {lot.quantity:.0f} {plan.planning_unit}, {tag})"
+                )
+    tortilla = next((i for i, d in resolver.data.items() if d.slug == "flour-tortilla-small"), None)
+    return IdeaRequest(
+        slot=gap.slot,
+        mood=mood,
+        base_servings=BASE_SERVINGS.get(gap.slot, 2),
+        equipment=c.equipment,
+        vocabulary=tuple(sorted({resolver.short_name(i) for i in usable})),
+        never_use=(BEEF_NEVER, *sorted({resolver.short_name(i) for i in resolver.data if i not in allowed})),
+        max_active_minutes=minutes,
+        kcal_per_portion=c.slot_target(gap.slot).kcal,
+        use_up=tuple(sorted(use_up)),
+        avoid_titles=tuple(sorted(r.title for r in problem.candidates if gap.slot in r.meal_slots)),
+        substitution_rules=(TORTILLA_RULE.format(name=resolver.short_name(tortilla)),) if tortilla else (),
+    )
+
+
+class IdeaCandidates:
+    """Gap generation for meal prep (F20): one ideas call per uncovered meal, whose 5–8 passing ideas all
+    join the pool the solver plans from (saved with steps pending; steps are written on first open). Same
+    interface as planning/candidates.CandidateGenerator, which POST /plans keeps."""
+
+    def __init__(self, session: Session, user_id: int, llm: LLMRunContext) -> None:
+        self.generator = IdeaGenerator(session, user_id, llm)
+        self.created: list[int] = []
+        self.dropped: dict[str, list[str]] = {}
+
+    def generate(self, problem: PlanningProblem, gaps: Sequence[Gap]) -> list[int]:
+        """Raises the LLM's errors (a wait too long, the request's time running out) for the orchestrator;
+        ideas saved before an error stay saved."""
+        passed: list[int] = []
+        for gap in gaps:
+            outcome = self.generator.generate(plan_idea_request(problem, gap, self.generator.resolver))
+            self.created.extend(outcome.created)
+            self.dropped.update(outcome.dropped)
+            passed.extend(outcome.passed)
+        return passed

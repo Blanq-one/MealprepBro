@@ -13,6 +13,10 @@ only after that first tap). The target-0 fallback for the protein cap (§13.3) i
 you want to cook?" step with four options (C1b), the per-day fridge and freezer rules and the "freezes well" flag
 (C1b, C6), and the new plan view with its one Prep notes row (C6); change F22 (§16). The build order is now 2b.3a →
 2b.4 → 2b.3b, so until 2b.3b More ideas shows disabled with "coming soon" (C5).
+**Recorded at the 2b.3b pre-work approval (2026-10-11), to build later:** the batch view, "cook once, eat many"
+(C6, for 2b.7), and a **Not for me** action separate from Swap (C6, C8, S0, for 2b.6 and 2b.7); changes F23 and
+F24 (§16). Meal prep's engine (2b.5) already returns what the batch view needs: each batch's portions with
+fridge and freezer counts, each meal's source line, the thaw notes, and the Prep notes items.
 **Sources:** your redesign brief (2026-10-10), `CLAUDE.md` (wins on conflict), `docs/PRD.md` (new "Primary user flow"
 section), `docs/BUILD_PLAN.md` (Phase 2b build steps, §9).
 
@@ -582,6 +586,16 @@ The Building steps from 5.4.
     freezer"), and the day before a freezer meal says "Thaw tomorrow's lunch in the fridge tonight" (C1b).
   - **Meal row:** icon · meal label · name · "520 kcal · 38 g protein" · badges ("from the freezer: thaw Fri night",
     "Draft") · **⇄ Swap** (44 px).
+- **Batch view, "cook once, eat many"** (recorded 2026-10-11 for 2b.7, F23):
+  - Each cook day lists every batch with its portion count and where each portion goes, e.g. "Cook Air-fryer
+    chicken over rice ×4 → Mon lunch, Tue dinner, Wed lunch, Sat dinner (1 to the freezer)".
+  - Each meal row shows its source: "cooked Mon", or "from freezer, cooked Mon, thaw Fri night" (the API's
+    `source_display`, 2b.5).
+  - "Left out" recipe notes and freeze notes never appear as a block in the plan view: they go behind the Prep
+    notes row or an **About this plan** tap.
+- **Not for me** (recorded 2026-10-11 for 2b.6 and 2b.7, F24), on recipe pages (C8) and meal rows, separate from
+  Swap: it hides that recipe from all future suggestions and plans, logs a feedback event, and can be undone from a
+  **Hidden recipes** list in Settings (S0). Swap still replaces just one meal.
 - **Shopping list view:** the plan's grocery list exactly as on the Grocery tab (store groups, stock-up section,
   "check you have", unpriced), read-only here, with **Open in Grocery** to check things off.
 - **Bottom bar:** **Use this plan** on a draft, "This is your current plan ✓" on the active one.
@@ -1110,6 +1124,14 @@ ALTER recipe_version ADD steps_status text NULL -- NULL = has its steps (every s
                                                 -- pending = an idea whose steps are written on first open (F19)
 ```
 
+**Migration `0007_recipe_freeze_note`** (step 2b.5, decided at the 2b.3b pre-work approval):
+
+```
+ALTER recipe_version ADD freeze_note text NULL  -- how to freeze a recipe that freezes well: "Freeze the chicken
+                                                -- and rice; make the yogurt sauce fresh" (seeds now; your versions
+                                                -- and generated recipes can carry one too)
+```
+
 - **Ideas are recipe versions** (`created_by = llm`, `prompt_version = recipe_ideas/1`) with their ingredient lines
   and no `recipe_step` rows. The idea's one-line method is stored in `description`, so no other column is needed.
 - **Write-once steps (F19):** an idea's steps are inserted exactly once, in the same transaction that sets
@@ -1565,6 +1587,13 @@ A user-editable variety cap stays deferred (your carried decision). The one exce
 | # | Earlier decision | Change | Why |
 |---|---|---|---|
 | F22 | Q14: at most 5 portions of one recipe a week for meals | **Same dish, many portions** (C1b) overrides the 5-portion cap for that request: one recipe scaled to any number of portions. Every other request keeps Q14 | You asked for one dish for many portions (e.g. 8) |
+
+**Recorded at the 2b.3b pre-work approval (2026-10-11), to build later:**
+
+| # | Earlier decision | Change | Why |
+|---|---|---|---|
+| F23 | C6 lists days and meal rows; freeze and spoil notes collapse into one Prep notes row (H4) | **Batch view (2b.7):** each cook day lists every batch, its portion count and where each portion goes ("×4 → Mon lunch, Tue dinner, Wed lunch, Sat dinner (1 to the freezer)"); each meal row shows its source ("cooked Mon" / "from freezer, cooked Mon, thaw Fri night"); "Left out" notes and freeze notes only behind Prep notes or **About this plan** | "Cook once, eat many" |
+| F24 | Swap is the only way to turn down a meal (E5) | **Not for me (2b.6, 2b.7):** on recipe pages and meal rows, separate from Swap; hides that recipe from every future suggestion and plan, logs a feedback event, undone from **Hidden recipes** in Settings. Swap still replaces just one meal | A recipe you never want again shouldn't need a swap every time |
 
 ---
 

@@ -18,7 +18,8 @@
  "equipment": [
   "stovetop"
  ],
- "freezer_friendly": false,
+ "freezer_friendly": true,
+ "freeze_note": "Freeze the curry and rice; reheat only once, since the shrimp toughen if reheated twice.",
  "draft_note": "Draft quantities: adjust them in the app. Best fresh; the shrimp toughen if reheated twice.",
  "ingredients": [
   {

@@ -72,3 +72,62 @@ def used_up(caps: Iterable[ResolvedCap], used: Mapping[str, int]) -> dict[str, f
         for cap in caps
         if cap.max_meals_per_week > 0 and used.get(cap.label, 0) >= cap.max_meals_per_week
     }
+
+
+def plan_days(plan: MealPlan) -> tuple[date, date]:
+    """A stored plan's first and last day."""
+    days = len(plan.constraints.get("days", [])) or 7
+    return plan.week_start, plan.week_start + timedelta(days=days - 1)
+
+
+def week_use(
+    session: Session, user_id: int, caps: Iterable[ResolvedCap], *, start: date, end: date, today: date
+) -> dict[tuple[date, str], int]:
+    """For a new plan from `start` to `end`: meals your other plans count toward each cap, per Monday–Sunday
+    week it touches, by (Monday, label). Active plans count unless they overlap the new plan (accepting it
+    replaces them); one-meal plans count as in meals_this_week."""
+    caps = [cap for cap in caps if cap.max_meals_per_week > 0]
+    if not caps:
+        return {}
+    first, last = week_of(start)[0], week_of(end)[1]
+    single = and_(
+        MealPlan.kind == "single",
+        or_(
+            PlanCookBatch.status == "cooked",
+            and_(PlanCookBatch.status == "planned", PlanMeal.eat_on >= today),
+        ),
+    )
+    rows = session.execute(
+        select(PlanMeal.eat_on, PlanCookBatch.recipe_version_id, MealPlan)
+        .join(PlanCookBatch, PlanCookBatch.id == PlanMeal.cook_batch_id)
+        .join(MealPlan, MealPlan.id == PlanMeal.meal_plan_id)
+        .where(
+            MealPlan.user_id == user_id,
+            PlanMeal.eat_on >= first,
+            PlanMeal.eat_on <= last,
+            PlanMeal.status.notin_(("replaced", "skipped")),
+            or_(MealPlan.status == "active", single),
+        )
+    ).all()
+    kept = []
+    for eat_on, version_id, plan in rows:
+        if plan.kind != "single":
+            plan_start, plan_end = plan_days(plan)
+            if plan_start <= end and start <= plan_end:
+                continue  # overlaps the new plan: accepting it replaces this one
+        kept.append((eat_on, version_id))
+    versions = {version_id for _, version_id in kept}
+    ingredients: Mapping[int, set[int]] = defaultdict(set)
+    if versions:
+        for version_id, ingredient_id in session.execute(
+            select(RecipeIngredient.recipe_version_id, RecipeIngredient.ingredient_id).where(
+                RecipeIngredient.recipe_version_id.in_(versions)
+            )
+        ).tuples():
+            ingredients[version_id].add(ingredient_id)
+    out: dict[tuple[date, str], int] = defaultdict(int)
+    for eat_on, version_id in kept:
+        for cap in caps:
+            if ingredients[version_id] & cap.member_ids:
+                out[(week_of(eat_on)[0], cap.label)] += 1
+    return dict(out)

@@ -42,6 +42,9 @@ describe("Settings list (S0)", () => {
     expect(screen.getByRole("link", { name: /Always have/ })).toHaveAttribute("href", expect.stringMatching(/^\/settings\/edit\/?\?field=always_have$/));
     expect(screen.queryByRole("link", { name: /Beef/ })).not.toBeInTheDocument(); // locked
     expect(screen.getByText("2 held, 0 allowed")).toBeInTheDocument();
+    const diet = screen.getByRole("region", { name: "Diet" });
+    expect(within(diet).getByRole("link", { name: /Daily caps/ })).toHaveAttribute("href", expect.stringMatching(/^\/settings\/edit\/?\?field=daily_amount_caps$/));
+    expect(within(diet).getByText("Protein powder: usually 1 scoop a day, at most 2 scoops")).toBeInTheDocument();
   });
 
   it("switches the theme: Light, Dark and Match my phone, stored on this device", async () => {
@@ -97,6 +100,28 @@ describe("Settings editors (S1)", () => {
     expect(await screen.findByText("Slot allocations exceed the daily kcal target")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Dinner: 675/ })).toBeInTheDocument(); // the edit is kept
     expect(onDone).not.toHaveBeenCalled();
+  });
+
+  it("the daily caps editor sets the usual and the most a day, and refuses a usual above the most", async () => {
+    const calls = settingsApi();
+    const onDone = vi.fn();
+    render(<SettingsEditor field="daily_amount_caps" online onDone={onDone} />);
+    expect(await screen.findByRole("button", { name: /Protein powder usually: 1/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Protein powder at most: 2/ })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "More protein powder usually" }));
+    await userEvent.click(screen.getByRole("button", { name: "More protein powder usually" }));
+    await userEvent.click(screen.getByRole("button", { name: "More protein powder usually" }));
+    expect(screen.getByText("The usual amount can't be more than the most.")).toBeInTheDocument(); // 2.5 > 2
+    await userEvent.click(screen.getByRole("button", { name: "More protein powder at most" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(onDone).toHaveBeenCalled());
+    expect(calls.filter((c) => c.method === "PATCH")).toEqual([
+      {
+        method: "PATCH",
+        path: "/api/v1/settings",
+        body: { daily_amount_caps: [{ label: "Protein powder", ingredient: "protein-powder-double-chocolate", unit: "scoop", usual: 2.5, maximum: 2.5 }] },
+      },
+    ]);
   });
 
   it("offline, Save says it needs a connection", async () => {

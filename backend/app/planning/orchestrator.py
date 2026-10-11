@@ -2,9 +2,13 @@
 
   constraints → candidate pool (seeds + saved first; the LLM only for uncovered slots) → solve
   → infeasible: targeted generation for the slots the diagnostics name (≤ 2 rounds) or a clear `infeasible`
-  → round + absorb → validate the RoundedPlan → calorie / protein / purchase-limit errors: re-solve with the
-    observed rounding bias and the bound tightened (≤ 2) → still failing: a clear error
+  → pricing: round + absorb, packages, stores and costs → validate the RoundedPlan → calorie / protein /
+    purchase-limit / daily-amount errors: re-solve with the observed rounding bias and the bound tightened
+    (≤ 2) → still failing: a clear error
   → persist the plan and its grocery list.
+
+Meal prep (step 2b.5) fills gaps with the ideas pass (`recipe_ideas/1`, F20) and saves the plan with its
+kind; POST /plans keeps the Phase 1 complete-recipe calls.
 
 LLM failures end the run as `failed` with a problem+json error; nothing from the failing call and no plan is
 persisted (validated recipes from earlier, completed calls stay saved for reuse, per CLAUDE.md rule 7).
@@ -35,6 +39,7 @@ from app.llm.structured import LLMRunContext
 from app.planning.candidates import CandidateGenerator, Gap, gap_analysis
 from app.planning.constraint_builder import ConstraintError
 from app.planning.exposure import log_exposures
+from app.planning.ideas import IdeaCandidates
 from app.planning.inputs import constraints_for
 from app.planning.loader import build_problem
 from app.planning.persistence import save_plan
@@ -44,6 +49,7 @@ from app.planning.problem import PlanningProblem, Tightening
 from app.planning.reference import load_reference
 from app.planning.rounded import RoundedPlan
 from app.planning.shortlist import FULL_SOLVE_MAX, SHORTLIST_PER_SLOT, SHORTLIST_WIDER, shortlist
+from app.planning.snap import stepiest_batch
 from app.planning.solver.model import (
     Diagnostic,
     EmptyCandidatePoolError,
@@ -62,6 +68,21 @@ RESOLVE_MARGIN_PROTEIN_G = Decimal(1)
 # held back from an ingredient's inventory after rounding spilled past it under a purchase limit
 HOLDBACK_MARGIN = {"g": Decimal(5), "ml": Decimal(5), "count": Decimal(1)}
 TARGETED_COUNT = 2
+ROUNDING_CODES = frozenset(
+    {
+        "KCAL_DAY_OVER_CEILING",
+        "KCAL_DAY_UNDER_FLOOR",
+        "KCAL_WEEK_OVER_CEILING",
+        "KCAL_WEEK_UNDER_FLOOR",
+        "PROTEIN_DAY_UNDER_TARGET",
+        "PROTEIN_WEEK_UNDER_TARGET",
+    }
+)
+AMOUNT_MARGIN = {
+    "g": Decimal(1),
+    "ml": Decimal(1),
+    "count": Decimal("0.1"),
+}  # below a daily cap after rounding
 MIN_SOLVE_SECONDS = 5.0  # a solve starts only with at least this much of the time budget left
 SOLVE_MARGIN_SECONDS = 2.0
 OUT_OF_TIME_NOTE = (
@@ -147,13 +168,21 @@ def problem_json(
 
 
 def tightening_from(
-    report: ValidationReport, problem: PlanningProblem, solution: SolverSolution, plan: RoundedPlan
+    report: ValidationReport,
+    problem: PlanningProblem,
+    solution: SolverSolution,
+    plan: RoundedPlan,
+    *,
+    leave_out_stiffest: bool = False,
 ) -> Tightening:
+    """`leave_out_stiffest`: tightening alone already failed once; if no nudge combination rounds into your
+    limits, the next solve also leaves out the stiffest batch on its cook day (2b.5, D117)."""
     day_ceiling: dict[date, int] = {}
     day_floor: dict[date, int] = {}
     protein_day: dict[date, Decimal] = {}
     protein_week = Decimal(0)
     holdback: dict[int, Decimal] = {}
+    amount_ceiling: dict[tuple[int, date], Decimal] = {}
     week_ceiling = week_floor = budget = 0
     for e in report.errors:
         amount = (e.amount or 0) + RESOLVE_MARGIN_KCAL
@@ -176,6 +205,28 @@ def tightening_from(
                 if item.kind == "buy" and item.inventory_used > 0:
                     margin = HOLDBACK_MARGIN.get(item.unit, Decimal(1))
                     holdback[item.ingredient_id] = item.to_buy + margin
+        elif e.code == "PURCHASE_NOT_ALLOWED":
+            # the same spill in "Use what I have": that item must come from your stock alone
+            for item in plan.grocery.items:
+                if item.ingredient_id == e.details.get("ingredient_id"):
+                    margin = HOLDBACK_MARGIN.get(item.unit, Decimal(1))
+                    holdback[item.ingredient_id] = item.to_buy + margin
+        elif e.code == "DAILY_AMOUNT_OVER" and e.day is not None:
+            ingredient_id = int(e.details["ingredient_id"])
+            cap = next(d for d in problem.constraints.daily_amount_caps if d.ingredient_id == ingredient_id)
+            amount_ceiling[(ingredient_id, e.day)] = Decimal(str(e.details["over"])) + AMOUNT_MARGIN.get(
+                cap.unit, Decimal(1)
+            )
+    forbidden: frozenset[tuple[int, date]] = frozenset()
+    # no nudge lands these batches inside your limits: try the week without the stepiest one that day
+    if (
+        leave_out_stiffest
+        and not plan.snapped
+        and any(e.code in ROUNDING_CODES for e in report.errors)
+        and (index := stepiest_batch(problem, solution)) is not None
+    ):
+        batch = solution.batches[index]
+        forbidden = frozenset({(batch.version_id, batch.cook_on)})
     return Tightening(
         day_ceiling,
         day_floor,
@@ -187,6 +238,8 @@ def tightening_from(
         protein_day,
         protein_week,
         holdback,
+        amount_ceiling=amount_ceiling,
+        forbidden=forbidden,
     )
 
 
@@ -202,7 +255,15 @@ class Orchestrator:
         validator_spy: ValidatorSpy | None = None,
         deadline: Deadline | None = None,
         on_progress: ProgressListener | None = None,
+        kind: str | None = None,
+        ideas: bool = False,
+        today: date | None = None,
     ) -> None:
+        """`kind`: the saved plan's kind (meal_prep | grocery_advice; None = a week plan from POST /plans).
+        `ideas`: fill gaps with the ideas pass (the 2b flows, F20) instead of complete recipes."""
+        self.kind = kind
+        self.ideas = ideas
+        self.today = today  # your local date (calendar-week caps); None = from your timezone
         self.session = session
         self.user_id = user_id
         self.llm_client = llm_client
@@ -315,8 +376,8 @@ class Orchestrator:
         (or inventory mode's top-up) takes longer than any time limit, so with a money limit the planner
         stops at the wider shortlist, as before P3. Explaining why no plan fits (the elastic solve) takes
         seconds on a shortlist and longer than any time limit on a big library, so an infeasible week is
-        explained once, from the wider shortlist: its fixes always make a plan, though a smaller fix might do
-        with every recipe."""
+        explained once, from the wider shortlist (the narrow one with a money limit, D126): its fixes always
+        make a plan, though a smaller fix might do with every recipe."""
         small = len(problem.candidates) <= FULL_SOLVE_MAX
         if small:
             tiers: tuple[int | None, ...] = (None,)
@@ -333,7 +394,10 @@ class Orchestrator:
             result = self._solve_exactly(short)
             if isinstance(result, SolverSolution):
                 return result
-        why = problem if small else shortlist(problem, SHORTLIST_WIDER)
+        # a money shortfall is explained from the narrow shortlist, which always holds each meal's cheapest
+        # recipes (T2): on the wider one the elastic solve took 4–5 minutes on a pantry-only week (2b.5, D126)
+        per_slot = SHORTLIST_PER_SLOT if problem.constraints.has_purchase_limit else SHORTLIST_WIDER
+        why = problem if small else shortlist(problem, per_slot)
         return explain_infeasible(why, time_limit_s=self._time_limit())
 
     def _solve_exactly(self, problem: PlanningProblem) -> SolverSolution | SolverInfeasible:
@@ -345,7 +409,9 @@ class Orchestrator:
             explain=False,
         )
 
-    def _generate(self, generator: CandidateGenerator, problem: PlanningProblem, gaps: list[Gap]) -> bool:
+    def _generate(
+        self, generator: CandidateGenerator | IdeaCandidates, problem: PlanningProblem, gaps: list[Gap]
+    ) -> bool:
         """False when the time budget ran out; what was generated before that is saved and used."""
         try:
             generator.generate(problem, gaps)
@@ -359,12 +425,18 @@ class Orchestrator:
         return True
 
     def _run(self, request: PlanRequest, run: GenerationRun) -> PlanOutcome:
-        constraints = constraints_for(self.session, self.user_id, request)
+        constraints = constraints_for(self.session, self.user_id, request, today=self.today)
         run.constraints = constraints.canonical()
         self._progress(run, "candidates")
         problem = build_problem(self.session, self.user_id, constraints)
         llm = self._llm(run) if request.allow_llm else None
-        generator = CandidateGenerator(self.session, self.user_id, llm) if llm is not None else None
+        generator: CandidateGenerator | IdeaCandidates | None = None
+        if llm is not None:
+            generator = (
+                IdeaCandidates(self.session, self.user_id, llm)
+                if self.ideas
+                else CandidateGenerator(self.session, self.user_id, llm)
+            )
         out_of_time = False
         gaps = gap_analysis(problem)
         if gaps and generator is not None:
@@ -426,12 +498,13 @@ class Orchestrator:
         run: GenerationRun,
         problem: PlanningProblem,
         result: SolverSolution,
-        generator: CandidateGenerator | None = None,
+        generator: CandidateGenerator | IdeaCandidates | None = None,
     ) -> PlanOutcome:
         resolves = 0
         while True:
-            self._progress(run, "validating", resolves=resolves)
+            self._progress(run, "pricing", resolves=resolves)  # rounding, absorption, packages, stores, costs
             plan = build_rounded_plan(problem, result)
+            self._progress(run, "validating", resolves=resolves)
             if self.validator_spy is not None:
                 self.validator_spy(plan)
             reference = load_reference(
@@ -439,7 +512,7 @@ class Orchestrator:
             )
             report = validate_plan(plan, reference)
             if report.ok:
-                saved = save_plan(self.session, self.user_id, plan, report, run.id)
+                saved = save_plan(self.session, self.user_id, plan, report, run.id, kind=self.kind)
                 log_exposures(
                     self.session,
                     run.id,
@@ -480,7 +553,9 @@ class Orchestrator:
                     ),
                 )
             resolves += 1
-            problem = problem.with_tightening(tightening_from(report, problem, result, plan))
+            problem = problem.with_tightening(
+                tightening_from(report, problem, result, plan, leave_out_stiffest=resolves > 1)
+            )
             self._progress(run, "re-solving", resolves=resolves)
             resolved = self._solve(problem)
             if isinstance(resolved, SolverInfeasible):

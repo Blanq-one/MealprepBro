@@ -78,6 +78,7 @@ def version_out(
         flavor_tags=list(v.flavor_tags),
         equipment=list(v.equipment),
         freezer_friendly=v.freezer_friendly,
+        freeze_note=v.freeze_note,
         base_servings=v.base_servings,
         portions=view.portions,
         portion_size=view.portion_size.value,

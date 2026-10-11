@@ -392,6 +392,32 @@
       "title": "Dish Category",
       "type": "string"
      },
+     "freeze_note": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Freeze Note"
+     },
+     "freezer_friendly": {
+      "default": false,
+      "title": "Freezer Friendly",
+      "type": "boolean"
+     },
+     "freezer_portions": {
+      "default": 0,
+      "title": "Freezer Portions",
+      "type": "integer"
+     },
+     "fridge_portions": {
+      "default": 0,
+      "title": "Fridge Portions",
+      "type": "integer"
+     },
      "id": {
       "title": "Id",
       "type": "integer"
@@ -411,6 +437,11 @@
      "portions": {
       "title": "Portions",
       "type": "integer"
+     },
+     "portions_display": {
+      "default": "",
+      "title": "Portions Display",
+      "type": "string"
      },
      "portions_to_freeze": {
       "title": "Portions To Freeze",
@@ -1787,6 +1818,51 @@
     "title": "CustomUnitOut",
     "type": "object"
    },
+   "DailyAmountCapSetting": {
+    "additionalProperties": false,
+    "description": "A per-day amount cap for one ingredient (M16, step 2b.5): like a frequency cap, but counting how much\nyou eat in a day, every meal included. Days above `usual` are avoided when another plan fits; `maximum` is\nnever exceeded.",
+    "properties": {
+     "ingredient": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Ingredient",
+      "type": "string"
+     },
+     "label": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Label",
+      "type": "string"
+     },
+     "maximum": {
+      "exclusiveMinimum": 0.0,
+      "maximum": 10000.0,
+      "title": "Maximum",
+      "type": "number"
+     },
+     "unit": {
+      "default": "g",
+      "maxLength": 20,
+      "minLength": 1,
+      "title": "Unit",
+      "type": "string"
+     },
+     "usual": {
+      "maximum": 10000.0,
+      "minimum": 0.0,
+      "title": "Usual",
+      "type": "number"
+     }
+    },
+    "required": [
+     "label",
+     "ingredient",
+     "usual",
+     "maximum"
+    ],
+    "title": "DailyAmountCapSetting",
+    "type": "object"
+   },
    "DayOut": {
     "properties": {
      "chill_minutes": {
@@ -1832,6 +1908,20 @@
       "title": "Elapsed Minutes",
       "type": "integer"
      },
+     "freeze_steps": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Freeze Steps",
+      "type": "array"
+     },
+     "freeze_today": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Freeze Today",
+      "type": "array"
+     },
      "hands_on_minutes": {
       "title": "Hands On Minutes",
       "type": "integer"
@@ -1855,9 +1945,23 @@
       "title": "Meals",
       "type": "array"
      },
+     "prep_order": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Prep Order",
+      "type": "array"
+     },
      "protein_g": {
       "title": "Protein G",
       "type": "string"
+     },
+     "thaw_notes": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Thaw Notes",
+      "type": "array"
      }
     },
     "required": [
@@ -2171,6 +2275,41 @@
      "status"
     ],
     "title": "ExtraItem",
+    "type": "object"
+   },
+   "ExtraLot": {
+    "additionalProperties": false,
+    "description": "A \"have it\" item from this request (meal prep, with the amount you picked): stock this plan may use,\nnever written to your pantry (FLOW_SPEC \u00a713.3).",
+    "properties": {
+     "ingredient_id": {
+      "title": "Ingredient Id",
+      "type": "integer"
+     },
+     "quantity": {
+      "anyOf": [
+       {
+        "exclusiveMinimum": 0.0,
+        "type": "number"
+       },
+       {
+        "type": "string"
+       }
+      ],
+      "title": "Quantity"
+     },
+     "unit": {
+      "maxLength": 20,
+      "minLength": 1,
+      "title": "Unit",
+      "type": "string"
+     }
+    },
+    "required": [
+     "ingredient_id",
+     "quantity",
+     "unit"
+    ],
+    "title": "ExtraLot",
     "type": "object"
    },
    "FieldErrorOut": {
@@ -3947,6 +4086,27 @@
      "slot": {
       "$ref": "#/components/schemas/MealSlot"
      },
+     "source_display": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Source Display"
+     },
+     "storage": {
+      "default": "fresh",
+      "enum": [
+       "fresh",
+       "fridge",
+       "freezer"
+      ],
+      "title": "Storage",
+      "type": "string"
+     },
      "title": {
       "title": "Title",
       "type": "string"
@@ -4547,6 +4707,14 @@
        }
       ]
      },
+     "could_buy": {
+      "description": "ingredient ids you'd happily buy",
+      "items": {
+       "type": "integer"
+      },
+      "title": "Could Buy",
+      "type": "array"
+     },
      "day_overrides": {
       "items": {
        "$ref": "#/components/schemas/DayOverride"
@@ -4560,6 +4728,60 @@
       "minimum": 1.0,
       "title": "Days",
       "type": "integer"
+     },
+     "extra_lots": {
+      "description": "have it, for this plan only",
+      "items": {
+       "$ref": "#/components/schemas/ExtraLot"
+      },
+      "title": "Extra Lots",
+      "type": "array"
+     },
+     "grocery_mode": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/GroceryMode"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "have_unlimited": {
+      "description": "have it, no amount: enough",
+      "items": {
+       "type": "integer"
+      },
+      "title": "Have Unlimited",
+      "type": "array"
+     },
+     "household_size": {
+      "anyOf": [
+       {
+        "maximum": 8.0,
+        "minimum": 1.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "None = your settings",
+      "title": "Household Size"
+     },
+     "max_portions_per_recipe": {
+      "anyOf": [
+       {
+        "maximum": 14.0,
+        "minimum": 1.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "None = 5 (Q14)",
+      "title": "Max Portions Per Recipe"
      },
      "mode": {
       "$ref": "#/components/schemas/PlanningMode",
@@ -4575,12 +4797,32 @@
        }
       ]
      },
+     "only_buy_could_buy": {
+      "default": false,
+      "description": "Use what I have: buy only the could-buys",
+      "title": "Only Buy Could Buy",
+      "type": "boolean"
+     },
+     "pantry_off": {
+      "description": "pantry items not for this plan",
+      "items": {
+       "type": "integer"
+      },
+      "title": "Pantry Off",
+      "type": "array"
+     },
      "portion_requests": {
       "items": {
        "$ref": "#/components/schemas/PortionRequest"
       },
       "title": "Portion Requests",
       "type": "array"
+     },
+     "protein_reward": {
+      "default": false,
+      "description": "High protein: reward up to 1.5 \u00d7 the target",
+      "title": "Protein Reward",
+      "type": "boolean"
      },
      "protein_target_g": {
       "anyOf": [
@@ -4872,6 +5114,22 @@
       ],
       "title": "Generation Run Id"
      },
+     "header": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Header"
+     },
+     "household_size": {
+      "default": 1,
+      "title": "Household Size",
+      "type": "integer"
+     },
      "id": {
       "title": "Id",
       "type": "integer"
@@ -4919,6 +5177,16 @@
      },
      "planning_mode": {
       "$ref": "#/components/schemas/PlanningMode"
+     },
+     "prep_notes": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/PrepNotesOut"
+       },
+       {
+        "type": "null"
+       }
+      ]
      },
      "protein_g_per_day": {
       "title": "Protein G Per Day",
@@ -5277,6 +5545,63 @@
      "shape"
     ],
     "title": "PrepAmount",
+    "type": "object"
+   },
+   "PrepNoteOut": {
+    "properties": {
+     "day": {
+      "anyOf": [
+       {
+        "format": "date",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Day"
+     },
+     "kind": {
+      "enum": [
+       "freeze",
+       "freeze_portions",
+       "spoil"
+      ],
+      "title": "Kind",
+      "type": "string"
+     },
+     "text": {
+      "title": "Text",
+      "type": "string"
+     }
+    },
+    "required": [
+     "kind",
+     "text"
+    ],
+    "title": "PrepNoteOut",
+    "type": "object"
+   },
+   "PrepNotesOut": {
+    "description": "The plan view's one Prep notes row (H4): \"3 to freeze \u00b7 4 may spoil\", with its items for the sheet.",
+    "properties": {
+     "display": {
+      "title": "Display",
+      "type": "string"
+     },
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/PrepNoteOut"
+      },
+      "title": "Items",
+      "type": "array"
+     }
+    },
+    "required": [
+     "display",
+     "items"
+    ],
+    "title": "PrepNotesOut",
     "type": "object"
    },
    "PresetOut": {
@@ -6200,6 +6525,17 @@
       },
       "title": "Flavor Tags",
       "type": "array"
+     },
+     "freeze_note": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Freeze Note"
      },
      "freezer_friendly": {
       "title": "Freezer Friendly",
@@ -7533,6 +7869,14 @@
       "title": "Cook Schedule",
       "type": "array"
      },
+     "daily_amount_caps": {
+      "items": {
+       "$ref": "#/components/schemas/DailyAmountCapSetting"
+      },
+      "maxItems": 10,
+      "title": "Daily Amount Caps",
+      "type": "array"
+     },
      "daily_band_kcal": {
       "default": 150,
       "maximum": 1000.0,
@@ -8312,6 +8656,49 @@
      }
     },
     "summary": "Meal Now",
+    "tags": [
+     "cook"
+    ]
+   }
+  },
+  "/api/v1/cook/meal-prep": {
+   "post": {
+    "description": "Meal prep (E4): your answers become a plan, inside this request. The response is a stream of JSON\nlines (`PlanStreamEvent`): `started` (the run id), `progress` lines with the building steps (constraints,\ncandidates, generating, waiting with `wait_s`, solving, pricing, validating), heartbeats, and one `result`\nwith the draft plan (kind `meal_prep`) or the problem. Answers that can't form a plan are a 422 before\nthe stream starts.",
+    "operationId": "meal_prep_api_v1_cook_meal_prep_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CookAnswers-Input"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PlanStreamEvent"
+        }
+       },
+       "application/x-ndjson": {}
+      },
+      "description": "NDJSON event lines"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Meal Prep",
     "tags": [
      "cook"
     ]
@@ -9352,6 +9739,7 @@
   },
   "/api/v1/plans/{plan_id}/accept": {
    "post": {
+    "description": "Make a draft your current plan. If active plans overlap its days, the answer is 409 with\n`overlapping` (each plan's id, days, meals and the \"Replace your current plan (\u2026)?\" question) unless\n`replace_overlapping=true`, which replaces them.",
     "operationId": "accept_plan_api_v1_plans__plan_id__accept_post",
     "parameters": [
      {
@@ -9361,6 +9749,16 @@
       "schema": {
        "title": "Plan Id",
        "type": "integer"
+      }
+     },
+     {
+      "in": "query",
+      "name": "replace_overlapping",
+      "required": false,
+      "schema": {
+       "default": false,
+       "title": "Replace Overlapping",
+       "type": "boolean"
       }
      }
     ],

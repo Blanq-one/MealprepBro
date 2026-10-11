@@ -1,6 +1,6 @@
 "use client";
 
-// Diet editors (S0 Diet group): frequency caps, and the ingredients you exclude or dislike.
+// Diet editors (S0 Diet group): frequency caps, daily amount caps, and the ingredients you exclude or dislike.
 import { useState } from "react";
 
 import { QuestionScreen } from "@/components/ui/QuestionScreen";
@@ -10,7 +10,7 @@ import { Stepper } from "@/components/ui/Stepper";
 import { api } from "@/lib/api/client";
 import type { IngredientHit, SettingsOut, UserSettings } from "@/lib/api/types";
 import { useApi } from "@/lib/hooks/useApi";
-import { CAP_MEALS } from "@/lib/settings/fields";
+import { CAP_MEALS, capAmount, dailyCapBounds } from "@/lib/settings/fields";
 
 import type { Change } from "./Controls";
 import styles from "./DietEditors.module.css";
@@ -33,6 +33,48 @@ export function CapsControl({ settings, onChange }: { settings: UserSettings; on
           onChange={(n) => onChange({ frequency_caps: caps.map((c, j) => (j === i ? { ...c, max_meals_per_week: n } : c)) })}
         />
       ))}
+    </>
+  );
+}
+
+/** Two steppers per daily cap (M16, step 2b.5): the usual amount a day and the most a day, counting every meal.
+ * Plans keep to the usual amount when another plan fits, and never go over the most. */
+export function DailyCapsControl({ settings, onChange }: { settings: UserSettings; onChange: Change }) {
+  const caps = settings.daily_amount_caps ?? [];
+  if (caps.length === 0) return <p className="muted">No daily caps.</p>;
+  function set(i: number, key: "usual" | "maximum", value: number) {
+    onChange({ daily_amount_caps: caps.map((c, j) => (j === i ? { ...c, [key]: value } : c)) });
+  }
+  return (
+    <>
+      {caps.map((cap, i) => {
+        const bounds = dailyCapBounds(cap.unit);
+        const unit = (n: number) => capAmount(n, cap.unit).replace(/^[\d.]+ ?/, "") || undefined;
+        return (
+          <div key={cap.ingredient} className={styles.capGroup} role="group" aria-label={cap.label}>
+            <p className={styles.capTitle}>{cap.label}</p>
+            <Stepper
+              size="compact"
+              label={`${cap.label} usually`}
+              value={cap.usual}
+              unit={unit(cap.usual) ? `${unit(cap.usual)} a day` : "a day"}
+              decimal={bounds.step < 1}
+              {...bounds}
+              onChange={(n) => set(i, "usual", n)}
+            />
+            <Stepper
+              size="compact"
+              label={`${cap.label} at most`}
+              value={cap.maximum}
+              unit={unit(cap.maximum) ? `${unit(cap.maximum)} a day` : "a day"}
+              decimal={bounds.step < 1}
+              {...bounds}
+              min={bounds.step}
+              onChange={(n) => set(i, "maximum", n)}
+            />
+          </div>
+        );
+      })}
     </>
   );
 }

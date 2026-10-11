@@ -14,6 +14,10 @@ export const PROTEIN_G: Bounds = { min: 0, max: 400, step: 5 };
 export const SLOT_KCAL: Bounds = { min: 25, max: 3000, step: 25 };
 export const COOK_MINUTES: Bounds = { min: 0, max: 240, step: 15 };
 export const PORK_MEALS: Bounds = { min: 0, max: 7, step: 1 };
+/** Daily amount caps (M16): named units (scoops) in halves, grams and millilitres in 5s, counts in 1s. */
+export const DAILY_CAP_NAMED: Bounds = { min: 0, max: 10, step: 0.5 };
+export const DAILY_CAP_BASE: Bounds = { min: 0, max: 1000, step: 5 };
+export const DAILY_CAP_COUNT: Bounds = { min: 0, max: 20, step: 1 };
 export const CAP_MEALS: Bounds = { min: 0, max: 21, step: 1 };
 export const BAND_KCAL: Bounds = { min: 0, max: 1000, step: 25 };
 export const FRIDGE_DAYS: Bounds = { min: 0, max: 4, step: 1 }; // the FoodSafety.gov chart allows 4 at most
@@ -38,6 +42,27 @@ const PORK_CAP: FrequencyCap = {
   max_meals_per_week: 1,
   never_favor: true,
 };
+
+export type DailyCap = NonNullable<UserSettings["daily_amount_caps"]>[number];
+
+export function dailyCapBounds(unit: string): Bounds {
+  if (unit === "g" || unit === "ml") return DAILY_CAP_BASE;
+  return unit === "count" ? DAILY_CAP_COUNT : DAILY_CAP_NAMED;
+}
+
+/** "1 scoop", "2 scoops", "30 g": the setting's own numbers and unit, as written. */
+export function capAmount(value: number, unit: string): string {
+  if (unit === "g" || unit === "ml") return `${value} ${unit}`;
+  if (unit === "count") return String(value);
+  return `${value} ${unit}${value === 1 ? "" : "s"}`;
+}
+
+/** The Settings row before the API's summary line arrives. */
+export function dailyCapsValue(settings: UserSettings): string {
+  const caps = settings.daily_amount_caps ?? [];
+  if (caps.length === 0) return "None";
+  return caps.map((c) => `${c.label}: usually ${capAmount(c.usual, c.unit)} a day, at most ${capAmount(c.maximum, c.unit)}`).join(" · ");
+}
 
 export function porkCap(settings: UserSettings): FrequencyCap | null {
   return (settings.frequency_caps ?? []).find((c) => c.target_type === "tag" && c.target === PORK_TAG) ?? null;

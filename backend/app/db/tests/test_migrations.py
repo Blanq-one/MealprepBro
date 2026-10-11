@@ -187,3 +187,23 @@ def test_0006_adds_the_lots_estimate_flag_and_container(scratch_db_url):
         assert not columns() & {"quantity_is_estimate", "container"}
     finally:
         engine.dispose()
+
+
+def test_0007_adds_the_recipe_freeze_note(scratch_db_url):
+    """Step 2b.5: one nullable column on recipe_version, added and dropped cleanly."""
+    cfg = alembic_config(scratch_db_url)
+    command.upgrade(cfg, "0006")
+    engine = create_engine(scratch_db_url)
+    try:
+
+        def columns() -> set[str]:
+            with engine.connect() as conn:
+                return {c["name"] for c in inspect(conn).get_columns("recipe_version")}
+
+        assert "freeze_note" not in columns()
+        command.upgrade(cfg, "0007")
+        assert "freeze_note" in columns()
+        command.downgrade(cfg, "0006")
+        assert "freeze_note" not in columns()
+    finally:
+        engine.dispose()

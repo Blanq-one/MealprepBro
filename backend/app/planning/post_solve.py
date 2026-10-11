@@ -208,6 +208,7 @@ def build_rounded_plan(
     problem: PlanningProblem, solution: SolverSolution, *, absorb: bool = True
 ) -> RoundedPlan:
     snapped = snap_batches(problem, solution)
+    jointly = snapped is not None or len(problem.nudges()) < 2
     if snapped is None:  # no combination fits the limits: snap each batch on its own; the validator decides
         snapped = tuple(snap_nudge(problem, b) for b in solution.batches)
     solution = replace(solution, batches=snapped)
@@ -237,4 +238,5 @@ def build_rounded_plan(
         leftovers=leftovers,
         freeze=freeze_instructions(problem.constraints, batches, grocery, problem.ingredients),
         notes=tuple(notes),
+        snapped=jointly,
     )

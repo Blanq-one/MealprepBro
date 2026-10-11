@@ -9,7 +9,7 @@ import { Segmented } from "@/components/ui/Segmented";
 import type { SettingsOut, SummaryLine, UserSettings } from "@/lib/api/types";
 import { grouped, minutesLabel, slotLabel } from "@/lib/format/labels";
 import { formatCents } from "@/lib/format/money";
-import { porkCap, previewSettings, WEEKDAYS } from "@/lib/settings/fields";
+import { dailyCapsValue, porkCap, previewSettings, WEEKDAYS } from "@/lib/settings/fields";
 import { readThemeChoice, saveThemeChoice, type ThemeChoice } from "@/lib/theme/theme";
 
 import styles from "./SettingsList.module.css";
@@ -90,6 +90,7 @@ export function settingsGroups(out: SettingsOut, summary: Record<string, string>
           label: "Frequency caps",
           value: pork ? (pork.max_meals_per_week === 0 ? "Pork: never" : `Pork: up to ${pork.max_meals_per_week} a week`) : `${(s.frequency_caps ?? []).length} caps`,
         },
+        { field: "daily_amount_caps", label: "Daily caps", value: summary.daily_caps ?? dailyCapsValue(s) },
         { field: "preferences", label: "Excluded and disliked", value: prefs.length ? prefs.map((p) => p.name).join(", ") : "None" },
       ],
     },

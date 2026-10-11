@@ -19,6 +19,7 @@
   "stovetop"
  ],
  "freezer_friendly": true,
+ "freeze_note": "Wrap each burrito in foil before freezing; keep the salsa in the fridge and add it when serving.",
  "draft_note": "Draft quantities: adjust them in the app. Freeze the wrapped burritos; add the salsa after reheating.",
  "ingredients": [
   {

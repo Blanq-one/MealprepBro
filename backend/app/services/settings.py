@@ -4,17 +4,24 @@ settings change (field errors and summary lines, nothing saved); your grocery st
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from decimal import Decimal
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, ValidationError
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.db.models import AppUser, Ingredient, IngredientPreference, Store, UserSettingsRow
+from app.db.models import AppUser, Ingredient, IngredientPreference, IngredientUnit, Store, UserSettingsRow
 from app.domain.cost import money_display
 from app.domain.exclusions import Preference
 from app.domain.frequency_caps import CapTarget
-from app.schemas.settings import ALWAYS_EXCLUDED_TAGS, SlotAllocationSetting, UserSettings, Weekday
+from app.schemas.settings import (
+    ALWAYS_EXCLUDED_TAGS,
+    DailyAmountCapSetting,
+    SlotAllocationSetting,
+    UserSettings,
+    Weekday,
+)
 from app.services.catalog import catalog_file
 
 WEEKDAY_LABELS = {
@@ -62,6 +69,9 @@ class SettingsPreview:
         return self.settings is not None and not self.errors
 
 
+BASE_UNITS = frozenset({"g", "ml", "count"})
+
+
 def current_user(session: Session) -> AppUser:
     user = session.scalars(select(AppUser).order_by(AppUser.id)).first()
     if user is None:
@@ -103,6 +113,26 @@ def database_errors(session: Session, settings: UserSettings) -> list[FieldError
                 FieldError(
                     ("always_have", n),
                     f"{ingredient.name} is tagged {', '.join(sorted(hard))}, which is always excluded",
+                )
+            )
+    for n, dcap in enumerate(settings.daily_amount_caps):
+        ingredient = ingredients.get(dcap.ingredient)
+        if ingredient is None:
+            errors.append(
+                FieldError(
+                    ("daily_amount_caps", n, "ingredient"),
+                    f"daily cap '{dcap.label}': no ingredient with slug '{dcap.ingredient}'",
+                )
+            )
+        elif dcap.unit not in BASE_UNITS and dcap.unit not in set(
+            session.scalars(
+                select(IngredientUnit.unit_name).where(IngredientUnit.ingredient_id == ingredient.id)
+            )
+        ):
+            errors.append(
+                FieldError(
+                    ("daily_amount_caps", n, "unit"),
+                    f"daily cap '{dcap.label}': {ingredient.name} has no unit '{dcap.unit}'",
                 )
             )
     versions = {v.generic: v for v in catalog_file().versions}
@@ -192,6 +222,21 @@ def _cook_days_line(settings: UserSettings) -> str:
     return ", ".join(f"{WEEKDAY_LABELS[d.weekday]} {_minutes(d.cook_minutes)}" for d in days)
 
 
+def _amount(value: float, unit: str) -> str:
+    n = Decimal(str(value)).normalize()
+    text = f"{n:f}"
+    if unit in BASE_UNITS:
+        return f"{text} {unit}" if unit != "count" else text
+    return f"{text} {unit}{'' if n == 1 else 's'}"
+
+
+def daily_cap_line(cap: DailyAmountCapSetting) -> str:
+    """'Protein powder: usually 1 scoop a day, at most 2 scoops'."""
+    return (
+        f"{cap.label}: usually {_amount(cap.usual, cap.unit)} a day, at most {_amount(cap.maximum, cap.unit)}"
+    )
+
+
 def _label(value: str) -> str:
     return value.replace("_", " ").capitalize()
 
@@ -252,6 +297,11 @@ def settings_summary(session: Session, user_id: int, settings: UserSettings) -> 
         ),
         SummaryLine("food_rules", "Food rules", " · ".join(rules)),
         SummaryLine("always_have", "Always have", ", ".join(staples) if staples else "Nothing yet"),
+        SummaryLine(
+            "daily_caps",
+            "Daily caps",
+            " · ".join(daily_cap_line(cap) for cap in settings.daily_amount_caps) or "None",
+        ),
     ]
 
 

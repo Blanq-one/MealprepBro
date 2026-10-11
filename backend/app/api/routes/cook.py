@@ -6,9 +6,12 @@ from app.api.problems import ProblemError
 from app.cook import search as search_service
 from app.cook.home import cook_home
 from app.cook.ideas import LLMAccess
+from app.cook.meal_prep import meal_prep_events, prepare
+from app.cook.prep import PrepAnswersError
 from app.cook.single_meal import cook_meal
 from app.cook.stream import meal_now_events, more_events
 from app.schemas.cook import CookAnswers, CookHomeOut, CookMealIn, CookMealOut, CookSearchOut, CookStreamEvent
+from app.schemas.plans import PlanStreamEvent
 
 router = APIRouter(prefix="/api/v1/cook", tags=["cook"])
 
@@ -46,6 +49,38 @@ def meal_now(
     events = meal_now_events(
         session_factory, user.id, body, client_factory=client_factory, clock=clock, settings=llm_settings
     )
+    return StreamingResponse(events, media_type=NDJSON, headers=STREAM_HEADERS)
+
+
+@router.post(
+    "/meal-prep",
+    response_class=StreamingResponse,
+    responses={200: {"model": PlanStreamEvent, "content": {NDJSON: {}}, "description": "NDJSON event lines"}},
+)
+def meal_prep(
+    *,
+    body: CookAnswers,
+    session: DbSession,
+    user: CurrentUser,
+    session_factory: SessionFactory,
+    client_factory: LLMClientFactory,
+) -> StreamingResponse:
+    """Meal prep (E4): your answers become a plan, inside this request. The response is a stream of JSON
+    lines (`PlanStreamEvent`): `started` (the run id), `progress` lines with the building steps (constraints,
+    candidates, generating, waiting with `wait_s`, solving, pricing, validating), heartbeats, and one `result`
+    with the draft plan (kind `meal_prep`) or the problem. Answers that can't form a plan are a 422 before
+    the stream starts."""
+    if body.mode != "prep":
+        raise ProblemError(
+            422, "Not a meal-prep request", 'Send mode "prep"; a meal now has its own endpoint.'
+        )
+    today = search_service.local_now(user).date()
+    try:
+        plan, search = prepare(session, user.id, body, today)
+    except PrepAnswersError as exc:
+        raise ProblemError(422, "These answers can't make a plan", str(exc)) from exc
+    session.commit()
+    events = meal_prep_events(session_factory, user.id, plan, search.id, client_factory, today=today)
     return StreamingResponse(events, media_type=NDJSON, headers=STREAM_HEADERS)
 
 

@@ -11,6 +11,7 @@
  "total_minutes": 45,
  "equipment": ["oven", "stovetop"],
  "freezer_friendly": true,
+ "freeze_note": "Freeze the chicken, peppers and rice; make the yogurt-lemon sauce fresh.",
  "draft_note": "Draft quantities: adjust them in the app.",
  "ingredients": [
   {"ingredient": "chicken-thigh-boneless-skinless", "quantity": "680", "unit": "g", "preparation": "cut into 1½-inch pieces", "role": "protein", "component": "chicken"},

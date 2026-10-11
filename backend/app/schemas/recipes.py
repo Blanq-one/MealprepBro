@@ -41,7 +41,8 @@ class RecipeVersionOut(BaseModel):
     cuisine: str | None
     flavor_tags: list[str]
     equipment: list[str]
-    freezer_friendly: bool
+    freezer_friendly: bool  # shown as "Freezes well"
+    freeze_note: str | None = None  # how to freeze it: "Freeze the chicken and rice; make the sauce fresh"
     base_servings: int
     portions: int
     portion_size: str

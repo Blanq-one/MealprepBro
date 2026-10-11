@@ -1,12 +1,14 @@
 """Write a validated RoundedPlan: meal_plan, cook batches, practical batch quantities, meals and the
 grocery list."""
 
-from datetime import UTC, datetime
+from dataclasses import dataclass
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
+from app.cook.caps import plan_days
 from app.db.models import (
     GroceryList,
     GroceryListItem,
@@ -144,8 +146,55 @@ def save_plan(
     return row
 
 
-def accept_plan(session: Session, user_id: int, plan_id: int) -> MealPlan:
-    """Make a draft the week's active plan; any earlier active plan for that week becomes superseded."""
+@dataclass(frozen=True)
+class Overlap:
+    """An active plan whose days overlap the one being accepted."""
+
+    plan_id: int
+    start: date
+    end: date
+    meals: int
+
+    @property
+    def message(self) -> str:
+        """'Replace your current plan (Mon 12 – Sun 18, 21 meals)?' (C6)."""
+        return (
+            f"Replace your current plan ({self.start:%a} {self.start.day} – {self.end:%a} {self.end.day}, "
+            f"{self.meals} meal{'s' if self.meals != 1 else ''})?"
+        )
+
+
+class PlanOverlapError(ConflictError):
+    """Accepting would replace active plans whose days overlap it: send replace_overlapping=true (409)."""
+
+    def __init__(self, overlapping: list[Overlap]) -> None:
+        super().__init__(overlapping[0].message)
+        self.overlapping = overlapping
+
+
+def overlapping_plans(session: Session, user_id: int, plan: MealPlan) -> list[MealPlan]:
+    """Your active plans (never a one-meal plan) whose days overlap `plan`'s (F6): plans start on any day."""
+    start, end = plan_days(plan)
+    out = []
+    for other in session.scalars(
+        select(MealPlan)
+        .where(MealPlan.user_id == user_id, MealPlan.status == "active", MealPlan.id != plan.id)
+        .order_by(MealPlan.week_start, MealPlan.id)
+    ):
+        if other.kind == SINGLE:
+            continue
+        other_start, other_end = plan_days(other)
+        if other_start <= end and start <= other_end:
+            out.append(other)
+    return out
+
+
+def accept_plan(
+    session: Session, user_id: int, plan_id: int, *, replace_overlapping: bool = False
+) -> MealPlan:
+    """Make a draft your current plan (E6). Active plans whose days overlap it are replaced (superseded) only
+    with `replace_overlapping`; otherwise PlanOverlapError names them, for the "Replace your current plan?"
+    sheet."""
     plan = session.get(MealPlan, plan_id)
     if plan is None or plan.user_id != user_id:
         raise PlanNotFoundError(f"plan {plan_id} not found")
@@ -153,14 +202,28 @@ def accept_plan(session: Session, user_id: int, plan_id: int) -> MealPlan:
         raise ConflictError("a one-meal plan (Cook this) can't become your current plan")
     if plan.status == "active":
         return plan
-    previous = session.scalars(
-        select(MealPlan).where(
-            MealPlan.user_id == user_id, MealPlan.week_start == plan.week_start, MealPlan.status == "active"
+    overlapping = overlapping_plans(session, user_id, plan)
+    if overlapping and not replace_overlapping:
+        raise PlanOverlapError(
+            [
+                Overlap(
+                    other.id,
+                    *plan_days(other),
+                    session.scalar(
+                        select(func.count())
+                        .select_from(PlanMeal)
+                        .where(PlanMeal.meal_plan_id == other.id, PlanMeal.status != "replaced")
+                    )
+                    or 0,
+                )
+                for other in overlapping
+            ]
         )
-    ).first()
-    if previous is not None:
-        session.execute(update(MealPlan).where(MealPlan.id == previous.id).values(status="superseded"))
-        plan.supersedes_plan_id = previous.id
+    if overlapping:
+        session.execute(
+            update(MealPlan).where(MealPlan.id.in_([o.id for o in overlapping])).values(status="superseded")
+        )
+        plan.supersedes_plan_id = overlapping[-1].id
         session.flush()
     plan.status = "active"
     plan.accepted_at = datetime.now(UTC)

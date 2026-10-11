@@ -19,6 +19,7 @@
   "stovetop"
  ],
  "freezer_friendly": true,
+ "freeze_note": "Freeze the hash; fry the eggs fresh when serving.",
  "draft_note": "Draft quantities: adjust them in the app. Freeze the hash only; fry the eggs fresh.",
  "ingredients": [
   {

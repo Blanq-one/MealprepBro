@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.cook import answers as answers_mod
+from app.cook import prep as prep_mod
 from app.cook.saved import saved_rows
 from app.db.models import AppUser, CookSearch, Ingredient, MealPlan
 from app.schemas.cook import (
@@ -48,20 +49,28 @@ def last_searches(session: Session, user: AppUser, now: datetime) -> list[LastSe
     out = []
     for search in latest:
         answers = CookAnswers.model_validate(search.answers)
-        if search.mode != "now":
-            continue  # meal prep and grocery advice summaries arrive with their steps (2b.5, 2b.8)
+        if search.mode == "grocery":
+            continue  # grocery advice summaries arrive with step 2b.8
         ids = {e.ingredient_id for e in answers.extras}
         names = dict(
             session.execute(select(Ingredient.id, Ingredient.name).where(Ingredient.id.in_(ids)))
             .tuples()
             .all()
         )
-        query = answers_mod.resolve(answers, settings, now)
+        if search.mode == "prep":
+            try:  # "today" and "tomorrow" move with the calendar; an old fixed date may be past
+                text = prep_mod.summary(
+                    answers, prep_mod.resolve_prep(answers, settings, now.date()), names, now.date()
+                )
+            except prep_mod.PrepAnswersError:
+                continue
+        else:
+            text = answers_mod.summary(answers, answers_mod.resolve(answers, settings, now), names)
         out.append(
             LastSearchOut(
-                mode="now",
+                mode="prep" if search.mode == "prep" else "now",
                 search_id=search.id,
-                summary=answers_mod.summary(answers, query, names),
+                summary=text,
                 answers=search.answers,
                 extras=[
                     LastExtraOut(

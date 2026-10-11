@@ -11,6 +11,7 @@
  "total_minutes": 50,
  "equipment": ["stovetop"],
  "freezer_friendly": true,
+ "freeze_note": "Freeze the chicken and rice; make the garlic yogurt sauce and the salad fresh.",
  "draft_note": "Draft quantities: adjust them in the app. Freeze the chicken and rice only; keep sauce and salad fresh.",
  "ingredients": [
   {"ingredient": "chicken-thigh-boneless-skinless", "quantity": "680", "unit": "g", "preparation": "cut into large pieces", "role": "protein", "component": "chicken"},

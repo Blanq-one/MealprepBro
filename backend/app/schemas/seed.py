@@ -277,11 +277,16 @@ class SeedRecipe(_Strict):
     ingredients: list[SeedRecipeIngredient] = Field(min_length=2, max_length=25)
     steps: list[SeedRecipeStep] = Field(min_length=3, max_length=30)
     draft_note: str
+    # how to freeze it, when that needs saying (step 2b.5, H5): "Freeze the chicken and rice; make the yogurt
+    # sauce and salad fresh"
+    freeze_note: str | None = Field(default=None, min_length=5, max_length=200)
 
     @model_validator(mode="after")
     def _structure(self) -> Self:
         if self.total_minutes < self.active_minutes:
             raise ValueError("total_minutes must be >= active_minutes")
+        if self.freeze_note is not None and not self.freezer_friendly:
+            raise ValueError("a freeze note needs freezer_friendly: true")
         slugs = [i.ingredient for i in self.ingredients]
         if len(set(slugs)) != len(slugs):
             raise ValueError("duplicate ingredient lines")

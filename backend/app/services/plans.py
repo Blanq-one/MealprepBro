@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.db.models import (
+    CookSearch,
     GenerationRun,
     GroceryList,
     GroceryListItem,
@@ -24,11 +25,13 @@ from app.db.models import (
     Product,
     Recipe,
     RecipeIngredient,
+    RecipeStep,
     RecipeVersion,
     Store,
 )
 from app.domain.cost import money_display
 from app.domain.enums import MealSlot
+from app.domain.prep_order import PrepBatch, prep_order
 from app.domain.units import GRAMS_PER_UNIT, ML_PER_UNIT
 from app.llm.client import LLMClient
 from app.llm.errors import LLMConfigError
@@ -52,8 +55,11 @@ from app.schemas.plans import (
     PlanListItemOut,
     PlanRequest,
     PlanSummaryOut,
+    PrepNoteOut,
+    PrepNotesOut,
     StoreTotalOut,
 )
+from app.services import plan_view as view
 from app.services.dishes import dish_categories
 from app.services.ingredient_data import IngredientData, load_ingredients
 from app.services.settings import ALWAYS_HAVE_SLUGS
@@ -144,11 +150,13 @@ def expire_stale_runs(session: Session, user_id: int, older_than_s: int) -> int:
     return len(stale)
 
 
-def start_run(session: Session, user_id: int, request: PlanRequest) -> GenerationRun:
+def start_run(
+    session: Session, user_id: int, request: PlanRequest, purpose: str = "weekly_plan"
+) -> GenerationRun:
     expire_stale_runs(session, user_id, get_settings().plan_stale_after_seconds)
     run = GenerationRun(
         user_id=user_id,
-        purpose="weekly_plan",
+        purpose=purpose,
         status="pending",
         progress={"stage": "queued", "request": request.model_dump(mode="json")},
     )
@@ -164,10 +172,14 @@ def execute_run(
     client_factory: ClientFactory,
     *,
     on_progress: ProgressListener | None = None,
+    kind: str | None = None,
+    ideas: bool = False,
+    today: date | None = None,
 ) -> PlanOutcome:
     """Run the orchestrator to the end, in this request and this session. Commits what happened (the run
     record, its LLM calls, saved recipes and the plan); an unexpected crash rolls back and marks the run
-    failed, so a run never stays "running"."""
+    failed, so a run never stays "running". `kind` and `ideas`: a meal-prep plan (step 2b.5) is saved with its
+    kind and fills gaps with the ideas pass."""
     notes: list[str] = []
     client: LLMClient | None = None
     if request.allow_llm:
@@ -177,7 +189,9 @@ def execute_run(
             notes.append(NO_LLM_NOTE.format(reason=exc))
     run_id, user_id = run.id, run.user_id
     try:
-        outcome = Orchestrator(session, user_id, llm_client=client, on_progress=on_progress).run(request, run)
+        outcome = Orchestrator(
+            session, user_id, llm_client=client, on_progress=on_progress, kind=kind, ideas=ideas, today=today
+        ).run(request, run)
         outcome.notes = [*notes, *outcome.notes]
         session.commit()
         return outcome
@@ -301,15 +315,35 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
     )
     slot_order = {s.value: i for i, s in enumerate(MealSlot)}
     meals.sort(key=lambda m: (m.eat_on, slot_order.get(m.slot, 99)))
+    household = int(c.get("household_size", 1))
+    split = {
+        b.id: view.portion_split(
+            b.portions,
+            sum(1 for m in meals if m.cook_batch_id == b.id and m.from_freezer),
+            household,
+            b.portions_to_freeze,
+        )
+        for b in batches
+    }
+    freeze = _freeze_instructions(totals)
+    sections = _step_sections(session, [b.recipe_version_id for b in batches])
     days_out = []
     for spec in c["days"]:
         day = date.fromisoformat(spec["day"])
         meals_out = []
+        thaw = [
+            view.thaw_note(
+                MealSlot(m.slot), versions[batch_by_id[m.cook_batch_id].recipe_version_id][0].title
+            )
+            for m in meals
+            if m.from_freezer and m.cook_batch_id is not None and m.eat_on == day + timedelta(days=1)
+        ]
         for m in meals:
             if m.eat_on != day or m.cook_batch_id is None:
                 continue
             b = batch_by_id[m.cook_batch_id]
             v, r = versions[b.recipe_version_id]
+            storage, source = view.meal_source(m.eat_on, b.cook_on, m.from_freezer)
             protein = (
                 nutrition.get(b.id, {}).get("protein_g", Decimal(0)).quantize(Decimal("0.1"), ROUND_HALF_UP)
             )
@@ -332,9 +366,12 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
                     dish_category=categories[v.id].value,
                     cost_cents=cents,
                     cost_display=money(cents) if cents is not None else None,
+                    storage=storage,
+                    source_display=source,
                 )
             )
-        cooked = [(versions[b.recipe_version_id][0].title, b.portions) for b in batches if b.cook_on == day]
+        today_batches = [b for b in batches if b.cook_on == day]
+        cooked = [(versions[b.recipe_version_id][0].title, b.portions) for b in today_batches]
         cents_today = day_cents.get(day.isoformat())
         days_out.append(
             DayOut(
@@ -351,6 +388,27 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
                 cook_note=cook_note(cooked),
                 cost_cents=cents_today,
                 cost_display=money(cents_today) if cents_today is not None else None,
+                freeze_steps=[
+                    freeze_text(f, amount_display(f.quantity, f.unit)) for f in freeze if f.freeze_on == day
+                ],
+                freeze_today=[
+                    view.freeze_today(versions[b.recipe_version_id][0].title, split[b.id][1])
+                    for b in today_batches
+                    if split[b.id][1]
+                ],
+                thaw_notes=thaw,
+                prep_order=prep_order(
+                    [
+                        PrepBatch(
+                            title=versions[b.recipe_version_id][0].title,
+                            active_minutes=versions[b.recipe_version_id][0].active_minutes,
+                            total_minutes=versions[b.recipe_version_id][0].total_minutes,
+                            equipment=frozenset(versions[b.recipe_version_id][0].equipment),
+                            sections=sections.get(b.recipe_version_id, ()),
+                        )
+                        for b in today_batches
+                    ]
+                ),
             )
         )
     stores = {s.id: s.name for s in session.scalars(select(Store))}
@@ -364,20 +422,36 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
     n_days = len(c["days"])
     report = plan.validation_report
     unpriced = totals["unpriced"]
-    freeze = [
-        FreezeInstruction(
-            ingredient_id=f["ingredient_id"],
-            name=f["name"],
-            unit=f["unit"],
-            quantity=Decimal(f["quantity"]),
-            freeze_on=date.fromisoformat(f["freeze_on"]),
-            fridge_days=f["fridge_days"],
-            source=f["source"],
-            use_on=date.fromisoformat(f["use_on"]) if f["use_on"] else None,
-            recipe=f["recipe"],
-        )
-        for f in totals["freeze"]
+    notes_items = [
+        PrepNoteOut(kind="freeze", text=freeze_text(f, amount_display(f.quantity, f.unit)), day=f.freeze_on)
+        for f in freeze
     ]
+    notes_items += [
+        PrepNoteOut(
+            kind="freeze_portions",
+            text=view.freeze_portions_note(
+                versions[b.recipe_version_id][0].title,
+                split[b.id][1],
+                b.cook_on,
+                versions[b.recipe_version_id][0].freeze_note,
+            ),
+            day=b.cook_on,
+        )
+        for b in batches
+        if split[b.id][1]
+    ]
+    spoil = [
+        PrepNoteOut(
+            kind="spoil",
+            text=view.spoil_note(item["name"], amount_display(Decimal(item["quantity"]), item["unit"])),
+        )
+        for item in totals["leftovers"]
+        if item["fate"] == "at_risk"
+    ]
+    to_freeze = len(notes_items)
+    notes_items += spoil
+    display = view.prep_notes_display(to_freeze, len(spoil))
+    search = session.scalars(select(CookSearch).where(CookSearch.meal_plan_id == plan.id)).first()
     return PlanSummaryOut(
         id=plan.id,
         week_start=plan.week_start,
@@ -459,17 +533,56 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
                 dish_category=categories[b.recipe_version_id].value,
                 cost_cents=batch_cents.get(b.id),
                 cost_display=money(batch_cents[b.id]) if b.id in batch_cents else None,
+                fridge_portions=split[b.id][0],
+                freezer_portions=split[b.id][1],
+                portions_display=view.portions_display(b.portions, *split[b.id]),
+                freezer_friendly=versions[b.recipe_version_id][0].freezer_friendly,
+                freeze_note=versions[b.recipe_version_id][0].freeze_note,
             )
             for b in batches
         ],
         warnings=list(report.get("warnings", [])),
         notes=list(report.get("notes", [])),
         generation_run_id=plan.generation_run_id,
+        prep_notes=PrepNotesOut(display=display, items=notes_items) if display else None,
+        header=(search.results or {}).get("header") if search is not None else None,
+        household_size=household,
     )
 
 
-def accept(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut:
-    accept_plan(session, user_id, plan_id)
+def _freeze_instructions(totals: dict[str, Any]) -> list[FreezeInstruction]:
+    return [
+        FreezeInstruction(
+            ingredient_id=f["ingredient_id"],
+            name=f["name"],
+            unit=f["unit"],
+            quantity=Decimal(f["quantity"]),
+            freeze_on=date.fromisoformat(f["freeze_on"]),
+            fridge_days=f["fridge_days"],
+            source=f["source"],
+            use_on=date.fromisoformat(f["use_on"]) if f["use_on"] else None,
+            recipe=f["recipe"],
+        )
+        for f in totals["freeze"]
+    ]
+
+
+def _step_sections(session: Session, version_ids: list[int]) -> dict[int, tuple[str, ...]]:
+    """Each recipe's step sections in order (the prep order reads them)."""
+    out: dict[int, list[str]] = defaultdict(list)
+    for version_id, section in session.execute(
+        select(RecipeStep.recipe_version_id, RecipeStep.section)
+        .where(RecipeStep.recipe_version_id.in_(version_ids))
+        .order_by(RecipeStep.recipe_version_id, RecipeStep.position)
+    ).tuples():
+        out[version_id].append(section)
+    return {k: tuple(v) for k, v in out.items()}
+
+
+def accept(
+    session: Session, user_id: int, plan_id: int, *, replace_overlapping: bool = False
+) -> PlanSummaryOut:
+    accept_plan(session, user_id, plan_id, replace_overlapping=replace_overlapping)
     return plan_summary(session, user_id, plan_id)
 
 

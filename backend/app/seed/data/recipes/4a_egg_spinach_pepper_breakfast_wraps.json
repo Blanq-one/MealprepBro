@@ -11,6 +11,7 @@
  "total_minutes": 25,
  "equipment": ["stovetop"],
  "freezer_friendly": true,
+ "freeze_note": "Wrap each wrap in foil before freezing.",
  "draft_note": "Draft quantities: adjust them in the app. Wrap each one in foil to freeze.",
  "ingredients": [
   {"ingredient": "egg-large", "quantity": "8", "unit": "count", "role": "protein"},

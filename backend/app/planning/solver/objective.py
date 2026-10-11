@@ -32,6 +32,10 @@ class Weights:
     batch: float = 0.3  # each extra cook batch
     from_freezer: float = 0.05  # small preference for fresh leftovers over thawed ones
     never_favored_tiebreak: float = 0.05  # per portion: an otherwise-equal capped recipe always loses
+    could_buy: float = 0.1  # per meal using one of your could-buy items, on a shopping list (step 2b.5)
+    # per display unit (a scoop) a day goes above a daily amount cap's usual amount (M16): a second scoop
+    # has to be worth about $2 in fit or price
+    daily_amount_over: float = 1.0
 
 
 def weights_for(mode: GroceryMode) -> Weights:

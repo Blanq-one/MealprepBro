@@ -4,6 +4,7 @@ draft seed recipe library. Run after `usda-import`. The caller commits."""
 
 import hashlib
 import json
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, time
 from decimal import ROUND_HALF_UP, Decimal
@@ -49,7 +50,7 @@ from app.domain.units import (
 )
 from app.schemas.seed import LabelRef, PortionRef, SeedAmount, SeedIngredient, SeedNutrient, SeedRecipe
 from app.seed.files import DATA_DIR, SeedFiles, load_seed_files, normalize_name
-from app.services.ingredient_data import load_by_slug
+from app.services.ingredient_data import IngredientData, load_by_slug
 
 SEED_USER_NAME = "Me"
 _Q3 = Decimal("0.001")
@@ -502,7 +503,12 @@ def _settings(
 
 
 def content_hash(recipe: SeedRecipe) -> str:
-    payload = json.dumps(recipe.model_dump(mode="json", exclude={"family", "draft_note"}), sort_keys=True)
+    """The seed's content, for spotting a changed file. A field added later counts only when set, so adding
+    it (freeze_note, step 2b.5) doesn't revise every seed."""
+    added_later = {"freeze_note"} if recipe.freeze_note is None else set()
+    payload = json.dumps(
+        recipe.model_dump(mode="json", exclude={"family", "draft_note"} | added_later), sort_keys=True
+    )
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
@@ -537,81 +543,134 @@ def _recipes(session: Session, files: SeedFiles, user: AppUser, report: SeedRepo
             )
         ).first()
         if recipe is not None:
-            first = session.scalars(
-                select(RecipeVersion).where(
-                    RecipeVersion.recipe_id == recipe.id, RecipeVersion.version_number == 1
-                )
-            ).one()
-            if first.content_hash != digest:
-                report.warnings.append(
-                    f"{file_name}: seed file changed since it was loaded; versions are "
-                    "immutable, so the stored draft was not updated"
-                )
+            if _revise_seed(session, recipe, seed, digest, data, file_name=file_name, report=report):
+                report.counts["recipes_revised"] = report.counts.get("recipes_revised", 0) + 1
             continue
         recipe = Recipe(
             user_id=user.id, family_id=family.id, title=seed.title, origin=RecipeOrigin.SEED.value
         )
         session.add(recipe)
         session.flush()
-        version = RecipeVersion(
-            recipe_id=recipe.id,
-            version_number=1,
-            created_by="system",
-            is_draft=True,
-            change_summary=f"Seed draft. {seed.draft_note}",
-            title=seed.title,
-            description=seed.description,
-            meal_slots=[s.value for s in seed.meal_slots],
-            mood=seed.mood.value,
-            cuisine=seed.cuisine,
-            flavor_tags=list(seed.flavor_tags),
-            base_servings=seed.base_servings,
-            active_minutes=seed.active_minutes,
-            total_minutes=seed.total_minutes,
-            equipment=[e.value for e in seed.equipment],
-            freezer_friendly=seed.freezer_friendly,
-            content_hash=digest,
-        )
-        session.add(version)
-        session.flush()
-        for position, line in enumerate(seed.ingredients, start=1):
-            ingredient = data[line.ingredient]
-            amount = parse_quantity(line.quantity)
-            base = to_base(amount, line.unit, ingredient.units)
-            session.add(
-                RecipeIngredient(
-                    recipe_version_id=version.id,
-                    position=position,
-                    ingredient_id=ingredient.id,
-                    quantity=_q3(base.amount),
-                    unit=base.unit.value,
-                    authored_quantity=_q3(amount),
-                    authored_unit=normalize_unit(line.unit, ingredient.units.named_units),
-                    preparation=line.preparation,
-                    role=line.role.value,
-                    component=line.component,
-                    is_optional=line.optional,
-                )
-            )
-        for position, step in enumerate(seed.steps, start=1):
-            session.add(
-                RecipeStep(
-                    recipe_version_id=version.id,
-                    position=position,
-                    section=step.section.value,
-                    text=step.text,
-                    duration_minutes=step.duration_minutes,
-                    appliance_temp_f=step.appliance_temp_f,
-                    doneness_check_ingredient_id=data[step.doneness_check_for].id
-                    if step.doneness_check_for
-                    else None,
-                )
-            )
-        session.flush()
-        recipe.default_version_id = version.id
+        _add_seed_version(session, recipe, seed, digest, data, version_number=1)
         created += 1
     session.flush()
     return created
+
+
+def _revise_seed(
+    session: Session,
+    recipe: Recipe,
+    seed: SeedRecipe,
+    digest: str,
+    data: Mapping[str, IngredientData],
+    *,
+    file_name: str,
+    report: SeedReport,
+) -> bool:
+    """A seed file changed since it was loaded: versions are immutable, so the change becomes a new draft
+    version linked to the one it replaces, and the recipe's default (step 2b.5). Plans keep the version they
+    were made with. When your own version is the default, it stays the default and nothing is added."""
+    versions = list(
+        session.scalars(
+            select(RecipeVersion)
+            .where(RecipeVersion.recipe_id == recipe.id)
+            .order_by(RecipeVersion.version_number)
+        )
+    )
+    seeded = [v for v in versions if v.created_by == "system"]
+    if seeded and seeded[-1].content_hash == digest:
+        return False
+    current = next((v for v in versions if v.id == recipe.default_version_id), None)
+    if current is not None and current.created_by != "system":
+        report.warnings.append(
+            f"{file_name}: seed file changed, but your own version is the default, so the new draft wasn't "
+            "added"
+        )
+        return False
+    _add_seed_version(
+        session,
+        recipe,
+        seed,
+        digest,
+        data,
+        version_number=max((v.version_number for v in versions), default=0) + 1,
+        parent_id=current.id if current is not None else None,
+    )
+    return True
+
+
+def _add_seed_version(
+    session: Session,
+    recipe: Recipe,
+    seed: SeedRecipe,
+    digest: str,
+    data: Mapping[str, IngredientData],
+    *,
+    version_number: int,
+    parent_id: int | None = None,
+) -> RecipeVersion:
+    version = RecipeVersion(
+        recipe_id=recipe.id,
+        version_number=version_number,
+        parent_version_id=parent_id,
+        created_by="system",
+        is_draft=True,
+        change_summary=f"Seed draft. {seed.draft_note}"
+        if parent_id is None
+        else f"Seed draft, revised. {seed.draft_note}",
+        title=seed.title,
+        description=seed.description,
+        meal_slots=[s.value for s in seed.meal_slots],
+        mood=seed.mood.value,
+        cuisine=seed.cuisine,
+        flavor_tags=list(seed.flavor_tags),
+        base_servings=seed.base_servings,
+        active_minutes=seed.active_minutes,
+        total_minutes=seed.total_minutes,
+        equipment=[e.value for e in seed.equipment],
+        freezer_friendly=seed.freezer_friendly,
+        freeze_note=seed.freeze_note,
+        content_hash=digest,
+    )
+    session.add(version)
+    session.flush()
+    for position, line in enumerate(seed.ingredients, start=1):
+        ingredient = data[line.ingredient]
+        amount = parse_quantity(line.quantity)
+        base = to_base(amount, line.unit, ingredient.units)
+        session.add(
+            RecipeIngredient(
+                recipe_version_id=version.id,
+                position=position,
+                ingredient_id=ingredient.id,
+                quantity=_q3(base.amount),
+                unit=base.unit.value,
+                authored_quantity=_q3(amount),
+                authored_unit=normalize_unit(line.unit, ingredient.units.named_units),
+                preparation=line.preparation,
+                role=line.role.value,
+                component=line.component,
+                is_optional=line.optional,
+            )
+        )
+    for position, step in enumerate(seed.steps, start=1):
+        session.add(
+            RecipeStep(
+                recipe_version_id=version.id,
+                position=position,
+                section=step.section.value,
+                text=step.text,
+                duration_minutes=step.duration_minutes,
+                appliance_temp_f=step.appliance_temp_f,
+                doneness_check_ingredient_id=data[step.doneness_check_for].id
+                if step.doneness_check_for
+                else None,
+            )
+        )
+    session.flush()
+    recipe.default_version_id = version.id
+    session.flush()
+    return version
 
 
 def seed_all(session: Session, data_dir: Path = DATA_DIR) -> SeedReport:

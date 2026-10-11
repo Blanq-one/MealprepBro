@@ -277,3 +277,4 @@ class RoundedPlan:
     leftovers: tuple[LeftoverItem, ...] = ()
     freeze: tuple[FreezeInstruction, ...] = ()
     notes: tuple[str, ...] = field(default_factory=tuple)
+    snapped: bool = True  # False: no nudge combination rounded into your limits (snap.py)

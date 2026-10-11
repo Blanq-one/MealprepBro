@@ -65,6 +65,38 @@ class FrequencyCapSetting(_Strict):
     never_favor: bool = True
 
 
+class DailyAmountCapSetting(_Strict):
+    """A per-day amount cap for one ingredient (M16, step 2b.5): like a frequency cap, but counting how much
+    you eat in a day, every meal included. Days above `usual` are avoided when another plan fits; `maximum` is
+    never exceeded."""
+
+    label: str = Field(min_length=1, max_length=80)
+    ingredient: str = Field(min_length=1, max_length=80)  # slug
+    unit: str = Field(default="g", min_length=1, max_length=20)  # g | ml | count, or a named unit (scoop)
+    # plain numbers, like the other settings (one schema for the app); code reads them as exact decimals
+    usual: float = Field(ge=0, le=10_000)
+    maximum: float = Field(gt=0, le=10_000)
+
+    @model_validator(mode="after")
+    def _order(self) -> Self:
+        if self.usual > self.maximum:
+            raise ValueError(f"{self.label}: the usual amount can't be above the maximum")
+        return self
+
+
+def _default_daily_caps() -> list[DailyAmountCapSetting]:
+    """Protein powder: usually 1 scoop a day, at most 2 (M16)."""
+    return [
+        DailyAmountCapSetting(
+            label="Protein powder",
+            ingredient="protein-powder-double-chocolate",
+            unit="scoop",
+            usual=1,
+            maximum=2,
+        )
+    ]
+
+
 class UserSettings(_Strict):
     # 2: the budget moved to each plan request; protein target added. 3 (Phase 2b): household size, Always
     # have, a default budget (a pre-fill only: each request still owns its limit), the onboarding flag.
@@ -99,6 +131,9 @@ class UserSettings(_Strict):
     # a held item that comes in versions -> the version you usually buy (M3, slug -> choice key). It only
     # pre-selects that version when you add the item; it never allows the held item itself.
     usual_versions: dict[str, str] = Field(default_factory=dict)
+    # how much of one ingredient a day, counting every meal (M16, step 2b.5); a field with a default, so
+    # settings saved before it get protein powder's cap
+    daily_amount_caps: list[DailyAmountCapSetting] = Field(default_factory=_default_daily_caps, max_length=10)
 
     @field_validator("leftover_fridge_days")
     @classmethod
@@ -134,6 +169,9 @@ class UserSettings(_Strict):
             raise ValueError("store_order has duplicates")
         if len(set(self.always_have)) != len(self.always_have):
             raise ValueError("always_have has duplicates")
+        capped = [c.ingredient for c in self.daily_amount_caps]
+        if len(set(capped)) != len(capped):
+            raise ValueError("an ingredient can have one daily amount cap")
         return self
 
     def cook_day(self, weekday: Weekday) -> CookDaySetting:
@@ -179,7 +217,10 @@ class FieldErrorOut(BaseModel):
 
 
 class SummaryLineOut(BaseModel):
-    key: str  # people | budget | targets | meals | cook_days | equipment | stores | food_rules | always_have
+    key: (
+        str  # people | budget | targets | meals | cook_days | equipment | stores | food_rules | always_have |
+    )
+    # daily_caps
     label: str
     value: str
 
