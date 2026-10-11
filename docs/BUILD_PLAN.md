@@ -8,7 +8,10 @@ portion, and two notes for 2b.6/2b.7)**. Step 2b.5 (meal prep engine) was built 
 (2b.5 outcome note, §9) and **approved the same day, including D107–D126 (U1–U5, §12.1)**. At the approval the
 ideas pass got its optional freeze note (D127), and two designs were written for your review, nothing built:
 **smart prep, "Cook basics, mix and match"** (FLOW_SPEC §19) and **parallel cooking on a cook day** (FLOW_SPEC §20),
-with four proposed steps before 2b.6 (2b.9–2b.12, §9) and open questions V1–V17 (FLOW_SPEC §21.3).
+with four proposed steps before 2b.6 (2b.9–2b.12, §9) and open questions V1–V17 (FLOW_SPEC §21.3). **Both designs
+were approved 2026-10-11, including D127 (X1–X9, §12.1)**: F25–F32 approved, V1–V17 answered, and a new build order
+so new screens and a live link come sooner: **2b.9 → 2b.10 → 2b.7 → 2b.13 (deploy) → 2b.11 → 2b.12 → 2b.6 → 2b.8**.
+Step 2b.9 (cook-day schedule) started the same day.
 **Source documents:** `CLAUDE.md` (build rules, wins on conflict), `docs/PRD.md` (product vision; "Primary user flow" at the top), `docs/FLOW_SPEC.md` (screens and backend work for Phase 2b).
 
 This plan covers Phases 0–6, plus Phase 2b. One phase per session; Phase 2b is split into build steps, one per session (§9). A phase or step is done only when its acceptance criteria are met, its tests pass, and the test output has been shown.
@@ -27,7 +30,7 @@ This plan covers Phases 0–6, plus Phase 2b. One phase per session; Phase 2b is
 | — | Pre-Phase 1 tasks | Done | 2026-10-08 | 2026-10-08 | Package-label data (tortillas, protein powder), USDA mapping review sheet (`docs/review/usda_mappings.md`), raw/dry/as-sold rule + check (§7.8), CLAUDE.md machine-boundaries rule. Round 2: FoodSafety.gov chart transcribed (53 rows, §7.2), top-25 mappings approved, tortilla renamed, Docker rule clarified, fresh-clone check made a per-phase step. |
 | 1 | Planning brain | Approved 2026-10-09; post-approval round done | 2026-10-08 | 2026-10-09 | First pass: 645 tests, fresh-clone check passed; D1–D13 and C1–C3 approved 2026-10-09. Fix-up round (C4–C8: budget per request with inventory/shop modes, cash vs food eaten, freeze-on-shopping-day and waste, 100 g protein floor, elapsed time): 705 tests pass (the opt-in live test skips), domain coverage 99%, ruff/mypy clean, fresh-clone check passed; deviations D14–D22 in the fix-up note. Approved 2026-10-09. Post-approval round (C9–C14: powder prices, stock-up items, shelf-life fix, regular chicken packs, two-week steady-state check, A3 hosting): 721 tests pass (the opt-in live test skips), domain coverage 99%; deviations D23–D28. |
 | 2 | Mobile PWA + cloud deploy (deploy prep only, K7) | Approved 2026-10-10 | 2026-10-09 | 2026-10-09 | Pre-work K2–K6 done; PWA, auth, shopping, Mark cooked, quick add, exposure log. 800 backend tests pass (2 opt-in skipped), 78 frontend tests; not deployed (your step, `docs/deploy.md`). Deviations D29–D43 in the Phase 2 outcome note (§9). |
-| 2b | Cook-first flow redesign | 2b.1 approved 2026-10-10 (D44–D53); 2b.2 approved 2026-10-10 (D54–D64, H1–H6); 2b.3a approved 2026-10-10 (D65–D76, J1–J6); 2b.4 approved 2026-10-10 (D77–D88, M1–M20); 2b.4 fixes approved 2026-10-10 (N1–N3); 2b.3b approved 2026-10-11 (D89–D101, P1–P8); pre-work P2–P7 done and approved 2026-10-11 (D102–D106, T1–T8); 2b.5 approved 2026-10-11 (D107–D126, U1); freeze note in the ideas pass done (D127, U2); designs for smart prep and parallel cooking written, awaiting your review (U3–U5; proposed steps 2b.9–2b.12) | 2026-10-10 | | `docs/FLOW_SPEC.md`; PRD "Primary user flow"; 9 build steps, built in the order 2b.1, 2b.2, 2b.3a, **2b.4, 2b.3b**, 2b.5–2b.8 (H3; §9); changes F1–F21 approved (FLOW_SPEC §16); decisions E1–E17 (§12.1). Two-stage generation added the same day (E15, E17; built in 2b.3b). **2b.1 (backend foundations):** 898 backend tests pass (2 opt-in skipped), 78 frontend tests, ruff/mypy clean; deviations D44–D53 in the 2b.1 outcome note (§9). **2b.2 (look, shell, onboarding, Settings, Pantry):** 180 frontend tests (78 before), 899 backend tests pass (2 opt-in skipped), type checks clean, static export builds; AA contrast tested, 375 px not yet checked on a device; deviations D54–D64 in the 2b.2 outcome note (§9). Footer fix H2 done before 2b.3a. **2b.3a (ranking and cards, no LLM calls):** 964 backend tests pass (2 opt-in skipped), 187 frontend tests, ruff, mypy and type check clean; deviations D65–D76 in the 2b.3a outcome note (§9). **2b.4 (A meal now: screens, with J2–J6):** 993 backend tests pass (2 opt-in skipped), 236 frontend tests, ruff, mypy and type check clean, static export builds; migration `0006_pantry_presets`; deviations D77–D88 in the 2b.4 outcome note (§9). **2b.4 fixes (M2–M13, M15, M17, M20):** 1056 backend tests pass (2 opt-in skipped), 244 frontend tests, ruff, mypy and type check clean; no migration; 37 new draft seed recipes (47 in all); solver shortlist; fixes outcome note (§9). **2b.3b (ideas, steps, More ideas, background batch, rate-limit waits, live test, screens; with N2, ground vs whole cuts):** 1132 backend tests pass (2 opt-in skipped), 263 frontend tests, ruff, mypy and type check clean, static export builds; no migration, no new dependency; the live Groq test ran (FLOW_SPEC §15.1); deviations D89–D101 in the 2b.3b outcome note (§9). **2b.3b approval pre-work (P2–P7):** 1143 backend tests pass with `--run-slow` (3 opt-in skipped); the default run is parallel and skips 6 `slow` tests (100 s, was about 20 min); 265 frontend tests; ruff, mypy and type check clean; no migration; new dev dependency pytest-xdist (approved); `LLM_IDEAS_MODEL` (20b by default in compose); deviations D102–D106 in 2b.3b's approval note (§9). **2b.5 (meal prep engine, with T2–T4):** 1218 backend tests pass with `--run-slow` (3 opt-in skipped), 266 (265 before) frontend tests; ruff, mypy and type check clean; migration `0007_recipe_freeze_note`; no new dependency; deviations D107–D126 in the 2b.5 outcome note (§9). **2b.5 approval (U1–U5):** the ideas pass carries an optional freeze note under the seeds' rules (D127): 1218 backend tests pass in the default run (9 skipped: 6 slow, 3 opt-in), ruff and mypy clean, no migration; FLOW_SPEC §19–§21 and the proposed steps 2b.9–2b.12 (§9) are written for your review. |
+| 2b | Cook-first flow redesign | 2b.1 approved 2026-10-10 (D44–D53); 2b.2 approved 2026-10-10 (D54–D64, H1–H6); 2b.3a approved 2026-10-10 (D65–D76, J1–J6); 2b.4 approved 2026-10-10 (D77–D88, M1–M20); 2b.4 fixes approved 2026-10-10 (N1–N3); 2b.3b approved 2026-10-11 (D89–D101, P1–P8); pre-work P2–P7 done and approved 2026-10-11 (D102–D106, T1–T8); 2b.5 approved 2026-10-11 (D107–D126, U1); freeze note in the ideas pass done (D127, U2); designs for smart prep and parallel cooking approved 2026-10-11 (X1–X9; steps 2b.9–2b.13); 2b.9 started 2026-10-11 | 2026-10-10 | | `docs/FLOW_SPEC.md`; PRD "Primary user flow"; 14 build steps, built in the order 2b.1, 2b.2, 2b.3a, **2b.4, 2b.3b**, 2b.5, then **2b.9, 2b.10, 2b.7, 2b.13 (deploy), 2b.11, 2b.12, 2b.6, 2b.8** (H3, X8; §9); changes F1–F21 approved (FLOW_SPEC §16); decisions E1–E17 (§12.1). Two-stage generation added the same day (E15, E17; built in 2b.3b). **2b.1 (backend foundations):** 898 backend tests pass (2 opt-in skipped), 78 frontend tests, ruff/mypy clean; deviations D44–D53 in the 2b.1 outcome note (§9). **2b.2 (look, shell, onboarding, Settings, Pantry):** 180 frontend tests (78 before), 899 backend tests pass (2 opt-in skipped), type checks clean, static export builds; AA contrast tested, 375 px not yet checked on a device; deviations D54–D64 in the 2b.2 outcome note (§9). Footer fix H2 done before 2b.3a. **2b.3a (ranking and cards, no LLM calls):** 964 backend tests pass (2 opt-in skipped), 187 frontend tests, ruff, mypy and type check clean; deviations D65–D76 in the 2b.3a outcome note (§9). **2b.4 (A meal now: screens, with J2–J6):** 993 backend tests pass (2 opt-in skipped), 236 frontend tests, ruff, mypy and type check clean, static export builds; migration `0006_pantry_presets`; deviations D77–D88 in the 2b.4 outcome note (§9). **2b.4 fixes (M2–M13, M15, M17, M20):** 1056 backend tests pass (2 opt-in skipped), 244 frontend tests, ruff, mypy and type check clean; no migration; 37 new draft seed recipes (47 in all); solver shortlist; fixes outcome note (§9). **2b.3b (ideas, steps, More ideas, background batch, rate-limit waits, live test, screens; with N2, ground vs whole cuts):** 1132 backend tests pass (2 opt-in skipped), 263 frontend tests, ruff, mypy and type check clean, static export builds; no migration, no new dependency; the live Groq test ran (FLOW_SPEC §15.1); deviations D89–D101 in the 2b.3b outcome note (§9). **2b.3b approval pre-work (P2–P7):** 1143 backend tests pass with `--run-slow` (3 opt-in skipped); the default run is parallel and skips 6 `slow` tests (100 s, was about 20 min); 265 frontend tests; ruff, mypy and type check clean; no migration; new dev dependency pytest-xdist (approved); `LLM_IDEAS_MODEL` (20b by default in compose); deviations D102–D106 in 2b.3b's approval note (§9). **2b.5 (meal prep engine, with T2–T4):** 1218 backend tests pass with `--run-slow` (3 opt-in skipped), 266 (265 before) frontend tests; ruff, mypy and type check clean; migration `0007_recipe_freeze_note`; no new dependency; deviations D107–D126 in the 2b.5 outcome note (§9). **2b.5 approval (U1–U5):** the ideas pass carries an optional freeze note under the seeds' rules (D127): 1218 backend tests pass in the default run (9 skipped: 6 slow, 3 opt-in), ruff and mypy clean, no migration; FLOW_SPEC §19–§21 and the proposed steps 2b.9–2b.12 (§9) are written for your review. |
 | 3 | Feedback loop | Not started | | | Favorites moved to 2b. |
 | 4 | Daily overrides | Not started | | | |
 | 5 | Grocery intelligence | Not started | | | |
@@ -91,10 +94,12 @@ Mealbro/
 │   │   ├── 0005_cook_flow.py          # P2b: favorites, saved, feedback_event, cook_search, meal_plan.kind, settings v3
 │   │   ├── 0006_pantry_presets.py     # P2b (2b.4, J5): inventory_item.quantity_is_estimate, container
 │   │   ├── 0007_recipe_freeze_note.py # P2b (2b.5, T3): recipe_version.freeze_note
-│   │   ├── 0008_feedback_loop.py      # P3 (planned as 0003)
-│   │   ├── 0009_daily_overrides.py    # P4 (planned as 0004)
-│   │   ├── 0010_grocery_intelligence.py  # P5 (planned as 0005)
-│   │   └── 0011_ranker.py             # P6 (planned as 0006)
+│   │   ├── 0008_step_timing.py        # P2b (2b.9): step timing, an idea's tasks, start-to-finish cook days
+│   │   ├── 0009_smart_prep.py         # P2b (2b.10): prep items, assemblies, prep batches, finish tasks
+│   │   ├── 0010_feedback_loop.py      # P3 (planned as 0003)
+│   │   ├── 0011_daily_overrides.py    # P4 (planned as 0004)
+│   │   ├── 0012_grocery_intelligence.py  # P5 (planned as 0005)
+│   │   └── 0013_ranker.py             # P6 (planned as 0006)
 │   └── app/
 │       ├── main.py · config.py · cli.py
 │       ├── db/                        # P0: base (naming convention), session, types, models/
@@ -107,7 +112,9 @@ Mealbro/
 │       │   ├── text_rules.py          # P1: the narrow prose filter (§7.3)
 │       │   ├── dish_category.py       # P2b: deterministic dish-category classifier (FLOW_SPEC §4.4)
 │       │   ├── meat_forms.py · prompt_names.py   # P2b (2b.3b): ground vs whole cuts; short names for prompts
-│       │   ├── prep_order.py          # P2b (2b.5): a cook day's prep order
+│       │   ├── prep_order.py          # P2b (2b.5): a cook day's prep order (retired in 2b.9)
+│       │   ├── cook_schedule.py       # P2b (2b.9): tasks, batch growth, the cook-day schedule, the timeline
+│       │   ├── prep_storage.py · assembly_text.py   # P2b (2b.10): storage per prep item and state; meal names
 │       │   ├── preferences.py         # P3
 │       │   ├── price_stats.py         # P5
 │       │   └── tests/
@@ -134,7 +141,8 @@ Mealbro/
 │       │   ├── constraint_builder.py · resolver.py · recipe_validator.py · candidates.py
 │       │   ├── rendering.py · post_solve.py · plan_validator.py · grocery_list.py · orchestrator.py
 │       │   ├── ideas.py · steps.py        # P2b (2b.3b): the ideas pass and steps on first open
-│       │   ├── solver/ (model.py · objective.py · absorption.py · diagnostics.py)
+│       │   ├── solver/ (model.py · objective.py · absorption.py · diagnostics.py · supply.py (2b.11))
+│       │   ├── smart/                 # P2b (2b.11): the smart prep model, rounding, checks, persistence
 │       │   └── tests/
 │       ├── auth/                      # P2: single-user passphrase session
 │       ├── cook/                      # P2b: answers → requests, single-meal ranking, substitutes, search memory,
@@ -188,10 +196,12 @@ Mealbro/
 | `0005_cook_flow` | 2b | recipe_favorite and feedback_event (both pulled forward from P3, unchanged), recipe_saved, cook_search | `meal_plan.kind`; data: settings v3 |
 | `0006_pantry_presets` | 2b (2b.4, J5) | — | `inventory_item.quantity_is_estimate`, `inventory_item.container` |
 | `0007_recipe_freeze_note` | 2b (2b.5, T3) | — | `recipe_version.freeze_note` |
-| `0008_feedback_loop` (planned as 0003) | 3 | prepared_portion, preference_profile | `plan_meal.prepared_portion_id`, `inventory_event.prepared_portion_id` + CHECK |
-| `0009_daily_overrides` (planned as 0004) | 4 | day_override, consumption_entry | — |
-| `0010_grocery_intelligence` (planned as 0005) | 5 | region, ingredient_seasonality, cart_session | `price_observation.cart_session_id` |
-| `0011_ranker` (planned as 0006) | 6 | ranker_model | — |
+| `0008_step_timing` | 2b (2b.9, X1) | — | `recipe_step.component`, `.equipment`, `.hands_on_minutes`, `.hands_off_minutes`; `recipe_version.tasks`; data: start-to-finish cook-day minutes (V11) |
+| `0009_smart_prep` | 2b (2b.10, X1) | assembly_component, plan_meal_component, plan_finish_task | `recipe_version.kind`, `.stages`, `.pairs_with`, `.label`; `recipe_step.stage`; `plan_cook_batch.stop_stage`, `.stop_state`, `.fridge_until`; `plan_meal.assembly_version_id` |
+| `0010_feedback_loop` (planned as 0003, then 0008) | 3 | prepared_portion, preference_profile | `plan_meal.prepared_portion_id`, `inventory_event.prepared_portion_id` + CHECK |
+| `0011_daily_overrides` (planned as 0004, then 0009) | 4 | day_override, consumption_entry | — |
+| `0012_grocery_intelligence` (planned as 0005, then 0010) | 5 | region, ingredient_seasonality, cart_session | `price_observation.cart_session_id` |
+| `0013_ranker` (planned as 0006, then 0011) | 6 | ranker_model | — |
 
 ### 4.2a Table audit for `0001_initial` (2026-10-08)
 
@@ -746,13 +756,13 @@ ALTER inventory_item ADD container text NULL             -- the preset's package
 -- 0007_recipe_freeze_note (Phase 2b, step 2b.5, T3) ----------------------------------
 ALTER recipe_version ADD freeze_note text NULL      -- how to freeze a recipe that freezes well; NULL = no note
 
--- PROPOSED (design review 2026-10-11, FLOW_SPEC §19.3, §20.1); if approved, the later migrations below move up by
--- two (0008_feedback_loop becomes 0010, and so on)
--- 0008_step_timing (proposed step 2b.9) ----------------------------------------------
+-- Approved 2026-10-11 (X1; FLOW_SPEC §19.3, §20.1); the later migrations below moved up by two
+-- 0008_step_timing (step 2b.9) --------------------------------------------------------
 ALTER recipe_step    ADD component text NULL, ADD equipment text NULL,
                      ADD hands_on_minutes smallint NULL, ADD hands_off_minutes smallint NULL
 ALTER recipe_version ADD tasks jsonb NULL           -- an idea's task list (component, equipment, minutes, temp)
--- 0009_smart_prep (proposed step 2b.10) ----------------------------------------------
+-- data: saved cook-day minutes become start to finish (V11, X4)
+-- 0009_smart_prep (step 2b.10) --------------------------------------------------------
 ALTER recipe_version ADD kind text NOT NULL DEFAULT 'dish', ADD stages jsonb NULL,
                      ADD pairs_with text[] NULL, ADD label text NULL
 ALTER recipe_step    ADD stage smallint NULL
@@ -765,7 +775,7 @@ plan_meal_component  (id, plan_meal_id FK, cook_batch_id FK, portions numeric(4,
 plan_finish_task     (id, meal_plan_id FK, day, cook_batch_id FK, kind, portions, hands_on_minutes,
                       hands_off_minutes, equipment NULL, status)
 
--- 0008_feedback_loop (Phase 3; planned as 0003) --------------------------------------
+-- 0010_feedback_loop (Phase 3; planned as 0003, then 0008) ---------------------------
 prepared_portion                                -- cooked leftovers / frozen meal-prep portions
   id, user_id FK→app_user, recipe_version_id FK→recipe_version, cook_batch_id NULL FK→plan_cook_batch,
   portions smallint NN CHECK ≥ 0, portion_size text NN, location text NN (fridge | freezer),
@@ -778,21 +788,21 @@ ALTER plan_meal       ADD prepared_portion_id bigint NULL FK→prepared_portion
 ALTER inventory_event ADD prepared_portion_id bigint NULL FK→prepared_portion
 ALTER inventory_event ADD CHECK (inventory_item_id IS NOT NULL OR prepared_portion_id IS NOT NULL)
 
--- 0009_daily_overrides (Phase 4; planned as 0004) ------------------------------------
+-- 0011_daily_overrides (Phase 4; planned as 0004, then 0009) -------------------------
 day_override        (id, meal_plan_id FK, day date NN, cook_minutes smallint NULL, mood text NULL,
                      slots text[] NN, reason text NULL, generation_run_id NULL FK, created_at)
 consumption_entry   (id, user_id FK, consumed_on date NN, slot text NULL, plan_meal_id NULL FK, description text NN,
                      kcal integer NN CHECK ≥ 0, protein_g numeric(8,2) NULL, source text NN (planned_meal | manual | parsed),
                      is_estimate bool NN, parsed_items jsonb NULL, created_at)
 
--- 0010_grocery_intelligence (Phase 5; planned as 0005) -------------------------------
+-- 0012_grocery_intelligence (Phase 5; planned as 0005, then 0010) --------------------
 region                 (code text PK, name text NN)
 ingredient_seasonality (ingredient_id FK, region_code text FK→region.code, month smallint CHECK 1–12,
                         availability text NN (peak | available), source text NN, PK (ingredient_id, region_code, month))
 cart_session           (id, user_id FK, store_id NN FK→store, started_at, ended_at NULL, status text NN)
 ALTER price_observation ADD cart_session_id bigint NULL FK→cart_session
 
--- 0011_ranker (Phase 6; planned as 0006) ---------------------------------------------
+-- 0013_ranker (Phase 6; planned as 0006, then 0011) ----------------------------------
 ranker_model (id, version integer NN UNIQUE, algorithm text NN, trained_at timestamptz NN, train_window jsonb NN,
               n_examples integer NN, feature_spec jsonb NN, weights jsonb NN, metrics jsonb NN,
               is_active bool NN DEFAULT false, created_at)   UQ partial (is_active) WHERE is_active
@@ -1866,12 +1876,23 @@ Every number still comes from code, and the LLM still only writes recipes.
 - **From Phase 4:** the pinned re-solve, for the single-meal swap. Consumption, day-level overrides, rebalancing and the mode toggle stay in Phase 4.
 - **From Phase 5:** a basic "What should I buy?" with templated reasons from current prices. Price history, deals, seasonality, usual items and the cart optimizer stay in Phase 5.
 
-**How the steps run.** Nine build steps, one per session, in this order: 2b.1, 2b.2, 2b.3a, **2b.4, 2b.3b**, 2b.5, 2b.6, 2b.7, 2b.8.
+**How the steps run.** Fourteen build steps, one per session, in this order: 2b.1, 2b.2, 2b.3a, **2b.4, 2b.3b**,
+2b.5, then **2b.9, 2b.10, 2b.7, 2b.13 (deploy), 2b.11, 2b.12, 2b.6, 2b.8** (X8).
 - 2b.3 was split into 2b.3a and 2b.3b on 2026-10-10 (E17).
 - **New order (H3, 2026-10-10):** 2b.4 (the meal-now screens) is built right after 2b.3a, with seed and saved recipes only, so you can use the new flow sooner. 2b.3b (LLM ideas, steps, background batch) follows 2b.4 and also takes the screen work that needs ideas (the countdown wait states, the held `prefetched` list, the C8 steps state). Until 2b.3b, More ideas shows disabled with "coming soon".
 - The step numbers stay as they are, so earlier references still point to the right step.
-- **Proposed at the 2b.5 approval (2026-10-11, for your review):** four more steps before 2b.6, in the order 2b.9
-  (cook-day schedule), 2b.10–2b.12 (smart prep), then 2b.6, 2b.7, 2b.8 (FLOW_SPEC §21.1, V16).
+- **Added and reordered at the design approval (2026-10-11, X1, X8):** the cook-day schedule (2b.9) and smart prep
+  (2b.10–2b.12) from FLOW_SPEC §19–§21, and a deploy step (2b.13). To get new screens and a live link sooner, the
+  plan screens (2b.7) come right after smart prep's data model (2b.10), then the deploy, then smart prep's solver
+  and ideas, then swap and What should I buy?. What moved between steps because of the new order (mine, X8):
+  - **2b.7 builds the plan screens for both shapes** (single-recipe meals and assemblies), so its backend part takes
+    the read side of 2b.11's plan view data: each cook day's items and where they go, each meal's sources, finish
+    tasks per day and meal instructions, read from 2b.10's tables. Until 2b.11 only test plans written by fixtures
+    have assemblies; 2b.11 fills the same tables from the solver.
+  - **Swap screens move from 2b.7 to 2b.6** (swap with progress, toast and Undo, the no-fit sheet, the "Write a new
+    one" countdown, and Not for me with Hidden recipes), so 2b.6 becomes "Swap (backend and screens)".
+  - **The fifth tile, Cook basics, mix and match,** is built in 2b.11 with `cook_style = "basics"`; until then C1b
+    shows it disabled with "coming soon" (as H3 did for More ideas).
 - Each step ends exactly like a phase: its acceptance criteria met, `pytest` (and from 2b.2 `vitest`) output shown, a commit, `scripts/fresh_clone_check.sh` after committing, a short summary, then a stop for your approval.
 - Each step's session reads this section, the shared sections, and the FLOW_SPEC sections listed with the step.
 - The phase-end rules in CLAUDE.md apply to every step (see §11 item 7).
@@ -2856,11 +2877,12 @@ backend` is enough (the code reloads).
   are in FLOW_SPEC §21; the earlier decisions they would change are F25–F32 (FLOW_SPEC §16). The proposed steps
   follow.
 
-#### Proposed steps 2b.9–2b.12 (design review, 2026-10-11; not approved yet)
+#### Steps 2b.9–2b.13 (approved 2026-10-11, X1–X8)
 
-*Proposed order (V16): **2b.9 → 2b.10 → 2b.11 → 2b.12**, then 2b.6, 2b.7, 2b.8. The numbers continue from 2b.8 so
-earlier references stay right (as with H3). Each step ends like a phase. Phase 2b would have 13 steps, and CLAUDE.md's
-phase outline would change with your OK (as F18).*
+*Build order (X8): **2b.9 → 2b.10 → 2b.7 → 2b.13 (deploy) → 2b.11 → 2b.12 → 2b.6 → 2b.8**. The numbers continue
+from 2b.8 so earlier references stay right (as with H3). Each step ends like a phase. Phase 2b has 14 steps; CLAUDE.md's
+phase outline was updated with your OK (V16, X6). 2b.7 and 2b.6 follow below in their own sections, with the changes
+the new order makes to them.*
 
 ##### 2b.9 Cook-day schedule (backend)
 
@@ -2868,8 +2890,10 @@ phase outline would change with your OK (as F18).*
 
 **Deliverables**
 1. Migration `0008_step_timing`: `recipe_step` gets `component`, `equipment`, `hands_on_minutes` and
-   `hands_off_minutes`; `recipe_version` gets `tasks` (jsonb: an idea's task list). If V11 is approved as
-   recommended, a settings data migration doubles saved cook-day minutes (at most 600) and changes the default to 90.
+   `hands_off_minutes`; `recipe_version` gets `tasks` (jsonb: an idea's task list). V11 is approved (X4): a
+   settings data migration doubles saved cook-day minutes (at most 600) and the default becomes 90. The weeknight
+   time for finish tasks (V7, X5: per day, default 30) is added to the settings here too, so 2b.7's Settings can show
+   it before 2b.11 uses it.
 2. Seeds: every step of the 47 seeds tagged by hand (seed revisions, D107), with a review table in the summary.
 3. `domain/cook_schedule.py`:
    - tasks from tagged steps, from an idea, or estimated from untagged steps (V15);
@@ -2905,7 +2929,14 @@ opt-in timing test (a 6-dish day in under 50 ms).
 
 **Deliverables**
 1. Migration `0009_smart_prep` (FLOW_SPEC §19.3).
-2. `domain/prep_storage.py`: storage per item and stop state (FLOW_SPEC §19.4, with V1 and V2 as answered).
+2. `domain/prep_storage.py`: storage per item and stop state (FLOW_SPEC §19.4, with V1 and V2 as answered, X2 and
+   X3):
+   - **V1 (X2):** the USDA FSIS FoodKeeper data is the second official source. You save `foodkeeper.json` (English)
+     into `docs/sources/`; I transcribe the rows needed (cooked rice and grains, cooked vegetables, cut fresh
+     vegetables, salads, sauces, and any other gaps) into the storage table, citing FoodKeeper per row. If the file
+     isn't in `docs/sources/` when this step starts, cooked items keep today's 3-day rule and fresh items are made on
+     the day, and I say so.
+   - **V2 (X3):** partly cooked meat, poultry, fish or eggs is never stored.
 3. Seed data:
    - about 16–20 draft prep items split from the seeds, with stages and timing;
    - about 10 draft assemblies;
@@ -2933,8 +2964,10 @@ opt-in timing test (a 6-dish day in under 50 ms).
 2. `planning/smart/`: the shortlist and code's own combinations, the model, rounding, the validator's `smart`
    checks, and persistence (`plan_meal_component`, `plan_finish_task`).
 3. `cook_style = "basics"` in `CookAnswers`; `POST /cook/meal-prep` builds it from the seed pool with 0 LLM calls.
-4. Plan view data: each cook day's items and where they go, finish tasks per day, meal instructions, the shopping
-   list with add-ons; Mark cooked on prep batches; Done on finish tasks.
+   C1b's fifth tile, Cook basics, mix and match, is enabled (shown "coming soon" since 2b.7; X8).
+4. Plan view data: the solver's plans fill the tables 2b.7's screens already read (items per cook day and where they
+   go, finish tasks per day, meal instructions; X8), plus the shopping list with add-ons; Mark cooked on prep
+   batches; Done on finish tasks.
 
 **Acceptance criteria**
 1. "Lunch and dinner Mon–Thu, cooking Sunday" from the seeds:
@@ -2967,6 +3000,28 @@ household, rounding and validator), `test_supply_refactor.py` (the old model unc
 
 **Tests.** `planning/tests/test_prep_ideas.py`, `planning/tests/test_prep_steps.py`, the live test.
 
+##### 2b.13 Deploy: Vercel + Neon (after 2b.7, X8)
+
+*Reads `docs/deploy.md`, `docs/hosting.md`, §12.4.*
+
+**Deliverables**
+1. The pre-deploy list (§12.4), starting with PD1: the login rate limit keyed on the real client address.
+2. A dry run of `docs/deploy.md` from the repo side: the Vercel build (`python -m app.deploy`, the static export),
+   migrations through `0009` on a fresh database, the USDA import and the seed, with the doc corrected where it's
+   wrong.
+3. The live deploy, with you: you create the Neon and Vercel accounts, the GitHub remote and the secrets (anything
+   outside the repo is yours to do or approve); I walk through each step and check `/health`, sign-in, a meal-now
+   search and a meal-prep plan on the live link.
+
+**Acceptance criteria**
+1. PD1's tests pass: two clients behind the proxy get separate counters, and a client can't pick its own key by
+   sending the header.
+2. The live link serves the PWA over https, `/health` is ok, sign-in works, and a meal-prep plan finishes inside the
+   request (K2).
+3. `docs/deploy.md` matches what was actually done.
+
+**Tests.** The PD1 tests; the deploy smoke checks are listed in the summary (manual, on the live link).
+
 #### 2b.6 Swap (backend)
 
 *Reads FLOW_SPEC §7 (C6 swap), §13.1 (E5), §13.3 (pinned re-solve), §15.*
@@ -2991,7 +3046,10 @@ household, rounding and validator), `test_supply_refactor.py` (the old model unc
 
 **Tests.** `test_pins.py` (a diff test like Phase 4 AC 1); `test_swap_api.py` (cycling, none fits, LLM gating, undo, check-off carry-over, after shopping); event and exposure rows.
 
-**Proposed changes (design review, 2026-10-11; FLOW_SPEC §19.9, F32):**
+**Changes (approved 2026-10-11, X1, X8; FLOW_SPEC §19.9, F32):**
+- **The swap screens move here from 2b.7 (X8):** Swap with progress, toast and Undo, the no-fit sheet, the "Write a
+  new one" countdown, and Not for me with Hidden recipes in Settings. 2b.7's acceptance criterion "swap and undo
+  work from the UI" and its swap Vitest tests (optimistic states and undo) are this step's.
 - Swap also works on a smart prep meal (an assembly): other meals keep their assemblies and portions; combinations
   of items already in the plan are tried first; at least 2 uses becomes a penalty in a swap.
 - **Swap this item** on a prep item.
@@ -3031,14 +3089,19 @@ household, rounding and validator), `test_supply_refactor.py` (the old model unc
 
 **Tests (Vitest).** Day order with Today first; swap optimistic states and undo; the overlap confirm; diagnostics → fix buttons; toggle memory. For H4 and H5: the four cook options → request (big day with minutes above the usual maximum, sessions, same dish for 8 portions, mix); the Prep notes row (collapsed, its text from the API, opens the sheet); freeze steps on the shopping day; the fridge/freezer and thaw lines per day; the prep order.
 
-**Proposed changes (design review, 2026-10-11; FLOW_SPEC §19.10, §20.4):**
-- The fifth tile, Cook basics, mix and match.
-- Each cook day's timeline (in place of the prep order), and a cook-day cooking mode that steps through it.
-- Finish tasks at the top of each eating day.
-- The batch view with prep items, their stop states and where each portion goes.
-- Assembly and prep item recipe pages.
-- Swap and Not for me on assemblies and items.
-- Cook-day minutes shown as start-to-finish time in C1b and Settings (V11), and the weeknight time setting (V7).
+**Changes (approved 2026-10-11, X1, X8; FLOW_SPEC §19.10, §20.4).** Built right after 2b.10, before the deploy, to
+show both single-recipe meals and assemblies:
+- the batch view (each cook day's batches or prep items, their stop states and where each portion goes), each
+  meal's sources, the Prep notes row, and each cook day's timeline (in place of the prep order), with a cook-day
+  cooking mode that steps through it;
+- finish tasks at the top of each eating day;
+- assembly and prep item recipe pages;
+- cook-day minutes shown as start-to-finish time in C1b, onboarding and Settings (V11), and the weeknight time
+  setting per day (V7);
+- **backend:** the plan view payload for assemblies (read from 2b.10's tables; moved from 2b.11, X8);
+- **not here any more (X8):** Swap, its Undo and no-fit sheet, and Not for me move to 2b.6; the fifth tile is shown
+  "coming soon" and enabled in 2b.11. AC 1 becomes "the meal-prep flow works end to end", and the swap tests go to
+  2b.6.
 
 #### 2b.8 What should I buy?, and phase wrap-up
 
@@ -3060,8 +3123,8 @@ household, rounding and validator), `test_supply_refactor.py` (the old model unc
 
 **Tests.** `test_grocery_advice.py` (reasons; comparison edge cases including ties and estimates; budget); Vitest for G1–G3.
 
-**Proposed (design review, 2026-10-11):** unchanged. Grocery advice plans dishes; smart prep for it goes to the
-backlog (V17). Its cook days use the schedule from 2b.9.
+**Approved 2026-10-11 (X1, X7):** unchanged. Grocery advice plans dishes; smart prep for it goes to the backlog
+(V17, §12.5 DF4). Its cook days use the schedule from 2b.9.
 
 **Phase 2b acceptance (after 2b.8).**
 1. Every step's criteria are met; full `pytest` and `vitest` pass; the fresh-clone check passes.
@@ -3120,9 +3183,9 @@ backlog (V17). Its cook days use the schedule from 2b.9.
 7. **Weighted scoring function:** `preference_score` in [−1, 1] → solver preference term, reuse order, prompt hints. Its score and components are written into the `plan_candidate` rows that Phase 2 already logs. Capped never-favored items get no preference-score boost from nutrition, price or inventory features (§7.4).
 8. **Cook Again:** your default version is re-scaled and re-costed deterministically (0 LLM calls). It calls the LLM once only on the triggers (excluded/disliked ingredient, missing equipment, can't fit calories/time by scaling, or "adapt to what I have"). Adapted versions apply to that cook unless you save them.
 
-**Files and folders.** Creates `app/feedback/`, `app/preferences/`, `app/substitutions/`, `app/domain/preferences.py`, `app/schemas/feedback.py`, prompts (comment_tags, substitution, step_rewrite, adaptation), API routes (ratings, cook_logs, recipe_versions, substitutions, cook_again, profile), `migrations/versions/0007_feedback_loop.py`; frontend `history/`, `learned/` (reached from Settings and the Cook tab), rating sheet, editor, substitution sheet. (♥ and 🔖 shipped in Phase 2b.)
+**Files and folders.** Creates `app/feedback/`, `app/preferences/`, `app/substitutions/`, `app/domain/preferences.py`, `app/schemas/feedback.py`, prompts (comment_tags, substitution, step_rewrite, adaptation), API routes (ratings, cook_logs, recipe_versions, substitutions, cook_again, profile), `migrations/versions/0010_feedback_loop.py`; frontend `history/`, `learned/` (reached from Settings and the Cook tab), rating sheet, editor, substitution sheet. (♥ and 🔖 shipped in Phase 2b.)
 
-**Database.** Migration `0007_feedback_loop` (planned as 0003): `prepared_portion`, `preference_profile`; `plan_meal.prepared_portion_id`; `inventory_event.prepared_portion_id` + CHECK (§4.5). `feedback_event` and `recipe_favorite` already exist (Phase 2b, `0005_cook_flow`).
+**Database.** Migration `0010_feedback_loop` (planned as 0003): `prepared_portion`, `preference_profile`; `plan_meal.prepared_portion_id`; `inventory_event.prepared_portion_id` + CHECK (§4.5). `feedback_event` and `recipe_favorite` already exist (Phase 2b, `0005_cook_flow`).
 
 **Acceptance criteria**
 1. Favorites (from Phase 2b) feed the weighted preference score; with otherwise-equal candidates the favorite still wins.
@@ -3176,9 +3239,9 @@ backlog (V17). Its cook days use the schedule from 2b.9.
 5. **Mode toggle:** in settings and per plan.
 6. **"What's left today" feeds A meal now:** with consumption logged, the meal-now calorie target becomes the remaining calories for today (e.g. 750 kcal), within the same mode rules.
 
-**Files and folders.** Creates `app/overrides/`; extends `app/domain/calories.py`; prompt `off_plan_parse`; API routes (days, consumption, rebalance); frontend Today additions on the Cook tab; `migrations/versions/0008_daily_overrides.py`.
+**Files and folders.** Creates `app/overrides/`; extends `app/domain/calories.py`; prompt `off_plan_parse`; API routes (days, consumption, rebalance); frontend Today additions on the Cook tab; `migrations/versions/0011_daily_overrides.py`.
 
-**Database.** Migration `0008_daily_overrides` (planned as 0004): `day_override`, `consumption_entry`.
+**Database.** Migration `0011_daily_overrides` (planned as 0004): `day_override`, `consumption_entry`.
 
 **Added at the 2b.4 approval (M19, backlog):** **daily habit items**, a recurring item counted every day toward
 calories and protein (a daily shake, a coffee with milk), with a one-tap "had an extra today". It fits the daily
@@ -3222,9 +3285,9 @@ tracking and rebalancing here: the habit is a standing `consumption_entry`, and 
 5. **Next-list recommendations:** extends Phase 2b's "What should I buy?" (a shop-mode plan with templated reasons from current prices) with expiring items and open packages, usual items from history (a separate dismissible section) and within-store deals, all as templated, data-backed sentences.
 6. **Grocery Store Mode** (in the Grocery tab): a `cart_session` per store; "+ Add Grocery" entries; **Optimize My Cart** in two modes, quick (recipes fixed, cheapest packages) and full re-plan, returning the cheapest combination, nutritional value, meals, servings and cost per serving.
 
-**Files and folders.** Creates `app/grocery/`, `app/domain/price_stats.py`, `app/seed/data/seasonality_new_england.json`, API routes (price_history, deals, recommendations, cart_sessions), frontend `store/`, history views, mode selector, badges, `migrations/versions/0009_grocery_intelligence.py`. Changes `objective.py`, `app/cook/grocery_advice.py` (Phase 2b) and `docs/data-sources.md`.
+**Files and folders.** Creates `app/grocery/`, `app/domain/price_stats.py`, `app/seed/data/seasonality_new_england.json`, API routes (price_history, deals, recommendations, cart_sessions), frontend `store/`, history views, mode selector, badges, `migrations/versions/0012_grocery_intelligence.py`. Changes `objective.py`, `app/cook/grocery_advice.py` (Phase 2b) and `docs/data-sources.md`.
 
-**Database.** Migration `0009_grocery_intelligence` (planned as 0005): `region`, `ingredient_seasonality`, `cart_session`, `price_observation.cart_session_id`.
+**Database.** Migration `0012_grocery_intelligence` (planned as 0005): `region`, `ingredient_seasonality`, `cart_session`, `price_observation.cart_session_id`.
 
 **Acceptance criteria**
 1. Deal labels appear only when the same-store thresholds are met. A lower Price Rite price never marks a Stop & Shop observation as a deal, or vice versa.
@@ -3267,7 +3330,7 @@ tracking and rebalancing here: the habit is a standing `consumption_entry`, and 
 
 **Files and folders.** Creates `app/ranking/`, CLI commands, API `ranker/status`, a frontend settings panel, `migrations/versions/0010_ranker.py`. Changes the preference-term source in `objective.py` and in `app/cook/ranking.py` (Phase 2b).
 
-**Database.** Migration `0010_ranker` (planned as 0006): `ranker_model`.
+**Database.** Migration `0013_ranker` (planned as 0006): `ranker_model`.
 
 **Acceptance criteria**
 1. A test proves the dataset is leak-free (features for an occasion use only earlier events).
@@ -3333,6 +3396,12 @@ No other dependencies are planned. Auth uses the stdlib, and the solver uses HiG
 7. **CLAUDE.md phase outline vs Phase 2b (flagged 2026-10-10; resolved: CLAUDE.md updated with your OK the same day).** CLAUDE.md listed favorites under Phase 3, had no Phase 2b, and says "build exactly ONE phase per session". This plan, following your brief, moves favorites to 2b and runs 2b as nine one-session build steps (eight at first; 2b.3 was split into 2b.3a and 2b.3b on 2026-10-10, E17), each ending with the phase-end steps (tests shown, commit, fresh-clone check, summary, stop). The CLAUDE.md wording now in place:
    - add "Phase 2b: Cook-first flow (4 tabs, Cook flow, favorites and save for later, onboarding, swap, grocery advice). Built in nine steps, one step per session, in the order 2b.1, 2b.2, 2b.3a, 2b.4, 2b.3b, 2b.5–2b.8; each step ends like a phase." (the order changed at your request on 2026-10-10, H3);
    - change Phase 3's line to "Feedback loop (ratings, recipe versioning, preference profile, Cook Again)".
+
+   **Updated again 2026-10-11 (V16, X6, X8)**, when smart prep, parallel cooking and the deploy step were added:
+   "Phase 2b: Cook-first flow (4 tabs, Cook flow, favorites and save for later, onboarding, meal prep with parallel
+   cooking and smart prep, swap, grocery advice, first cloud deploy). Built in fourteen steps, one step per session,
+   in the order 2b.1, 2b.2, 2b.3a, 2b.4, 2b.3b, 2b.5, 2b.9, 2b.10, 2b.7, 2b.13 (deploy), 2b.11, 2b.12, 2b.6, 2b.8;
+   each step ends like a phase."
 
 ---
 
@@ -3557,6 +3626,20 @@ your instruction; real design decisions stop and wait):
 | U4 | Parallel cooking (design only) | Each task's time split into hands-on and hands-off on a piece of equipment; hands-on grows with batch size; capacity per equipment with extra rounds; each cook day a schedule (equipment one at a time, hands one task at a time, hands-off overlapping), with the cook-day check on its elapsed time; eating-day finish tasks on their own days; a timeline. Written as FLOW_SPEC §20; proposed step 2b.9 (§9). |
 | U5 | Next | Stop for your review of both designs: the build order, the token impact and the open questions V1–V17 (FLOW_SPEC §21). No other code this session. |
 
+**Design approval (2026-10-11).** You approved both designs, then:
+
+| # | Topic | Decision |
+|---|---|---|
+| X1 | Designs | Smart prep (FLOW_SPEC §19) and parallel cooking (FLOW_SPEC §20) approved, including D127; so are the changes F25–F32 (FLOW_SPEC §16) and the migrations `0008_step_timing` and `0009_smart_prep` (§4.5; later phases' migrations move up by two). |
+| X2 | V1: storage rows the chart doesn't have | The USDA FSIS **FoodKeeper** data is the second official storage source. You save `foodkeeper.json` (English) into `docs/sources/`. In 2b.10 I transcribe the rows needed (cooked rice and grains, cooked vegetables, cut fresh vegetables, salads, sauces, and any other gaps) into the storage table, citing FoodKeeper per row. If the file isn't in `docs/sources/` when 2b.10 starts, cooked items keep today's 3-day rule and fresh items are made on the day, and I tell you. |
+| X3 | V2: partly cooked protein | Approved: partly cooked meat, poultry, fish or eggs is never stored. |
+| X4 | V11: cook-day time | Approved: a cook day's minutes mean start to finish, checked against the day's schedule. Default 90 minutes; your saved cook days are converted (doubled, at most 600). This replaces C1's hands-on reading. |
+| X5 | V7: weeknight time | Approved: a per-day weeknight time for finish tasks, default 30 minutes, editable per day (in Settings next to the cook days). |
+| X6 | V16: CLAUDE.md | Approved: CLAUDE.md's phase outline is updated (§11 item 7). |
+| X7 | Other questions | V3–V6, V8–V10, V12–V15 and V17: the recommended defaults (FLOW_SPEC §21.3). V13's per-appliance size and V17 go to the backlog (§12.5 DF5, DF4). |
+| X8 | Build order | New screens and a live link sooner: **2b.9** cook-day schedule → **2b.10** smart prep data model (including meals that draw from several prep batches) → **2b.7** the new plan screens, built to show both single-recipe meals and assemblies (batch view, sources per meal, Prep notes row, cook-day timeline) → **2b.13** a deploy step (Vercel + Neon per `docs/deploy.md`, with the pre-deploy list, PD1 first) → **2b.11** smart prep solver → **2b.12** smart prep ideas → **2b.6** swap (with Not for me) → **2b.8** What should I buy?. Consequences (mine, in §9 "How the steps run"): 2b.7 takes the read side of 2b.11's plan view data; the swap screens and Not for me move to 2b.6; the fifth tile shows "coming soon" until 2b.11. |
+| X9 | Next | Step 2b.9 per this plan. |
+
 ### 12.2 Remaining questions (from applying your answers)
 
 - **Phase 2b questions:** all answered (FLOW_SPEC §18). None open.
@@ -3579,7 +3662,7 @@ your instruction; real design decisions stop and wait):
 
 ### 12.4 Pre-deploy list (fix before the first cloud deploy)
 
-Started 2026-10-10 (H6). Each item is done before `docs/deploy.md` is followed for real.
+Started 2026-10-10 (H6). Each item is done before `docs/deploy.md` is followed for real, in step 2b.13 (X8).
 
 - **PD1. Login rate limit keyed on the real client address.** Today `client_address()` (`api/routes/auth.py`) trusts `X-Real-IP` / `X-Forwarded-For` whenever it runs on Vercel and otherwise uses the socket's peer, which behind the Next dev proxy is the proxy itself, so every device shares one lockout counter. Fix: read `X-Forwarded-For` only when the request comes from the trusted proxy (a configured proxy address or Vercel's own header), take the client entry that proxy appended, and fall back to the peer address otherwise. Test: two clients behind the proxy get separate counters, and a client can't pick its own key by sending the header directly.
 
@@ -3596,6 +3679,10 @@ Recorded so they aren't lost; each gets a phase when you schedule it.
   entering its label values per serving, like the protein powder's label entry (package-label nutrition, values per
   serving, USDA filling nothing). Scheduled together with DF1, since both are "Can't find it?" in the add flow.
 - **Daily habit items** (M19) are placed with Phase 4 (see its section).
+- **DF4. Smart prep in What should I buy?** (V17, X7, 2026-10-11): grocery advice plans dishes in 2b.8; planning it
+  with prep items and assemblies comes later.
+- **DF5. Appliance sizes** (V13, X7, 2026-10-11): a size choice per appliance in Settings → Equipment (a bigger air
+  fryer basket, a second oven rack), replacing the capacity constants of FLOW_SPEC §20.2 for that appliance.
 
 ---
 

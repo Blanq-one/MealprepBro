@@ -94,7 +94,7 @@ Safe internal temperatures and storage/reheating guidance come from a hardcoded 
 - Phase 0: Data foundation (schema, units, USDA nutrition cache, deterministic calculators, tests). No LLM.
 - Phase 1: Planning brain (constraint object, LLM adapter, candidate generation, solver, validator, retry loop). Backend only.
 - Phase 2: Mobile PWA (weekly plan, recipe view, inventory, grocery list).
-- Phase 2b: Cook-first flow (4 tabs, Cook flow, favorites and save for later, onboarding, swap, grocery advice). Built in nine steps, one step per session, in the order 2b.1, 2b.2, 2b.3a, 2b.4, 2b.3b, 2b.5–2b.8; each step ends like a phase.
+- Phase 2b: Cook-first flow (4 tabs, Cook flow, favorites and save for later, onboarding, meal prep with parallel cooking and smart prep, swap, grocery advice, first cloud deploy). Built in fourteen steps, one step per session, in the order 2b.1, 2b.2, 2b.3a, 2b.4, 2b.3b, 2b.5, 2b.9, 2b.10, 2b.7, 2b.13 (deploy), 2b.11, 2b.12, 2b.6, 2b.8; each step ends like a phase.
 - Phase 3: Feedback loop (ratings, recipe versioning, preference profile, Cook Again).
 - Phase 4: Daily overrides (time/mood swaps for one day, dynamic calorie rebalancing, strict-daily vs weekly mode).
 - Phase 5: Grocery intelligence (price history, deal detection, seasonal tags, grocery list modes, cart optimizer).

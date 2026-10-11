@@ -1616,7 +1616,7 @@ A user-editable variety cap stays deferred (your carried decision). The one exce
 | F23 | C6 lists days and meal rows; freeze and spoil notes collapse into one Prep notes row (H4) | **Batch view (2b.7):** each cook day lists every batch, its portion count and where each portion goes ("×4 → Mon lunch, Tue dinner, Wed lunch, Sat dinner (1 to the freezer)"); each meal row shows its source ("cooked Mon" / "from freezer, cooked Mon, thaw Fri night"); "Left out" notes and freeze notes only behind Prep notes or **About this plan** | "Cook once, eat many" |
 | F24 | Swap is the only way to turn down a meal (E5) | **Not for me (2b.6, 2b.7):** on recipe pages and meal rows, separate from Swap; hides that recipe from every future suggestion and plan, logs a feedback event, undone from **Hidden recipes** in Settings. Swap still replaces just one meal | A recipe you never want again shouldn't need a swap every time |
 
-**Proposed with the smart prep and parallel cooking designs (2026-10-11, for your review; §19–§21):**
+**Added with the smart prep and parallel cooking designs (2026-10-11; approved the same day, BUILD_PLAN X1; §19–§21):**
 
 | # | Earlier decision | Change | Why |
 |---|---|---|---|
@@ -1661,11 +1661,10 @@ You accepted the defaults for all ten.
 
 ---
 
-## 19. Smart prep: "Cook basics, mix and match" (design, 2026-10-11)
+## 19. Smart prep: "Cook basics, mix and match" (design, approved 2026-10-11)
 
-*Design only, for your review: nothing here is built. The open questions (V1–V17) are in §21.3 with my recommended
-defaults, the build steps are proposed in BUILD_PLAN §9 (2b.9–2b.12), and the earlier decisions it would change are
-F25–F32 (§16).*
+*Approved 2026-10-11 (BUILD_PLAN X1). The answered questions (V1–V17) are in §21.3, the build steps in BUILD_PLAN §9
+(2b.10–2b.12, built in the order of X8), and the earlier decisions it changes are F25–F32 (§16).*
 
 ### 19.1 What it is
 
@@ -1993,10 +1992,10 @@ class PrepIdeaBatch(_Strict):
 
 ---
 
-## 20. Parallel cooking on a cook day (design, 2026-10-11)
+## 20. Parallel cooking on a cook day (design, approved 2026-10-11)
 
-*Design only, for your review. It applies to every meal-prep style (and to smart prep's cook days and finish tasks),
-to swap, and to `POST /plans`.*
+*Approved 2026-10-11 (BUILD_PLAN X1); built in step 2b.9. It applies to every meal-prep style (and to smart prep's
+cook days and finish tasks), to swap, and to `POST /plans`.*
 
 ### 20.1 Timing on steps and ideas
 
@@ -2141,7 +2140,12 @@ Sunday · about 1 h start to finish · 35 min hands-on
 
 ## 21. Build order, LLM tokens and open questions for §19–§20
 
-### 21.1 Proposed build order
+### 21.1 Build order
+
+**Approved order (2026-10-11, BUILD_PLAN X8), for new screens and a live link sooner:** 2b.9 → 2b.10 → **2b.7** (the
+plan screens for both single-recipe meals and assemblies) → **2b.13** (deploy: Vercel + Neon) → 2b.11 → 2b.12 → 2b.6
+→ 2b.8. The swap screens and Not for me move to 2b.6, the read side of the plan view data to 2b.7, and the fifth tile
+shows "coming soon" until 2b.11 (BUILD_PLAN §9). The table below is the order first proposed.
 
 Four new steps before swap, because swap (2b.6) works on the plan shape these designs change. The step numbers
 continue from 2b.8, so every earlier reference still points at the right step (as with H3). Details are in BUILD_PLAN
@@ -2179,6 +2183,16 @@ Measured today (§15.1): an ideas call ≈ 4.7K (1.5K prompt + 3.1K for 8 ideas)
   uses what it finds.
 
 ### 21.3 Open questions (each with my recommended default)
+
+**Answered 2026-10-11 (BUILD_PLAN X2–X7).** Every recommended default below was accepted, with these answers:
+- **V1:** the second official source is the USDA FSIS **FoodKeeper** data (`docs/sources/foodkeeper.json`, English),
+  transcribed in 2b.10 with a FoodKeeper citation per row (cooked rice and grains, cooked vegetables, cut fresh
+  vegetables, salads, sauces and any other gaps). Without the file, today's 3-day rule and same-day fresh items stay.
+- **V2:** never store partly cooked meat, poultry, fish or eggs.
+- **V7:** a per-day weeknight time for finish tasks, default 30 minutes, editable per day.
+- **V11:** cook-day time means start to finish; default 90 minutes; saved cook days are converted (doubled, at most
+  600).
+- **V16:** CLAUDE.md's phase outline is updated, and the build order changed (§21.1).
 
 | # | Question | Recommended default |
 |---|---|---|
