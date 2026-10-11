@@ -3,9 +3,16 @@ from fastapi import APIRouter, Query
 from app.api.deps import CurrentUser, DbSession
 from app.api.presenters import inventory_lots_out
 from app.db.models import InventoryItem
-from app.schemas.inventory import DiscardIn, InventoryLotIn, InventoryLotOut, InventoryLotPatch, VersionIn
+from app.schemas.inventory import (
+    CorrectOptionsOut,
+    DiscardIn,
+    InventoryLotIn,
+    InventoryLotOut,
+    InventoryLotPatch,
+    VersionIn,
+)
 from app.services import inventory as service
-from app.services.pantry_add import resolve_preset, version_label
+from app.services.pantry_add import correct_options, fraction_quantity, resolve_preset, version_label
 
 router = APIRouter(prefix="/api/v1/inventory", tags=["inventory"])
 
@@ -45,12 +52,22 @@ def patch_lot(
         item = service.correct_amount(
             session, user.id, item_id, preset.quantity, preset.unit, container=preset.container
         )
+    elif body.package_fraction is not None:  # what's left of the package (M2)
+        left = fraction_quantity(session, user.id, item_id, body.package_fraction)
+        item = service.set_quantity(session, user.id, item_id, left)
     elif body.quantity is not None and body.unit is not None:
         item = service.correct_amount(session, user.id, item_id, body.quantity, body.unit)
     elif body.quantity is not None:
         item = service.set_quantity(session, user.id, item_id, body.quantity)
     session.commit()
     return _out(session, [item])[0]
+
+
+@router.get("/{item_id}/correct-options", response_model=CorrectOptionsOut)
+def get_correct_options(item_id: int, session: DbSession, user: CurrentUser) -> CorrectOptionsOut:
+    """Correct amount, for any lot (M2): ¾, ½ or ¼ of the package it came in, another package size, or a
+    custom amount."""
+    return correct_options(session, user.id, item_id)
 
 
 @router.post("/{item_id}/version", response_model=InventoryLotOut)

@@ -118,11 +118,11 @@ def test_pantry_fit_use_up_missing_and_could_buy_components():
     assert c["use_up"] == Decimal("0.5000")
     assert c["missing"] == Decimal("-0.8000")  # −0.6 without a substitute, −0.2 with one
     assert c["could_buy"] == Decimal("-0.2000")  # the could-buy line and the top-up
-    assert c["mood_match"] == Decimal("0.1000")
+    assert "mood_match" not in c  # the mood is a section now (M10), not a score term
     assert r.score == sum(c.values())
     assert r.cash_cents == 300 + 200 + 129  # what you'd buy now: the top-up, the missing sauce, the could-buy
     assert r.missing_count == 2
-    assert r.why == ("Uses 2 of your items", "Uses up your item 1")
+    assert r.why == ("Uses up your item 1",)  # the card's Uses line names your items: no chip for it (M11)
 
 
 def test_the_use_up_bonus_stops_at_one():
@@ -246,7 +246,8 @@ def test_hard_filters_record_their_reason():
         candidate(10, ingredient_ids=frozenset({11}), mood=RecipeMood.FANCY, total_minutes=45),
     ]
     out, filtered = ranked(cands, q, rules)
-    assert [r.candidate.version_id for r in out] == [9]
+    # mood is a preference (M10): the Fancy recipe is not filtered; it comes after, under "A bit more effort"
+    assert [(r.candidate.version_id, r.section) for r in out] == [(9, "match"), (6, "more_effort")]
     reasons = {f.candidate.version_id: f.reason for f in filtered}
     assert reasons == {
         1: "excluded",
@@ -254,12 +255,11 @@ def test_hard_filters_record_their_reason():
         3: "frequency_cap",
         4: "frequency_cap",
         5: "equipment",
-        6: "mood",
         7: "time",
         8: "nutrition_incomplete",
-        10: "held",  # held outranks mood and time
+        10: "held",  # held outranks time
     }
-    assert set(next(f for f in filtered if f.candidate.version_id == 10).codes) == {"held", "mood", "time"}
+    assert set(next(f for f in filtered if f.candidate.version_id == 10).codes) == {"held", "time"}
     assert top_filter(filtered) == "held"  # held and frequency_cap remove two each: the more important wins
 
 
@@ -294,9 +294,15 @@ def test_a_good_match_uses_your_protein_or_carb_with_at_most_two_missing_without
     good = {r.candidate.version_id: r.good_match for r in out}
     assert good == {1: True, 2: False, 3: False}
     assert good_matches(out) == 1 and ideas_needed(out)
-    # an empty pantry: every recipe is equally missing, so passing the filters is enough
+    # an empty pantry: every recipe is equally missing, so the mood is enough
     out, _ = ranked([ok, too_many, side_only], empty=True)
-    assert good_matches(out) == 3 and not ideas_needed(out)
+    assert good_matches(out) == 3 and ideas_needed(out)  # M14: fewer than 6 good matches asks for ideas
+    six = [candidate(i, (have(1, "protein"),)) for i in range(1, 7)]
+    assert not ideas_needed(ranked(six)[0])
+    # a recipe in another mood is shown (under its section) but isn't a good match (M10)
+    fancy = candidate(7, (have(1, "protein"),), mood=RecipeMood.FANCY)
+    out, _ = ranked([*six[:5], fancy])
+    assert [r.section for r in out][-1] == "more_effort" and good_matches(out) == 5 and ideas_needed(out)
 
 
 # ---------------- on the seed library ----------------
@@ -310,46 +316,60 @@ def test_golden_ordering_with_a_pantry_of_chicken_thighs_spinach_and_tortillas(a
     stock_thighs_spinach_tortillas(seeded_db)
     events = meal_now(api, slot="dinner")
     cards = results(events)
-    assert titles(cards) == [
+    assert len(cards) == 25  # every dinner seed: your mood only orders them (M10)
+    assert titles(cards)[:8] == [
         "Chicken and spinach gravy",  # uses all three, and the spinach before it expires
         "Everyday chicken curry gravy",
-        "Air-fryer chicken over rice with broccoli",  # three lines covered by substitutes you have
+        "Lemon garlic salmon with rice and broccoli",  # its protein and carb are swaps you have
         "Sheet-pan chicken and peppers over rice",
         "Yogurt chicken gravy",
-        "Chicken over rice with garlic yogurt sauce",
+        "Air-fryer chicken wings with sweet potato wedges",
+        "Shakshuka with warm tortillas",
+        "Roast bone-in chicken breasts with quinoa and asparagus",
     ]
+    sections = [
+        c["section"] for c in cards
+    ]  # Wednesday is medium: those first, then more effort, then simpler
+    assert sections == sorted(sections, key=["match", "more_effort", "simpler"].index)
+    assert sections.count("match") == 15 and "simpler" in sections
     top = cards[0]
     assert top["uses"] == [
         "chicken thigh, boneless skinless",
         "spinach, fresh",
         "flour tortilla (Price Rite, 37 g)",
     ]
-    assert top["why"] == ["Uses 3 of your items", "Uses up your spinach, fresh"]
-    air = cards[2]
-    assert air["uses"] == []
-    swaps = {m["name"]: m["substitute"] for m in air["missing"] if m["substitute"]}
+    assert top["why"] == [
+        "Uses up your spinach, fresh"
+    ]  # no "Uses 3 of your items": the uses line says it (M11)
+    air = next(c for c in cards if c["title"] == "Air-fryer chicken over rice with broccoli")
+    assert air["uses"] == [] and air["section"] == "simpler"
+    assert all(m["substitute"] is None for m in air["missing"])  # a line you can swap is never Missing (M11)
+    swaps = {s["name"]: s for s in air["swaps"]}
     # a protein keeps its protein grams: 170 g of breast per portion is matched by about 200 g of thigh
-    assert swaps["chicken breast, boneless skinless"]["name"] == "chicken thigh, boneless skinless"
-    assert swaps["chicken breast, boneless skinless"]["amount_display"].endswith(" g")
-    assert (
-        swaps["long-grain white rice (dry)"]["name"] == "flour tortilla (Price Rite, 37 g)"
-    )  # a carb, by kcal
-    assert all(s["you_have"] for s in swaps.values())
+    breast = swaps["chicken breast, boneless skinless"]
+    assert breast["substitute"]["name"] == "chicken thigh, boneless skinless"
+    assert breast["substitute"]["amount_display"].endswith(" g")
+    assert breast["display"] == (
+        "Swap: chicken thigh, boneless skinless instead of chicken breast, boneless skinless (you have it)"
+    )
+    rice = swaps["long-grain white rice (dry)"]["substitute"]
+    assert rice["name"] == "flour tortilla (Price Rite, 37 g)"  # a carb, by kcal
+    assert all(s["substitute"]["you_have"] for s in swaps.values())
     # an identical search ranks identically (and is served from the cache)
     again = meal_now(api, slot="dinner")
     assert titles(results(again)) == titles(cards) and final(again)["cached"] is True
 
 
-def test_golden_ordering_quick_and_simple_leaves_the_one_seed_that_fits(api, seeded_db):
+def test_golden_ordering_quick_and_simple_leaves_the_two_seeds_that_fit(api, seeded_db):
     stock_thighs_spinach_tortillas(seeded_db)
     events = meal_now(api, slot="dinner", goals=["quick"], time_limit_minutes=30, mood="simple")
-    assert titles(results(events)) == ["Air-fryer chicken over rice with broccoli"]
-    assert "Ready in 30 min" in results(events)[0]["why"]
+    assert titles(results(events)) == ["Air-fryer chicken over rice with broccoli", "Ground turkey tacos"]
+    assert [c["why"] for c in results(events)] == [["Ready in 30 min"], ["Ready in 25 min"]]
     nothing = meal_now(api, slot="dinner", goals=["quick"], time_limit_minutes=20, mood="simple")
     assert results(nothing) == []
-    assert (
-        final(nothing)["empty_filter"] == "mood" and final(nothing)["empty_reason"] == "Nothing fits Simple."
-    )
+    # the mood never empties the list (M10): the time limit does
+    assert final(nothing)["empty_filter"] == "time"
+    assert final(nothing)["empty_reason"] == "Nothing fits 20 minutes."
 
 
 # ---------------- the pork cap, per calendar week ----------------
@@ -452,8 +472,7 @@ def test_yellow_onion_never_becomes_spinach_on_a_card(api, seeded_db):
     curry = next(
         c for c in results(meal_now(api, slot="dinner")) if c["title"] == "Everyday chicken curry gravy"
     )
-    onion = next(m for m in curry["missing"] if m["name"] == "yellow onion")
-    assert (
-        onion["substitute"]["name"] == "red onion"
-        and onion["display"] == "yellow onion → red onion (you have it)"
-    )
+    assert all(m["name"] != "yellow onion" for m in curry["missing"])  # a swap now, not Missing (M11)
+    onion = next(s for s in curry["swaps"] if s["name"] == "yellow onion")
+    assert onion["substitute"]["name"] == "red onion"
+    assert onion["display"] == "Swap: red onion instead of yellow onion (you have it)"

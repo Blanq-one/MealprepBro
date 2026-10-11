@@ -57,7 +57,7 @@ def saved_cards(
         item = pool.item(version.id)
         if item is None:  # a recipe without ingredient lines can't be a card
             continue
-        uses, could_buy, missing = coverage_lines(item.rank_input.coverage)
+        uses, could_buy, missing, swaps = coverage_lines(item.rank_input.coverage)
         cards.append(
             SavedRecipeOut(
                 recipe_id=item.recipe.id,
@@ -73,6 +73,7 @@ def saved_cards(
                 uses=uses,
                 could_buy=could_buy,
                 missing=missing,
+                swaps=swaps,
                 saved_at=saved_at,
             )
         )

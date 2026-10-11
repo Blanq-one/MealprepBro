@@ -39,6 +39,15 @@ class MissingLineOut(BaseModel):
     display: str
 
 
+class SwapLineOut(BaseModel):
+    """A missing line you can make with something you have (M11): never "Missing"."""
+
+    ingredient_id: int
+    name: str
+    substitute: SubstituteOut
+    display: str  # "Swap: lime juice instead of lemon (you have it)"
+
+
 class LineContextOut(BaseModel):
     """What a recipe line means for the search it was opened from (C8)."""
 
@@ -56,6 +65,7 @@ class SearchContextOut(BaseModel):
     portions_display: str
     uses: list[str]
     could_buy: list[CostLineOut]
-    missing: list[MissingLineOut]
+    missing: list[MissingLineOut]  # only what you'd buy (M11)
+    swaps: list[SwapLineOut] = []  # what you can make with something you have
     lines: list[LineContextOut]
     note: str  # "Numbers are for the recipe as written."

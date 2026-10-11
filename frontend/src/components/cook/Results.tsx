@@ -7,16 +7,22 @@ import { BuildingSteps, type Stage } from "@/components/ui/BuildingSteps";
 import { RecipeCard } from "@/components/ui/RecipeCard";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { ApiError } from "@/lib/api/client";
-import type { CookAnswers, Problem, RecipeMood, Suggestion } from "@/lib/api/types";
-import { MOODS, nextQuick } from "@/lib/cook/answers";
+import type { CookAnswers, Problem, Suggestion } from "@/lib/api/types";
+import { nextQuick } from "@/lib/cook/answers";
 import { useMarks } from "@/lib/cook/marks";
 import { type StageKey, STAGES } from "@/lib/cook/stream";
-import { humanize } from "@/lib/format/labels";
 
 import { cardData, cardHref, initialMarks } from "./cards";
 import styles from "./Results.module.css";
 
 export const FIRST_PAGE = 12;
+
+/** Mood is a preference (M10): your mood's recipes first, then these, each under its heading. */
+export const SECTIONS: readonly { key: Suggestion["section"]; title: string | null }[] = [
+  { key: "match", title: null },
+  { key: "more_effort", title: "A bit more effort" },
+  { key: "simpler", title: "Simpler options" },
+];
 
 /** What C5 shows, from the live stream or a stored search. */
 export type ResultsData = {
@@ -42,11 +48,6 @@ export function emptyFixes(filter: string | null, answers: CookAnswers | null): 
     const goals = answers.goals ?? [];
     const quick = goals.includes("quick") ? goals : [...goals, "quick" as const];
     if (next !== null) fixes.push({ label: `Allow ${next} min`, answers: { ...answers, goals: quick, time_limit_minutes: next } });
-  }
-  if (answers && filter === "mood") {
-    for (const mood of MOODS.filter((m) => m !== answers.mood)) {
-      fixes.push({ label: `Try ${humanize(mood)}`, answers: { ...answers, mood: mood as RecipeMood } });
-    }
   }
   if (filter === "equipment") fixes.push({ label: "Check your equipment", href: "/settings/" });
   if (filter === "held" || filter === "excluded" || filter === "frequency_cap") fixes.push({ label: "Review held items", href: "/settings/" });
@@ -152,19 +153,26 @@ export function ResultsView({
         </>
       )}
 
-      <div className={styles.cards}>
-        {shown.map((card) => (
-          <RecipeCard
-            key={card.version_id}
-            recipe={cardData(card)}
-            href={cardHref(card, data.searchId)}
-            isFavorite={marks.favorites.has(card.recipe_id)}
-            isSaved={marks.saved.has(card.recipe_id)}
-            onToggleFavorite={() => void toggle(card.recipe_id, "favorite", card.title)}
-            onToggleSaved={() => void toggle(card.recipe_id, "saved", card.title)}
-          />
-        ))}
-      </div>
+      {SECTIONS.map(({ key, title }) => {
+        const here = shown.filter((card) => (card.section ?? "match") === key);
+        if (here.length === 0) return null;
+        return (
+          <section key={key} aria-label={title ?? "In your mood"} className={styles.cards}>
+            {title && <h2 className={styles.section}>{title}</h2>}
+            {here.map((card) => (
+              <RecipeCard
+                key={card.version_id}
+                recipe={cardData(card)}
+                href={cardHref(card, data.searchId)}
+                isFavorite={marks.favorites.has(card.recipe_id)}
+                isSaved={marks.saved.has(card.recipe_id)}
+                onToggleFavorite={() => void toggle(card.recipe_id, "favorite", card.title)}
+                onToggleSaved={() => void toggle(card.recipe_id, "saved", card.title)}
+              />
+            ))}
+          </section>
+        );
+      })}
       {!all && cards.length > FIRST_PAGE && (
         <button type="button" className="btn btn-block" onClick={() => setAll(true)}>
           Show more

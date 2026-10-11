@@ -15,7 +15,8 @@ export type RecipeCardData = {
   numbers: readonly string[]; // "540 kcal", "41 g protein", "35 min", "$2.10"
   uses?: string | null; // "Uses: chicken thigh, spinach, onion"
   could_buy?: readonly string[]; // "Could buy: chickpeas $1.29 (Stop & Shop)"
-  missing?: readonly string[]; // "Missing: lemon → lime juice (you have it)"
+  swaps?: readonly string[]; // "Swap: lime juice instead of lemon (you have it)" (M11)
+  missing?: readonly string[]; // "Missing: lemon · buy $0.79 (Stop & Shop)": only what you'd buy
   why?: readonly string[]; // "Uses 3 of your items", "ready in 35 min"
 };
 
@@ -78,6 +79,11 @@ export function RecipeCard({
       {recipe.uses && <p className={styles.line}>{recipe.uses}</p>}
       {recipe.could_buy?.map((line) => (
         <p key={line} className={styles.line}>
+          {line}
+        </p>
+      ))}
+      {recipe.swaps?.map((line) => (
+        <p key={line} className={`${styles.line} ${styles.swap}`}>
           {line}
         </p>
       ))}

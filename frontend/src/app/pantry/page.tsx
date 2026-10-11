@@ -24,8 +24,8 @@ const LOCATIONS: { key: StorageLocation; label: string }[] = [
 ];
 
 // P0 Pantry (FLOW_SPEC §9): items by location. Adding (a quick pick or a typed name) opens the add flow
-// (J4–J5: version, form, package size, Custom or Not sure); an estimated amount can be corrected, and a held
-// item that comes in versions can be set to the version on its label.
+// (J4–J5: version, form, package size, Custom or Not sure); any lot's amount can be corrected (M2: ¾, ½ or ¼
+// of its package, another size, or custom), and a held item that comes in versions can be set to its label's.
 export default function PantryPage() {
   const lots = useApi<InventoryLot[]>("/api/v1/inventory");
   const picks = useApi<QuickPick[]>("/api/v1/inventory/quick-picks");
@@ -132,11 +132,9 @@ export default function PantryPage() {
                       </div>
                       {lot.notes && <p className="small muted">{lot.notes}</p>}
                       <div className="row" style={{ flexWrap: "wrap", marginTop: 4 }}>
-                        {lot.quantity_is_estimate && (
-                          <button type="button" className="btn btn-small" disabled={!online} onClick={() => setCorrecting(lot)}>
-                            Correct amount
-                          </button>
-                        )}
+                        <button type="button" className="btn btn-small" disabled={!online} onClick={() => setCorrecting(lot)}>
+                          Correct amount
+                        </button>
                         {lot.state === "held" && lot.has_versions && (
                           <button type="button" className="btn btn-small" disabled={!online} onClick={() => setVersioning(lot)}>
                             Which version?

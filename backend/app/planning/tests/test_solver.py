@@ -513,7 +513,8 @@ def test_shop_budget_too_low_is_infeasible_and_says_what_the_plan_would_cost():
     (short,) = [d for d in result.diagnostics if d.code == "BUDGET_SHORT"]
     assert short.amount == 1347 + 499 - 500  # whole packages: the cheapest plan is $18.46
     assert "costs about $18.46 in regular groceries, $13.46 over your budget of $5.00" in short.message
-    assert "chicken about" in short.message and "rice about" in short.message
+    items = " | ".join(short.items)  # what it would buy, apart from the message (2b.4 approval, B)
+    assert "chicken about" in items and "rice about" in items
 
 
 def test_when_only_the_money_is_short_the_diagnosis_is_only_about_money():
@@ -541,7 +542,7 @@ def test_when_only_the_money_is_short_the_diagnosis_is_only_about_money():
     result = solve(f.problem(c, recipes, ing))
     assert isinstance(result, SolverInfeasible)
     assert [d.code for d in result.diagnostics] == ["BUDGET_SHORT"]
-    assert "chicken about 850 g ($42.50)" in result.diagnostics[0].message
+    assert "chicken about 850 g ($42.50)" in result.diagnostics[0].items
 
 
 def test_shop_mode_uses_inventory_first():
@@ -575,7 +576,8 @@ def test_inventory_mode_explains_exactly_what_is_missing():
     (short,) = [d for d in result.diagnostics if d.code == "INVENTORY_SHORT"]
     assert short.message.startswith("Your inventory doesn't cover this week.")
     assert "smallest top-up that makes a plan is about $13.47" in short.message
-    assert "chicken about" in short.message and "rice" not in short.message  # rice is in the cupboard
+    items = " | ".join(short.items)
+    assert "chicken about" in items and "rice" not in items  # rice is in the cupboard
 
 
 def test_a_top_up_buys_only_the_missing_items():

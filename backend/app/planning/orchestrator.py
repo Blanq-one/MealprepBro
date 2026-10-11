@@ -42,6 +42,7 @@ from app.planning.post_solve import build_rounded_plan, observed_rounding_bias, 
 from app.planning.problem import PlanningProblem, Tightening
 from app.planning.reference import load_reference
 from app.planning.rounded import RoundedPlan
+from app.planning.shortlist import FULL_SOLVE_MAX, SHORTLIST_PER_SLOT, SHORTLIST_WIDER, shortlist
 from app.planning.solver.model import (
     Diagnostic,
     EmptyCandidatePoolError,
@@ -62,6 +63,10 @@ HOLDBACK_MARGIN = {"g": Decimal(5), "ml": Decimal(5), "count": Decimal(1)}
 TARGETED_COUNT = 2
 MIN_SOLVE_SECONDS = 5.0  # a solve starts only with at least this much of the time budget left
 SOLVE_MARGIN_SECONDS = 2.0
+SHORTLIST_NOTE = (
+    "No plan fit the best-fitting recipes for each meal (up to 6 a meal were tried); the reasons below are "
+    "for those recipes."
+)
 OUT_OF_TIME_NOTE = (
     "Recipe generation stopped early: this request ran out of time ({reason}). The recipes made so far are "
     "saved, so planning again carries on from there."
@@ -115,6 +120,8 @@ def problem_json(
                     "slot": d.slot.value if d.slot else None,
                     "day": d.day.isoformat() if d.day else None,
                     "amount": d.amount,
+                    "suggested_cents": d.suggested_cents,
+                    "items": list(d.items) or None,
                 }.items()
                 if v is not None
             }
@@ -281,6 +288,31 @@ class Orchestrator:
         return max(1, min(self.settings.solver_time_limit_seconds, int(left - SOLVE_MARGIN_SECONDS)))
 
     def _solve(self, problem: PlanningProblem) -> SolverSolution | SolverInfeasible:
+        """Solve the shortlist (the best candidates per meal, planning/shortlist.py), then a wider one when
+        it can't make a plan, and the whole library only when it is small. An infeasible week is explained
+        from the last set tried."""
+        tried: set[int] = set()
+        result: SolverSolution | SolverInfeasible | None = None
+        for per_slot in (SHORTLIST_PER_SLOT, SHORTLIST_WIDER, None):
+            if per_slot is None and len(problem.candidates) > FULL_SOLVE_MAX:
+                break
+            short = problem if per_slot is None else shortlist(problem, per_slot)
+            if len(short.candidates) in tried:
+                continue
+            tried.add(len(short.candidates))
+            result = self._solve_exactly(short)
+            if isinstance(result, SolverSolution):
+                return result
+        if (
+            result is not None
+            and len(problem.candidates) > FULL_SOLVE_MAX
+            and SHORTLIST_NOTE not in self.notes
+        ):
+            self.notes.append(SHORTLIST_NOTE)
+        assert result is not None
+        return result
+
+    def _solve_exactly(self, problem: PlanningProblem) -> SolverSolution | SolverInfeasible:
         return solve(
             problem,
             time_limit_s=self._time_limit(),

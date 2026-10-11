@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models import InventoryItem
 from app.domain.inventory_math import Lot, allocate
-from app.domain.quantities import format_fraction
+from app.domain.quantities import format_fraction, scoops_text
 from app.domain.scaling import practical_us_volume
 from app.domain.units import GRAMS_PER_UNIT, ConversionError, IngredientUnits, UnitError, convert
 from app.services.ingredient_data import load_ingredients
@@ -50,8 +50,11 @@ def _trim(value: Decimal, places: int) -> str:
     return text.rstrip("0").rstrip(".") if "." in text else text
 
 
-def amount_text(quantity: Decimal, unit: str, units: str = "us") -> str:
-    """'4 oz', '1.5 lb', '113 g', '½ cup', '2'."""
+def amount_text(quantity: Decimal, unit: str, units: str = "us", iu: IngredientUnits | None = None) -> str:
+    """'4 oz', '1.5 lb', '113 g', '½ cup', '2', or '2 scoops' for a powder measured by the scoop (A1)."""
+    scoop = dict(iu.named_units).get("scoop") if iu is not None else None
+    if unit == "g" and scoop:
+        return scoops_text(quantity, scoop)
     if unit == "g":
         if units == "metric":
             return f"{_trim(quantity / 1000, 2)} kg" if quantity >= 1000 else f"{_trim(quantity, 0)} g"
@@ -98,12 +101,12 @@ def note(
     except (ConversionError, UnitError):
         return None
     if want >= have:
-        all_of = f"uses all {amount_text(have, shown, units)} you have"
-        return all_of if want == have else f"{all_of} (it needs {amount_text(want, shown, units)})"
+        all_of = f"uses all {amount_text(have, shown, units, iu)} you have"
+        return all_of if want == have else f"{all_of} (it needs {amount_text(want, shown, units, iu)})"
     if shown == "count":
         return (
-            f"uses {amount_text(want, shown, units)} of your {amount_text(have, shown, units)} · "
-            f"{amount_text(have - want, shown, units)} left after"
+            f"uses {amount_text(want, shown, units, iu)} of your {amount_text(have, shown, units, iu)} · "
+            f"{amount_text(have - want, shown, units, iu)} left after"
         )
     by_id = {lot.id: lot for lot in lots}
     used = [by_id[t.lot_id] for t in takes]
@@ -111,8 +114,8 @@ def note(
     holder = f"your {single.container}" if single is not None and single.container else "what you have"
     words = fraction_words(want / have)
     return (
-        f"uses {amount_text(want, shown, units)}, {words} {holder} · "
-        f"{amount_text(have - want, shown, units)} left after"
+        f"uses {amount_text(want, shown, units, iu)}, {words} {holder} · "
+        f"{amount_text(have - want, shown, units, iu)} left after"
     )
 
 

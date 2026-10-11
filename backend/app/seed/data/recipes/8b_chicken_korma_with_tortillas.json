@@ -1,0 +1,161 @@
+{
+ "family": "Chicken gravy with flour tortillas used as chapati",
+ "title": "Chicken korma with tortillas",
+ "description": "Mild, fragrant chicken in a cashew-yogurt gravy with cardamom and cloves, served with tortillas warmed like chapati.",
+ "meal_slots": [
+  "dinner"
+ ],
+ "mood": "fancy",
+ "cuisine": "Indian",
+ "flavor_tags": [
+  "mild",
+  "nutty",
+  "fragrant"
+ ],
+ "base_servings": 4,
+ "active_minutes": 40,
+ "total_minutes": 65,
+ "equipment": [
+  "stovetop"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Draft quantities: adjust them in the app. Freeze the korma; keep the tortillas separate.",
+ "ingredients": [
+  {
+   "ingredient": "chicken-thigh-boneless-skinless",
+   "quantity": "680",
+   "unit": "g",
+   "preparation": "bite-size pieces",
+   "role": "protein",
+   "component": "korma"
+  },
+  {
+   "ingredient": "cashews",
+   "quantity": "50",
+   "unit": "g",
+   "role": "sauce",
+   "component": "korma"
+  },
+  {
+   "ingredient": "yogurt-plain-whole",
+   "quantity": "200",
+   "unit": "g",
+   "role": "sauce",
+   "component": "korma"
+  },
+  {
+   "ingredient": "onion-yellow",
+   "quantity": "2",
+   "unit": "count",
+   "preparation": "sliced",
+   "role": "vegetable",
+   "component": "korma"
+  },
+  {
+   "ingredient": "garlic",
+   "quantity": "5",
+   "unit": "clove",
+   "preparation": "grated",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "ginger",
+   "quantity": "15",
+   "unit": "g",
+   "preparation": "grated",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "ghee",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "fat",
+   "component": "korma"
+  },
+  {
+   "ingredient": "cardamom",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "cloves",
+   "quantity": "1/4",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "cinnamon",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "bay-leaf",
+   "quantity": "1",
+   "unit": "g",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "garam-masala",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1 1/4",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "water",
+   "quantity": "250",
+   "unit": "ml",
+   "role": "other",
+   "component": "korma"
+  },
+  {
+   "ingredient": "flour-tortilla-small",
+   "quantity": "8",
+   "unit": "count",
+   "preparation": "2 per serving",
+   "role": "carb",
+   "component": "tortillas"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Soak the cashews in hot water 15 minutes, drain, then mash them to a paste with a fork (or chop very finely) and stir into the yogurt. Slice the onions and grate the ginger and garlic.",
+   "duration_minutes": 15
+  },
+  {
+   "section": "stovetop",
+   "text": "Heat the ghee in a heavy pot over medium heat with the bay leaf, cardamom, cloves and cinnamon for 30 seconds. Cook the onions until golden, 10 minutes, then the ginger and garlic for 1 minute.",
+   "duration_minutes": 11
+  },
+  {
+   "section": "stovetop",
+   "text": "Add the chicken and cook 5 minutes. Lower the heat, stir in the cashew yogurt, water and salt, cover and simmer gently, stirring often, until the chicken is cooked through, about 15 minutes. Finish with the garam masala.",
+   "duration_minutes": 20,
+   "doneness_check_for": "chicken-thigh-boneless-skinless"
+  },
+  {
+   "section": "assembly",
+   "text": "Warm each tortilla on a dry pan about 30 seconds per side, like chapati."
+  },
+  {
+   "section": "portioning",
+   "text": "Divide the korma among 4 containers. Keep 2 tortillas per serving wrapped separately."
+  },
+  {
+   "section": "storage",
+   "text": "Cool, then refrigerate in the containers."
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat covered, stirring halfway, until hot all the way through."
+  }
+ ]
+}

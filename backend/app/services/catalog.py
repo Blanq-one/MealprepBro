@@ -11,8 +11,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.models import Ingredient
+from app.domain.chicken_cuts import CutForm
 from app.schemas.seed import PantryCatalogFile, PresetOption
-from app.seed.files import DATA_DIR
+from app.seed.files import DATA_DIR, normalize_name
 
 CATALOG_PATH = DATA_DIR / "pantry_catalog.json"
 
@@ -68,6 +69,8 @@ class Catalog:
     versions_of: dict[int, Versions]  # the generic held item's id -> its versions
     generic_of: dict[int, int]  # a version's ingredient id -> its generic held item's id
     presets_of: dict[int, tuple[PresetOption, ...]]
+    cut_of: dict[int, CutForm]  # chicken cuts' bone and skin (M6)
+    close_of: dict[str, int]  # a normalized name -> its closest ingredient, always labeled (M7)
 
     def default_preset(self, ingredient_id: int) -> PresetOption | None:
         return next((o for o in self.presets_of.get(ingredient_id, ()) if o.default), None)
@@ -84,6 +87,7 @@ def load_catalog(session: Session) -> Catalog:
         c.ingredient for v in cat.versions for c in v.choices if c.ingredient
     }
     slugs |= {p.ingredient for p in cat.presets}
+    slugs |= {c.ingredient for c in cat.chicken_cuts} | {c.ingredient for c in cat.close_matches}
     ids = dict(
         session.execute(select(Ingredient.slug, Ingredient.id).where(Ingredient.slug.in_(slugs)))
         .tuples()
@@ -121,4 +125,6 @@ def load_catalog(session: Session) -> Catalog:
         versions_of=versions_of,
         generic_of=generic_of,
         presets_of={ids[p.ingredient]: tuple(p.options) for p in cat.presets},
+        cut_of={ids[c.ingredient]: CutForm(c.bone, c.skin) for c in cat.chicken_cuts},
+        close_of={normalize_name(c.alias): ids[c.ingredient] for c in cat.close_matches},
     )

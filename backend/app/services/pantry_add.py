@@ -8,13 +8,16 @@ from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
-from app.domain.amount_options import custom_units, noun
+from app.db.models import InventoryItem
+from app.domain.amount_options import amount_display, amount_options, custom_units, noun, option_quantity
 from app.domain.enums import StorageLocation
 from app.domain.exclusions import ExclusionStatus
 from app.domain.expiry import ShelfLife, estimate_expiry
 from app.domain.units import to_base
 from app.schemas.inventory import (
     AddOptionsOut,
+    AmountOptionOut,
+    CorrectOptionsOut,
     CustomUnitOut,
     DietState,
     FormOut,
@@ -25,7 +28,7 @@ from app.schemas.inventory import (
 from app.services.catalog import Catalog, Versions, catalog_file, load_catalog
 from app.services.exclusions import DietStatus, diet_status
 from app.services.ingredient_data import IngredientData, load_ingredients
-from app.services.inventory import InventoryError
+from app.services.inventory import InventoryError, original_quantity
 from app.services.settings import load_settings
 
 
@@ -101,7 +104,9 @@ def _custom_units(catalog: Catalog, data: IngredientData, us: bool) -> list[Cust
     return [CustomUnitOut(unit=u.unit, label=u.label, step=u.step, start=u.start) for u in units]
 
 
-def _versions_out(versions: Versions, data: dict[int, IngredientData], status: DietStatus) -> VersionsOut:
+def _versions_out(
+    versions: Versions, data: dict[int, IngredientData], status: DietStatus, usual: str | None = None
+) -> VersionsOut:
     choices = []
     for c in versions.choices:
         if c.ingredient_id is None:
@@ -130,7 +135,7 @@ def _versions_out(versions: Versions, data: dict[int, IngredientData], status: D
                 nutrition_estimated=c.nutrition_estimated,
             )
         )
-    return VersionsOut(question=versions.question, guidance=versions.guidance, choices=choices)
+    return VersionsOut(question=versions.question, guidance=versions.guidance, choices=choices, usual=usual)
 
 
 def held_versions(session: Session, user_id: int, ingredient_ids: Iterable[int]) -> dict[int, VersionsOut]:
@@ -140,9 +145,10 @@ def held_versions(session: Session, user_id: int, ingredient_ids: Iterable[int])
     if not held:
         return {}
     ids = {c.ingredient_id for v in held.values() for c in v.choices if c.ingredient_id is not None}
-    data = load_ingredients(session, ids)
+    data = load_ingredients(session, ids | set(held))
     status = diet_status(session, user_id)
-    return {i: _versions_out(v, data, status) for i, v in held.items()}
+    usual = load_settings(session, user_id).usual_versions
+    return {i: _versions_out(v, data, status, usual.get(data[i].slug)) for i, v in held.items()}
 
 
 def add_options(session: Session, user_id: int, ingredient_id: int) -> AddOptionsOut:
@@ -180,7 +186,8 @@ def add_options(session: Session, user_id: int, ingredient_id: int) -> AddOption
     else:
         forms_out = [form_out("as_is", me.name, me)]
         selected = "as_is"
-    versions_out = _versions_out(versions, data, status) if versions is not None else None
+    usual = load_settings(session, user_id).usual_versions.get(me.slug)
+    versions_out = _versions_out(versions, data, status, usual) if versions is not None else None
     return AddOptionsOut(
         ingredient_id=me.id,
         name=me.name,
@@ -191,6 +198,51 @@ def add_options(session: Session, user_id: int, ingredient_id: int) -> AddOption
         forms=forms_out,
         selected_form=selected,
     )
+
+
+CORRECT_FRACTIONS = ("three_quarters", "half", "quarter")  # M2: quick taps for what's left
+
+
+def _lot(session: Session, user_id: int, item_id: int) -> InventoryItem:
+    item = session.get(InventoryItem, item_id)
+    if item is None or item.user_id != user_id:
+        raise InventoryError(f"inventory item {item_id} not found")
+    return item
+
+
+def correct_options(session: Session, user_id: int, item_id: int) -> CorrectOptionsOut:
+    """Ways to correct any lot (M2): ¾, ½ or ¼ of the package it came in, another package size, or a custom
+    amount. Every amount and display string is computed here."""
+    item = _lot(session, user_id, item_id)
+    data = load_ingredients(session, [item.ingredient_id])[item.ingredient_id]
+    catalog = load_catalog(session)
+    us = load_settings(session, user_id).units == "us"
+    piece = noun(data.name, dict(data.units.named_units))
+    full = original_quantity(session, user_id, item_id)
+    shown = amount_display(full, item.unit, piece, us)
+    fractions = [
+        AmountOptionOut(key=o.key, quantity=o.quantity, unit=o.unit, display=o.display)
+        for o in amount_options(full, item.unit, piece, data.count_rounding_step, us)
+        if o.key in CORRECT_FRACTIONS
+    ]
+    return CorrectOptionsOut(
+        lot_id=item.id,
+        name=data.name,
+        display=amount_display(item.quantity, item.unit, piece, us),
+        estimated=bool(item.quantity_is_estimate),
+        package_display=f"your {item.container}: {shown}" if item.container else shown,
+        fractions=fractions,
+        presets=_presets(catalog, data),
+        custom_units=_custom_units(catalog, data, us),
+    )
+
+
+def fraction_quantity(session: Session, user_id: int, item_id: int, key: str) -> Decimal:
+    """What's left as a fraction of the lot's package, in its base unit (M2)."""
+    item = _lot(session, user_id, item_id)
+    data = load_ingredients(session, [item.ingredient_id])[item.ingredient_id]
+    full = original_quantity(session, user_id, item_id)
+    return option_quantity(key, full, item.unit, data.count_rounding_step)  # type: ignore[arg-type]
 
 
 @dataclass(frozen=True)

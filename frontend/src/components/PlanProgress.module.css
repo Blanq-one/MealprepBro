@@ -4,3 +4,14 @@
   gap: 8px;
   font-size: 1.05rem;
 }
+
+.diagnostic {
+  margin-top: 8px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 6px 0;
+}

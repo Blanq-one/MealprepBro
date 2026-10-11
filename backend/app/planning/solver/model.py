@@ -114,6 +114,10 @@ class Diagnostic:
     slot: MealSlot | None = None
     day: date | None = None
     amount: int | None = None
+    # a money shortfall's fix (2b.4 approval, B): the limit to allow, rounded up to whole dollars, and what
+    # it would buy, so the app can offer "Allow a $37 top-up" and "See what it would buy"
+    suggested_cents: int | None = None
+    items: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

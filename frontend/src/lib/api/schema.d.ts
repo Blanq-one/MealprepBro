@@ -457,6 +457,27 @@ export interface paths {
         patch: operations["patch_lot_api_v1_inventory__item_id__patch"];
         trace?: never;
     };
+    "/api/v1/inventory/{item_id}/correct-options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Correct Options
+         * @description Correct amount, for any lot (M2): ¾, ½ or ¼ of the package it came in, another package size, or a
+         *     custom amount.
+         */
+        get: operations["get_correct_options_api_v1_inventory__item_id__correct_options_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/inventory/{item_id}/discard": {
         parameters: {
             query?: never;
@@ -1003,6 +1024,8 @@ export interface components {
             name: string;
             /** Optional */
             optional: boolean;
+            /** Portion Note */
+            portion_note?: string | null;
             /** Preparation */
             preparation: string | null;
         };
@@ -1377,6 +1400,30 @@ export interface components {
             title: string;
         };
         /**
+         * CorrectOptionsOut
+         * @description GET /inventory/{id}/correct-options (M2): ways to say how much of a lot is really there. Every amount
+         *     and display string is code-computed; send a fraction's key as `package_fraction`, a preset's key as
+         *     `preset`, or a custom amount as `quantity` + `unit`.
+         */
+        CorrectOptionsOut: {
+            /** Custom Units */
+            custom_units: components["schemas"]["CustomUnitOut"][];
+            /** Display */
+            display: string;
+            /** Estimated */
+            estimated: boolean;
+            /** Fractions */
+            fractions: components["schemas"]["AmountOptionOut"][];
+            /** Lot Id */
+            lot_id: number;
+            /** Name */
+            name: string;
+            /** Package Display */
+            package_display: string;
+            /** Presets */
+            presets: components["schemas"]["PresetOut"][];
+        };
+        /**
          * CostLineOut
          * @description Something to buy for this meal: whole packages at the first of your stores that prices it.
          */
@@ -1520,6 +1567,11 @@ export interface components {
             name: string;
             /** Note */
             note: string | null;
+            /**
+             * Slug
+             * @default
+             */
+            slug: string;
             versions?: components["schemas"]["VersionsOut"] | null;
         };
         /** DiscardIn */
@@ -1932,10 +1984,17 @@ export interface components {
         IngredientSearchHitOut: {
             /** Category */
             category: string;
+            /**
+             * Closest Match
+             * @default false
+             */
+            closest_match: boolean;
             /** Frequency Caps */
             frequency_caps: string[];
             /** Id */
             id: number;
+            /** Label */
+            label?: string | null;
             /** Matched Alias */
             matched_alias: string;
             /** Name */
@@ -2040,6 +2099,11 @@ export interface components {
             notes?: string | null;
             /** Opened On */
             opened_on?: string | null;
+            /**
+             * Package Fraction
+             * @description what's left: full, ¾, ½ or ¼ of the lot's package (M2)
+             */
+            package_fraction?: ("full" | "three_quarters" | "half" | "quarter") | null;
             /**
              * Preset
              * @description a package preset key: the lot holds that amount
@@ -2868,8 +2932,16 @@ export interface components {
             recipe_id: number;
             /** Score */
             score: string;
+            /**
+             * Section
+             * @default match
+             * @enum {string}
+             */
+            section: "match" | "more_effort" | "simpler";
             /** Steps Ready */
             steps_ready: boolean;
+            /** Swaps */
+            swaps?: components["schemas"]["SwapLineOut"][];
             /** Title */
             title: string;
             /** Uses */
@@ -2974,6 +3046,11 @@ export interface components {
         };
         /** RenderedLineOut */
         RenderedLineOut: {
+            /**
+             * Amount Display
+             * @default
+             */
+            amount_display: string;
             /** Display */
             display: string;
             /** Ingredient Id */
@@ -2982,6 +3059,8 @@ export interface components {
             name: string;
             /** Optional */
             optional: boolean;
+            /** Portion Note */
+            portion_note?: string | null;
             /** Preparation */
             preparation: string | null;
         };
@@ -3047,6 +3126,8 @@ export interface components {
             saved_at: string;
             /** Steps Ready */
             steps_ready: boolean;
+            /** Swaps */
+            swaps?: components["schemas"]["SwapLineOut"][];
             /** Title */
             title: string;
             /** Uses */
@@ -3074,6 +3155,11 @@ export interface components {
             portions_display: string;
             /** Search Id */
             search_id: number;
+            /**
+             * Swaps
+             * @default []
+             */
+            swaps: components["schemas"]["SwapLineOut"][];
             /** Uses */
             uses: string[];
         };
@@ -3223,6 +3309,19 @@ export interface components {
             /** Value */
             value: string;
         };
+        /**
+         * SwapLineOut
+         * @description A missing line you can make with something you have (M11): never "Missing".
+         */
+        SwapLineOut: {
+            /** Display */
+            display: string;
+            /** Ingredient Id */
+            ingredient_id: number;
+            /** Name */
+            name: string;
+            substitute: components["schemas"]["SubstituteOut"];
+        };
         /** TodayMealOut */
         TodayMealOut: {
             /** Cook Batch Id */
@@ -3354,6 +3453,10 @@ export interface components {
              * @enum {string}
              */
             units: "us" | "metric";
+            /** Usual Versions */
+            usual_versions?: {
+                [key: string]: string;
+            };
             /**
              * Weekly Under Pct
              * @default 3
@@ -3409,6 +3512,8 @@ export interface components {
             guidance: string;
             /** Question */
             question: string;
+            /** Usual */
+            usual?: string | null;
         };
         /**
          * Weekday
@@ -4198,6 +4303,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InventoryLotOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_correct_options_api_v1_inventory__item_id__correct_options_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CorrectOptionsOut"];
                 };
             };
             /** @description Validation Error */

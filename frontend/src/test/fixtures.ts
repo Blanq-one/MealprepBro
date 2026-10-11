@@ -57,6 +57,7 @@ export function userSettings(overrides: Partial<UserSettings> = {}): UserSetting
     default_portion_size: "normal",
     region_code: "MA",
     units: "us",
+    usual_versions: {},
     ...overrides,
   };
 }
@@ -66,8 +67,8 @@ export function settingsOut(overrides: Partial<UserSettings> = {}): SettingsOut 
     settings: userSettings(overrides),
     preferences: [],
     diet_review: [
-      { ingredient_id: 40, name: "gelatin, unflavored", note: "Source not stated; may be bovine.", decision: "held" },
-      { ingredient_id: 41, name: "marshmallows", note: null, decision: "held" },
+      { ingredient_id: 40, slug: "gelatin-unflavored", name: "gelatin, unflavored", note: "Source not stated; may be bovine.", decision: "held" },
+      { ingredient_id: 41, slug: "marshmallows", name: "marshmallows", note: null, decision: "held" },
     ],
   };
 }
@@ -363,7 +364,17 @@ export function recipe(overrides: Partial<RecipeVersion> = {}): RecipeVersion {
     active_minutes: 30,
     total_minutes: 55,
     time_note: "",
-    lines: [{ ingredient_id: 1, name: "chicken thigh, boneless skinless", display: "680 g", preparation: "cubed", optional: false }],
+    lines: [
+      {
+        ingredient_id: 1,
+        name: "chicken thigh, boneless skinless",
+        display: "680 g chicken thigh, boneless skinless",
+        amount_display: "680 g",
+        portion_note: "170 g per portion · 680 g for the batch of 4",
+        preparation: "cubed",
+        optional: false,
+      },
+    ],
     steps: [
       { section: "prep", text: "Cut the chicken into 1-inch pieces.", duration_minutes: null, appliance_temp_f: null, safety_note: null, added_by_app: false },
       {
@@ -423,7 +434,7 @@ export function suggestion(overrides: Partial<Suggestion> = {}): Suggestion {
     portions: 1,
     portion_size: "normal",
     portions_display: "1 portion",
-    numbers: ["540 kcal", "41 g protein", "35 min", "$2.10 a portion est."],
+    numbers: ["540 kcal", "41 g protein", "35 min", "$2.10 a portion est.", "$1.29 est. to buy today"],
     uses: ["chicken thigh, boneless skinless", "spinach"],
     could_buy: [
       { ingredient_id: 7, name: "chickpeas", cost_cents: 129, cost_display: "$1.29 est.", store: "Stop & Shop", is_estimate: true, display: "chickpeas $1.29 est. (Stop & Shop)" },
@@ -438,9 +449,18 @@ export function suggestion(overrides: Partial<Suggestion> = {}): Suggestion {
         display: "lemon → lime juice (you have it)",
       },
     ],
-    why: ["Uses 2 of your items", "ready in 35 min"],
+    swaps: [
+      {
+        ingredient_id: 10,
+        name: "yellow onion",
+        substitute: { ingredient_id: 11, name: "red onion", amount_display: "1", you_have: true, note: null },
+        display: "Swap: red onion instead of yellow onion (you have it)",
+      },
+    ],
+    why: ["ready in 35 min"],
     score: "1.25",
     good_match: true,
+    section: "match",
     ...overrides,
   };
 }

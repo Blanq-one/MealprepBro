@@ -40,11 +40,12 @@ describe("C5 results for a meal now", () => {
     view();
     const card = screen.getByRole("article");
     expect(within(card).getByRole("link", { name: "Everyday chicken curry" })).toHaveAttribute("href", expect.stringMatching(/^\/recipe\/?\?version=21&search=5$/));
-    expect(within(card).getByText("540 kcal · 41 g protein · 35 min · $2.10 a portion est.")).toBeInTheDocument();
+    expect(within(card).getByText("540 kcal · 41 g protein · 35 min · $2.10 a portion est. · $1.29 est. to buy today")).toBeInTheDocument(); // M12
     expect(within(card).getByText("Uses: chicken thigh, boneless skinless, spinach")).toBeInTheDocument();
     expect(within(card).getByText("Could buy: chickpeas $1.29 est. (Stop & Shop)")).toBeInTheDocument();
-    expect(within(card).getByText("Missing: lemon → lime juice (you have it)")).toBeInTheDocument();
-    expect(within(card).getByText("Uses 2 of your items · ready in 35 min")).toBeInTheDocument();
+    expect(within(card).getByText("Swap: red onion instead of yellow onion (you have it)")).toBeInTheDocument(); // M11
+    expect(within(card).getByText("ready in 35 min")).toBeInTheDocument();
+    expect(within(card).queryByText(/Uses \d+ of your items/)).toBeNull(); // the Uses line already names them
     // no number on the card that the server didn't send
     const numbers = card.textContent?.match(/\d+(\.\d+)?/g) ?? [];
     const sent = JSON.stringify(suggestion());
@@ -79,8 +80,24 @@ describe("C5 results for a meal now", () => {
     expect(onRerun).toHaveBeenCalledWith(expect.objectContaining({ time_limit_minutes: 30, mood: "fancy" }));
     expect(screen.getByRole("button", { name: "Write new recipes (coming soon)" })).toBeDisabled();
     expect(screen.queryByRole("button", { name: "More ideas" })).not.toBeInTheDocument();
-    expect(emptyFixes("mood", answers).map((f) => f.label)).toEqual(["Try Simple", "Try Medium", "Write new recipes (coming soon)"]);
+    expect(emptyFixes("time", { ...answers, time_limit_minutes: 120 }).map((f) => f.label)).toEqual(["Write new recipes (coming soon)"]);
     expect(emptyFixes("equipment", answers)[0]).toEqual({ label: "Check your equipment", href: "/settings/" });
+  });
+
+  it("mood is a preference: your mood's recipes first, then 'A bit more effort' and 'Simpler options' (M10)", () => {
+    const cards = [
+      suggestion({ version_id: 1, recipe_id: 1, title: "In your mood", section: "match" }),
+      suggestion({ version_id: 2, recipe_id: 2, title: "Fancier", section: "more_effort" }),
+      suggestion({ version_id: 3, recipe_id: 3, title: "Simpler", section: "simpler" }),
+    ];
+    view({ data: data({ suggestions: cards }) });
+    const effort = screen.getByRole("region", { name: "A bit more effort" });
+    expect(within(effort).getByRole("heading", { name: "A bit more effort" })).toBeInTheDocument();
+    expect(within(effort).getByRole("link", { name: "Fancier" })).toBeInTheDocument();
+    expect(within(screen.getByRole("region", { name: "Simpler options" })).getByRole("link", { name: "Simpler" })).toBeInTheDocument();
+    expect(within(screen.getByRole("region", { name: "In your mood" })).getByRole("link", { name: "In your mood" })).toBeInTheDocument();
+    const order = screen.getAllByRole("article").map((a) => within(a).getByRole("link").textContent);
+    expect(order).toEqual(["In your mood", "Fancier", "Simpler"]);
   });
 
   it("loading shows the building steps and skeleton cards", () => {

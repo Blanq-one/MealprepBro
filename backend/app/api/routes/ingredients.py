@@ -34,6 +34,8 @@ def search_ingredients(
             status=h.status.value,
             reasons=list(h.reasons),
             frequency_caps=list(h.frequency_caps),
+            closest_match=h.closest_match,
+            label=h.label,
         )
         for h in service.search(session, user.id, q, limit)
     ]

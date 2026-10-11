@@ -34,7 +34,7 @@ from app.db.models import (
 from app.domain.enums import PortionSize
 from app.domain.expiry import ShelfLife, estimate_expiry
 from app.domain.inventory_math import Lot, allocate
-from app.domain.quantities import format_quantity
+from app.domain.quantities import format_quantity, portion_note
 from app.domain.units import ConversionError, convert, grams_of
 from app.planning.reference import daily_values
 from app.planning.rendering import LineInput as RenderLine
@@ -45,7 +45,7 @@ from app.services.errors import ConflictError
 from app.services.ingredient_data import IngredientData, load_ingredients
 from app.services.inventory import consume
 from app.services.plans import amount_display
-from app.services.recipes import VersionView
+from app.services.recipes import VersionView, shown_in
 from app.services.settings import load_settings
 
 Q3 = Decimal("0.001")
@@ -215,7 +215,8 @@ class BatchView:
     batch: PlanCookBatch
     plan: MealPlan
     version: VersionView
-    lines: list[tuple[PlanBatchIngredient, str, str, str | None, bool]]  # row, name, display, prep, optional
+    # row, name, display, prep, optional, per-portion note ("1 scoop per portion · 4 scoops for the batch")
+    lines: list[tuple[PlanBatchIngredient, str, str, str | None, bool, str | None]]
     meals: list[PlanMeal]
     package_notes: list[str]
     freeze_notes: list[str]
@@ -252,7 +253,7 @@ def batch_view(session: Session, user_id: int, batch_id: int) -> BatchView:
     data = load_ingredients(session, {row.ingredient_id for row in rows})
     calc_lines: list[CalcLine] = []
     render_lines: list[RenderLine] = []
-    shown: list[tuple[PlanBatchIngredient, str, str, str | None, bool]] = []
+    shown: list[tuple[PlanBatchIngredient, str, str, str | None, bool, str | None]] = []
     for row in rows:
         d = data[row.ingredient_id]
         source = authored.get(row.recipe_ingredient_id or 0)
@@ -262,6 +263,7 @@ def batch_view(session: Session, user_id: int, batch_id: int) -> BatchView:
             amount = convert(row.quantity, row.unit, unit, d.units) if unit != row.unit else row.quantity
         except ConversionError:
             amount, unit = row.quantity, row.unit
+        amount, unit = shown_in(amount, unit, d)  # scoop-based items in scoops (A1)
         calc_lines.append(CalcLine(row.ingredient_id, row.quantity, row.unit, optional))
         render_lines.append(
             RenderLine(
@@ -269,7 +271,7 @@ def batch_view(session: Session, user_id: int, batch_id: int) -> BatchView:
                 d.name,
                 amount,
                 unit,
-                grams_of(row.quantity, row.unit, d.units),
+                grams_of(row.quantity, row.unit, d.units) * d.profile.edible_fraction,  # M5
                 source.role if source is not None else "other",
                 d.safety_category,
                 source.preparation if source is not None else None,
@@ -277,7 +279,14 @@ def batch_view(session: Session, user_id: int, batch_id: int) -> BatchView:
             )
         )
         shown.append(
-            (row, d.name, format_quantity(amount, unit), source.preparation if source else None, optional)
+            (
+                row,
+                d.name,
+                format_quantity(amount, unit),
+                source.preparation if source else None,
+                optional,
+                portion_note(amount, unit, batch.portions),
+            )
         )
     calc = calculate(session, calc_lines, batch.portions)
     steps = [

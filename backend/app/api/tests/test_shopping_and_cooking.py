@@ -205,14 +205,19 @@ def test_cooking_the_week_leaves_exactly_the_plans_expected_remainder(api, week,
 def test_an_open_package_is_used_first_and_its_remainder_gets_a_new_use_by(api, week, seeded_db):
     plan_id, _ = week
     user = current_user(seeded_db)
-    batch = seeded_db.scalars(
+    batches = seeded_db.scalars(
         select(PlanCookBatch).where(PlanCookBatch.meal_plan_id == plan_id).order_by(PlanCookBatch.cook_on)
-    ).first()
-    detail = api.get(f"/api/v1/cook-batches/{batch.id}").json()
-    rice = next((ln for ln in detail["lines"] if "rice" in ln["name"]), None)
-    assert detail["recipe"]["steps"] and detail["lines"] and detail["meals"]
-    if rice is None:
-        pytest.skip("the first batch has no rice")
+    ).all()
+    batch, detail, rice = None, None, None
+    for candidate in batches:  # the first batch with rice (the 47-recipe library may not start with one)
+        detail = api.get(f"/api/v1/cook-batches/{candidate.id}").json()
+        assert detail["recipe"]["steps"] and detail["lines"] and detail["meals"]
+        rice = next((ln for ln in detail["lines"] if "rice" in ln["name"]), None)
+        if rice is not None:
+            batch = candidate
+            break
+    if batch is None or rice is None:
+        pytest.skip("no batch this week has rice")
     rice_id = rice["ingredient_id"]
     pantry = StorageLocation.PANTRY
     fresh = add_lot(

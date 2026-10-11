@@ -12,7 +12,6 @@ import { TileGrid } from "@/components/ui/TileGrid";
 import { VersionChoices } from "@/components/pantry/VersionChoices";
 import { ToggleRow } from "@/components/ui/ToggleRow";
 import type { CookDay, DietReview, Equipment, MealSlot, RecipeMood, SlotAllocation, Store, UserSettings } from "@/lib/api/types";
-import { setUsualVersion, usualVersions } from "@/lib/cook/usualVersions";
 import { SLOT_ICONS, SLOT_ORDER } from "@/lib/format/icons";
 import { grouped, slotLabel } from "@/lib/format/labels";
 import {
@@ -477,11 +476,11 @@ export function PorkControl({ settings, onChange }: Props) {
 
 /** Possibly-beef items: held until you allow one. A change is saved at once (an ingredient decision, not a
  * setting); offline the switches are off. */
-/** A held item that comes in versions (J4): the versions with the label guidance. Picking your usual one only
- * pre-selects it when you add the item (on this device); it never allows the held item itself. */
-function HeldVersions({ item }: { item: DietReview }) {
-  const [usual, setUsual] = useState<string | null>(() => usualVersions()[String(item.ingredient_id)] ?? null);
+/** A held item that comes in versions (J4): the versions with the label guidance. Your usual one is saved in
+ * your settings (M3) and only pre-selects it when you add the item; it never allows the held item itself. */
+function HeldVersions({ item, onUsual, disabled }: { item: DietReview; onUsual: (item: DietReview, key: string | null) => void; disabled?: boolean }) {
   if (!item.versions) return null;
+  const usual = item.versions.usual ?? null;
   return (
     <details className={styles.versions}>
       <summary>Comes in versions{usual ? `: you usually buy ${item.versions.choices.find((c) => c.key === usual)?.label ?? usual}` : ""}</summary>
@@ -489,11 +488,8 @@ function HeldVersions({ item }: { item: DietReview }) {
         versions={item.versions}
         selected={usual}
         usual={usual}
-        onPick={(choice) => {
-          const next = choice.key === usual || choice.ingredient_id === null ? null : choice.key;
-          setUsualVersion(item.ingredient_id, next);
-          setUsual(next);
-        }}
+        disabled={disabled}
+        onPick={(choice) => onUsual(item, choice.key === usual || choice.ingredient_id === null ? null : choice.key)}
       />
       <p className="small muted">
         Picking your usual version pre-selects it when you add {item.name}. It doesn&apos;t allow {item.name} itself, which
@@ -508,11 +504,14 @@ export function HeldItemsControl({
   onDecide,
   disabled,
   busyId,
+  onUsual,
 }: {
   items: readonly DietReview[];
   onDecide: (item: DietReview, allow: boolean) => void;
   disabled?: boolean;
   busyId?: number | null;
+  /** Save your usual version of a held item (Settings, M3); without it the versions aren't shown. */
+  onUsual?: (item: DietReview, key: string | null) => void;
 }) {
   return (
     <section className={`card ${styles.rule}`} aria-label="Held items">
@@ -532,7 +531,7 @@ export function HeldItemsControl({
             disabled={disabled || busyId === item.ingredient_id}
             onChange={(allow) => onDecide(item, allow)}
           />
-          <HeldVersions item={item} />
+          {onUsual && <HeldVersions item={item} onUsual={onUsual} disabled={disabled || busyId === item.ingredient_id} />}
         </div>
       ))}
     </section>

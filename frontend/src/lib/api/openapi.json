@@ -325,6 +325,17 @@
       "title": "Optional",
       "type": "boolean"
      },
+     "portion_note": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Portion Note"
+     },
      "preparation": {
       "anyOf": [
        {
@@ -1545,6 +1556,64 @@
     "title": "CookedOut",
     "type": "object"
    },
+   "CorrectOptionsOut": {
+    "description": "GET /inventory/{id}/correct-options (M2): ways to say how much of a lot is really there. Every amount\nand display string is code-computed; send a fraction's key as `package_fraction`, a preset's key as\n`preset`, or a custom amount as `quantity` + `unit`.",
+    "properties": {
+     "custom_units": {
+      "items": {
+       "$ref": "#/components/schemas/CustomUnitOut"
+      },
+      "title": "Custom Units",
+      "type": "array"
+     },
+     "display": {
+      "title": "Display",
+      "type": "string"
+     },
+     "estimated": {
+      "title": "Estimated",
+      "type": "boolean"
+     },
+     "fractions": {
+      "items": {
+       "$ref": "#/components/schemas/AmountOptionOut"
+      },
+      "title": "Fractions",
+      "type": "array"
+     },
+     "lot_id": {
+      "title": "Lot Id",
+      "type": "integer"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "package_display": {
+      "title": "Package Display",
+      "type": "string"
+     },
+     "presets": {
+      "items": {
+       "$ref": "#/components/schemas/PresetOut"
+      },
+      "title": "Presets",
+      "type": "array"
+     }
+    },
+    "required": [
+     "lot_id",
+     "name",
+     "display",
+     "estimated",
+     "package_display",
+     "fractions",
+     "presets",
+     "custom_units"
+    ],
+    "title": "CorrectOptionsOut",
+    "type": "object"
+   },
    "CostLineOut": {
     "description": "Something to buy for this meal: whole packages at the first of your stores that prices it.",
     "properties": {
@@ -1926,6 +1995,11 @@
        }
       ],
       "title": "Note"
+     },
+     "slug": {
+      "default": "",
+      "title": "Slug",
+      "type": "string"
      },
      "versions": {
       "anyOf": [
@@ -3196,6 +3270,11 @@
       "title": "Category",
       "type": "string"
      },
+     "closest_match": {
+      "default": false,
+      "title": "Closest Match",
+      "type": "boolean"
+     },
      "frequency_caps": {
       "items": {
        "type": "string"
@@ -3206,6 +3285,17 @@
      "id": {
       "title": "Id",
       "type": "integer"
+     },
+     "label": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Label"
      },
      "matched_alias": {
       "title": "Matched Alias",
@@ -3554,6 +3644,24 @@
        }
       ],
       "title": "Opened On"
+     },
+     "package_fraction": {
+      "anyOf": [
+       {
+        "enum": [
+         "full",
+         "three_quarters",
+         "half",
+         "quarter"
+        ],
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "what's left: full, \u00be, \u00bd or \u00bc of the lot's package (M2)",
+      "title": "Package Fraction"
      },
      "preset": {
       "anyOf": [
@@ -5909,9 +6017,26 @@
       "title": "Score",
       "type": "string"
      },
+     "section": {
+      "default": "match",
+      "enum": [
+       "match",
+       "more_effort",
+       "simpler"
+      ],
+      "title": "Section",
+      "type": "string"
+     },
      "steps_ready": {
       "title": "Steps Ready",
       "type": "boolean"
+     },
+     "swaps": {
+      "items": {
+       "$ref": "#/components/schemas/SwapLineOut"
+      },
+      "title": "Swaps",
+      "type": "array"
      },
      "title": {
       "title": "Title",
@@ -6240,6 +6365,11 @@
    },
    "RenderedLineOut": {
     "properties": {
+     "amount_display": {
+      "default": "",
+      "title": "Amount Display",
+      "type": "string"
+     },
      "display": {
       "title": "Display",
       "type": "string"
@@ -6255,6 +6385,17 @@
      "optional": {
       "title": "Optional",
       "type": "boolean"
+     },
+     "portion_note": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Portion Note"
      },
      "preparation": {
       "anyOf": [
@@ -6439,6 +6580,13 @@
       "title": "Steps Ready",
       "type": "boolean"
      },
+     "swaps": {
+      "items": {
+       "$ref": "#/components/schemas/SwapLineOut"
+      },
+      "title": "Swaps",
+      "type": "array"
+     },
      "title": {
       "title": "Title",
       "type": "string"
@@ -6516,6 +6664,14 @@
      "search_id": {
       "title": "Search Id",
       "type": "integer"
+     },
+     "swaps": {
+      "default": [],
+      "items": {
+       "$ref": "#/components/schemas/SwapLineOut"
+      },
+      "title": "Swaps",
+      "type": "array"
      },
      "uses": {
       "items": {
@@ -6982,6 +7138,34 @@
     "title": "SummaryLineOut",
     "type": "object"
    },
+   "SwapLineOut": {
+    "description": "A missing line you can make with something you have (M11): never \"Missing\".",
+    "properties": {
+     "display": {
+      "title": "Display",
+      "type": "string"
+     },
+     "ingredient_id": {
+      "title": "Ingredient Id",
+      "type": "integer"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "substitute": {
+      "$ref": "#/components/schemas/SubstituteOut"
+     }
+    },
+    "required": [
+     "ingredient_id",
+     "name",
+     "substitute",
+     "display"
+    ],
+    "title": "SwapLineOut",
+    "type": "object"
+   },
    "TodayMealOut": {
     "properties": {
      "cook_batch_id": {
@@ -7308,6 +7492,13 @@
       "title": "Units",
       "type": "string"
      },
+     "usual_versions": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "title": "Usual Versions",
+      "type": "object"
+     },
      "weekly_under_pct": {
       "default": 3.0,
       "maximum": 25.0,
@@ -7459,6 +7650,17 @@
      "question": {
       "title": "Question",
       "type": "string"
+     },
+     "usual": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Usual"
      }
     },
     "required": [
@@ -8628,6 +8830,49 @@
      }
     },
     "summary": "Patch Lot",
+    "tags": [
+     "inventory"
+    ]
+   }
+  },
+  "/api/v1/inventory/{item_id}/correct-options": {
+   "get": {
+    "description": "Correct amount, for any lot (M2): \u00be, \u00bd or \u00bc of the package it came in, another package size, or a\ncustom amount.",
+    "operationId": "get_correct_options_api_v1_inventory__item_id__correct_options_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "item_id",
+      "required": true,
+      "schema": {
+       "title": "Item Id",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CorrectOptionsOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Get Correct Options",
     "tags": [
      "inventory"
     ]

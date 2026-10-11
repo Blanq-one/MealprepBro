@@ -1,0 +1,161 @@
+{
+ "family": "Dal and rice",
+ "title": "Dal tadka with rice",
+ "description": "Red lentils simmered with turmeric, finished with a sizzling tadka of ghee, cumin, garlic and chili.",
+ "meal_slots": [
+  "lunch",
+  "dinner"
+ ],
+ "mood": "simple",
+ "cuisine": "Indian",
+ "flavor_tags": [
+  "comforting",
+  "warm spices"
+ ],
+ "base_servings": 4,
+ "active_minutes": 20,
+ "total_minutes": 45,
+ "equipment": [
+  "stovetop"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Draft quantities: adjust them in the app. The dal thickens as it sits: loosen it with water when reheating.",
+ "ingredients": [
+  {
+   "ingredient": "lentils-red",
+   "quantity": "250",
+   "unit": "g",
+   "preparation": "rinsed",
+   "role": "protein",
+   "component": "dal"
+  },
+  {
+   "ingredient": "water",
+   "quantity": "1000",
+   "unit": "ml",
+   "role": "other",
+   "component": "dal"
+  },
+  {
+   "ingredient": "turmeric",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "dal"
+  },
+  {
+   "ingredient": "tomato",
+   "quantity": "2",
+   "unit": "count",
+   "preparation": "chopped",
+   "role": "vegetable",
+   "component": "dal"
+  },
+  {
+   "ingredient": "onion-yellow",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "finely chopped",
+   "role": "vegetable",
+   "component": "tadka"
+  },
+  {
+   "ingredient": "garlic",
+   "quantity": "4",
+   "unit": "clove",
+   "preparation": "sliced",
+   "role": "seasoning",
+   "component": "tadka"
+  },
+  {
+   "ingredient": "ginger",
+   "quantity": "10",
+   "unit": "g",
+   "preparation": "grated",
+   "role": "seasoning",
+   "component": "tadka"
+  },
+  {
+   "ingredient": "ghee",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "fat",
+   "component": "tadka"
+  },
+  {
+   "ingredient": "cumin-seeds",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "tadka"
+  },
+  {
+   "ingredient": "chili-powder",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "tadka"
+  },
+  {
+   "ingredient": "garam-masala",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1 1/4",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "rice-long-grain-white",
+   "quantity": "300",
+   "unit": "g",
+   "preparation": "rinsed",
+   "role": "carb",
+   "component": "rice"
+  },
+  {
+   "ingredient": "cilantro",
+   "quantity": "10",
+   "unit": "g",
+   "preparation": "chopped",
+   "role": "garnish",
+   "optional": true
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Rinse the lentils. Chop the onion and tomatoes, slice the garlic and grate the ginger."
+  },
+  {
+   "section": "stovetop",
+   "text": "Simmer the lentils with the water, turmeric and tomatoes, partly covered, stirring now and then, until soft and creamy, about 25 minutes. Stir in the salt.",
+   "duration_minutes": 25
+  },
+  {
+   "section": "rice",
+   "text": "Bring 540 ml of water to a boil, add the rinsed rice, cover and simmer on low 15 minutes. Rest off the heat 10 minutes, then fluff.",
+   "duration_minutes": 25
+  },
+  {
+   "section": "stovetop",
+   "text": "For the tadka, heat the ghee in a small pan. Add the cumin seeds until they crackle, then the onion until golden, then the garlic, ginger and chili powder for 1 minute. Pour it over the dal with the garam masala.",
+   "duration_minutes": 10
+  },
+  {
+   "section": "portioning",
+   "text": "Divide the dal and rice among 4 containers; top with cilantro."
+  },
+  {
+   "section": "storage",
+   "text": "Cool, then refrigerate in the containers."
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat covered, stirring halfway, until hot all the way through."
+  }
+ ]
+}

@@ -43,6 +43,7 @@ def _diet_review(session: DbSession, user_id: int) -> list[DietReviewOut]:
     return [
         DietReviewOut(
             ingredient_id=i.id,
+            slug=i.slug,
             name=i.name,
             note=i.diet_review_note,
             decision="allowed" if i.id in allowed else "held",

@@ -149,6 +149,18 @@ def set_quantity(
     return item
 
 
+def original_quantity(session: Session, user_id: int, item_id: int) -> Decimal:
+    """How much the lot held when it came in (its first added amount; M2: "¾ of the package")."""
+    item = _lot(session, user_id, item_id)
+    first = session.scalar(
+        select(InventoryEvent.delta_quantity)
+        .where(InventoryEvent.inventory_item_id == item.id, InventoryEvent.delta_quantity > 0)
+        .order_by(InventoryEvent.occurred_at, InventoryEvent.id)
+        .limit(1)
+    )
+    return first if first is not None else item.quantity
+
+
 def correct_amount(
     session: Session,
     user_id: int,

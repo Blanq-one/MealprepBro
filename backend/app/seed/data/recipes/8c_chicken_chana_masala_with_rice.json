@@ -1,0 +1,168 @@
+{
+ "family": "Curries with rice",
+ "title": "Chicken chana masala with rice",
+ "description": "Chicken and chickpeas in a tangy onion-tomato masala, over rice.",
+ "meal_slots": [
+  "lunch",
+  "dinner"
+ ],
+ "mood": "medium",
+ "cuisine": "Indian",
+ "flavor_tags": [
+  "tangy",
+  "warm spices"
+ ],
+ "base_servings": 4,
+ "active_minutes": 30,
+ "total_minutes": 55,
+ "equipment": [
+  "stovetop"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Draft quantities: adjust them in the app. Freezes well with or without the rice.",
+ "ingredients": [
+  {
+   "ingredient": "chicken-thigh-boneless-skinless",
+   "quantity": "450",
+   "unit": "g",
+   "preparation": "bite-size pieces",
+   "role": "protein",
+   "component": "curry"
+  },
+  {
+   "ingredient": "chickpeas-canned",
+   "quantity": "1",
+   "unit": "can",
+   "preparation": "drained, rinsed",
+   "role": "protein",
+   "component": "curry"
+  },
+  {
+   "ingredient": "vegetable-oil",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "fat"
+  },
+  {
+   "ingredient": "onion-yellow",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "finely chopped",
+   "role": "vegetable",
+   "component": "curry"
+  },
+  {
+   "ingredient": "tomatoes-canned",
+   "quantity": "400",
+   "unit": "ml",
+   "role": "vegetable",
+   "component": "curry"
+  },
+  {
+   "ingredient": "garlic",
+   "quantity": "4",
+   "unit": "clove",
+   "preparation": "grated",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "ginger",
+   "quantity": "15",
+   "unit": "g",
+   "preparation": "grated",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "cumin-ground",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "coriander-ground",
+   "quantity": "2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "turmeric",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "chili-powder",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "garam-masala",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1 1/4",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "lemon-juice",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "sauce"
+  },
+  {
+   "ingredient": "rice-long-grain-white",
+   "quantity": "300",
+   "unit": "g",
+   "preparation": "rinsed",
+   "role": "carb",
+   "component": "rice"
+  },
+  {
+   "ingredient": "cilantro",
+   "quantity": "10",
+   "unit": "g",
+   "preparation": "chopped",
+   "role": "garnish",
+   "optional": true
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Cut the chicken. Chop the onion, grate the ginger and garlic, drain the chickpeas."
+  },
+  {
+   "section": "rice",
+   "text": "Bring 540 ml of water to a boil, add the rinsed rice, cover and simmer on low 15 minutes. Rest off the heat 10 minutes, then fluff.",
+   "duration_minutes": 25
+  },
+  {
+   "section": "stovetop",
+   "text": "Heat the oil in a heavy pot over medium heat. Cook the onion until deep golden, 10 minutes. Add the ginger, garlic, cumin, coriander, turmeric and chili powder for 1 minute.",
+   "duration_minutes": 11
+  },
+  {
+   "section": "stovetop",
+   "text": "Add the tomatoes and salt and cook until thick, 8 minutes. Add the chicken and chickpeas, cover and simmer until the chicken is cooked through, about 15 minutes. Stir in the garam masala and lemon juice.",
+   "duration_minutes": 23,
+   "doneness_check_for": "chicken-thigh-boneless-skinless"
+  },
+  {
+   "section": "portioning",
+   "text": "Divide the rice and curry among 4 containers; top with cilantro."
+  },
+  {
+   "section": "storage",
+   "text": "Cool, then refrigerate in the containers."
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat covered, stirring halfway, until hot all the way through."
+  }
+ ]
+}

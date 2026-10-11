@@ -5,22 +5,22 @@ Each category has title words and a structural rule (slots, the main carb, a tor
 are checked first, across the whole table in order, then the structural rules in the same order; the first
 match wins, and "other" is the fallback. Title words go first so a curry served with tortillas is a curry,
 not a wrap (the spec's own card shows "🍛 Everyday chicken curry"), and a sheet-pan chicken over rice is a
-roast.
+roast. A few phrases go before the table: a "burrito bowl" is a bowl, not a wrap.
 
 | Category | Icon | Title words | Structural rule |
 | drink    | 🥤 | smoothie, shake, latte                      | drink slot |
-| dessert  | 🍮 | pudding, mousse, cake, brownie, cookie      | protein-dessert slot |
+| dessert  | 🍮 | pudding, mousse, cake, brownie, cookie, parfait, yogurt bowl | protein-dessert slot |
+| snack    | 🥜 | dip, bites, chaat, roasted chickpeas        | snack slot (checked last) |
 | oats     | 🥣 | oats, oatmeal, porridge, granola            | oats are the main carb |
 | eggs     | 🍳 | omelet, frittata, scramble                  | egg is the protein in a breakfast |
 | wrap     | 🌯 | wrap, burrito, taco, quesadilla             | a tortilla line |
 | sandwich | 🥪 | sandwich, toast                             | bread is the main carb |
 | soup     | 🍲 | soup, stew, chili (the dish: "turkey chili")  | — |
-| curry    | 🍛 | curry, masala, gravy, dal, korma            | — |
+| curry    | 🍛 | curry, masala, gravy, dal, korma, keema, butter chicken | — |
 | pasta    | 🍝 | pasta, noodle, spaghetti, ramen             | — |
 | salad    | 🥗 | salad                                       | no-cook, mostly vegetables by weight |
 | bowl     | 🍚 | bowl                                        | rice is the main carb |
 | roast    | 🍗 | sheet pan, roast(ed), baked, air fryer/fried | a protein cooked in the oven or air fryer |
-| snack    | 🥜 | —                                           | snack slot |
 | other    | 🍽️ | fallback |
 """
 
@@ -56,15 +56,17 @@ class DishLine:
     optional: bool = False
 
 
+TITLE_FIRST: tuple[tuple[str, DishCategory], ...] = (("burrito bowl", DishCategory.BOWL),)
 TITLE_WORDS: dict[DishCategory, tuple[str, ...]] = {
     DishCategory.DRINK: ("smoothie", "shake", "latte"),
-    DishCategory.DESSERT: ("pudding", "mousse", "cake", "brownie", "cookie"),
+    DishCategory.DESSERT: ("pudding", "mousse", "cake", "brownie", "cookie", "parfait", "yogurt bowl"),
+    DishCategory.SNACK: ("dip", "bites", "chaat", "roasted chickpeas"),
     DishCategory.OATS: ("oat", "oatmeal", "porridge", "granola"),
     DishCategory.EGGS: ("omelet", "omelette", "frittata", "scramble"),
     DishCategory.WRAP: ("wrap", "burrito", "taco", "quesadilla"),
     DishCategory.SANDWICH: ("sandwich", "toast"),
     DishCategory.SOUP: ("soup", "stew"),
-    DishCategory.CURRY: ("curry", "masala", "gravy", "dal", "korma"),
+    DishCategory.CURRY: ("curry", "masala", "gravy", "dal", "korma", "keema", "butter chicken"),
     DishCategory.PASTA: ("pasta", "noodle", "spaghetti", "ramen"),
     DishCategory.SALAD: ("salad",),
     DishCategory.BOWL: ("bowl",),
@@ -107,6 +109,9 @@ def _is_chili_dish(tokens: Sequence[str]) -> bool:
 
 def _by_title(title: str) -> DishCategory | None:
     tokens = _tokens(title)
+    for phrase, first in TITLE_FIRST:
+        if _has_phrase(tokens, phrase):
+            return first
     for category, words in TITLE_WORDS.items():
         if any(_has_phrase(tokens, w) for w in words):
             return category

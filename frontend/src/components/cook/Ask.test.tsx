@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -8,7 +8,7 @@ import { emptyDraft, type MealNowDraft } from "@/lib/cook/answers";
 import { mockApi } from "@/test/api";
 import { cookHome, lot } from "@/test/fixtures";
 
-import { forLine, GoalsStep } from "./GoalsStep";
+import { GoalsStep, PICK_A_MEAL } from "./GoalsStep";
 import { alwaysHaveLine, HaveStep } from "./HaveStep";
 
 const staples: AlwaysHaveOption[] = ["rice", "olive oil", "salt", "black pepper", "garlic"].map((name, i) => ({ ingredient_id: 100 + i, slug: name, name, category: "pantry", common: true, selected: true }));
@@ -40,9 +40,26 @@ function Have({ initial = emptyDraft(), online = true, onDraft }: { initial?: Me
 }
 
 describe("C2 goals", () => {
-  it("the For line names the meal and people; Quick shows Ready in; a mood tapped again goes back to your usual", async () => {
-    expect(forLine({ slot: null, people: null }, 2, new Date(2026, 9, 10, 18, 30))).toBe("Dinner for 2");
-    expect(forLine({ slot: "lunch", people: 3 }, 2)).toBe("Lunch for 3");
+  it("the meal is a visible choice with nothing preselected, never guessed from the clock (M9)", async () => {
+    const onNext = vi.fn();
+    function Goals() {
+      const [draft, setDraft] = useState(emptyDraft());
+      return <GoalsStep draft={draft} householdSize={2} onChange={setDraft} onBack={() => undefined} onNext={onNext} />;
+    }
+    render(<Goals />);
+    const meals = screen.getByRole("group", { name: "Meal" });
+    expect(within(meals).getAllByRole("button").map((b) => b.textContent?.replace(/[^A-Za-z]/g, ""))).toEqual(["Breakfast", "Lunch", "Dinner", "Snack", "Dessert"]);
+    expect(within(meals).queryByRole("button", { pressed: true })).toBeNull();
+    expect(screen.getByRole("button", { name: "Next" })).toBeDisabled();
+    expect(screen.getByRole("alert")).toHaveTextContent(PICK_A_MEAL);
+    await userEvent.click(within(meals).getByRole("button", { name: /Dinner/ }));
+    expect(within(meals).getByRole("button", { name: /Dinner/ })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: /People: 2/ })).toBeInTheDocument(); // your household size
+    await userEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(onNext).toHaveBeenCalled();
+  });
+
+  it("Quick shows Ready in; a mood tapped again goes back to your usual", async () => {
     function Goals() {
       const [draft, setDraft] = useState(emptyDraft());
       return <GoalsStep draft={draft} householdSize={1} onChange={setDraft} onBack={() => undefined} onNext={() => undefined} />;
@@ -54,7 +71,7 @@ describe("C2 goals", () => {
     await userEvent.click(screen.getByRole("button", { name: /Fancy/ }));
     expect(screen.getByRole("button", { name: /Fancy/ })).toHaveAttribute("aria-pressed", "true");
     await userEvent.click(screen.getByRole("button", { name: /Fancy/ }));
-    expect(screen.getByText("Not picked: today's usual from your cook schedule.")).toBeInTheDocument();
+    expect(screen.getByText(/Not picked: today's usual from your cook schedule\. Recipes in your mood come first/)).toBeInTheDocument();
   });
 });
 

@@ -1,0 +1,101 @@
+{
+ "family": "Snacks",
+ "title": "Spiced egg chaat",
+ "description": "Boiled eggs tossed with onion, tomato, lemon, chili and cumin: a tangy street-style snack.",
+ "meal_slots": [
+  "snack",
+  "breakfast"
+ ],
+ "mood": "simple",
+ "cuisine": "Indian",
+ "flavor_tags": [
+  "tangy",
+  "spicy"
+ ],
+ "base_servings": 4,
+ "active_minutes": 10,
+ "total_minutes": 25,
+ "equipment": [
+  "stovetop"
+ ],
+ "freezer_friendly": false,
+ "draft_note": "Draft quantities: adjust them in the app. Peel and chop the eggs just before eating.",
+ "ingredients": [
+  {
+   "ingredient": "egg-large",
+   "quantity": "8",
+   "unit": "count",
+   "role": "protein"
+  },
+  {
+   "ingredient": "onion-red",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "small, finely diced",
+   "role": "vegetable"
+  },
+  {
+   "ingredient": "tomato",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "finely diced",
+   "role": "vegetable"
+  },
+  {
+   "ingredient": "lemon-juice",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "sauce"
+  },
+  {
+   "ingredient": "chili-powder",
+   "quantity": "1/4",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "cumin-ground",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "cilantro",
+   "quantity": "10",
+   "unit": "g",
+   "preparation": "chopped",
+   "role": "garnish",
+   "optional": true
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Finely dice the onion and tomato."
+  },
+  {
+   "section": "stovetop",
+   "text": "Lower the eggs into boiling water and cook 10 minutes, then cool them in cold water.",
+   "duration_minutes": 10,
+   "doneness_check_for": "egg-large"
+  },
+  {
+   "section": "assembly",
+   "text": "Peel and quarter the eggs; top with the onion, tomato, lemon juice, spices, salt and cilantro."
+  },
+  {
+   "section": "portioning",
+   "text": "Serve 2 eggs per person."
+  },
+  {
+   "section": "storage",
+   "text": "Refrigerate the boiled eggs in their shells."
+  }
+ ]
+}

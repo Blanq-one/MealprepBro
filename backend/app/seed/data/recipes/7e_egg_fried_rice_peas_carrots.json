@@ -1,0 +1,119 @@
+{
+ "family": "Fried rice",
+ "title": "Egg fried rice with peas and carrots",
+ "description": "Day-old-style fried rice with scrambled egg, peas, carrot, green onion, soy sauce and sesame oil.",
+ "meal_slots": [
+  "lunch",
+  "dinner"
+ ],
+ "mood": "simple",
+ "cuisine": "Chinese",
+ "flavor_tags": [
+  "savory",
+  "umami"
+ ],
+ "base_servings": 4,
+ "active_minutes": 20,
+ "total_minutes": 50,
+ "equipment": [
+  "stovetop"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Draft quantities: adjust them in the app. Cooking the rice ahead and chilling it gives the best texture.",
+ "ingredients": [
+  {
+   "ingredient": "rice-long-grain-white",
+   "quantity": "300",
+   "unit": "g",
+   "preparation": "rinsed",
+   "role": "carb",
+   "component": "rice"
+  },
+  {
+   "ingredient": "egg-large",
+   "quantity": "6",
+   "unit": "count",
+   "preparation": "beaten",
+   "role": "protein"
+  },
+  {
+   "ingredient": "peas-frozen",
+   "quantity": "150",
+   "unit": "g",
+   "role": "vegetable"
+  },
+  {
+   "ingredient": "carrot",
+   "quantity": "2",
+   "unit": "count",
+   "preparation": "diced",
+   "role": "vegetable"
+  },
+  {
+   "ingredient": "green-onion",
+   "quantity": "4",
+   "unit": "count",
+   "preparation": "sliced",
+   "role": "vegetable"
+  },
+  {
+   "ingredient": "garlic",
+   "quantity": "3",
+   "unit": "clove",
+   "preparation": "minced",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "soy-sauce",
+   "quantity": "3",
+   "unit": "tbsp",
+   "role": "sauce"
+  },
+  {
+   "ingredient": "sesame-oil",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "fat"
+  },
+  {
+   "ingredient": "vegetable-oil",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "fat"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Dice the carrots, slice the green onions, mince the garlic and beat the eggs."
+  },
+  {
+   "section": "rice",
+   "text": "Cook the rice: bring 540 ml of water to a boil, add the rice, cover and simmer on low 15 minutes. Spread it out to cool.",
+   "duration_minutes": 25
+  },
+  {
+   "section": "stovetop",
+   "text": "Heat half the vegetable oil in a wok or large skillet over high heat. Scramble the eggs until set with no liquid left, then set aside.",
+   "duration_minutes": 3,
+   "doneness_check_for": "egg-large"
+  },
+  {
+   "section": "stovetop",
+   "text": "Add the remaining oil, the carrots and garlic and stir-fry 3 minutes. Add the rice, peas and soy sauce and fry until hot and starting to crisp, 5 minutes. Fold in the eggs, green onions and sesame oil.",
+   "duration_minutes": 8
+  },
+  {
+   "section": "portioning",
+   "text": "Divide among 4 containers."
+  },
+  {
+   "section": "storage",
+   "text": "Cool, then refrigerate in the containers."
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat covered, stirring halfway, until hot all the way through."
+  }
+ ]
+}

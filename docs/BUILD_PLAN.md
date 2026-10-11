@@ -1,6 +1,6 @@
 # Mealbro Build Plan
 
-**Status:** v3, **approved** 2026-10-08 with the changes recorded in §12.1. Phase 0 approved. Phase 1 approved 2026-10-09 (with C1–C8 and D1–D22); a post-approval round (C9–C14, D23–D28) is done. A3 is answered in `docs/hosting.md`; the hosting decision changed at the Phase 2 kickoff to Vercel Hobby + Neon Free, $0/month (K1, §12.1). Phase 2 (PWA, deploy prep only) was approved 2026-10-10. **Phase 2b (cook-first redesign) was added and its spec approved 2026-10-10** (with changes E10–E13, §12.1): the spec is `docs/FLOW_SPEC.md` and the build steps are in §9. Step 2b.1 (backend foundations) was built and **approved 2026-10-10, including D44–D53**; step 2b.2 (look, shell, onboarding, Settings, Pantry) started the same day. **Addition (2026-10-10, E15–E17):** two-stage recipe generation (ideas for the cards, steps on first open, and after the first More ideas tap a background batch for later taps) to fit Groq's 8K tokens a minute; the target-0 fallback for the protein cap; and step 2b.3 split into 2b.3a (ranking and cards) and 2b.3b (ideas, steps, background batch). All approved. **Step 2b.2 was approved 2026-10-10, including D54–D64** (H1–H6, §12.1): a footer fix on question screens, a new build order (**2b.3a → 2b.4 → 2b.3b**, then 2b.5–2b.8, so the meal-now flow can be used before LLM ideas exist), notes for 2b.5 and 2b.7 (the plan view's Prep notes row; a "How do you want to cook?" step with four options) and a pre-deploy item (§12.4). Step 2b.3a (ranking and cards) was built the same day and **approved, including D65–D76** (J1–J6, §12.1: culinary groups for vegetable swaps, a Mark cooked fix, and three additions to 2b.4). Step 2b.4 (the meal-now screens, with J2–J6) was built the same day and awaits approval (D77–D88).
+**Status:** v3, **approved** 2026-10-08 with the changes recorded in §12.1. Phase 0 approved. Phase 1 approved 2026-10-09 (with C1–C8 and D1–D22); a post-approval round (C9–C14, D23–D28) is done. A3 is answered in `docs/hosting.md`; the hosting decision changed at the Phase 2 kickoff to Vercel Hobby + Neon Free, $0/month (K1, §12.1). Phase 2 (PWA, deploy prep only) was approved 2026-10-10. **Phase 2b (cook-first redesign) was added and its spec approved 2026-10-10** (with changes E10–E13, §12.1): the spec is `docs/FLOW_SPEC.md` and the build steps are in §9. Step 2b.1 (backend foundations) was built and **approved 2026-10-10, including D44–D53**; step 2b.2 (look, shell, onboarding, Settings, Pantry) started the same day. **Addition (2026-10-10, E15–E17):** two-stage recipe generation (ideas for the cards, steps on first open, and after the first More ideas tap a background batch for later taps) to fit Groq's 8K tokens a minute; the target-0 fallback for the protein cap; and step 2b.3 split into 2b.3a (ranking and cards) and 2b.3b (ideas, steps, background batch). All approved. **Step 2b.2 was approved 2026-10-10, including D54–D64** (H1–H6, §12.1): a footer fix on question screens, a new build order (**2b.3a → 2b.4 → 2b.3b**, then 2b.5–2b.8, so the meal-now flow can be used before LLM ideas exist), notes for 2b.5 and 2b.7 (the plan view's Prep notes row; a "How do you want to cook?" step with four options) and a pre-deploy item (§12.4). Step 2b.3a (ranking and cards) was built the same day and **approved, including D65–D76** (J1–J6, §12.1: culinary groups for vegetable swaps, a Mark cooked fix, and three additions to 2b.4). Step 2b.4 (the meal-now screens, with J2–J6) was built the same day and **approved, including D77–D88** (M1–M20, §12.1); its follow-up fixes were built and committed on their own, and 2b.3b starts next session.
 **Source documents:** `CLAUDE.md` (build rules, wins on conflict), `docs/PRD.md` (product vision; "Primary user flow" at the top), `docs/FLOW_SPEC.md` (screens and backend work for Phase 2b).
 
 This plan covers Phases 0–6, plus Phase 2b. One phase per session; Phase 2b is split into build steps, one per session (§9). A phase or step is done only when its acceptance criteria are met, its tests pass, and the test output has been shown.
@@ -19,7 +19,7 @@ This plan covers Phases 0–6, plus Phase 2b. One phase per session; Phase 2b is
 | — | Pre-Phase 1 tasks | Done | 2026-10-08 | 2026-10-08 | Package-label data (tortillas, protein powder), USDA mapping review sheet (`docs/review/usda_mappings.md`), raw/dry/as-sold rule + check (§7.8), CLAUDE.md machine-boundaries rule. Round 2: FoodSafety.gov chart transcribed (53 rows, §7.2), top-25 mappings approved, tortilla renamed, Docker rule clarified, fresh-clone check made a per-phase step. |
 | 1 | Planning brain | Approved 2026-10-09; post-approval round done | 2026-10-08 | 2026-10-09 | First pass: 645 tests, fresh-clone check passed; D1–D13 and C1–C3 approved 2026-10-09. Fix-up round (C4–C8: budget per request with inventory/shop modes, cash vs food eaten, freeze-on-shopping-day and waste, 100 g protein floor, elapsed time): 705 tests pass (the opt-in live test skips), domain coverage 99%, ruff/mypy clean, fresh-clone check passed; deviations D14–D22 in the fix-up note. Approved 2026-10-09. Post-approval round (C9–C14: powder prices, stock-up items, shelf-life fix, regular chicken packs, two-week steady-state check, A3 hosting): 721 tests pass (the opt-in live test skips), domain coverage 99%; deviations D23–D28. |
 | 2 | Mobile PWA + cloud deploy (deploy prep only, K7) | Approved 2026-10-10 | 2026-10-09 | 2026-10-09 | Pre-work K2–K6 done; PWA, auth, shopping, Mark cooked, quick add, exposure log. 800 backend tests pass (2 opt-in skipped), 78 frontend tests; not deployed (your step, `docs/deploy.md`). Deviations D29–D43 in the Phase 2 outcome note (§9). |
-| 2b | Cook-first flow redesign | 2b.1 approved 2026-10-10 (D44–D53); 2b.2 approved 2026-10-10 (D54–D64, H1–H6); 2b.3a approved 2026-10-10 (D65–D76, J1–J6); 2b.4 built 2026-10-10 (D77–D88), awaiting approval | 2026-10-10 | | `docs/FLOW_SPEC.md`; PRD "Primary user flow"; 9 build steps, built in the order 2b.1, 2b.2, 2b.3a, **2b.4, 2b.3b**, 2b.5–2b.8 (H3; §9); changes F1–F21 approved (FLOW_SPEC §16); decisions E1–E17 (§12.1). Two-stage generation added the same day (E15, E17; built in 2b.3b). **2b.1 (backend foundations):** 898 backend tests pass (2 opt-in skipped), 78 frontend tests, ruff/mypy clean; deviations D44–D53 in the 2b.1 outcome note (§9). **2b.2 (look, shell, onboarding, Settings, Pantry):** 180 frontend tests (78 before), 899 backend tests pass (2 opt-in skipped), type checks clean, static export builds; AA contrast tested, 375 px not yet checked on a device; deviations D54–D64 in the 2b.2 outcome note (§9). Footer fix H2 done before 2b.3a. **2b.3a (ranking and cards, no LLM calls):** 964 backend tests pass (2 opt-in skipped), 187 frontend tests, ruff, mypy and type check clean; deviations D65–D76 in the 2b.3a outcome note (§9). **2b.4 (A meal now: screens, with J2–J6):** 993 backend tests pass (2 opt-in skipped), 236 frontend tests, ruff, mypy and type check clean, static export builds; migration `0006_pantry_presets`; deviations D77–D88 in the 2b.4 outcome note (§9). |
+| 2b | Cook-first flow redesign | 2b.1 approved 2026-10-10 (D44–D53); 2b.2 approved 2026-10-10 (D54–D64, H1–H6); 2b.3a approved 2026-10-10 (D65–D76, J1–J6); 2b.4 approved 2026-10-10 (D77–D88, M1–M20); 2b.4 fixes built 2026-10-10, awaiting approval; 2b.3b not started | 2026-10-10 | | `docs/FLOW_SPEC.md`; PRD "Primary user flow"; 9 build steps, built in the order 2b.1, 2b.2, 2b.3a, **2b.4, 2b.3b**, 2b.5–2b.8 (H3; §9); changes F1–F21 approved (FLOW_SPEC §16); decisions E1–E17 (§12.1). Two-stage generation added the same day (E15, E17; built in 2b.3b). **2b.1 (backend foundations):** 898 backend tests pass (2 opt-in skipped), 78 frontend tests, ruff/mypy clean; deviations D44–D53 in the 2b.1 outcome note (§9). **2b.2 (look, shell, onboarding, Settings, Pantry):** 180 frontend tests (78 before), 899 backend tests pass (2 opt-in skipped), type checks clean, static export builds; AA contrast tested, 375 px not yet checked on a device; deviations D54–D64 in the 2b.2 outcome note (§9). Footer fix H2 done before 2b.3a. **2b.3a (ranking and cards, no LLM calls):** 964 backend tests pass (2 opt-in skipped), 187 frontend tests, ruff, mypy and type check clean; deviations D65–D76 in the 2b.3a outcome note (§9). **2b.4 (A meal now: screens, with J2–J6):** 993 backend tests pass (2 opt-in skipped), 236 frontend tests, ruff, mypy and type check clean, static export builds; migration `0006_pantry_presets`; deviations D77–D88 in the 2b.4 outcome note (§9). **2b.4 fixes (M2–M13, M15, M17, M20):** 1056 backend tests pass (2 opt-in skipped), 244 frontend tests, ruff, mypy and type check clean; no migration; 37 new draft seed recipes (47 in all); solver shortlist; fixes outcome note (§9). |
 | 3 | Feedback loop | Not started | | | Favorites moved to 2b. |
 | 4 | Daily overrides | Not started | | | |
 | 5 | Grocery intelligence | Not started | | | |
@@ -2355,6 +2355,71 @@ migration (`0006_pantry_presets`), 20 new seed ingredients (205 now), a new seed
 **Dev database.** Upgraded to `0006` and re-seeded (205 ingredients). To undo: `docker compose exec -T backend uv
 run --frozen alembic downgrade 0005`.
 
+**Approved 2026-10-10, including D77–D88 (M1).** Follow-ups M2–M13, done at the start of the next session
+before 2b.3b; see the fixes outcome note below and §12.1.
+
+**Fixes outcome (2026-10-10): M2–M13, M15, M17 and M20 built; 2b.3b not started.** The fixes took the session
+(M1's fallback): they are committed on their own, and 2b.3b starts next session. Tests: 1056 backend tests pass (2 opt-in skipped; 993 at 2b.4), 244 frontend tests in 35 files (236 at 2b.4), ruff, mypy and the type check clean, and the API schema matches the PWA's generated types.
+
+- **M2 Correct amount.** Every Pantry lot has Correct amount. `GET /inventory/{id}/correct-options` gives the
+  package (the lot's first stocked amount), quick taps for ¾, ½ and ¼ of it, the presets and the units for
+  Custom; `PATCH /inventory/{id}` takes `package_fraction`, a `preset`, or a `quantity` + `unit`.
+- **M3 Usual version.** `usual_versions` in settings (held item slug → version slug, checked against the
+  catalog); Settings' held items set it and the add flow and version sheet pre-select it. The device-only
+  `usualVersions.ts` is gone.
+- **M4 Chicken cuts.** Five new ingredients (210 in all), each mapped to its USDA SR Legacy "meat and skin, raw"
+  entry: thigh bone-in skin-on (172385), breast bone-in skin-on (171474), drumstick (172373), wing (172390),
+  whole chicken (171447). The catalog's `chicken_cuts` records the bone and skin form of all seven chicken cuts;
+  forms and package sizes are in the pantry catalog.
+- **M5 Refuse.** `refuse` on the seed ingredient (USDA SR28 refuse: thigh 27%, kept at your review as noted in
+  the seed, breast 20%, drumstick 33%, wing 38%, whole 32%) sets `edible_fraction`, which the nutrition math
+  already applied; recipe pages and cooking mode now pass edible grams to the food-safety and leftover lines too.
+- **M6 Strict chicken.** `domain/chicken_cuts.py` reads a stated form ("bone-in", "boneless", "skin-on",
+  "skinless", and their spellings) from text. Search drops cuts that conflict with what you typed; the resolver
+  never maps a line to a conflicting cut; swaps and substitutes only pair the same bone and skin form. Tests on
+  all three paths.
+- **M7 Close matches.** 25 close matches in the catalog (garlic paste → garlic, canned peas → frozen peas,
+  naan → pita, whole wheat tortilla → chapati, …; never a chicken cut). Each works as a labeled alias: search
+  finds it and shows "Closest match: …", and the resolver maps a recipe line through it with `via="close"`.
+  They aren't plain aliases, so nothing passes one off as the exact item.
+- **M9 Meal choice.** The question screen shows Breakfast, Lunch, Dinner, Snack, Dessert with nothing picked;
+  you pick one to go on. The API still guesses from the clock when a client doesn't say (the CLI and tests).
+- **M10 Mood is soft.** No mood filter: results come in three sections (your mood, "A bit more effort",
+  "Simpler options"), and only your mood's recipes count as good matches for the gap rule. The mood empty
+  state is gone (a mood can't empty the list now).
+- **M11 Card wording.** `swaps` on cards and the recipe page's search context ("Swap: red onion instead of
+  yellow onion (you have it)"); `missing` lists only things to buy; the "Uses N of your items" chip is gone.
+- **M12 Card cost.** A card's numbers add "$Y to buy today" (whole packages of what's missing or short, "+
+  unpriced items" when some have no price). Cheap ranks on the buy-today total as well as the portion cost.
+- **M13 Seed library.** 37 drafts (47 seed recipes in all), written by `backend/scripts/build_seed_recipes_m13.py`:
+  7 breakfasts, 8 lunches, 12 dinners, 5 snacks, 5 protein desserts; simple, medium and fancy. No beef, no pork
+  component (the CLAUDE.md rule, flagged in M13), no held items (cheese), no blender. The 37 are listed in the
+  step summary. 58 ingredients they use had no price: each got one product with an **estimated** price
+  (source "estimate", flagged on cards as "est.") so cost and the Cheap goal work; replace them with real
+  prices when you shop. Thirteen ingredients the new recipes moved into the top 25 of the mapping review were
+  reviewed by you (38 reviewed in all) and `docs/review/usda_mappings.md` is regenerated (210 rows).
+- **M15 Portion vs batch.** Recipe lines, plan batch lines and cooking mode carry `portion_note` ("1 scoop
+  per portion · 4 scoops for the batch of 4") and scoop-based items show scoops everywhere, including Pantry
+  ("22 scoops (682 g)"). Code computes every number (`domain/quantities.py`).
+- **M17 No plan fits (the `/plan/new/` part).** The diagnostic carries `suggested_cents` (rounded up to whole
+  dollars) and `items`; the screen shows one message, "Allow a $X top-up" and "Switch to shopping" buttons,
+  and the items behind "See what it would buy". The `--topup` wording stays in the CLI's text report only.
+- **M20 Solver shortlist.** See §12.1 M20.
+- **Also: dish categories.** The new titles needed a few classifier words (FLOW_SPEC §4.4): dessert adds parfait
+  and "yogurt bowl", curry adds keema and "butter chicken", new snack title words (dip, bites, chaat, "roasted
+  chickpeas") are checked right after dessert's, and "burrito bowl" is a bowl. Every seed recipe's category is
+  pinned in the tests.
+- **Deferred:** M16 (daily amount caps) to 2b.5 deliverable 13; the meal-prep part of M17 to 2b.7; M18 and M19
+  to the backlog (§12.5, Phase 4); M8 (Add from USDA) is DF1.
+
+**Left for 2b.3b** (unchanged scope, with M14's gap rule of 6, already in the ranking code and the token
+estimates): the ideas pass and its prompts (`recipe_ideas/1`, `idea_revision/1`), steps on first open (E19), More
+ideas and the background batch (F21), the pacer and rate-limit waits (E13), the live token test, and the screens
+that need ideas (New badges, the "Writing new ideas…" strip, countdown waits, More ideas live, the C8 steps
+state).
+
+**Dev database.** Re-seeded (210 ingredients, 47 seed recipes, 89 products, 174 prices); no migration.
+
 #### 2b.5 Meal prep: engine (backend)
 
 *Reads FLOW_SPEC §7 (C1, C1b, C3b, C6), §13.1 (E4, E6), §13.3, §13.5 (ideas pass), §13.6.*
@@ -2384,6 +2449,11 @@ run --frozen alembic downgrade 0005`.
 10. **Big cook day time:** code estimates the total hands-on time of every batch cooked that day and checks it against the minutes you set for that day (solver limit and validator). A day that can't fit reports the time fix ("Allow 150 min").
 11. **Prep order:** each cook day gets a simple prep order where the recipes allow it, built by code from the batches' step sections and durations: what to start first (oven, rice, simmering, chilling), and what to cook while those run. A day with one batch, or with only hands-on steps, shows no order.
 12. **Plan view data (H4, FLOW_SPEC C6):** the plan summary gains one `prep_notes` row ("3 to freeze · 4 may spoil") with its items, instead of a freeze and spoil block; each freeze-on-shopping-day step is also listed on the shopping day itself; days with nothing to cook keep the `cook_note` "Nothing to cook, eating prepped meals" (2b.1).
+13. **Daily amount caps (M16, added at the 2b.4 approval):** a per-day amount cap setting for an ingredient, general like the frequency caps but counting the amount eaten per day instead of meals per week (`UserSettings.daily_amount_caps`: ingredient slug, a usual amount, a hard maximum). Protein powder starts at usually 1 scoop (31 g) a day, at most 2 scoops a day.
+   - The solver adds a penalty for every day above the usual amount and never exceeds the maximum, counting every meal that day (overnight oats and protein pudding together); the validator checks the maximum per day.
+   - Meal-now ranking (2b.3a) filters a recipe whose single portion is above the maximum.
+   - Settings shows the cap (a row under Diet, with its editor).
+   - Tests: a week with oats and pudding on the same day never exceeds 2 scoops that day, and prefers 1 when the protein targets are still met; a meal-now card is never above the maximum.
 
 **Acceptance criteria**
 1. "5 lunches from today, cooking today" gives one batch today, freezes the portions past the fridge window, and makes 0 LLM calls with the seed library.
@@ -2453,6 +2523,7 @@ run --frozen alembic downgrade 0005`.
    - days with nothing to cook show "Nothing to cook, eating prepped meals";
    - each day says which portions come from the fridge and which from the freezer, with "thaw in the fridge the night before";
    - a cook day shows its prep order when there is one.
+   - **"No plan fits" (M17, added at the 2b.4 approval):** never CLI wording ("--topup"), never the same sentence twice, and action buttons instead of a paragraph: **Allow a $X top-up** (the server's whole-dollar suggestion, rounded up) and **Switch to shopping**, with the item list behind **See what it would buy**; a budget shortfall offers **Raise the budget to $X**. The diagnostics carry `suggested_cents` and `items` since the 2b.4 approval fixes, and the old `/plan/new/` screen already uses them.
 
 **Acceptance criteria**
 1. The meal-prep flow works end to end; swap and undo work from the UI.
@@ -2598,6 +2669,10 @@ run --frozen alembic downgrade 0005`.
 **Files and folders.** Creates `app/overrides/`; extends `app/domain/calories.py`; prompt `off_plan_parse`; API routes (days, consumption, rebalance); frontend Today additions on the Cook tab; `migrations/versions/0008_daily_overrides.py`.
 
 **Database.** Migration `0008_daily_overrides` (planned as 0004): `day_override`, `consumption_entry`.
+
+**Added at the 2b.4 approval (M19, backlog):** **daily habit items**, a recurring item counted every day toward
+calories and protein (a daily shake, a coffee with milk), with a one-tap "had an extra today". It fits the daily
+tracking and rebalancing here: the habit is a standing `consumption_entry`, and the day's targets rebalance around it.
 
 **Acceptance criteria**
 1. A day override changes only the targeted meals; all other `plan_meal` rows are identical before and after.
@@ -2901,6 +2976,31 @@ No other dependencies are planned. Auth uses the stdlib, and the solver uses HiG
 | J5 | Amount presets (in 2b.4) | Adding to Pantry or "What do you have?": step 1 the form (fresh, frozen, canned, dried, or that ingredient's forms), mapped to the right ingredient entry; step 2 common package sizes for that form as buttons, plus Custom, plus Not sure (the most common size, the lot marked estimated, correctable from Pantry). Presets in seed data per ingredient and form, realistic US sizes, flagged as estimates; listed in the step summary. |
 | J6 | Recipe amounts in your terms (in 2b.4) | For each ingredient you have, the recipe page shows how much the recipe uses relative to what you have ("uses 4 oz, about half your bag · 4 oz left after"). Mark cooked subtracts exactly that; the leftover stays in Pantry for later plans and searches. |
 
+**Step 2b.4 approval (2026-10-10).** You tested and approved 2b.4, then:
+
+| # | Topic | Decision |
+|---|---|---|
+| M1 | 2b.4 | Approved, including D77–D88. Fixes M2–M13 first, then step 2b.3b (with M14). If both don't fit one session, the fixes are finished and committed first, and the step stops with what's left of 2b.3b. |
+| M2 | Correct amount (D88 follow-up, decision #1) | Pantry's **Correct amount** works on any lot, not only estimated ones, with quick taps for ¾, ½ and ¼ of the package plus Custom. |
+| M3 | Usual version (decision #5) | Your usual version of a held item is saved in your settings on the server, not on one device. |
+| M4 | Chicken cuts | Chicken is protein-critical, so it must be exact. Catalog ingredients with forms and package sizes for chicken thigh and breast bone-in skin-on, drumsticks, wings and whole chicken, each mapped to the best USDA entry. |
+| M5 | Bone-in refuse | Bone-in cuts use USDA refuse (bone) percentages, so a package's weight becomes edible weight for nutrition, portions and leftovers. With tests. |
+| M6 | Strict chicken | Chicken search is strict: bone-in vs boneless and skin-on vs skinless must match exactly ("chicken thighs bone in" never leads with boneless). Never substitute between these forms anywhere (search, swaps, substitutes). With tests. |
+| M7 | Close matches, labeled | Everything else can use a close match as long as it's labeled: "garlic paste" maps to minced garlic, "canned peas" to frozen peas; search shows "Closest match: frozen peas". Added as aliases where they make sense. |
+| M8 | USDA fallback | "Can't find it? Add from USDA" is deferred to a later phase (§12.5, DF1). |
+| M9 | Meal choice | The small "Dinner for 1 ▸" line becomes a visible choice: Breakfast, Lunch, Dinner, Snack, Dessert. No default by time of day, nothing preselected (Same as last time covers repeats). Results match the chosen meal. |
+| M10 | Mood is soft | Mood is a preference, not a hard filter: recipes matching the mood first, then "A bit more effort" or "Simpler options" with the rest that pass the hard filters. |
+| M11 | Card wording | A substitute you have reads "Swap: X instead of Y (you have it)", not "Missing"; only things you'd buy are "Missing". The duplicated "Uses …" line at the bottom of cards goes. |
+| M12 | Card cost | Cards show "$X a portion" and "$Y to buy today" (whole packages of what's missing). With Cheap on, ranking accounts for the buy-today total, not just the per-portion cost. |
+| M13 | Seed library | 30–40 new draft recipes in your style (chicken, Indian-style gravies, tortillas as chapati, eggs, rice bowls; no beef, pork rare) across breakfast, lunch, dinner, snacks and protein desserts, and simple, medium and fancy. Nutrition and cost computed by code. Listed in the step summary. **Conflict flagged:** CLAUDE.md says "Seed recipes use no pork component", which wins over "pork rare", so the new seeds have no pork component. |
+| M14 | Gap rule (2b.3b) | A meal-now search calls the ideas pass when fewer than **6** recipes fit well (was 3), so every search aims for 6–8 options. The token estimates are updated for this. |
+| M15 | Portion vs batch (A1, now) | Every recipe page and plan view shows amounts per portion and, for batches, the batch total ("1 scoop per portion · 4 scoops for the batch of 4"). Scoop-based items always show scoops, not just grams. Done with the fixes. |
+| M16 | Daily amount cap (A2, 2b.5) | A per-day amount cap setting for an ingredient (like frequency caps, but amount per day). Protein powder: usually 1 scoop (31 g) a day, hard maximum 2 scoops. The solver penalizes days above the usual amount and never exceeds the maximum, counting every meal that day; meal-now ranking never suggests a single portion above the maximum; Settings shows the cap. Tests: oats and pudding on one day never exceed 2 scoops, and 1 is preferred when protein targets are still met. Didn't fit with the fixes, so it is built in 2b.5 (deliverable 13). |
+| M17 | "No plan fits" (B: 2b.7, plus a fix now) | Never CLI wording like "--topup", never repeated, action buttons instead of a paragraph: "Allow a $X top-up" (rounded up) and "Switch to shopping", the items behind "See what it would buy". Fixed now on `/plan/new/`; the meal-prep screens follow in 2b.7. |
+| M18 | Custom items from labels (C, backlog) | Add an item that isn't in USDA (granola bought abroad) by entering label values per serving. Scheduled together with DF1 (§12.5, DF3). |
+| M19 | Daily habit items (C, backlog) | A recurring item counted every day toward calories and protein, with a one-tap "had an extra today". Placed with Phase 4 (daily tracking and rebalancing). |
+| M20 | Solver shortlist (asked during the fixes) | With the 47 seed recipes the weekly MILP stopped proving its best plan in time (slower plans that could differ between identical requests; planning tests timed out). Your choice: before each solve, code shortlists the best 3 candidates per meal (your nutrition priority per kcal, closeness to the meal's calories, favorites, pantry use, price; never-favored and disliked last), preferring recipes that share ingredients, since solve time grows with the number of different ingredients. When the shortlist can't make a plan it widens to 6 per meal, and a library of 16 or fewer is solved whole. The solver still does all the fitting. A default week now solves in about 6 s (the 10 Phase 0 seeds took about 10 s). `app/planning/shortlist.py`. |
+
 ### 12.2 Remaining questions (from applying your answers)
 
 - **Phase 2b questions:** all answered (FLOW_SPEC §18). None open.
@@ -2926,6 +3026,20 @@ No other dependencies are planned. Auth uses the stdlib, and the solver uses HiG
 Started 2026-10-10 (H6). Each item is done before `docs/deploy.md` is followed for real.
 
 - **PD1. Login rate limit keyed on the real client address.** Today `client_address()` (`api/routes/auth.py`) trusts `X-Real-IP` / `X-Forwarded-For` whenever it runs on Vercel and otherwise uses the socket's peer, which behind the Next dev proxy is the proxy itself, so every device shares one lockout counter. Fix: read `X-Forwarded-For` only when the request comes from the trusted proxy (a configured proxy address or Vercel's own header), take the client entry that proxy appended, and fall back to the peer address otherwise. Test: two clients behind the proxy get separate counters, and a client can't pick its own key by sending the header directly.
+
+### 12.5 Deferred features (no phase yet)
+
+Recorded so they aren't lost; each gets a phase when you schedule it.
+
+- **DF1. "Can't find it? Add from USDA"** (M8, 2026-10-10). When an ingredient search has no match, offer a
+  lookup in the local USDA cache and add the chosen food as a new canonical ingredient (with its mapping
+  reviewed like the seed ones). Until then a search with no match says so, and close matches are labeled
+  "Closest match: …" (M7).
+- **DF2. Variety caps as a setting** (E9): "max servings of one recipe per week"; the built-in Q14 rule stays.
+- **DF3. Custom items from labels** (M18, 2026-10-10): add an item that isn't in USDA (granola bought abroad) by
+  entering its label values per serving, like the protein powder's label entry (package-label nutrition, values per
+  serving, USDA filling nothing). Scheduled together with DF1, since both are "Can't find it?" in the add flow.
+- **Daily habit items** (M19) are placed with Phase 4 (see its section).
 
 ---
 

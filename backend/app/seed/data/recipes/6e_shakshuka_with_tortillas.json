@@ -1,0 +1,144 @@
+{
+ "family": "Egg breakfast",
+ "title": "Shakshuka with warm tortillas",
+ "description": "Eggs poached in a cumin-paprika tomato and pepper sauce, with tortillas for scooping.",
+ "meal_slots": [
+  "breakfast",
+  "lunch",
+  "dinner"
+ ],
+ "mood": "medium",
+ "cuisine": "Middle Eastern",
+ "flavor_tags": [
+  "smoky",
+  "tomato",
+  "warm spices"
+ ],
+ "base_servings": 4,
+ "active_minutes": 20,
+ "total_minutes": 35,
+ "equipment": [
+  "stovetop"
+ ],
+ "freezer_friendly": false,
+ "draft_note": "Draft quantities: adjust them in the app. The sauce freezes; poach the eggs fresh.",
+ "ingredients": [
+  {
+   "ingredient": "olive-oil",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "fat"
+  },
+  {
+   "ingredient": "onion-yellow",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "diced",
+   "role": "vegetable"
+  },
+  {
+   "ingredient": "bell-pepper",
+   "quantity": "2",
+   "unit": "count",
+   "preparation": "sliced",
+   "role": "vegetable"
+  },
+  {
+   "ingredient": "garlic",
+   "quantity": "4",
+   "unit": "clove",
+   "preparation": "sliced",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "tomatoes-canned",
+   "quantity": "800",
+   "unit": "ml",
+   "role": "vegetable"
+  },
+  {
+   "ingredient": "cumin-ground",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "paprika",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "chili-powder",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "3/4",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "egg-large",
+   "quantity": "8",
+   "unit": "count",
+   "role": "protein"
+  },
+  {
+   "ingredient": "cilantro",
+   "quantity": "10",
+   "unit": "g",
+   "preparation": "chopped",
+   "role": "garnish",
+   "optional": true
+  },
+  {
+   "ingredient": "flour-tortilla-small",
+   "quantity": "8",
+   "unit": "count",
+   "preparation": "2 per serving",
+   "role": "carb",
+   "component": "tortillas"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Dice the onion, slice the peppers and garlic."
+  },
+  {
+   "section": "stovetop",
+   "text": "Heat the oil in a wide skillet over medium heat. Cook the onion and peppers until soft, about 8 minutes, then add the garlic and spices for 1 minute.",
+   "duration_minutes": 9
+  },
+  {
+   "section": "stovetop",
+   "text": "Add the tomatoes and salt and simmer until thickened, about 10 minutes.",
+   "duration_minutes": 10
+  },
+  {
+   "section": "stovetop",
+   "text": "Make 8 wells, crack in the eggs, cover and cook until the whites are set and the yolks are as you like them, 6 to 8 minutes.",
+   "duration_minutes": 8,
+   "doneness_check_for": "egg-large"
+  },
+  {
+   "section": "assembly",
+   "text": "Warm each tortilla on a dry pan about 30 seconds per side, like chapati."
+  },
+  {
+   "section": "portioning",
+   "text": "Serve 2 eggs with sauce and 2 tortillas per person, topped with cilantro."
+  },
+  {
+   "section": "storage",
+   "text": "Cool, then refrigerate in the containers."
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat covered, stirring halfway, until hot all the way through."
+  }
+ ]
+}

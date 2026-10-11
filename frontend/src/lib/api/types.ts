@@ -75,3 +75,6 @@ export type Preset = S["PresetOut"];
 export type VersionChoice = S["VersionChoiceOut"];
 export type Versions = S["VersionsOut"];
 export type PantryNote = S["PantryNoteOut"];
+// Step 2b.4 approval (M2, M11)
+export type CorrectOptions = S["CorrectOptionsOut"];
+export type SwapLine = S["SwapLineOut"];

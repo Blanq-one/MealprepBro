@@ -19,6 +19,8 @@ from app.db.models import (
 from app.domain.enums import MealSlot
 from app.llm.fake import FakeLLMClient, fixture_response
 from app.planning.exposure import filtered_reason
+from app.planning.inputs import constraints_for
+from app.planning.loader import build_problem
 from app.planning.orchestrator import Orchestrator
 from app.planning.problem import ExcludedRecipe
 from app.schemas.plans import DayOverride, PlanRequest
@@ -125,7 +127,11 @@ def test_a_cold_start_plan_logs_every_seed_candidate_with_its_selection(seeded_d
     assert out.status == "succeeded" and out.llm_calls == 0
     logged = rows(seeded_db, out.run_id)
     offered = [r for r in logged if r.filtered_reason is None]
-    assert len(offered) == 10 and {r.source for r in logged} == {"seed"}  # the ten seed recipes
+    # every seed candidate of the week is logged (the solver may see a shortlist: planning/shortlist.py)
+    user = current_user(seeded_db)
+    week = constraints_for(seeded_db, user.id, PlanRequest(week_start=WEEK, days=DAYS))
+    candidates = build_problem(seeded_db, user.id, week).candidates
+    assert len(offered) == len(candidates) and {r.source for r in logged} == {"seed"}
     assert all(r.meal_plan_id == out.plan_id for r in logged)
     batches = seeded_db.scalars(select(PlanCookBatch).where(PlanCookBatch.meal_plan_id == out.plan_id)).all()
     portions = Counter()

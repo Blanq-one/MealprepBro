@@ -34,3 +34,8 @@
   margin-top: 8px;
   text-align: center;
 }
+
+.section {
+  margin: 8px 0 0;
+  font-size: 1.05rem;
+}

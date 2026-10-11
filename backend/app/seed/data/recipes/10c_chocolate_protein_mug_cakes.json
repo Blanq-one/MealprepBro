@@ -1,0 +1,97 @@
+{
+ "family": "Protein desserts",
+ "title": "Chocolate protein mug cakes",
+ "description": "Fudgy single-serve chocolate cakes made with protein powder, cocoa and egg, cooked in the microwave in a minute.",
+ "meal_slots": [
+  "protein_dessert"
+ ],
+ "mood": "medium",
+ "cuisine": null,
+ "flavor_tags": [
+  "chocolate",
+  "fudgy"
+ ],
+ "base_servings": 4,
+ "active_minutes": 10,
+ "total_minutes": 15,
+ "equipment": [
+  "microwave"
+ ],
+ "freezer_friendly": false,
+ "draft_note": "Draft quantities: adjust them in the app. Best warm, straight from the microwave.",
+ "ingredients": [
+  {
+   "ingredient": "protein-powder-double-chocolate",
+   "quantity": "4",
+   "unit": "scoop",
+   "role": "protein"
+  },
+  {
+   "ingredient": "flour-all-purpose",
+   "quantity": "4",
+   "unit": "tbsp",
+   "role": "carb"
+  },
+  {
+   "ingredient": "cocoa-powder",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "other"
+  },
+  {
+   "ingredient": "baking-powder",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "other"
+  },
+  {
+   "ingredient": "sugar",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "other"
+  },
+  {
+   "ingredient": "egg-large",
+   "quantity": "2",
+   "unit": "count",
+   "preparation": "beaten",
+   "role": "protein"
+  },
+  {
+   "ingredient": "milk-2",
+   "quantity": "160",
+   "unit": "ml",
+   "role": "dairy"
+  },
+  {
+   "ingredient": "vegetable-oil",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "fat"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Whisk the protein powder, flour, cocoa, baking powder and sugar. Whisk the eggs, milk and oil separately."
+  },
+  {
+   "section": "assembly",
+   "text": "Stir the wet into the dry until just smooth and divide among 4 greased mugs."
+  },
+  {
+   "section": "microwave",
+   "text": "Microwave one mug at a time on high 60 to 75 seconds, until risen and set at the edges with a soft center.",
+   "duration_minutes": 5,
+   "doneness_check_for": "egg-large"
+  },
+  {
+   "section": "portioning",
+   "text": "Serve one mug each, warm."
+  },
+  {
+   "section": "storage",
+   "text": "Cool, then refrigerate in the containers."
+  }
+ ]
+}

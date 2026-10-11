@@ -51,6 +51,7 @@ export function CookingMode({ batch, online, onCooked }: { batch: BatchDetail; o
                 <li key={`${line.ingredient_id}-${i}`}>
                   <strong>{line.display}</strong> {line.name}
                   {line.preparation ? `, ${line.preparation}` : ""}
+                  {line.portion_note && <span className={styles.note}>{line.portion_note}</span>}
                   {notes.get(line.ingredient_id) && <span className={styles.note}>{notes.get(line.ingredient_id)}</span>}
                 </li>
               ))}

@@ -10,7 +10,6 @@ import { ToggleRow } from "@/components/ui/ToggleRow";
 import { api, describeError } from "@/lib/api/client";
 import type { AddOptions, BulkItemIn, FormOption, InventoryLot, StorageLocation, VersionChoice } from "@/lib/api/types";
 import type { DraftExtra } from "@/lib/cook/answers";
-import { usualVersions } from "@/lib/cook/usualVersions";
 
 import styles from "./AddFlow.module.css";
 import { VersionChoices } from "./VersionChoices";
@@ -196,7 +195,7 @@ export function AddFlow({
       )}
 
       {options && askVersion && options.versions && (
-        <VersionChoices versions={options.versions} selected={null} onPick={pickVersion} usual={usualVersions()[String(options.ingredient_id)] ?? null} />
+        <VersionChoices versions={options.versions} selected={null} onPick={pickVersion} usual={options.versions.usual ?? null} />
       )}
 
       {options && stop && (

@@ -1,0 +1,135 @@
+{
+ "family": "Bone-in chicken",
+ "title": "Roast bone-in chicken breasts with quinoa and asparagus",
+ "description": "Split chicken breasts roasted with oregano and lemon, with broth-cooked quinoa and roasted asparagus.",
+ "meal_slots": [
+  "dinner"
+ ],
+ "mood": "medium",
+ "cuisine": "Mediterranean",
+ "flavor_tags": [
+  "lemony",
+  "herby"
+ ],
+ "base_servings": 4,
+ "active_minutes": 20,
+ "total_minutes": 55,
+ "equipment": [
+  "oven",
+  "stovetop"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Draft quantities: adjust them in the app. Freeze the chicken and quinoa; the asparagus softens when frozen.",
+ "ingredients": [
+  {
+   "ingredient": "chicken-breast-bone-in-skin-on",
+   "quantity": "1200",
+   "unit": "g",
+   "preparation": "about 4 split breasts",
+   "role": "protein",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "olive-oil",
+   "quantity": "3",
+   "unit": "tbsp",
+   "role": "fat"
+  },
+  {
+   "ingredient": "lemon-juice",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "sauce"
+  },
+  {
+   "ingredient": "garlic",
+   "quantity": "4",
+   "unit": "clove",
+   "preparation": "minced",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "oregano",
+   "quantity": "2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "paprika",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1 1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "black-pepper",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "quinoa",
+   "quantity": "250",
+   "unit": "g",
+   "preparation": "rinsed",
+   "role": "carb",
+   "component": "quinoa"
+  },
+  {
+   "ingredient": "vegetable-broth",
+   "quantity": "500",
+   "unit": "ml",
+   "role": "other",
+   "component": "quinoa"
+  },
+  {
+   "ingredient": "asparagus",
+   "quantity": "450",
+   "unit": "g",
+   "preparation": "trimmed",
+   "role": "vegetable",
+   "component": "asparagus"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Heat the oven to 400F. Rub the chicken with 2 tbsp of the oil, the lemon juice, garlic, oregano, paprika and most of the salt and pepper. Trim the asparagus."
+  },
+  {
+   "section": "oven",
+   "text": "Roast the chicken skin side up at 400F for 35 to 40 minutes, until golden and cooked through to the bone.",
+   "duration_minutes": 40,
+   "appliance_temp_f": 400,
+   "doneness_check_for": "chicken-breast-bone-in-skin-on"
+  },
+  {
+   "section": "stovetop",
+   "text": "Meanwhile simmer the quinoa in the broth, covered, 15 minutes; rest 5 minutes and fluff.",
+   "duration_minutes": 20
+  },
+  {
+   "section": "oven",
+   "text": "For the last 12 minutes, roast the asparagus tossed with the remaining oil and salt alongside the chicken.",
+   "duration_minutes": 12,
+   "appliance_temp_f": 400
+  },
+  {
+   "section": "portioning",
+   "text": "Slice the chicken off the bone and divide it with the quinoa and asparagus among 4 containers."
+  },
+  {
+   "section": "storage",
+   "text": "Cool, then refrigerate in the containers."
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat covered, stirring halfway, until hot all the way through."
+  }
+ ]
+}

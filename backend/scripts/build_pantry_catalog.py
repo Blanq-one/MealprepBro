@@ -60,8 +60,24 @@ GROUPS: list[tuple[str, str, list[str]]] = [
     ("bay", "Bay leaf", ["bay-leaf"]),
 ]
 
-# ---------------- foods with several forms (J5) ----------------
+# ---------------- foods with several forms (J5; chicken cuts M4) ----------------
 FORMS: list[tuple[str, str, list[tuple[str, str, str]]]] = [
+    (
+        "chicken_thighs",
+        "Chicken thighs",
+        [
+            ("boneless_skinless", "Boneless, skinless", "chicken-thigh-boneless-skinless"),
+            ("bone_in_skin_on", "Bone-in, skin-on", "chicken-thigh-bone-in-skin-on"),
+        ],
+    ),
+    (
+        "chicken_breasts",
+        "Chicken breasts",
+        [
+            ("boneless_skinless", "Boneless, skinless", "chicken-breast-boneless-skinless"),
+            ("bone_in_skin_on", "Bone-in, skin-on (split)", "chicken-breast-bone-in-skin-on"),
+        ],
+    ),
     (
         "cauliflower",
         "Cauliflower",
@@ -105,6 +121,46 @@ FORMS: list[tuple[str, str, list[tuple[str, str, str]]]] = [
         "Blueberries",
         [("fresh", "Fresh", "blueberries"), ("frozen", "Frozen", "blueberries-frozen")],
     ),
+]
+
+# ---------------- chicken cuts are exact (M6): never swapped for another bone or skin form ----------------
+CHICKEN_CUTS: list[tuple[str, str, str]] = [
+    ("chicken-thigh-boneless-skinless", "boneless", "skinless"),
+    ("chicken-breast-boneless-skinless", "boneless", "skinless"),
+    ("chicken-thigh-bone-in-skin-on", "bone_in", "skin_on"),
+    ("chicken-breast-bone-in-skin-on", "bone_in", "skin_on"),
+    ("chicken-drumstick", "bone_in", "skin_on"),
+    ("chicken-wing", "bone_in", "skin_on"),
+    ("chicken-whole", "bone_in", "skin_on"),
+]
+
+# ---------------- close matches, always labeled (M7): a name with no ingredient of its own ----------------
+CLOSE_MATCHES: list[tuple[str, str]] = [
+    ("garlic paste", "garlic"),
+    ("ginger paste", "ginger"),
+    ("canned peas", "peas-frozen"),
+    ("fresh peas", "peas-frozen"),
+    ("canned spinach", "spinach-frozen"),
+    ("fresh corn", "corn-frozen"),
+    ("corn on the cob", "corn-frozen"),
+    ("tomato puree", "tomato-sauce"),
+    ("roma tomatoes", "tomato"),
+    ("cherry tomatoes", "tomato"),
+    ("shallot", "onion-red"),
+    ("shallots", "onion-red"),
+    ("yukon gold potatoes", "potato-russet"),
+    ("red potatoes", "potato-russet"),
+    ("brown basmati rice", "rice-brown"),
+    ("whole wheat tortilla", "chapati"),
+    ("naan", "pita"),
+    ("lime", "lime-juice"),
+    ("limes", "lime-juice"),
+    ("lemon zest", "lemon"),
+    ("sour cream", "greek-yogurt-whole"),
+    ("light cream", "heavy-cream"),
+    ("coconut cream", "coconut-milk"),
+    ("avocado oil", "vegetable-oil"),
+    ("rice vinegar", "vinegar-white"),
 ]
 
 # ---------------- held items with versions (J4) ----------------
@@ -256,6 +312,12 @@ PRESETS: dict[str, list[P]] = {
     # protein
     "chicken-thigh-boneless-skinless": FRESH_MEAT,
     "chicken-breast-boneless-skinless": FRESH_MEAT,
+    # bone-in cuts (M4): sold by weight with the bone; the edible share comes from USDA's refuse (M5)
+    "chicken-thigh-bone-in-skin-on": packs_lb("1.5", "2.5", "4", default="2.5"),
+    "chicken-breast-bone-in-skin-on": packs_lb("1.5", "2.5", "4", default="2.5"),
+    "chicken-drumstick": packs_lb("1.5", "2.5", "4.5", default="2.5"),
+    "chicken-wing": packs_lb("1", "2.5", "4", default="2.5"),
+    "chicken-whole": packs_lb("3.5", "4.5", "5.5", default="4.5", container="bird"),
     "ground-chicken": GROUND,
     "ground-turkey-93": GROUND,
     "turkey-breast": packs_lb("1.5", "2.5", "4", default="2.5", container="roast"),
@@ -791,6 +853,10 @@ def build() -> dict[str, Any]:
             }
             for slug, options in PRESETS.items()
         ],
+        "chicken_cuts": [
+            {"ingredient": slug, "bone": bone, "skin": skin} for slug, bone, skin in CHICKEN_CUTS
+        ],
+        "close_matches": [{"alias": alias, "ingredient": slug} for alias, slug in CLOSE_MATCHES],
     }
 
 
@@ -822,6 +888,13 @@ def review_sheet() -> str:
     out += [
         f"| {label} | {', '.join(f'{fl} ({slug})' for _, fl, slug in forms)} |" for _, label, forms in FORMS
     ]
+    out += ["", "## Chicken cuts are exact (M6)", "", "| Ingredient | Bone | Skin |", "|---|---|---|"]
+    out += [
+        f"| {slug} | {bone.replace('_', '-')} | {skin.replace('_', '-')} |"
+        for slug, bone, skin in CHICKEN_CUTS
+    ]
+    out += ["", "## Close matches, always labeled (M7)", "", "| You type | Closest match |", "|---|---|"]
+    out += [f"| {alias} | {slug} |" for alias, slug in CLOSE_MATCHES]
     out += ["", "## Package sizes (J5), per ingredient and form", "", "| Ingredient | Sizes |", "|---|---|"]
     for slug, options in PRESETS.items():
         sizes = ", ".join(

@@ -63,6 +63,8 @@ Every package size is a typical US size and an **estimate**.
 
 | Food | Forms |
 |---|---|
+| Chicken thighs | Boneless, skinless (chicken-thigh-boneless-skinless), Bone-in, skin-on (chicken-thigh-bone-in-skin-on) |
+| Chicken breasts | Boneless, skinless (chicken-breast-boneless-skinless), Bone-in, skin-on (split) (chicken-breast-bone-in-skin-on) |
 | Cauliflower | Fresh head (cauliflower), Frozen florets (cauliflower-frozen) |
 | Broccoli | Fresh (broccoli), Frozen (broccoli-frozen) |
 | Green beans | Fresh (green-beans), Frozen (green-beans-frozen), Canned (green-beans-canned) |
@@ -75,12 +77,59 @@ Every package size is a typical US size and an **estimate**.
 | Strawberries | Fresh (strawberries), Frozen (strawberries-frozen) |
 | Blueberries | Fresh (blueberries), Frozen (blueberries-frozen) |
 
+## Chicken cuts are exact (M6)
+
+| Ingredient | Bone | Skin |
+|---|---|---|
+| chicken-thigh-boneless-skinless | boneless | skinless |
+| chicken-breast-boneless-skinless | boneless | skinless |
+| chicken-thigh-bone-in-skin-on | bone-in | skin-on |
+| chicken-breast-bone-in-skin-on | bone-in | skin-on |
+| chicken-drumstick | bone-in | skin-on |
+| chicken-wing | bone-in | skin-on |
+| chicken-whole | bone-in | skin-on |
+
+## Close matches, always labeled (M7)
+
+| You type | Closest match |
+|---|---|
+| garlic paste | garlic |
+| ginger paste | ginger |
+| canned peas | peas-frozen |
+| fresh peas | peas-frozen |
+| canned spinach | spinach-frozen |
+| fresh corn | corn-frozen |
+| corn on the cob | corn-frozen |
+| tomato puree | tomato-sauce |
+| roma tomatoes | tomato |
+| cherry tomatoes | tomato |
+| shallot | onion-red |
+| shallots | onion-red |
+| yukon gold potatoes | potato-russet |
+| red potatoes | potato-russet |
+| brown basmati rice | rice-brown |
+| whole wheat tortilla | chapati |
+| naan | pita |
+| lime | lime-juice |
+| limes | lime-juice |
+| lemon zest | lemon |
+| sour cream | greek-yogurt-whole |
+| light cream | heavy-cream |
+| coconut cream | coconut-milk |
+| avocado oil | vegetable-oil |
+| rice vinegar | vinegar-white |
+
 ## Package sizes (J5), per ingredient and form
 
 | Ingredient | Sizes |
 |---|---|
 | chicken-thigh-boneless-skinless | 1 lb pack, 1.5 lb pack (default), 3 lb pack |
 | chicken-breast-boneless-skinless | 1 lb pack, 1.5 lb pack (default), 3 lb pack |
+| chicken-thigh-bone-in-skin-on | 1.5 lb pack, 2.5 lb pack (default), 4 lb pack |
+| chicken-breast-bone-in-skin-on | 1.5 lb pack, 2.5 lb pack (default), 4 lb pack |
+| chicken-drumstick | 1.5 lb pack, 2.5 lb pack (default), 4.5 lb pack |
+| chicken-wing | 1 lb pack, 2.5 lb pack (default), 4 lb pack |
+| chicken-whole | 3.5 lb bird, 4.5 lb bird (default), 5.5 lb bird |
 | ground-chicken | 1 lb pack (default), 2 lb pack, 3 lb pack |
 | ground-turkey-93 | 1 lb pack (default), 2 lb pack, 3 lb pack |
 | turkey-breast | 1.5 lb roast, 2.5 lb roast (default), 4 lb roast |

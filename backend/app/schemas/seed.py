@@ -78,6 +78,15 @@ class SeedShelfLife(_Strict):
     basis: str = Field(min_length=10)
 
 
+class SeedRefuse(_Strict):
+    """The inedible share of an ingredient as purchased (bone, decision M5), from USDA SR28 FOOD_DES
+    "Refuse". A package's weight times (1 - pct/100) is its edible weight for nutrition and portions."""
+
+    pct: Decimal = Field(gt=0, lt=100)
+    description: str = Field(min_length=3)  # "bone", "bone and cartilage"
+    source: str = Field(min_length=10)  # the SR28 record and value it comes from
+
+
 class SeedIngredient(_Strict):
     name: str
     slug: str = Field(pattern=r"^[a-z0-9]+(-[a-z0-9]+)*$")
@@ -101,6 +110,7 @@ class SeedIngredient(_Strict):
     density: PortionRef | None = None
     count_unit_weight: PortionRef | LabelRef | None = None
     units: list[SeedUnit] = Field(default_factory=list)
+    refuse: SeedRefuse | None = None  # bone-in cuts (M5): unset = all of it is edible
     notes: str | None = None
     nutrition_reviewed_on: date | None = None  # you approved this mapping (review sheet)
 
@@ -305,7 +315,8 @@ class CulinaryGroup(_Strict):
 
 
 class FoodForm(_Strict):
-    form: Literal["fresh", "frozen", "canned", "dried"]
+    # fresh, frozen, canned, dried (J5); a chicken cut's bone and skin (M4)
+    form: Literal["fresh", "frozen", "canned", "dried", "boneless_skinless", "bone_in_skin_on"]
     label: str
     ingredient: str  # slug: each form is its own ingredient (nutrition and shelf life differ)
 
@@ -363,6 +374,23 @@ class IngredientPresets(_Strict):
         return self
 
 
+class ChickenCut(_Strict):
+    """A chicken cut's bone and skin (M6): exact, never swapped for another form in search, the resolver or a
+    substitute."""
+
+    ingredient: str
+    bone: Literal["bone_in", "boneless"]
+    skin: Literal["skin_on", "skinless"]
+
+
+class CloseMatch(_Strict):
+    """A name with no ingredient of its own, mapped to the closest one and always labeled (M7): "canned peas"
+    → "Closest match: peas, frozen"."""
+
+    alias: str = Field(min_length=2)
+    ingredient: str
+
+
 class PantryCatalogFile(_Strict):
     """app/seed/data/pantry_catalog.json, written by scripts/build_pantry_catalog.py."""
 
@@ -372,6 +400,8 @@ class PantryCatalogFile(_Strict):
     foods: list[Food]
     versions: list[HeldVersions]
     presets: list[IngredientPresets]
+    chicken_cuts: list[ChickenCut] = Field(default_factory=list)
+    close_matches: list[CloseMatch] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def _unique(self) -> Self:
@@ -384,4 +414,12 @@ class PantryCatalogFile(_Strict):
         preset = [p.ingredient for p in self.presets]
         if dupes := sorted({m for m in preset if preset.count(m) > 1}):
             raise ValueError(f"presets listed twice: {dupes}")
+        cuts = [c.ingredient for c in self.chicken_cuts]
+        if dupes := sorted({m for m in cuts if cuts.count(m) > 1}):
+            raise ValueError(f"chicken cuts listed twice: {dupes}")
+        close = [c.alias for c in self.close_matches]
+        if dupes := sorted({m for m in close if close.count(m) > 1}):
+            raise ValueError(f"close matches listed twice: {dupes}")
+        if strict := sorted({c.ingredient for c in self.close_matches} & set(cuts)):
+            raise ValueError(f"a chicken cut is never a close match (M6): {strict}")
         return self

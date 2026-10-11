@@ -1,0 +1,74 @@
+{
+ "family": "Protein desserts",
+ "title": "Mango lassi smoothie",
+ "description": "A thick mango, Greek yogurt and milk lassi with a little cardamom and honey.",
+ "meal_slots": [
+  "protein_dessert",
+  "snack",
+  "breakfast"
+ ],
+ "mood": "simple",
+ "cuisine": "Indian",
+ "flavor_tags": [
+  "fruity",
+  "cool",
+  "fragrant"
+ ],
+ "base_servings": 3,
+ "active_minutes": 10,
+ "total_minutes": 10,
+ "equipment": [],
+ "freezer_friendly": false,
+ "draft_note": "Draft quantities: adjust them in the app. Make just before drinking.",
+ "ingredients": [
+  {
+   "ingredient": "mango",
+   "quantity": "2",
+   "unit": "count",
+   "preparation": "very ripe, peeled",
+   "role": "fruit"
+  },
+  {
+   "ingredient": "greek-yogurt-nonfat",
+   "quantity": "400",
+   "unit": "g",
+   "role": "dairy"
+  },
+  {
+   "ingredient": "milk-2",
+   "quantity": "360",
+   "unit": "ml",
+   "role": "dairy"
+  },
+  {
+   "ingredient": "honey",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "other"
+  },
+  {
+   "ingredient": "cardamom",
+   "quantity": "1/4",
+   "unit": "tsp",
+   "role": "seasoning"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Peel the mangoes and mash the flesh to a smooth purée with a fork or potato masher."
+  },
+  {
+   "section": "no_cook",
+   "text": "Whisk the mango purée with the yogurt, milk, honey and cardamom until smooth and frothy."
+  },
+  {
+   "section": "portioning",
+   "text": "Pour into 3 glasses."
+  },
+  {
+   "section": "storage",
+   "text": "Refrigerate any extra in a sealed jar and shake before drinking."
+  }
+ ]
+}

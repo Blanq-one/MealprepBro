@@ -12,7 +12,7 @@ from app.domain.cost import money_display
 from app.domain.dish_category import DishCategory
 from app.domain.enums import PortionSize
 from app.domain.nutrition import kcal_display
-from app.schemas.cards import CostLineOut, LineContextOut, MissingLineOut, SubstituteOut
+from app.schemas.cards import CostLineOut, LineContextOut, MissingLineOut, SubstituteOut, SwapLineOut
 from app.schemas.cook import GoalTile, RecipeSuggestionOut
 
 Badge = Literal["favorite", "saved", "new", "draft"]
@@ -25,8 +25,29 @@ def portions_display(portions: int) -> str:
     return "1 portion" if portions == 1 else f"for {portions} people"
 
 
+def buy_today(coverage: Sequence[LineCoverage]) -> str:
+    """What this meal needs you to buy now, in whole packages (M12): "$4.29 to buy today", "nothing to buy
+    today", or "$4.29 to buy today + unpriced items"."""
+    needed = [
+        cov
+        for cov in coverage
+        if cov.status in (Status.COULD_BUY, Status.SHORT)
+        or (cov.status is Status.MISSING and cov.substitute is None)
+    ]
+    if not needed:
+        return "nothing to buy today"
+    priced = [cov.purchase for cov in needed if cov.purchase is not None]
+    if not priced:
+        return "no price yet for what to buy"
+    cents = sum(p.cents for p in priced)
+    estimate = " est." if any(p.is_estimate for p in priced) else ""
+    unpriced = " + unpriced items" if len(priced) < len(needed) else ""
+    return f"{money_display(cents)}{estimate} to buy today{unpriced}"
+
+
 def numbers(item: PoolItem, goals: Sequence[GoalTile], store_order: Sequence[str]) -> list[str]:
-    """Per portion: kcal, protein, time (start to finish) and cost, plus iron or carbs with those goals."""
+    """Per portion: kcal, protein, time (start to finish) and cost; then what to buy today (M12); plus iron or
+    carbs with those goals."""
     calc = item.scaled.calculation
     per = calc.per_portion.amounts
     out = [
@@ -39,6 +60,7 @@ def numbers(item: PoolItem, goals: Sequence[GoalTile], store_order: Sequence[str
         out.append("no price yet")
     else:
         out.append(f"{money_display(cost[0])} a portion" + (" est." if cost[1] else ""))
+    out.append(buy_today(item.rank_input.coverage))
     if GoalTile.IRON_RICH in goals:
         iron = per.get("iron_mg", Decimal(0)).quantize(_TENTH, ROUND_HALF_UP)
         heme = (calc.per_portion.heme.heme_mg if calc.per_portion.heme else Decimal(0)).quantize(
@@ -113,10 +135,28 @@ def _missing(cov: LineCoverage) -> MissingLineOut:
     )
 
 
+def swap(cov: LineCoverage) -> SwapLineOut:
+    sub = cov.substitute
+    assert sub is not None
+    return SwapLineOut(
+        ingredient_id=cov.line.ingredient_id,
+        name=cov.line.name,
+        substitute=SubstituteOut(
+            ingredient_id=sub.ingredient_id,
+            name=sub.name,
+            amount_display=sub.display,
+            you_have=True,
+            note=sub.note,
+        ),
+        display=f"Swap: {sub.name} instead of {cov.line.name} (you have it)",
+    )
+
+
 def coverage_lines(
     coverage: Sequence[LineCoverage],
-) -> tuple[list[str], list[CostLineOut], list[MissingLineOut]]:
-    """(uses, could buy, missing and top-ups) for a card."""
+) -> tuple[list[str], list[CostLineOut], list[MissingLineOut], list[SwapLineOut]]:
+    """(uses, could buy, missing and top-ups, swaps) for a card. A line you can make with something you have
+    is a swap, never "Missing" (M11)."""
     uses = [
         cov.line.name + (" (some)" if cov.status is Status.SHORT else "") for cov in coverage if cov.yours
     ]
@@ -125,8 +165,13 @@ def coverage_lines(
         for cov in coverage
         if cov.status is Status.COULD_BUY
     ]
-    missing = [_missing(cov) for cov in coverage if cov.status in (Status.MISSING, Status.SHORT)]
-    return uses, could_buy, missing
+    missing = [
+        _missing(cov)
+        for cov in coverage
+        if cov.status is Status.SHORT or (cov.status is Status.MISSING and cov.substitute is None)
+    ]
+    swaps = [swap(cov) for cov in coverage if cov.status is Status.MISSING and cov.substitute is not None]
+    return uses, could_buy, missing, swaps
 
 
 def line_context(coverage: Sequence[LineCoverage]) -> list[LineContextOut]:
@@ -193,7 +238,7 @@ def suggestion(
     saved_ids: frozenset[int],
     categories: Mapping[int, DishCategory],
 ) -> RecipeSuggestionOut:
-    uses, could_buy, missing = coverage_lines(item.rank_input.coverage)
+    uses, could_buy, missing, swaps = coverage_lines(item.rank_input.coverage)
     return RecipeSuggestionOut(
         version_id=item.version.id,
         recipe_id=item.recipe.id,
@@ -208,7 +253,9 @@ def suggestion(
         uses=uses,
         could_buy=could_buy,
         missing=missing,
+        swaps=swaps,
         why=list(ranked.why),
         score=ranked.score,
         good_match=ranked.good_match,
+        section=ranked.section,
     )

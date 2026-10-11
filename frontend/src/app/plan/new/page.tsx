@@ -10,7 +10,7 @@ import { api } from "@/lib/api/client";
 import { streamPlan } from "@/lib/api/ndjson";
 import type { GenerationRun, NutritionPriority, PlanRequestBody, PlanStreamEvent } from "@/lib/api/types";
 import { nextMonday } from "@/lib/format/dates";
-import { parseDollarsToCents } from "@/lib/format/money";
+import { centsToInput, parseDollarsToCents } from "@/lib/format/money";
 
 const PRIORITIES: { value: "" | NutritionPriority; label: string }[] = [
   { value: "", label: "My usual (settings)" },
@@ -49,15 +49,26 @@ export default function NewPlanPage() {
     return false;
   }
 
-  async function submit(event: FormEvent) {
+  function submit(event: FormEvent) {
     event.preventDefault();
-    if (running || cents === undefined) return;
+    void plan(mode, cents);
+  }
+
+  /** A "no plan fits" fix (2b.4 approval, B): the same week again with the suggested money or mode. */
+  function retry(nextMode: Mode, nextCents: number | null) {
+    setMode(nextMode);
+    setMoney(nextCents === null ? "" : centsToInput(nextCents));
+    void plan(nextMode, nextCents);
+  }
+
+  async function plan(planMode: Mode, planCents: number | null | undefined) {
+    if (running || planCents === undefined) return;
     const request: PlanRequestBody = {
       week_start: weekStart,
-      mode,
+      mode: planMode,
       allow_llm: allowLlm,
       ...(priority ? { nutrition_priority: priority } : {}),
-      ...(cents !== null ? (mode === "shop" ? { budget_cents: cents } : { topup_cents: cents }) : {}),
+      ...(planCents !== null ? (planMode === "shop" ? { budget_cents: planCents } : { topup_cents: planCents }) : {}),
     };
     setRunning(true);
     setStartedAt(Date.now());
@@ -149,7 +160,17 @@ export default function NewPlanPage() {
           </button>
         )}
       </div>
-      {failure && <PlanFailure event={failure} />}
+      {failure && (
+        <PlanFailure
+          event={failure}
+          busy={running}
+          actions={{
+            onTopUp: (c) => retry("inventory", c),
+            onShop: () => retry("shop", null),
+            onBudget: (c) => retry("shop", c),
+          }}
+        />
+      )}
       <ProblemNotice error={error} />
     </form>
   );

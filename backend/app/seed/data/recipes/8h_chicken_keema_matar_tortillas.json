@@ -1,0 +1,160 @@
+{
+ "family": "Chicken gravy with flour tortillas used as chapati",
+ "title": "Chicken keema with peas and tortillas",
+ "description": "Spiced ground chicken and peas cooked down with onion and tomato, with tortillas warmed like chapati.",
+ "meal_slots": [
+  "lunch",
+  "dinner"
+ ],
+ "mood": "medium",
+ "cuisine": "Indian",
+ "flavor_tags": [
+  "warm spices",
+  "savory"
+ ],
+ "base_servings": 4,
+ "active_minutes": 30,
+ "total_minutes": 40,
+ "equipment": [
+  "stovetop"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Draft quantities: adjust them in the app. Freeze the keema; keep the tortillas separate.",
+ "ingredients": [
+  {
+   "ingredient": "ground-chicken",
+   "quantity": "680",
+   "unit": "g",
+   "role": "protein",
+   "component": "keema"
+  },
+  {
+   "ingredient": "peas-frozen",
+   "quantity": "200",
+   "unit": "g",
+   "role": "vegetable",
+   "component": "keema"
+  },
+  {
+   "ingredient": "vegetable-oil",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "fat"
+  },
+  {
+   "ingredient": "onion-yellow",
+   "quantity": "2",
+   "unit": "count",
+   "preparation": "finely chopped",
+   "role": "vegetable",
+   "component": "keema"
+  },
+  {
+   "ingredient": "tomato",
+   "quantity": "2",
+   "unit": "count",
+   "preparation": "chopped",
+   "role": "vegetable",
+   "component": "keema"
+  },
+  {
+   "ingredient": "garlic",
+   "quantity": "5",
+   "unit": "clove",
+   "preparation": "grated",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "ginger",
+   "quantity": "15",
+   "unit": "g",
+   "preparation": "grated",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "cumin-ground",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "coriander-ground",
+   "quantity": "2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "turmeric",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "chili-powder",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "garam-masala",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1 1/4",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "cilantro",
+   "quantity": "10",
+   "unit": "g",
+   "preparation": "chopped",
+   "role": "garnish",
+   "optional": true
+  },
+  {
+   "ingredient": "flour-tortilla-small",
+   "quantity": "8",
+   "unit": "count",
+   "preparation": "2 per serving",
+   "role": "carb",
+   "component": "tortillas"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Chop the onions and tomatoes; grate the ginger and garlic."
+  },
+  {
+   "section": "stovetop",
+   "text": "Heat the oil in a wide pan over medium heat. Cook the onions until golden, 10 minutes, then the ginger, garlic and spices for 1 minute.",
+   "duration_minutes": 11
+  },
+  {
+   "section": "stovetop",
+   "text": "Add the ground chicken and cook, breaking it up, until no pink remains, 6 minutes. Add the tomatoes, peas and salt and cook until the tomatoes melt in and the chicken is cooked through, about 8 minutes. Finish with the garam masala.",
+   "duration_minutes": 14,
+   "doneness_check_for": "ground-chicken"
+  },
+  {
+   "section": "assembly",
+   "text": "Warm each tortilla on a dry pan about 30 seconds per side, like chapati."
+  },
+  {
+   "section": "portioning",
+   "text": "Divide the keema among 4 containers. Keep 2 tortillas per serving wrapped separately."
+  },
+  {
+   "section": "storage",
+   "text": "Cool, then refrigerate in the containers."
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat covered, stirring halfway, until hot all the way through."
+  }
+ ]
+}

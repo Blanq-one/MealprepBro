@@ -31,22 +31,27 @@ function linesWith(recipe: RecipeVersion, details: Map<number, string>): RecipeL
   return recipe.lines.map((l, i) => ({
     key: `${l.ingredient_id}-${i}`,
     name: l.name,
-    display: l.display,
+    display: l.amount_display || l.display,
     preparation: l.preparation,
     optional: l.optional,
     detail: details.get(l.ingredient_id) ?? null,
+    portionNote: l.portion_note ?? null,
   }));
 }
 
-/** "Before you start" for a meal now: what to buy and what's missing, with substitutes (C8). */
+/** "Before you start" for a meal now: what to buy, what's missing, and swaps with what you have (C8, M11). */
 function BeforeYouStart({ context }: { context: SearchContext }) {
-  if (context.could_buy.length === 0 && context.missing.length === 0) return null;
+  const swaps = context.swaps ?? [];
+  if (context.could_buy.length === 0 && context.missing.length === 0 && swaps.length === 0) return null;
   return (
     <section className="card" aria-labelledby="before-h">
       <h2 id="before-h">Before you start</h2>
       <ul className="list">
         {context.could_buy.map((line) => (
           <li key={`buy-${line.ingredient_id}`}>Could buy: {line.display}</li>
+        ))}
+        {swaps.map((line) => (
+          <li key={`swap-${line.ingredient_id}`}>{line.display}</li>
         ))}
         {context.missing.map((line) => (
           <li key={`missing-${line.ingredient_id}`}>Missing: {line.display}</li>
@@ -78,6 +83,7 @@ function BatchRecipe({ batchId }: { batchId: string }) {
           optional: l.optional,
           note: l.adjustment === "absorbed_full_package" ? "whole package" : l.adjustment === "substituted" ? "substituted" : null,
           detail: notes.get(l.ingredient_id) ?? null,
+          portionNote: l.portion_note ?? null,
         }))}
       >
         <section className="card">

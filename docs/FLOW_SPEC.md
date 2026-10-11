@@ -221,19 +221,22 @@ No food photos. Each recipe gets one category, chosen by a deterministic code cl
 | Category | Icon | Rule (first match) |
 |---|---|---|
 | drink | 🥤 | drink slot, or smoothie / shake / latte |
-| dessert | 🍮 | protein-dessert slot, or pudding / mousse / cake / brownie / cookie |
+| dessert | 🍮 | protein-dessert slot, or pudding / mousse / cake / brownie / cookie / parfait / yogurt bowl |
 | oats | 🥣 | oats / oatmeal / porridge / granola, or oats are the main carb |
 | eggs | 🍳 | omelet / frittata / scramble, or egg is the protein in a breakfast |
 | wrap | 🌯 | wrap / burrito / taco / quesadilla, or a tortilla line |
 | sandwich | 🥪 | sandwich / toast, or bread is the main carb |
 | soup | 🍲 | soup / stew / chili |
-| curry | 🍛 | curry / masala / gravy / dal / korma |
+| curry | 🍛 | curry / masala / gravy / dal / korma / keema / butter chicken |
 | pasta | 🍝 | pasta / noodle / spaghetti / ramen |
 | salad | 🥗 | salad, or no-cook with mostly vegetables |
 | bowl | 🍚 | bowl, or rice is the main carb |
 | roast | 🍗 | sheet pan / roast / baked / air-fried protein |
-| snack | 🥜 | snack slot |
+| snack | 🥜 | snack slot, or dip / bites / chaat / roasted chickpeas (these words are checked right after dessert's) |
 | other | 🍽️ | fallback |
+
+A "burrito bowl" is a bowl: that phrase is checked before the table. (The snack words, the extra dessert and curry
+words and the burrito-bowl phrase were added at the step 2b.4 approval fixes, for the 37 new seed recipes.)
 
 Goal tiles, meal tiles and mode cards use emoji too (§7). Equipment tiles use small in-house line icons, because emoji
 don't cover ovens or air fryers well. Every icon has a text label; emoji carry `aria-label`s.
@@ -293,17 +296,24 @@ line is a display string from the API.
 ┌───────────────────────────────────────────┐
 │ 🍛  Everyday chicken curry       ♥   🔖   │  icon · title · favorite · save for later
 │     Favorite · Draft                      │  badges: Favorite, Saved, New, Draft
-│ 540 kcal · 41 g protein · 35 min · $2.10  │  per portion (time = total; hands-on on the page)
+│ 540 kcal · 41 g protein · 35 min ·        │  per portion (time = total; hands-on on the page),
+│   $2.10 a portion · $4.29 to buy today    │  then whole packages of what to buy now (M12)
 │ Uses: chicken thigh, spinach, onion       │  your items (pantry or "have it")
 │ Could buy: chickpeas $1.29 (Stop & Shop)  │  your "could buy" items, whole-package cost
-│ Missing: lemon → lime juice (you have it) │  missing items with a code-suggested substitute
-│ Uses 3 of your items · ready in 35 min    │  "why" chips from the score components
+│ Swap: lime juice instead of lemon         │  a substitute you have (M11): never "Missing"
+│   (you have it)                           │
+│ Missing: tomato · buy $0.79 (Stop & Shop) │  only what you'd need to buy
+│ Uses up your spinach · ready in 35 min    │  "why" chips (never a repeat of the Uses line)
 └───────────────────────────────────────────┘
 ```
 
 - The numbers row follows your goals: with **Iron rich** on it adds "4.1 mg iron (1.6 mg heme, est.)"; with **High
   carb** it adds carbs.
-- A missing item with no substitute shows its price ("Missing: lemon · buy $0.79"), or "no price yet".
+- A missing item with no substitute shows its price ("Missing: lemon · buy $0.79"), or "no price yet". A missing
+  item you can make with something you have is a **Swap** line instead (step 2b.4 approval, M11).
+- **Buy today** (M12): "$4.29 to buy today" is the whole-package cost of everything the meal needs you to buy now
+  (could-buy items, top-ups and missing items without a swap), "nothing to buy today" when there's none, and
+  "+ unpriced items" when some have no price yet. With **Cheap** on, ranking uses it as well as the per-portion cost.
 - Numbers are for the recipe as written. A substitute line says so on the recipe page.
 - ♥ and 🔖 toggle in place (optimistic, queued offline, §13.1 E7–E8).
 
@@ -455,10 +465,13 @@ the earlier two tiles, "Today, all at once" and "On my cook days". The route kee
     secondary. A third tap shows "Pick up to two nutrition goals" and swaps out the oldest.
   - **Quick** reveals an inline stepper, "Ready in 30 min" (meal now: total time; meal prep: hands-on per cook day).
 - **Mood (segmented, one):** Simple · Medium · Fancy.
-- **For (meal now only):** a line "Dinner for 1 ▸". The meal is guessed from the clock (breakfast until 10:30, lunch
-  until 15:00, dinner until 21:00, then snack) and the count from your household size. Tapping it opens a sheet with
-  meal tiles and a people stepper.
-- **Why line:** "Time and mood rule recipes out; the goals change the order."
+- **Meal (meal now only), changed at the 2b.4 approval (M9):** a visible choice of Breakfast, Lunch, Dinner, Snack
+  and Dessert (the protein dessert), with **nothing preselected** and no guess from the clock (you often plan dinner
+  in the morning; Same as last time covers repeats). Next waits for a pick: "Pick a meal". Results are only that
+  meal's recipes. A people stepper sits under it, pre-filled from your household size. (Was: a "Dinner for 1 ▸" line
+  guessed from the clock.)
+- **Why line:** "Pick the meal; time rules recipes out, and the goals and mood change the order." (Mood is a
+  preference since M10.)
 - No goal selected is fine: your Settings priority applies. Goal mapping: §13.3.
 
 ### C3 What do you have? (both modes)
@@ -513,6 +526,9 @@ The Building steps from 5.4.
 - **New ideas are full cards at once.** Their numbers, coverage and why lines are computed from the idea's
   ingredients exactly like a saved recipe's; only the steps wait until you open one (C8).
 - **Cards:** the top 12 recipe cards in rank order (5.3); **Show more** loads the rest.
+- **Mood is a preference, not a filter** (step 2b.4 approval, M10): recipes in your mood come first, then a section
+  **"A bit more effort"** (more involved) and then **"Simpler options"** (less involved), each with the rest that pass
+  the hard filters (time, equipment, food rules). Only a recipe in your mood counts toward the gap rule.
 - **More ideas** at the bottom:
   - **Until step 2b.3b** (built after 2b.4, BUILD_PLAN H3) it is shown disabled with "coming soon", and the cards
     come from seed and saved recipes only.
@@ -536,9 +552,9 @@ The Building steps from 5.4.
 
 **States.**
 - **Loading:** skeleton cards.
-- **Empty** (nothing passes time, mood and equipment): Pottle: "Nothing fits 20 minutes and Fancy with your
-  equipment." Buttons come from the filter that removed the most recipes: "Allow 30 min", "Try Medium", "Write new
-  recipes".
+- **Empty** (nothing passes time and equipment): Pottle: "Nothing fits 20 minutes." Buttons come from the filter
+  that removed the most recipes: "Allow 30 min", "Check your equipment", "Write new recipes". (Mood no longer
+  empties the list, M10.)
 - **Stream error** after some results: keep them, show "Lost the connection; these may be incomplete" with **Try
   again**.
 - **Error before any results:** error pattern (5.5).
@@ -751,6 +767,18 @@ from `GET /ingredients/{id}/add-options`:
 
 A held lot that comes in versions shows **Which version?** in Pantry and in "What do you have?"; it becomes a
 lot of that version (`POST /inventory/{id}/version`).
+
+*Changed at the 2b.4 approval:*
+- **Correct amount on any lot (M2):** quick taps for ¾, ½ and ¼ of the package the lot came in (its first added
+  amount), another package size, or Custom; the server works out every amount.
+- **Your usual version (M3)** is saved in Settings on the server and marked "your usual" in the version sheet.
+- **Chicken cuts (M4–M6):** thighs and breasts come in two forms, *Boneless, skinless* and *Bone-in, skin-on*;
+  drumsticks, wings and whole chickens are bone-in and skin-on. Bone-in cuts are added and bought by weight with the
+  bone; nutrition and portion weights count only the edible part (USDA SR28 refuse). Chicken is exact everywhere:
+  "chicken thighs bone in" never offers boneless ones, and no substitute swaps one form for another.
+- **Close matches (M7):** a name with no ingredient of its own ("canned peas", "garlic paste") shows its closest
+  one, always labeled: "Closest match: peas, frozen". Never for chicken cuts. "Can't find it? Add from USDA" is
+  deferred (BUILD_PLAN §12.5, DF1).
 
 ---
 
@@ -1282,12 +1310,12 @@ idea in a batch passes. It sends at most 3 failed ideas with their errors, so th
 6. **Sort** by score, then fewer missing items, then version id. Cards carry the components as "why" chips.
 
 **Gap rule for new ideas:**
-- A **good match** passes the filters and, if your pantry isn't empty, uses at least one of your items as its protein
-  or carb with at most 2 missing items that have no substitute.
-- With fewer than 3 good matches, one **ideas call** writes 5–8 ideas (§13.5). The ones that pass the checks are
-  saved, scored by the same function and streamed into the list as soon as the call returns. Their steps are written
-  later, when you open one.
-- With 3 or more good matches, nothing is written (Q8 holds).
+- A **good match** passes the filters, is in your mood (M10) and, if your pantry isn't empty, uses at least one of
+  your items as its protein or carb with at most 2 missing items that have no substitute.
+- With fewer than **6** good matches (M14, was 3: every search aims for 6–8 options), one **ideas call** writes 5–8
+  ideas (§13.5). The ones that pass the checks are saved, scored by the same function and streamed into the list as
+  soon as the call returns. Their steps are written later, when you open one.
+- With 6 or more good matches, nothing is written (Q8 holds).
 - A search never starts a background batch, whether or not it wrote ideas.
 
 **The background batch** (so later More ideas taps are usually instant; F21):
@@ -1389,7 +1417,7 @@ measured one, and the ideas count, the background reserve and the heavy-day esti
 
 | Flow | Calls | Tokens, cautious (if it scales) | Worst case (capped) |
 |---|---|---|---|
-| **A meal now: the cards** | **0** when at least 3 saved or seed recipes are good matches (cards in under a second). Otherwise **1** ideas call; its 5–8 cards land 10–20 s after the saved ones | 0, or ≈ 6.8K (5.6K) | 1 ideas call + 1 idea revision ≈ 13K (11K); the revision about a minute later |
+| **A meal now: the cards** | **0** when at least 6 saved or seed recipes are good matches (M14; cards in under a second). Otherwise **1** ideas call; its 5–8 cards land 10–20 s after the saved ones | 0, or ≈ 6.8K (5.6K) | 1 ideas call + 1 idea revision ≈ 13K (11K); the revision about a minute later |
 | **More ideas, first tap in a search** | **1** ideas call (waits normally: the strip, or the countdown if the minute is used up), then **+1** background batch once the minute has room | ≈ 6.8K + 6.8K = 13.6K (11.2K) | 1 ideas call + 1 revision, then the background batch (never revised) ≈ 20K (17K) |
 | **More ideas, later taps** | **0** before the cards when the held batch is ready (instant); otherwise 1 ideas call. Then **+1** background batch | ≈ 6.8K (5.6K) per tap | As the first tap |
 | **Opening a new idea** | **1** steps call, the first time only. **0** for seed and saved recipes and every later open | ≈ 4.8K (2.3K) | 3 attempts (rule 5) ≈ 14K (7K) |
@@ -1402,6 +1430,10 @@ measured one, and the ideas count, the background reserve and the heavy-day esti
 **Days.**
 - **A typical day:** one meal-now search that writes ideas, with one new idea opened and no More ideas:
   6.8 + 4.8 ≈ **11.6K (7.9K)**, about 8% (5%) of the daily guard. Meal prep from the saved pool adds 0.
+- **With the 6-match rule (M14)** more searches write ideas, mostly in the first weeks: a slot and mood needs 6 good
+  matches before searches stop calling. A day of 3 searches that each write ideas and open one new idea each is
+  3 × 11.6 ≈ **35K (24K)**, about 23% (16%) of the guard. Calls per search don't change (at most one ideas call), so
+  the per-minute picture below is the same; the 47 seed recipes (M13) and every saved idea fill the pool faster.
 - **A heavy day** (the same day the earlier estimates used: 5 meal-now searches that each write ideas, 1 meal prep
   with one uncovered slot, 2 swaps from the pool), opening one new idea per search and both new meal-prep recipes:
   - 5 × (6.8 + 4.8) + 7.1 + 2 × 4.8 ≈ **75K (50K)**, about 50% (34%) of the guard.
@@ -1413,7 +1445,7 @@ measured one, and the ideas count, the background reserve and the heavy-day esti
 - **The extras go first:** background batches stop when less than 30K of the daily guard would remain, so calls you
   ask for keep the rest. When the guard can't afford a call you asked for, flows fall back to saved recipes with a
   note (§15.3, item 8).
-- **The pool grows fast:** each ideas call adds 5–8 saved recipes, so later searches more often find 3 good matches
+- **The pool grows fast:** each ideas call adds 5–8 saved recipes, so later searches more often find 6 good matches
   and make no call at all.
 - **Per minute:** every single call fits under 8K. A second call in the same minute (a first More ideas tap right
   after the search's own ideas, or a new idea opened right after a batch) gets the friendly countdown wait (5.5),
@@ -1510,6 +1542,6 @@ You accepted the defaults for all ten.
 | Q5 | **What should I buy?** builds a meal plan behind the list, and **Use this list** also sets that plan? | **Yes** |
 | Q6 | The **pork cap week** is Monday–Sunday in your timezone, across all plans and single meals? | **Yes** |
 | Q7 | The **mascot**? | **Pottle**, the small clay pot |
-| Q8 | **Meal now** writes new ideas automatically only when fewer than 3 saved recipes fit well (plus More ideas)? | **Yes.** The background batch (F21) keeps this: it starts only after your first More ideas tap |
+| Q8 | **Meal now** writes new ideas automatically only when fewer than 3 saved recipes fit well (plus More ideas)? | **Yes.** The background batch (F21) keeps this: it starts only after your first More ideas tap. **Changed 2026-10-10 (M14):** fewer than 6 |
 | Q9 | **Phase 2 approval?** | **Approved 2026-10-10** |
 | Q10 | **CLAUDE.md** phase outline update? | **Yes**; applied with the BUILD_PLAN §11 item 7 wording |

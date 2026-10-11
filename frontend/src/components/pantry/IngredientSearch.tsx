@@ -10,7 +10,8 @@ import styles from "./IngredientSearch.module.css";
 const STATUS_BADGES: Record<string, string> = { excluded: "off your list", held: "held" };
 
 /** Typed entry with autocomplete from the ingredient list (C3, P0). A pick opens the add flow, which says what
- * an excluded or held item means. */
+ * an excluded or held item means. A name with no ingredient of its own shows its closest one, labeled
+ * ("Closest match: peas, frozen", M7); chicken cuts never get one (M6). */
 export function IngredientSearch({ onPick, disabled, label = "Add something" }: { onPick: (hit: IngredientHit) => void; disabled?: boolean; label?: string }) {
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<IngredientHit[] | null>(null);
@@ -58,7 +59,7 @@ export function IngredientSearch({ onPick, disabled, label = "Add something" }: 
                   setHits(null);
                 }}
               >
-                {hit.name}
+                {hit.closest_match && hit.label ? hit.label : hit.name}
                 {STATUS_BADGES[hit.status] && <span className="badge"> {STATUS_BADGES[hit.status]}</span>}
               </button>
             </li>

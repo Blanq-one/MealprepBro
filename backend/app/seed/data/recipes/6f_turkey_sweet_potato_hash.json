@@ -1,0 +1,135 @@
+{
+ "family": "Breakfast burritos and hash",
+ "title": "Turkey and sweet potato breakfast hash",
+ "description": "Crispy sweet potato with ground turkey, peppers and smoked paprika, topped with fried eggs.",
+ "meal_slots": [
+  "breakfast",
+  "lunch"
+ ],
+ "mood": "medium",
+ "cuisine": "American",
+ "flavor_tags": [
+  "smoky",
+  "savory"
+ ],
+ "base_servings": 4,
+ "active_minutes": 25,
+ "total_minutes": 35,
+ "equipment": [
+  "stovetop"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Draft quantities: adjust them in the app. Freeze the hash only; fry the eggs fresh.",
+ "ingredients": [
+  {
+   "ingredient": "ground-turkey-93",
+   "quantity": "450",
+   "unit": "g",
+   "role": "protein",
+   "component": "hash"
+  },
+  {
+   "ingredient": "sweet-potato",
+   "quantity": "2",
+   "unit": "count",
+   "preparation": "medium, diced",
+   "role": "carb",
+   "component": "hash"
+  },
+  {
+   "ingredient": "onion-yellow",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "diced",
+   "role": "vegetable",
+   "component": "hash"
+  },
+  {
+   "ingredient": "bell-pepper",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "diced",
+   "role": "vegetable",
+   "component": "hash"
+  },
+  {
+   "ingredient": "garlic",
+   "quantity": "3",
+   "unit": "clove",
+   "preparation": "minced",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "smoked-paprika",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "cumin-ground",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "black-pepper",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "vegetable-oil",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "fat"
+  },
+  {
+   "ingredient": "egg-large",
+   "quantity": "4",
+   "unit": "count",
+   "role": "protein",
+   "component": "eggs"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Dice the sweet potatoes, onion and pepper. Mince the garlic."
+  },
+  {
+   "section": "stovetop",
+   "text": "Heat the oil in a large skillet over medium-high heat. Cook the sweet potato, covered, stirring now and then, until tender and browned, about 12 minutes.",
+   "duration_minutes": 12
+  },
+  {
+   "section": "stovetop",
+   "text": "Push the potatoes aside, add the turkey, onion, pepper, garlic and spices and cook, breaking up the meat, until the turkey is cooked through, 7 to 8 minutes.",
+   "duration_minutes": 8,
+   "doneness_check_for": "ground-turkey-93"
+  },
+  {
+   "section": "stovetop",
+   "text": "Fry the eggs in a separate pan until the whites are set.",
+   "duration_minutes": 4,
+   "doneness_check_for": "egg-large"
+  },
+  {
+   "section": "portioning",
+   "text": "Divide the hash among 4 plates and top each with an egg."
+  },
+  {
+   "section": "storage",
+   "text": "Cool, then refrigerate in the containers."
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat covered, stirring halfway, until hot all the way through."
+  }
+ ]
+}

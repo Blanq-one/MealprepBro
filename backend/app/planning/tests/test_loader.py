@@ -6,7 +6,7 @@ from decimal import Decimal
 
 from sqlalchemy import select, update
 
-from app.db.models import Ingredient, Product
+from app.db.models import Ingredient, Product, RecipeVersion
 from app.domain.enums import Equipment, PlanningMode, StorageLocation
 from app.domain.exclusions import Preference
 from app.planning.inputs import constraints_for
@@ -29,10 +29,20 @@ def slug_id(session, slug):
     return session.scalars(select(Ingredient.id).where(Ingredient.slug == slug)).one()
 
 
-def test_all_ten_seed_recipes_are_candidates_by_default(seeded_db):
+SEED_RECIPES = 47  # 10, plus the 37 drafts of the step 2b.4 approval (M13)
+
+
+def test_every_seed_recipe_is_a_candidate_unless_this_weeks_cook_days_are_too_short(seeded_db):
     p = problem(seeded_db)
-    assert len(p.candidates) == 10 and p.excluded == ()
+    week = {t.slot.value for t in p.constraints.slot_targets}
+    versions = seeded_db.scalars(select(RecipeVersion)).all()
+    assert len(versions) == SEED_RECIPES
+    for_this_week = [v for v in versions if week & set(v.meal_slots)]  # snack-only recipes have no meal here
+    assert len(p.candidates) + len(p.excluded) == len(for_this_week) < SEED_RECIPES
     assert all(c.is_draft and c.origin == "seed" for c in p.candidates)
+    # the default cook days have no fancy day, so the fancy drafts wait for one; nothing else is left out
+    assert p.excluded and all(e.codes == ("time",) for e in p.excluded)
+    assert set(POWDER_RECIPES) | set(YOGURT_RECIPES) <= {c.title for c in p.candidates}
 
 
 def test_missing_equipment_keeps_its_reason(seeded_db):
@@ -70,20 +80,30 @@ def unprice(session, slug):
     session.flush()
 
 
+def by_default(session):
+    """The default week's candidates and what it leaves out for its cook days."""
+    base = problem(session)
+    return base.candidates, {e.title for e in base.excluded}
+
+
 def test_a_budget_excludes_recipes_with_an_unpriced_regular_item_and_says_why(seeded_db):
+    candidates, too_long = by_default(seeded_db)
+    yogurt = slug_id(seeded_db, "greek-yogurt-nonfat")
+    with_yogurt = {c.title for c in candidates if yogurt in c.ingredient_ids}
     unprice(seeded_db, "greek-yogurt-nonfat")
     p = problem(seeded_db, budget_cents=10000)
-    left_out = {e.title: e for e in p.excluded}
-    assert sorted(left_out) == sorted(YOGURT_RECIPES)
-    for title in YOGURT_RECIPES:
+    left_out = {e.title: e for e in p.excluded if e.title not in too_long}
+    assert set(left_out) == with_yogurt and set(YOGURT_RECIPES) <= with_yogurt
+    for title in with_yogurt:
         assert left_out[title].unpriced_ingredients == ("Greek yogurt, plain nonfat",)
         assert "your budget can't be checked" in " ".join(left_out[title].reasons)
 
 
 def test_an_unpriced_stock_up_item_doesnt_block_a_budget(seeded_db):
+    candidates, too_long = by_default(seeded_db)
     unprice(seeded_db, "protein-powder-double-chocolate")
     p = problem(seeded_db, budget_cents=10000)  # the budget covers regular groceries only
-    assert len(p.candidates) == 10 and p.excluded == ()
+    assert len(p.candidates) == len(candidates) and {e.title for e in p.excluded} == too_long
 
 
 def test_inventory_mode_excludes_unpriced_items_you_dont_have(seeded_db):
@@ -95,9 +115,10 @@ def test_inventory_mode_excludes_unpriced_items_you_dont_have(seeded_db):
 
 
 def test_no_budget_keeps_unpriced_recipes(seeded_db):
+    candidates, too_long = by_default(seeded_db)
     unprice(seeded_db, "greek-yogurt-nonfat")
     p = problem(seeded_db)
-    assert len(p.candidates) == 10 and p.excluded == ()
+    assert len(p.candidates) == len(candidates) and {e.title for e in p.excluded} == too_long
 
 
 def test_raw_protein_carries_its_chart_fridge_life(seeded_db):
@@ -123,7 +144,8 @@ def test_inventory_lets_a_top_up_use_an_unpriced_item(seeded_db):
         ),
     )
     p = problem(seeded_db, mode=PlanningMode.INVENTORY)
-    assert len(p.candidates) == 10  # the powder comes from what you have, so no price is needed
+    # the powder comes from what you have, so no price is needed
+    assert set(POWDER_RECIPES) <= {c.title for c in p.candidates}
     lot = p.ingredients[slug_id(seeded_db, "protein-powder-double-chocolate")].lots[0]
     assert lot.location == "pantry"
 

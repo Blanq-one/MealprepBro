@@ -23,7 +23,7 @@ from app.domain.food_safety import (
     reheat_text,
 )
 from app.domain.nutrition import dv_label, kcal_display
-from app.domain.quantities import format_quantity
+from app.domain.quantities import format_quantity, portion_note
 
 COOKING_SECTIONS = (
     InstructionSection.STOVETOP,
@@ -64,7 +64,7 @@ class LineInput:
     name: str
     amount: Decimal
     unit: str
-    grams: Decimal
+    grams: Decimal  # edible grams (bone-in cuts: the weight as purchased less USDA's refuse, M5)
     role: str
     safety_category: SafetyCategory | None = None
     preparation: str | None = None
@@ -101,9 +101,11 @@ class RenderedStep:
 class RenderedLine:
     ingredient_id: int
     name: str
-    display: str
+    display: str  # "1¼ tsp salt"
     preparation: str | None
     optional: bool
+    amount_display: str = ""  # "1¼ tsp": the batch's amount alone
+    portion_note: str | None = None  # "⅜ tsp per portion · 1¼ tsp for the batch of 4" (A1)
 
 
 @dataclass(frozen=True)
@@ -211,6 +213,8 @@ def render(data: RenderInput) -> RenderedRecipe:
                 f"{format_quantity(ln.amount, ln.unit)} {ln.name}",
                 ln.preparation,
                 ln.optional,
+                format_quantity(ln.amount, ln.unit),
+                portion_note(ln.amount, ln.unit, data.portions),
             )
             for ln in data.lines
         ),

@@ -919,6 +919,1914 @@
      "note": "derived: the 5 lb tub's price per gram ($62.50 / 2,268 g) plus a typical 40% small-tub premium"
     }
    ]
+  },
+  {
+   "ingredient": "chicken-thigh-bone-in-skin-on",
+   "name": "Chicken thighs, bone-in skin-on, family pack",
+   "package": {
+    "amount": "2.5",
+    "unit": "lb"
+   },
+   "is_variable_weight": true,
+   "price_basis": "per_weight",
+   "display_unit": "lb",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 249,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 199,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "chicken-breast-bone-in-skin-on",
+   "name": "Chicken breasts, bone-in skin-on (split)",
+   "package": {
+    "amount": "2.5",
+    "unit": "lb"
+   },
+   "is_variable_weight": true,
+   "price_basis": "per_weight",
+   "display_unit": "lb",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 299,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 249,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "chicken-drumstick",
+   "name": "Chicken drumsticks, bone-in skin-on, family pack",
+   "package": {
+    "amount": "2.5",
+    "unit": "lb"
+   },
+   "is_variable_weight": true,
+   "price_basis": "per_weight",
+   "display_unit": "lb",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 199,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 149,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "chicken-wing",
+   "name": "Chicken wings, bone-in skin-on (party wings)",
+   "package": {
+    "amount": "2.5",
+    "unit": "lb"
+   },
+   "is_variable_weight": true,
+   "price_basis": "per_weight",
+   "display_unit": "lb",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 399,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 329,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "chicken-whole",
+   "name": "Whole chicken (roaster), bone-in skin-on",
+   "package": {
+    "amount": "4.5",
+    "unit": "lb"
+   },
+   "is_variable_weight": true,
+   "price_basis": "per_weight",
+   "display_unit": "lb",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 229,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 179,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "chicken-sausage",
+   "name": "Chicken sausage, 12 oz pack",
+   "package": {
+    "amount": "12",
+    "unit": "oz"
+   },
+   "price_basis": "per_package",
+   "display_unit": "pack",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 549,
+     "per": {
+      "amount": "12",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 449,
+     "per": {
+      "amount": "12",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "ground-turkey-93",
+   "name": "Ground turkey 93% lean, 1 lb",
+   "package": {
+    "amount": "1",
+    "unit": "lb"
+   },
+   "price_basis": "per_package",
+   "display_unit": "lb",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 599,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 499,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "salmon",
+   "name": "Atlantic salmon fillets",
+   "package": {
+    "amount": "1",
+    "unit": "lb"
+   },
+   "is_variable_weight": true,
+   "price_basis": "per_weight",
+   "display_unit": "lb",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 1199,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 999,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "shrimp",
+   "name": "Shrimp, raw, peeled and deveined, frozen, 1 lb bag",
+   "package": {
+    "amount": "1",
+    "unit": "lb"
+   },
+   "price_basis": "per_package",
+   "display_unit": "bag",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 999,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 799,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "tuna-canned",
+   "name": "Light tuna in water, 5 oz can (about 165 g, USDA's can)",
+   "package": {
+    "amount": "165",
+    "unit": "g"
+   },
+   "price_basis": "per_package",
+   "display_unit": "can",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 149,
+     "per": {
+      "amount": "165",
+      "unit": "g"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 109,
+     "per": {
+      "amount": "165",
+      "unit": "g"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "egg-white",
+   "name": "Liquid egg whites, 16 oz carton (about 15 whites)",
+   "package": {
+    "amount": "15",
+    "unit": "count"
+   },
+   "price_basis": "per_package",
+   "display_unit": "carton",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 449,
+     "per": {
+      "amount": "15",
+      "unit": "count"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 379,
+     "per": {
+      "amount": "15",
+      "unit": "count"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "chickpeas-canned",
+   "name": "Chickpeas, 15.5 oz can (about 253 g drained)",
+   "package": {
+    "amount": "253",
+    "unit": "g"
+   },
+   "price_basis": "per_package",
+   "display_unit": "can",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 129,
+     "per": {
+      "amount": "253",
+      "unit": "g"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 99,
+     "per": {
+      "amount": "253",
+      "unit": "g"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "black-beans-canned",
+   "name": "Black beans, 15.5 oz can (about 240 g drained)",
+   "package": {
+    "amount": "240",
+    "unit": "g"
+   },
+   "price_basis": "per_package",
+   "display_unit": "can",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 119,
+     "per": {
+      "amount": "240",
+      "unit": "g"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 89,
+     "per": {
+      "amount": "240",
+      "unit": "g"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "lentils-red",
+   "name": "Red lentils, 1 lb bag",
+   "package": {
+    "amount": "1",
+    "unit": "lb"
+   },
+   "price_basis": "per_package",
+   "display_unit": "bag",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 249,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 199,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "edamame",
+   "name": "Edamame in the pod, frozen, 12 oz bag",
+   "package": {
+    "amount": "12",
+    "unit": "oz"
+   },
+   "price_basis": "per_package",
+   "display_unit": "bag",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 299,
+     "per": {
+      "amount": "12",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 249,
+     "per": {
+      "amount": "12",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "peanut-butter",
+   "name": "Peanut butter, 16 oz jar",
+   "package": {
+    "amount": "16",
+    "unit": "oz"
+   },
+   "price_basis": "per_package",
+   "display_unit": "jar",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 349,
+     "per": {
+      "amount": "16",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 279,
+     "per": {
+      "amount": "16",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "cashews",
+   "name": "Cashews, unsalted, 8 oz bag",
+   "package": {
+    "amount": "8",
+    "unit": "oz"
+   },
+   "price_basis": "per_package",
+   "display_unit": "bag",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 599,
+     "per": {
+      "amount": "8",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 499,
+     "per": {
+      "amount": "8",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "almonds",
+   "name": "Almonds, 8 oz bag",
+   "package": {
+    "amount": "8",
+    "unit": "oz"
+   },
+   "price_basis": "per_package",
+   "display_unit": "bag",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 549,
+     "per": {
+      "amount": "8",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 449,
+     "per": {
+      "amount": "8",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "flaxseed",
+   "name": "Ground flaxseed, 16 oz bag",
+   "package": {
+    "amount": "16",
+    "unit": "oz"
+   },
+   "price_basis": "per_package",
+   "display_unit": "bag",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 499,
+     "per": {
+      "amount": "16",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 399,
+     "per": {
+      "amount": "16",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "butter-unsalted",
+   "name": "Unsalted butter, 1 lb (4 sticks)",
+   "package": {
+    "amount": "1",
+    "unit": "lb"
+   },
+   "price_basis": "per_package",
+   "display_unit": "lb",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 549,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 449,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "heavy-cream",
+   "name": "Heavy cream, 1 pint",
+   "package": {
+    "amount": "16",
+    "unit": "fl_oz"
+   },
+   "price_basis": "per_package",
+   "display_unit": "pint",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 399,
+     "per": {
+      "amount": "16",
+      "unit": "fl_oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 329,
+     "per": {
+      "amount": "16",
+      "unit": "fl_oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "yogurt-plain-whole",
+   "name": "Plain whole-milk yogurt, 32 oz tub",
+   "package": {
+    "amount": "32",
+    "unit": "oz"
+   },
+   "price_basis": "per_package",
+   "display_unit": "tub",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 449,
+     "per": {
+      "amount": "32",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 379,
+     "per": {
+      "amount": "32",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "ghee",
+   "name": "Ghee, 8 fl oz jar",
+   "package": {
+    "amount": "8",
+    "unit": "fl_oz"
+   },
+   "price_basis": "per_package",
+   "display_unit": "jar",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 799,
+     "per": {
+      "amount": "8",
+      "unit": "fl_oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 699,
+     "per": {
+      "amount": "8",
+      "unit": "fl_oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "corn-tortilla",
+   "name": "Corn tortillas, 30 count",
+   "package": {
+    "amount": "30",
+    "unit": "count"
+   },
+   "price_basis": "per_package",
+   "display_unit": "pack",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 299,
+     "per": {
+      "amount": "30",
+      "unit": "count"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 249,
+     "per": {
+      "amount": "30",
+      "unit": "count"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "pita",
+   "name": "Pita bread, 6 count",
+   "package": {
+    "amount": "6",
+    "unit": "count"
+   },
+   "price_basis": "per_package",
+   "display_unit": "bag",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 299,
+     "per": {
+      "amount": "6",
+      "unit": "count"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 249,
+     "per": {
+      "amount": "6",
+      "unit": "count"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "quinoa",
+   "name": "Quinoa, 1 lb bag",
+   "package": {
+    "amount": "1",
+    "unit": "lb"
+   },
+   "price_basis": "per_package",
+   "display_unit": "bag",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 499,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 399,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "flour-all-purpose",
+   "name": "All-purpose flour, 5 lb bag",
+   "package": {
+    "amount": "5",
+    "unit": "lb"
+   },
+   "price_basis": "per_package",
+   "display_unit": "bag",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 449,
+     "per": {
+      "amount": "5",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 349,
+     "per": {
+      "amount": "5",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "cornstarch",
+   "name": "Cornstarch, 16 oz box",
+   "package": {
+    "amount": "16",
+    "unit": "oz"
+   },
+   "price_basis": "per_package",
+   "display_unit": "box",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 249,
+     "per": {
+      "amount": "16",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 199,
+     "per": {
+      "amount": "16",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "cucumber",
+   "name": "Cucumber",
+   "package": {
+    "amount": "1",
+    "unit": "count"
+   },
+   "price_basis": "per_count",
+   "display_unit": "each",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 99,
+     "per": {
+      "amount": "1",
+      "unit": "count"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 79,
+     "per": {
+      "amount": "1",
+      "unit": "count"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "jalapeno",
+   "name": "Jalapeño peppers",
+   "package": null,
+   "price_basis": "per_weight",
+   "display_unit": "lb",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 249,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 199,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "green-onion",
+   "name": "Green onions, bunch (about 6)",
+   "package": {
+    "amount": "6",
+    "unit": "count"
+   },
+   "price_basis": "per_package",
+   "display_unit": "bunch",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 129,
+     "per": {
+      "amount": "6",
+      "unit": "count"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 99,
+     "per": {
+      "amount": "6",
+      "unit": "count"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "carrot",
+   "name": "Carrots, 2 lb bag",
+   "package": {
+    "amount": "2",
+    "unit": "lb"
+   },
+   "price_basis": "per_package",
+   "display_unit": "bag",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 249,
+     "per": {
+      "amount": "2",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 199,
+     "per": {
+      "amount": "2",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "celery",
+   "name": "Celery, bunch (about 1.5 lb)",
+   "package": {
+    "amount": "1.5",
+    "unit": "lb"
+   },
+   "price_basis": "per_package",
+   "display_unit": "bunch",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 299,
+     "per": {
+      "amount": "1.5",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 249,
+     "per": {
+      "amount": "1.5",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "sweet-potato",
+   "name": "Sweet potatoes",
+   "package": null,
+   "price_basis": "per_weight",
+   "display_unit": "lb",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 149,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 119,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "potato-russet",
+   "name": "Russet potatoes, 5 lb bag",
+   "package": {
+    "amount": "5",
+    "unit": "lb"
+   },
+   "price_basis": "per_package",
+   "display_unit": "bag",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 499,
+     "per": {
+      "amount": "5",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 399,
+     "per": {
+      "amount": "5",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "green-beans",
+   "name": "Green beans",
+   "package": null,
+   "price_basis": "per_weight",
+   "display_unit": "lb",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 299,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 249,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "asparagus",
+   "name": "Asparagus",
+   "package": null,
+   "price_basis": "per_weight",
+   "display_unit": "lb",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 399,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 329,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "peas-frozen",
+   "name": "Frozen peas, 16 oz bag",
+   "package": {
+    "amount": "16",
+    "unit": "oz"
+   },
+   "price_basis": "per_package",
+   "display_unit": "bag",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 249,
+     "per": {
+      "amount": "16",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 199,
+     "per": {
+      "amount": "16",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "corn-frozen",
+   "name": "Frozen corn, 16 oz bag",
+   "package": {
+    "amount": "16",
+    "unit": "oz"
+   },
+   "price_basis": "per_package",
+   "display_unit": "bag",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 249,
+     "per": {
+      "amount": "16",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 199,
+     "per": {
+      "amount": "16",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "cilantro",
+   "name": "Cilantro, bunch (about 2 oz)",
+   "package": {
+    "amount": "2",
+    "unit": "oz"
+   },
+   "price_basis": "per_package",
+   "display_unit": "bunch",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 149,
+     "per": {
+      "amount": "2",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 99,
+     "per": {
+      "amount": "2",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "parsley",
+   "name": "Parsley, bunch (about 2 oz)",
+   "package": {
+    "amount": "2",
+    "unit": "oz"
+   },
+   "price_basis": "per_package",
+   "display_unit": "bunch",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 149,
+     "per": {
+      "amount": "2",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 99,
+     "per": {
+      "amount": "2",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "mint",
+   "name": "Mint, 0.75 oz clamshell",
+   "package": {
+    "amount": "0.75",
+    "unit": "oz"
+   },
+   "price_basis": "per_package",
+   "display_unit": "clamshell",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 249,
+     "per": {
+      "amount": "0.75",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 199,
+     "per": {
+      "amount": "0.75",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "tomatoes-canned",
+   "name": "Diced tomatoes, 28 oz can",
+   "package": {
+    "amount": "794",
+    "unit": "ml"
+   },
+   "price_basis": "per_package",
+   "display_unit": "can",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 249,
+     "per": {
+      "amount": "794",
+      "unit": "ml"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 179,
+     "per": {
+      "amount": "794",
+      "unit": "ml"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "tomato-sauce",
+   "name": "Tomato sauce, 15 oz can",
+   "package": {
+    "amount": "425",
+    "unit": "ml"
+   },
+   "price_basis": "per_package",
+   "display_unit": "can",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 129,
+     "per": {
+      "amount": "425",
+      "unit": "ml"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 89,
+     "per": {
+      "amount": "425",
+      "unit": "ml"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "lemon",
+   "name": "Lemon",
+   "package": {
+    "amount": "1",
+    "unit": "count"
+   },
+   "price_basis": "per_count",
+   "display_unit": "each",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 79,
+     "per": {
+      "amount": "1",
+      "unit": "count"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 59,
+     "per": {
+      "amount": "1",
+      "unit": "count"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "mango",
+   "name": "Mango",
+   "package": {
+    "amount": "1",
+    "unit": "count"
+   },
+   "price_basis": "per_count",
+   "display_unit": "each",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 149,
+     "per": {
+      "amount": "1",
+      "unit": "count"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 99,
+     "per": {
+      "amount": "1",
+      "unit": "count"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "strawberries",
+   "name": "Strawberries, 1 lb clamshell",
+   "package": {
+    "amount": "1",
+    "unit": "lb"
+   },
+   "price_basis": "per_package",
+   "display_unit": "clamshell",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 449,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 349,
+     "per": {
+      "amount": "1",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "lime-juice",
+   "name": "Lime juice, 15 fl oz bottle",
+   "package": {
+    "amount": "15",
+    "unit": "fl_oz"
+   },
+   "price_basis": "per_package",
+   "display_unit": "bottle",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 299,
+     "per": {
+      "amount": "15",
+      "unit": "fl_oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 199,
+     "per": {
+      "amount": "15",
+      "unit": "fl_oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "honey",
+   "name": "Honey, 12 oz bottle",
+   "package": {
+    "amount": "355",
+    "unit": "ml"
+   },
+   "price_basis": "per_package",
+   "display_unit": "bottle",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 599,
+     "per": {
+      "amount": "355",
+      "unit": "ml"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 499,
+     "per": {
+      "amount": "355",
+      "unit": "ml"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "salsa",
+   "name": "Salsa, 16 oz jar",
+   "package": {
+    "amount": "473",
+    "unit": "ml"
+   },
+   "price_basis": "per_package",
+   "display_unit": "jar",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 349,
+     "per": {
+      "amount": "473",
+      "unit": "ml"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 279,
+     "per": {
+      "amount": "473",
+      "unit": "ml"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "soy-sauce",
+   "name": "Soy sauce, 15 fl oz bottle",
+   "package": {
+    "amount": "15",
+    "unit": "fl_oz"
+   },
+   "price_basis": "per_package",
+   "display_unit": "bottle",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 349,
+     "per": {
+      "amount": "15",
+      "unit": "fl_oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 279,
+     "per": {
+      "amount": "15",
+      "unit": "fl_oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "sesame-oil",
+   "name": "Toasted sesame oil, 5 fl oz bottle",
+   "package": {
+    "amount": "5",
+    "unit": "fl_oz"
+   },
+   "price_basis": "per_package",
+   "display_unit": "bottle",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 449,
+     "per": {
+      "amount": "5",
+      "unit": "fl_oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 379,
+     "per": {
+      "amount": "5",
+      "unit": "fl_oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "hot-sauce",
+   "name": "Hot sauce, 12 fl oz bottle",
+   "package": {
+    "amount": "12",
+    "unit": "fl_oz"
+   },
+   "price_basis": "per_package",
+   "display_unit": "bottle",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 299,
+     "per": {
+      "amount": "12",
+      "unit": "fl_oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 249,
+     "per": {
+      "amount": "12",
+      "unit": "fl_oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "mustard-yellow",
+   "name": "Yellow mustard, 8 fl oz bottle",
+   "package": {
+    "amount": "8",
+    "unit": "fl_oz"
+   },
+   "price_basis": "per_package",
+   "display_unit": "bottle",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 179,
+     "per": {
+      "amount": "8",
+      "unit": "fl_oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 129,
+     "per": {
+      "amount": "8",
+      "unit": "fl_oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "coconut-milk",
+   "name": "Coconut milk, 13.5 fl oz can",
+   "package": {
+    "amount": "13.5",
+    "unit": "fl_oz"
+   },
+   "price_basis": "per_package",
+   "display_unit": "can",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 249,
+     "per": {
+      "amount": "13.5",
+      "unit": "fl_oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 199,
+     "per": {
+      "amount": "13.5",
+      "unit": "fl_oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "vegetable-broth",
+   "name": "Vegetable broth, 32 fl oz carton",
+   "package": {
+    "amount": "32",
+    "unit": "fl_oz"
+   },
+   "price_basis": "per_package",
+   "display_unit": "carton",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 279,
+     "per": {
+      "amount": "32",
+      "unit": "fl_oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 199,
+     "per": {
+      "amount": "32",
+      "unit": "fl_oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "vanilla-extract",
+   "name": "Pure vanilla extract, 2 fl oz",
+   "package": {
+    "amount": "2",
+    "unit": "fl_oz"
+   },
+   "price_basis": "per_package",
+   "display_unit": "bottle",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 699,
+     "per": {
+      "amount": "2",
+      "unit": "fl_oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 599,
+     "per": {
+      "amount": "2",
+      "unit": "fl_oz"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "sugar",
+   "name": "Granulated sugar, 4 lb bag",
+   "package": {
+    "amount": "4",
+    "unit": "lb"
+   },
+   "price_basis": "per_package",
+   "display_unit": "bag",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 399,
+     "per": {
+      "amount": "4",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 329,
+     "per": {
+      "amount": "4",
+      "unit": "lb"
+     },
+     "source": "estimate",
+     "note": "estimated for the M13 seed library: replace with what you pay"
+    }
+   ]
   }
  ]
 }

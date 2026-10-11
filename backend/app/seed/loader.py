@@ -283,6 +283,10 @@ def _apply_ingredient(row: Ingredient, seed: SeedIngredient, files: SeedFiles, c
         row.count_unit_weight_g = None
     row.count_rounding_step = seed.count_rounding_step
     row.heme_iron_fraction = seed.heme_iron_fraction
+    # bone-in cuts (M5): the edible share of the weight as purchased, from USDA's refuse
+    row.edible_fraction = (
+        (1 - seed.refuse.pct / 100).quantize(Decimal("0.001")) if seed.refuse else Decimal(1)
+    )
     row.diet_tags = sorted(seed.diet_tags)
     row.diet_review_note = seed.diet_review_note
     row.safety_category = seed.safety_category.value if seed.safety_category else None

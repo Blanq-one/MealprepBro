@@ -1,0 +1,122 @@
+{
+ "family": "Fish dinners",
+ "title": "Lemon garlic salmon with rice and broccoli",
+ "description": "Salmon fillets roasted with lemon and garlic, with roasted broccoli and rice.",
+ "meal_slots": [
+  "dinner"
+ ],
+ "mood": "medium",
+ "cuisine": null,
+ "flavor_tags": [
+  "lemony",
+  "garlicky"
+ ],
+ "base_servings": 4,
+ "active_minutes": 15,
+ "total_minutes": 35,
+ "equipment": [
+  "oven",
+  "stovetop"
+ ],
+ "freezer_friendly": false,
+ "draft_note": "Draft quantities: adjust them in the app. Best within a couple of days; reheat gently.",
+ "ingredients": [
+  {
+   "ingredient": "salmon",
+   "quantity": "600",
+   "unit": "g",
+   "preparation": "4 fillets",
+   "role": "protein"
+  },
+  {
+   "ingredient": "broccoli",
+   "quantity": "400",
+   "unit": "g",
+   "preparation": "florets",
+   "role": "vegetable"
+  },
+  {
+   "ingredient": "olive-oil",
+   "quantity": "3",
+   "unit": "tbsp",
+   "role": "fat"
+  },
+  {
+   "ingredient": "lemon-juice",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "sauce"
+  },
+  {
+   "ingredient": "garlic",
+   "quantity": "4",
+   "unit": "clove",
+   "preparation": "minced",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "black-pepper",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "parsley",
+   "quantity": "10",
+   "unit": "g",
+   "preparation": "chopped",
+   "role": "garnish",
+   "optional": true
+  },
+  {
+   "ingredient": "rice-long-grain-white",
+   "quantity": "300",
+   "unit": "g",
+   "preparation": "rinsed",
+   "role": "carb",
+   "component": "rice"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Heat the oven to 400F. Cut the broccoli into florets and mince the garlic."
+  },
+  {
+   "section": "rice",
+   "text": "Bring 540 ml of water to a boil, add the rinsed rice, cover and simmer on low 15 minutes. Rest off the heat 10 minutes, then fluff.",
+   "duration_minutes": 25
+  },
+  {
+   "section": "oven",
+   "text": "Toss the broccoli with 2 tbsp of the oil and half the salt and roast at 400F for 10 minutes.",
+   "duration_minutes": 10,
+   "appliance_temp_f": 400
+  },
+  {
+   "section": "oven",
+   "text": "Add the salmon to the pan, brush with the remaining oil, the lemon juice and garlic, season, and roast 12 to 14 minutes, until it flakes easily.",
+   "duration_minutes": 14,
+   "appliance_temp_f": 400,
+   "doneness_check_for": "salmon"
+  },
+  {
+   "section": "portioning",
+   "text": "Divide the rice, broccoli and salmon among 4 containers; top with parsley."
+  },
+  {
+   "section": "storage",
+   "text": "Cool, then refrigerate in the containers."
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat covered at medium power until hot all the way through."
+  }
+ ]
+}

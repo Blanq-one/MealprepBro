@@ -187,8 +187,8 @@ def test_approved_mappings_are_recorded(seeded_db):
     reviewed = seeded_db.scalars(
         select(Ingredient).where(Ingredient.nutrition_reviewed_at.is_not(None))
     ).all()
-    assert len(reviewed) == 25
-    assert {i.nutrition_reviewed_at.date().isoformat() for i in reviewed} == {"2026-10-08"}
+    assert len(reviewed) == 38  # the top 25 on 2026-10-08, the 13 the M13 recipes moved into it on 2026-10-10
+    assert {i.nutrition_reviewed_at.date().isoformat() for i in reviewed} == {"2026-10-08", "2026-10-10"}
     assert {"greek-yogurt-nonfat", "milk-2"} <= {i.slug for i in reviewed}  # nonfat and 2% kept
 
 
@@ -208,7 +208,7 @@ def test_usda_units_link_to_portions(seeded_db):
 
 
 def test_every_price_has_a_store(seeded_db):
-    assert _count(seeded_db, PriceObservation) == 58  # + 2 powder tubs, + regular chicken packs at 2 stores
+    assert _count(seeded_db, PriceObservation) == 174  # 58, + 58 estimated M13 items at 2 stores
     stores = {s.name: s for s in seeded_db.scalars(select(Store))}
     assert {(s.name, s.priority, s.kind) for s in stores.values()} == {
         ("Stop & Shop", 1, "grocery"),
@@ -254,7 +254,7 @@ def test_price_rite_chicken_estimate_below_stop_and_shop(seeded_db):
 
 def test_seed_recipes(seeded_db):
     versions = seeded_db.scalars(select(RecipeVersion)).all()
-    assert len(versions) == 10  # the chia pudding joined "Protein pudding" in Phase 1
+    assert len(versions) == 47  # 10, then the 37 drafts of the step 2b.4 approval (M13)
     assert all(v.is_draft and v.version_number == 1 and v.created_by == "system" for v in versions)
     families = seeded_db.scalars(select(RecipeFamily.name)).all()
     assert sorted(families) == sorted(
@@ -264,6 +264,18 @@ def test_seed_recipes(seeded_db):
             "Protein pudding",
             "Egg breakfast",
             "Protein oats",
+            # M13
+            "Breakfast burritos and hash",
+            "Chicken rice bowls",
+            "Wraps and tacos",
+            "Quick salad bowls",
+            "Fried rice",
+            "Dal and rice",
+            "Curries with rice",
+            "Bone-in chicken",
+            "Fish dinners",
+            "Snacks",
+            "Protein desserts",
         ]
     )
     for recipe in seeded_db.scalars(select(Recipe)):
@@ -291,7 +303,7 @@ def test_seed_steps(seeded_db):
     checks = seeded_db.scalars(
         select(RecipeStep).where(RecipeStep.doneness_check_ingredient_id.is_not(None))
     ).all()
-    assert len(checks) == 7  # every chicken and egg dish names what to check
+    assert len(checks) == 36  # every chicken, egg and fish dish names what to check (7 before M13)
 
 
 def test_seed_quantities_in_base_units(seeded_db):
@@ -467,7 +479,7 @@ def test_seed_rejects_a_recipe_with_a_pork_component(seeded_db, tmp_path):
 
 def test_seed_files_validate():
     files = load_seed_files()
-    assert len(files.recipes) == 10
+    assert len(files.recipes) == 47
     assert len(files.ingredients.ingredients) >= 150
 
 

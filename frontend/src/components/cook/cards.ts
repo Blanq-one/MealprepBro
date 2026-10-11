@@ -11,6 +11,7 @@ export function cardData(card: Suggestion | SavedRecipe): RecipeCardData {
     numbers: card.numbers,
     uses: card.uses.length > 0 ? `Uses: ${card.uses.join(", ")}` : null,
     could_buy: card.could_buy.map((line) => `Could buy: ${line.display}`),
+    swaps: (card.swaps ?? []).map((line) => line.display), // "Swap: … (you have it)", never "Missing" (M11)
     missing: card.missing.map((line) => `Missing: ${line.display}`),
     why: "why" in card ? card.why : [],
   };

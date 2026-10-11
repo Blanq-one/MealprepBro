@@ -1,0 +1,152 @@
+{
+ "family": "Curries with rice",
+ "title": "Coconut shrimp curry with rice",
+ "description": "Shrimp simmered in a coconut milk, tomato and curry sauce with lime, over rice.",
+ "meal_slots": [
+  "dinner"
+ ],
+ "mood": "medium",
+ "cuisine": "Indian",
+ "flavor_tags": [
+  "coconut",
+  "warm spices",
+  "tangy"
+ ],
+ "base_servings": 4,
+ "active_minutes": 20,
+ "total_minutes": 40,
+ "equipment": [
+  "stovetop"
+ ],
+ "freezer_friendly": false,
+ "draft_note": "Draft quantities: adjust them in the app. Best fresh; the shrimp toughen if reheated twice.",
+ "ingredients": [
+  {
+   "ingredient": "shrimp",
+   "quantity": "450",
+   "unit": "g",
+   "preparation": "peeled, deveined",
+   "role": "protein"
+  },
+  {
+   "ingredient": "coconut-milk",
+   "quantity": "400",
+   "unit": "ml",
+   "role": "sauce"
+  },
+  {
+   "ingredient": "vegetable-oil",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "fat"
+  },
+  {
+   "ingredient": "onion-yellow",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "finely chopped",
+   "role": "vegetable"
+  },
+  {
+   "ingredient": "tomato",
+   "quantity": "2",
+   "unit": "count",
+   "preparation": "chopped",
+   "role": "vegetable"
+  },
+  {
+   "ingredient": "garlic",
+   "quantity": "4",
+   "unit": "clove",
+   "preparation": "grated",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "ginger",
+   "quantity": "15",
+   "unit": "g",
+   "preparation": "grated",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "curry-powder",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "turmeric",
+   "quantity": "1/4",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "chili-powder",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "lime-juice",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "sauce"
+  },
+  {
+   "ingredient": "rice-long-grain-white",
+   "quantity": "300",
+   "unit": "g",
+   "preparation": "rinsed",
+   "role": "carb",
+   "component": "rice"
+  },
+  {
+   "ingredient": "cilantro",
+   "quantity": "10",
+   "unit": "g",
+   "preparation": "chopped",
+   "role": "garnish",
+   "optional": true
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Peel and devein the shrimp if needed. Chop the onion and tomatoes; grate the ginger and garlic."
+  },
+  {
+   "section": "rice",
+   "text": "Bring 540 ml of water to a boil, add the rinsed rice, cover and simmer on low 15 minutes. Rest off the heat 10 minutes, then fluff.",
+   "duration_minutes": 25
+  },
+  {
+   "section": "stovetop",
+   "text": "Heat the oil in a pan over medium heat. Cook the onion until soft, 6 minutes, then the ginger, garlic and spices for 1 minute. Add the tomatoes and cook until they break down, 5 minutes.",
+   "duration_minutes": 12
+  },
+  {
+   "section": "stovetop",
+   "text": "Stir in the coconut milk and salt and simmer 5 minutes. Add the shrimp and cook until pink and opaque, 3 to 4 minutes. Squeeze in the lime.",
+   "duration_minutes": 9,
+   "doneness_check_for": "shrimp"
+  },
+  {
+   "section": "portioning",
+   "text": "Divide the rice and curry among 4 containers; top with cilantro."
+  },
+  {
+   "section": "storage",
+   "text": "Cool, then refrigerate in the containers."
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat covered, stirring halfway, until hot all the way through."
+  }
+ ]
+}

@@ -1,0 +1,155 @@
+{
+ "family": "Wraps and tacos",
+ "title": "Chicken shawarma pitas with garlic yogurt",
+ "description": "Roasted spiced chicken thighs in warm pita with garlic yogurt, tomato, cucumber and romaine.",
+ "meal_slots": [
+  "lunch",
+  "dinner"
+ ],
+ "mood": "fancy",
+ "cuisine": "Middle Eastern",
+ "flavor_tags": [
+  "garlicky",
+  "warm spices",
+  "lemony"
+ ],
+ "base_servings": 4,
+ "active_minutes": 30,
+ "total_minutes": 75,
+ "equipment": [
+  "oven"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Draft quantities: adjust them in the app. Freeze the chicken only.",
+ "ingredients": [
+  {
+   "ingredient": "chicken-thigh-boneless-skinless",
+   "quantity": "680",
+   "unit": "g",
+   "role": "protein",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "olive-oil",
+   "quantity": "3",
+   "unit": "tbsp",
+   "role": "fat",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "lemon-juice",
+   "quantity": "3",
+   "unit": "tbsp",
+   "role": "sauce",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "garlic",
+   "quantity": "6",
+   "unit": "clove",
+   "preparation": "grated",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "cumin-ground",
+   "quantity": "2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "paprika",
+   "quantity": "2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "turmeric",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "cinnamon",
+   "quantity": "1/4",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1 1/4",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "greek-yogurt-nonfat",
+   "quantity": "200",
+   "unit": "g",
+   "role": "sauce",
+   "component": "sauce"
+  },
+  {
+   "ingredient": "pita",
+   "quantity": "4",
+   "unit": "count",
+   "role": "carb"
+  },
+  {
+   "ingredient": "tomato",
+   "quantity": "2",
+   "unit": "count",
+   "preparation": "sliced",
+   "role": "vegetable",
+   "component": "salad"
+  },
+  {
+   "ingredient": "cucumber",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "sliced",
+   "role": "vegetable",
+   "component": "salad"
+  },
+  {
+   "ingredient": "romaine",
+   "quantity": "100",
+   "unit": "g",
+   "preparation": "shredded",
+   "role": "vegetable",
+   "component": "salad"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Grate the garlic. Slice the tomatoes and cucumber and shred the romaine."
+  },
+  {
+   "section": "marinate",
+   "text": "Toss the chicken with 2 tbsp of the oil, the lemon juice, two-thirds of the garlic, the spices and 1 tsp of the salt. Marinate at least 30 minutes.",
+   "duration_minutes": 30
+  },
+  {
+   "section": "oven",
+   "text": "Roast on a lined sheet at 425F for 22 to 25 minutes, until browned and cooked through. Rest 5 minutes, then slice thinly.",
+   "duration_minutes": 25,
+   "appliance_temp_f": 425,
+   "doneness_check_for": "chicken-thigh-boneless-skinless"
+  },
+  {
+   "section": "assembly",
+   "text": "Stir the yogurt with the remaining garlic, oil and salt. Warm the pitas."
+  },
+  {
+   "section": "portioning",
+   "text": "Pack the chicken in 4 containers with a pita, the salad and the garlic yogurt on the side."
+  },
+  {
+   "section": "storage",
+   "text": "Cool, then refrigerate in the containers."
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat covered, stirring halfway, until hot all the way through."
+  }
+ ]
+}

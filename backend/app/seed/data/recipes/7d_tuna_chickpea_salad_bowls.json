@@ -1,0 +1,108 @@
+{
+ "family": "Quick salad bowls",
+ "title": "Tuna and chickpea salad bowls",
+ "description": "No-cook bowls of tuna, chickpeas, cucumber, tomato and parsley in a lemon-olive oil dressing.",
+ "meal_slots": [
+  "lunch"
+ ],
+ "mood": "simple",
+ "cuisine": "Mediterranean",
+ "flavor_tags": [
+  "lemony",
+  "fresh"
+ ],
+ "base_servings": 3,
+ "active_minutes": 15,
+ "total_minutes": 15,
+ "equipment": [],
+ "freezer_friendly": false,
+ "draft_note": "Draft quantities: adjust them in the app. Dress just before eating.",
+ "ingredients": [
+  {
+   "ingredient": "tuna-canned",
+   "quantity": "2",
+   "unit": "can",
+   "preparation": "drained",
+   "role": "protein"
+  },
+  {
+   "ingredient": "chickpeas-canned",
+   "quantity": "1",
+   "unit": "can",
+   "preparation": "drained, rinsed",
+   "role": "protein"
+  },
+  {
+   "ingredient": "cucumber",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "diced",
+   "role": "vegetable"
+  },
+  {
+   "ingredient": "tomato",
+   "quantity": "2",
+   "unit": "count",
+   "preparation": "diced",
+   "role": "vegetable"
+  },
+  {
+   "ingredient": "onion-red",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "small, finely diced",
+   "role": "vegetable"
+  },
+  {
+   "ingredient": "parsley",
+   "quantity": "15",
+   "unit": "g",
+   "preparation": "chopped",
+   "role": "garnish"
+  },
+  {
+   "ingredient": "lemon-juice",
+   "quantity": "3",
+   "unit": "tbsp",
+   "role": "sauce",
+   "component": "dressing"
+  },
+  {
+   "ingredient": "olive-oil",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "fat",
+   "component": "dressing"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "black-pepper",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Drain the tuna and chickpeas. Dice the cucumber, tomatoes and onion; chop the parsley."
+  },
+  {
+   "section": "no_cook",
+   "text": "Whisk the lemon juice, olive oil, salt and pepper. Toss everything else together."
+  },
+  {
+   "section": "portioning",
+   "text": "Divide among 3 containers with the dressing in a small jar."
+  },
+  {
+   "section": "storage",
+   "text": "Refrigerate; dress just before eating."
+  }
+ ]
+}

@@ -29,6 +29,7 @@ from app.db.models import (
     RecipeIngredient,
     RecipeVersion,
 )
+from app.domain.chicken_cuts import CutForm
 from app.domain.enums import Equipment, RecipeMood
 from app.domain.exclusions import ExclusionStatus
 from app.domain.frequency_caps import ResolvedCap
@@ -50,6 +51,9 @@ from app.services.calculations import (
 )
 from app.services.catalog import catalog_version, load_catalog
 from app.services.pricing import active_stores
+
+# 2: swaps apart from missing lines (M11), buy today (M12), mood sections (M10), 6 good matches (M14)
+CARD_FORMAT = 2
 
 
 @dataclass(frozen=True)
@@ -127,7 +131,9 @@ def _haves(
     stock: Mapping[int, Stock],
     context: CalcContext,
     roles: Mapping[int, frozenset[str]],
+    *,
     groups: Mapping[int, str],
+    cuts: Mapping[int, CutForm] | None = None,
 ) -> list[Have]:
     out = []
     for i, plan in plans.items():
@@ -149,6 +155,7 @@ def _haves(
                 expires_on=s.earliest_expiry if s is not None else None,
                 roles=roles.get(i, frozenset()),
                 group=groups.get(i),
+                cut=(cuts or {}).get(i),
             )
         )
     return out
@@ -170,7 +177,9 @@ def need_lines(
     scaled: ScaledCalculation,
     plans: Mapping[int, IngredientPlan],
     context: CalcContext,
+    *,
     groups: Mapping[int, str] | None = None,
+    cuts: Mapping[int, CutForm] | None = None,
 ) -> list[NeedLine]:
     """One need per ingredient at the card's practical amounts (repeated lines added up), in recipe order."""
     grouped: dict[int, list[tuple[RecipeLine, LineResult]]] = defaultdict(list)
@@ -205,6 +214,7 @@ def need_lines(
                 optional=not counted,
                 owned=plan.unlimited,
                 group=(groups or {}).get(i),
+                cut=(cuts or {}).get(i),
             )
         )
     return out
@@ -273,7 +283,14 @@ def load_pool(
         offers={i: p.offers for i, p in plans.items()},
         store_order=order,
         store_names=store_names,
-        haves=_haves(plans, stock, context, library_roles(session, user_id), catalog.group_of),
+        haves=_haves(
+            plans,
+            stock,
+            context,
+            library_roles(session, user_id),
+            groups=catalog.group_of,
+            cuts=catalog.cut_of,
+        ),
         pairs=accepted_pairs(session),
         unusable=excluded | diet.disliked_ids,
         units=settings.units,
@@ -298,7 +315,8 @@ def load_pool(
         )
         calc = scaled.calculation
         coverage: tuple[LineCoverage, ...] = cover(
-            need_lines(recipe_lines, scaled, plans, context, catalog.group_of), inputs
+            need_lines(recipe_lines, scaled, plans, context, groups=catalog.group_of, cuts=catalog.cut_of),
+            inputs,
         )
         cost = cost_per_portion(scaled, query.store_order)
         ingredient_ids = frozenset(ln.ingredient_id for ln in recipe_lines)
@@ -342,6 +360,7 @@ def load_pool(
         "caps_used": dict(sorted(cap_used.items())),
         "pairs": [(p.from_id, p.to_id, json.dumps(dict(p.rule), sort_keys=True)) for p in inputs.pairs],
         "catalog": catalog_version(),
+        "cards": CARD_FORMAT,  # a stored result made with older card lines isn't reused
     }
     return Pool(
         items=items,

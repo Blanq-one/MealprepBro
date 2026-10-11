@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models import InventoryItem, Nutrient
 from app.domain.nutrition import NutritionTotals, dv_label, kcal_display
-from app.domain.quantities import format_quantity
+from app.domain.quantities import format_quantity, scoops_text
 from app.schemas.api import (
     CalculatedLineOut,
     HemeOut,
@@ -110,8 +110,18 @@ def price_out(price: StorePrice) -> PriceOut:
     )
 
 
+def _lot_display(item: InventoryItem, scoop_grams: Decimal | None) -> str:
+    """'907 g (2.00 lb)', or for a powder measured by the scoop '22 scoops (682 g)' (A1)."""
+    shown = amount_display(item.quantity, item.unit)
+    return (
+        f"{scoops_text(item.quantity, scoop_grams)} ({shown})" if scoop_grams and item.unit == "g" else shown
+    )
+
+
 def inventory_lots_out(session: Session, items: Sequence[InventoryItem]) -> list[InventoryLotOut]:
-    names = {i: d.name for i, d in load_ingredients(session, {it.ingredient_id for it in items}).items()}
+    data = load_ingredients(session, {it.ingredient_id for it in items})
+    names = {i: d.name for i, d in data.items()}
+    scoops = {i: g for i, d in data.items() if (g := dict(d.units.named_units).get("scoop"))}
     user_ids = {it.user_id for it in items}
     status = diet_status(session, next(iter(user_ids))) if len(user_ids) == 1 else None
     versioned = set(load_catalog(session).versions_of) if items else set()
@@ -123,7 +133,7 @@ def inventory_lots_out(session: Session, items: Sequence[InventoryItem]) -> list
             product_id=it.product_id,
             quantity=it.quantity,
             unit=it.unit,
-            display=amount_display(it.quantity, it.unit),
+            display=_lot_display(it, scoops.get(it.ingredient_id)),
             location=it.location,
             acquired_on=it.acquired_on,
             opened_on=it.opened_on,

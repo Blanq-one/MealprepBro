@@ -418,6 +418,7 @@ def search_context(
         uses=s.uses,
         could_buy=s.could_buy,
         missing=s.missing,
+        swaps=s.swaps,
         lines=stored,
         note=AS_WRITTEN_NOTE,
     )

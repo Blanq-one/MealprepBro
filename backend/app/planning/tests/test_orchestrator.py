@@ -117,10 +117,13 @@ def test_full_week_becomes_active_and_validator_recomputation_matches_stored_tot
 
 
 def test_a_drink_slot_with_too_little_monday_time_is_explained(seeded_db):
-    out = run(seeded_db, FakeLLMClient([fixture_response("drinks_batch.json")]), slot_kcal=WITH_DRINK)
+    # (with the M13 library the default 45 minutes fit a Monday with a drink, so Monday gets 25)
+    monday_25 = [DayOverride(day=WEEK, cook_minutes=25)]
+    client = FakeLLMClient([fixture_response("drinks_batch.json")])
+    out = run(seeded_db, client, slot_kcal=WITH_DRINK, day_overrides=monday_25)
     assert out.status == "infeasible"
     assert any(
-        d.code == "COOK_TIME_SHORT" and "you have 45 (short by 5)" in d.message for d in out.diagnostics
+        d.code == "COOK_TIME_SHORT" and "you have 25 (short by 20)" in d.message for d in out.diagnostics
     )
 
 
@@ -266,7 +269,10 @@ def test_inventory_mode_with_an_empty_fridge_explains_exactly_what_is_missing(se
     (short,) = [d for d in out.diagnostics if d.code == "INVENTORY_SHORT"]
     assert short.message.startswith("Your inventory doesn't cover this week.")
     assert "The smallest top-up that makes a plan is about $" in short.message
-    assert "chicken" in short.message and "protein powder" not in short.message
+    assert "--topup" not in short.message  # no CLI wording in what the app shows (2b.4 approval, B)
+    assert short.suggested_cents is not None and short.suggested_cents % 100 == 0  # whole dollars, rounded up
+    items = " ".join(short.items)
+    assert "chicken" in items and "protein powder" not in items
     assert out.error["code"] == "infeasible" and plans(seeded_db) == 0
 
 
@@ -276,7 +282,7 @@ def test_shop_budget_too_low_for_the_seed_week_says_what_the_cheapest_plan_costs
     assert out.status == "infeasible"
     (short,) = [d for d in out.diagnostics if d.code == "BUDGET_SHORT"]
     assert "over your budget of $30.00" in short.message and short.amount > 0
-    assert "It would buy:" in short.message
+    assert short.items and short.suggested_cents is not None and short.suggested_cents >= 3000 + short.amount
 
 
 def test_the_seed_week_meets_the_protein_target_and_reports_its_money(seeded_db):

@@ -4,10 +4,12 @@ One meal is coupled to nothing else, so the best answer is the best-scoring cand
 scaled to your household at your portion size with the planner's practical rounding (the caller computes its
 numbers exactly as the recipe page does), then:
 
-  hard filters  excluded or held ingredients, the pork cap used up this week, equipment, a mood above the
-                one you chose, total time over the Quick limit, incomplete nutrition (each a filtered_reason);
+  hard filters  excluded or held ingredients, the pork cap used up this week, equipment, total time over
+                the Quick limit, incomplete nutrition (each a filtered_reason);
+  sections      mood is a preference, not a filter (M10): recipes in your mood first, then "A bit more
+                effort" (more involved), then "Simpler options" (less involved);
   score         a weighted sum of components normalized across the eligible pool (the table below);
-  sort          score, then fewer missing items, then version id.
+  sort          section, score, then fewer missing items, then version id.
 
 Never favored (pork components): bonuses for goals, pantry fit and use-up are zero, and the cost and pantry
 penalties take the pool's worst value, so a capped recipe never gains on those terms; plus a −0.05 tie-break.
@@ -31,14 +33,13 @@ W_MISSING_SUBSTITUTE = Decimal("-0.2")  # a missing line with a substitute you h
 W_COULD_BUY = Decimal("-0.1")  # each could-buy line (or top-up)
 W_FAVORITE = Decimal("0.3")  # the solver's preference weight
 W_DISLIKED = Decimal("-0.3")
-W_MOOD_MATCH = Decimal("0.1")
 W_KCAL_PER_KCAL = Decimal("-0.004")  # beyond ±15% of the meal's calories (as in D2)
 W_NEVER_FAVORED = Decimal("-0.05")
 W_GOAL = Decimal("1.0")  # Quick, Cheap and Low calorie (nutrition goals carry their own 1.0 / 0.6)
 KCAL_BAND = Decimal("0.15")
 SHORT_FIT = Decimal("0.5")  # a line you have some of counts half toward pantry fit
 GOOD_MATCH_MAX_MISSING = 2  # gap rule: at most 2 missing items with no substitute
-GOOD_MATCHES_WANTED = 3
+GOOD_MATCHES_WANTED = 6  # M14: the ideas pass runs with fewer than 6, so a search aims for 6–8 options
 WHY_CHIPS = 3
 Q4 = Decimal("0.0001")
 
@@ -46,7 +47,8 @@ BONUS_COMPONENTS = ("pantry_fit", "use_up", "favorite")  # zero for a never-favo
 PENALTY_COMPONENTS = ("missing", "could_buy", "goal:cheap")  # the pool's worst for a never-favored recipe
 
 # a filtered recipe's code, most important first (the exposure log names the first)
-FILTER_ORDER = ("held", "frequency_cap", "excluded", "equipment", "mood", "time", "nutrition_incomplete")
+FILTER_ORDER = ("held", "frequency_cap", "excluded", "equipment", "time", "nutrition_incomplete")
+SECTION_ORDER = {"match": 0, "more_effort": 1, "simpler": 2}
 
 
 @dataclass(frozen=True)
@@ -102,6 +104,7 @@ class Ranked:
     components: Mapping[str, Decimal]
     why: tuple[str, ...]
     good_match: bool
+    section: str  # match | more_effort | simpler (M10)
     missing_count: int
     cash_cents: int  # to buy for this meal now (could buy, top-ups, missing lines without a substitute)
 
@@ -127,9 +130,6 @@ def filter_reasons(c: RankInput, q: MealNowQuery, rules: Rules, names: Mapping[i
     if missing := sorted(e.value for e in c.equipment - rules.equipment):
         codes.append("equipment")
         reasons.append(f"needs {', '.join(missing)}")
-    if MOOD_ORDER[c.mood] > MOOD_ORDER[q.mood]:
-        codes.append("mood")
-        reasons.append(f"{c.mood.value}, more involved than {q.mood.value}")
     if q.quick_minutes is not None and c.total_minutes > q.quick_minutes:
         codes.append("time")
         reasons.append(f"takes {c.total_minutes} min, over {q.quick_minutes}")
@@ -182,10 +182,19 @@ def pantry_fit(c: RankInput) -> Decimal:
     return have / len(counted)
 
 
-def good_match(c: RankInput, pantry_empty: bool) -> bool:
-    """The gap rule's test (§14): with something in your pantry, it uses one of your items as its protein or
-    carb and has at most 2 missing items with no substitute. With an empty pantry, passing the filters is
-    enough (every recipe is equally missing)."""
+def section(c: RankInput, q: MealNowQuery) -> str:
+    """Your mood is a preference (M10): its recipes first, then more involved ones, then simpler ones."""
+    if c.mood is q.mood:
+        return "match"
+    return "more_effort" if MOOD_ORDER[c.mood] > MOOD_ORDER[q.mood] else "simpler"
+
+
+def good_match(c: RankInput, pantry_empty: bool, q: MealNowQuery | None = None) -> bool:
+    """The gap rule's test (§14): in your mood (M10) and, with something in your pantry, it uses one of
+    your items as its protein or carb and has at most 2 missing items with no substitute. With an empty
+    pantry, the mood is enough (every recipe is equally missing)."""
+    if q is not None and section(c, q) != "match":
+        return False
     if pantry_empty:
         return True
     uses_main = any(cov.yours and cov.line.role in ("protein", "carb") for cov in c.coverage)
@@ -224,8 +233,6 @@ def _components(
         out["favorite"] = W_FAVORITE
     if c.has_disliked:
         out["disliked"] = W_DISLIKED
-    if c.mood is q.mood:
-        out["mood_match"] = W_MOOD_MATCH
     if q.kcal_target is not None:
         beyond = abs(kcal - q.kcal_target) - q.kcal_target * KCAL_BAND
         if beyond > 0:
@@ -235,11 +242,7 @@ def _components(
 
 def _why(c: RankInput, q: MealNowQuery, components: Mapping[str, Decimal], cash: int) -> tuple[str, ...]:
     chips: list[str] = []
-    yours = [cov for cov in c.coverage if cov.yours]
-    if components.get("pantry_fit", Decimal(0)) > 0 and yours:
-        chips.append(
-            f"Uses your {yours[0].line.name}" if len(yours) == 1 else f"Uses {len(yours)} of your items"
-        )
+    yours = [cov for cov in c.coverage if cov.yours]  # (the card's Uses line names them: no chip, M11)
     if components.get("use_up", Decimal(0)) > 0:
         soon = next(cov for cov in yours if cov.uses_soon)
         chips.append(f"Uses up your {soon.line.name}")
@@ -304,12 +307,13 @@ def rank(
                 score=score,
                 components=parts,
                 why=_why(c, q, parts, cash),
-                good_match=good_match(c, pantry_empty),
+                good_match=good_match(c, pantry_empty, q),
+                section=section(c, q),
                 missing_count=sum(1 for cov in c.coverage if cov.status is Status.MISSING),
                 cash_cents=cash,
             )
         )
-    ranked.sort(key=lambda r: (-r.score, r.missing_count, r.candidate.version_id))
+    ranked.sort(key=lambda r: (SECTION_ORDER[r.section], -r.score, r.missing_count, r.candidate.version_id))
     return ranked, filtered
 
 
@@ -318,7 +322,7 @@ def good_matches(ranked: Sequence[Ranked]) -> int:
 
 
 def ideas_needed(ranked: Sequence[Ranked]) -> bool:
-    """The gap rule (§14): ideas are written only with fewer than 3 good matches (Q8)."""
+    """The gap rule (§14): ideas are written only with fewer than 6 good matches (Q8; 3 until M14)."""
     return good_matches(ranked) < GOOD_MATCHES_WANTED
 
 
@@ -339,8 +343,6 @@ def empty_reason(filtered: Sequence[Filtered], q: MealNowQuery) -> str | None:
         return None
     if top == "time" and q.quick_minutes is not None:
         return f"Nothing fits {q.quick_minutes} minutes."
-    if top == "mood":
-        return f"Nothing fits {q.mood.value.capitalize()}."
     if top == "equipment":
         return "Nothing fits your equipment."
     return "Nothing fits your food rules."

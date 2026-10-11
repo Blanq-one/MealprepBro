@@ -264,3 +264,40 @@ def test_notes_in_your_terms_for_counts_volumes_and_more_than_you_have(seeded_db
         and amount_text(Decimal(113), "g", "metric") == "113 g"
     )
     assert note(Decimal(10), "g", [], thigh) is None
+
+
+# ---------------- M2: correct any lot; M3: your usual version, on the server ----------------
+def test_correct_amount_works_on_any_lot_with_quick_taps_for_what_is_left(api, seeded_db):
+    frozen = ingredient_id(seeded_db, "cauliflower-frozen")
+    (bag,) = bulk(api, {"ingredient_id": frozen, "preset": "16oz", "location": "freezer"}).json()
+    assert bag["quantity_is_estimate"] is False  # an exact lot can be corrected too
+    options = api.get(f"/api/v1/inventory/{bag['id']}/correct-options").json()
+    assert options["package_display"] == "your bag: 16 oz (454 g)" and options["estimated"] is False
+    assert [f["display"] for f in options["fractions"]] == [
+        "¾ · 12 oz (340 g)",
+        "½ · 8 oz (227 g)",
+        "¼ · 4 oz (113 g)",
+    ]
+    assert [p["label"] for p in options["presets"]] == ["10 oz bag", "12 oz bag", "16 oz bag"]
+    half = api.patch(f"/api/v1/inventory/{bag['id']}", json={"package_fraction": "half"}).json()
+    assert Decimal(half["quantity"]) == Decimal("226.796")
+    # the fractions stay those of the package it came in, however much is left
+    again = api.get(f"/api/v1/inventory/{bag['id']}/correct-options").json()
+    assert again["fractions"][0]["display"] == "¾ · 12 oz (340 g)" and again["display"] == "8 oz (227 g)"
+    quarter = api.patch(f"/api/v1/inventory/{bag['id']}", json={"package_fraction": "quarter"}).json()
+    assert Decimal(quarter["quantity"]) == Decimal("113.398")
+    both = api.patch(f"/api/v1/inventory/{bag['id']}", json={"package_fraction": "half", "preset": "16oz"})
+    assert both.status_code == 422
+
+
+def test_your_usual_version_is_saved_in_your_settings(api, seeded_db):
+    pepperoni = ingredient_id(seeded_db, "pepperoni")
+    saved = api.patch("/api/v1/settings", json={"usual_versions": {"pepperoni": "turkey"}})
+    assert saved.status_code == 200, saved.text
+    assert saved.json()["settings"]["usual_versions"] == {"pepperoni": "turkey"}
+    assert options(api, seeded_db, "pepperoni")["versions"]["usual"] == "turkey"  # pre-selected when adding
+    review = {d["ingredient_id"]: d for d in api.get("/api/v1/settings").json()["diet_review"]}
+    assert review[pepperoni]["versions"]["usual"] == "turkey"
+    assert review[pepperoni]["decision"] == "held"  # it never allows pepperoni itself
+    for bad in ({"pepperoni": "not_sure"}, {"pepperoni": "beef"}, {"garlic": "turkey"}):
+        assert api.patch("/api/v1/settings", json={"usual_versions": bad}).status_code == 422, bad

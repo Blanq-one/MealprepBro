@@ -187,4 +187,10 @@ def test_check_you_have_shows_a_pinch_by_name_only(seeded_db):
     (pinch,) = [i for g in view.groups for i in g.items if i.ingredient_id == cayenne]
     assert (pinch.needed, pinch.to_buy, pinch.kind) == ("", "", "staple")  # never "0 g"
     staples = [i for g in view.groups if g.kind == "staple" for i in g.items if i.ingredient_id != cayenne]
-    assert all(i.to_buy for i in staples)  # a real amount still shows
+    rows = {
+        r.ingredient_id: r
+        for r in seeded_db.scalars(select(GroceryListItem).where(GroceryListItem.grocery_list_id == glist.id))
+    }
+    assert any(i.to_buy for i in staples)  # a real amount still shows
+    for i in staples:  # and only a pinch that would show as 0 goes without one
+        assert i.to_buy or Decimal(rows[i.ingredient_id].reason.get("to_buy_total", "0")) < 1, i

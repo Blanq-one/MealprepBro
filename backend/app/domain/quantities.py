@@ -107,3 +107,36 @@ def format_quantity(amount: Decimal, unit: str) -> str:
     words = unit.split("_")  # 'cup_chopped' → '2 cups chopped'
     words[0] = _plural(words[0], amount)
     return f"{format_fraction(amount)} {' '.join(words)}"
+
+
+_EIGHTH = Decimal("0.125")
+
+
+def per_portion_amount(amount: Decimal, unit: str, portions: int) -> Decimal:
+    """One portion's share of a line, rounded to something you can measure: grams and ml to the gram (a tenth
+    under 10), spoons, cups, pieces and scoops to the nearest eighth (at least an eighth)."""
+    share = amount / portions
+    if unit in {"g", "ml"}:
+        return share.quantize(Decimal(1) if share >= 10 else Decimal("0.1"), rounding=ROUND_HALF_UP)
+    eighths = (share / _EIGHTH).quantize(Decimal(1), rounding=ROUND_HALF_UP)
+    return max(eighths, Decimal(1)) * _EIGHTH
+
+
+def portion_note(amount: Decimal, unit: str, portions: int) -> str | None:
+    """'1 scoop per portion · 4 scoops for the batch of 4' (step 2b.4 approval, A1); None for one portion."""
+    if portions <= 1:
+        return None
+    each = format_quantity(per_portion_amount(amount, unit, portions), unit)
+    return f"{each} per portion · {format_quantity(amount, unit)} for the batch of {portions}"
+
+
+def display_unit(unit: str, named_units: dict[str, Decimal] | None) -> str:
+    """Scoop-based items always show scoops (A1): a powder measured by the scoop is written in scoops."""
+    return "scoop" if named_units and "scoop" in named_units and unit != "scoop" else unit
+
+
+def scoops_text(grams: Decimal, scoop_grams: Decimal) -> str:
+    """'22 scoops', '½ scoop': a powder's amount in its scoops, to the quarter (A1)."""
+    quarters = (grams / scoop_grams * 4).quantize(Decimal(1), rounding=ROUND_HALF_UP)
+    count = quarters / 4
+    return f"{format_fraction(count)} {'scoop' if count <= 1 else 'scoops'}"

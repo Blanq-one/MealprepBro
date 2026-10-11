@@ -1,0 +1,120 @@
+{
+ "family": "Wraps and tacos",
+ "title": "Yogurt chicken salad wraps",
+ "description": "Poached chicken breast in a lemony Greek yogurt dressing with celery and red onion, rolled in tortillas with romaine.",
+ "meal_slots": [
+  "lunch"
+ ],
+ "mood": "simple",
+ "cuisine": "American",
+ "flavor_tags": [
+  "lemony",
+  "creamy",
+  "crunchy"
+ ],
+ "base_servings": 4,
+ "active_minutes": 20,
+ "total_minutes": 35,
+ "equipment": [
+  "stovetop"
+ ],
+ "freezer_friendly": false,
+ "draft_note": "Draft quantities: adjust them in the app. Keep the salad and tortillas apart until lunch.",
+ "ingredients": [
+  {
+   "ingredient": "chicken-breast-boneless-skinless",
+   "quantity": "450",
+   "unit": "g",
+   "role": "protein",
+   "component": "salad"
+  },
+  {
+   "ingredient": "greek-yogurt-nonfat",
+   "quantity": "150",
+   "unit": "g",
+   "role": "sauce",
+   "component": "salad"
+  },
+  {
+   "ingredient": "celery",
+   "quantity": "60",
+   "unit": "g",
+   "preparation": "diced",
+   "role": "vegetable",
+   "component": "salad"
+  },
+  {
+   "ingredient": "onion-red",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "small, finely diced",
+   "role": "vegetable",
+   "component": "salad"
+  },
+  {
+   "ingredient": "lemon-juice",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "sauce",
+   "component": "salad"
+  },
+  {
+   "ingredient": "mustard-yellow",
+   "quantity": "2",
+   "unit": "tsp",
+   "role": "sauce",
+   "component": "salad"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "3/4",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "black-pepper",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "romaine",
+   "quantity": "100",
+   "unit": "g",
+   "preparation": "shredded",
+   "role": "vegetable"
+  },
+  {
+   "ingredient": "flour-tortilla-small",
+   "quantity": "8",
+   "unit": "count",
+   "preparation": "2 per serving",
+   "role": "carb",
+   "component": "tortillas"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Dice the celery and red onion. Shred the romaine."
+  },
+  {
+   "section": "stovetop",
+   "text": "Cover the chicken with cold salted water, bring to a simmer and cook gently 12 to 15 minutes, until cooked through. Cool, then shred.",
+   "duration_minutes": 15,
+   "doneness_check_for": "chicken-breast-boneless-skinless"
+  },
+  {
+   "section": "assembly",
+   "text": "Stir the yogurt, lemon juice, mustard, salt and pepper; fold in the chicken, celery and onion."
+  },
+  {
+   "section": "portioning",
+   "text": "Pack the chicken salad in 4 containers, with the romaine and 2 tortillas per serving on the side."
+  },
+  {
+   "section": "storage",
+   "text": "Cool, then refrigerate in the containers."
+  }
+ ]
+}

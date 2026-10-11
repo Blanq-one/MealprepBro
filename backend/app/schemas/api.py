@@ -28,6 +28,8 @@ class IngredientSearchHitOut(_Out):
     status: str  # allowed | excluded | held
     reasons: list[str]
     frequency_caps: list[str]
+    closest_match: bool = False  # the closest ingredient to what you typed (M7)
+    label: str | None = None  # "Closest match: peas, frozen"
 
 
 class NutrientPer100gOut(_Out):

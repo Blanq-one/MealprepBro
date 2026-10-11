@@ -396,6 +396,7 @@ class BatchLineOut(BaseModel):
     preparation: str | None
     optional: bool
     adjustment: str | None  # absorbed_full_package | substituted
+    portion_note: str | None = None  # "1 scoop per portion · 4 scoops for the batch of 4" (A1)
 
 
 PlanStreamEvent.model_rebuild()

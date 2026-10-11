@@ -9,7 +9,7 @@ from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from datetime import date
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import Decimal
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -123,6 +123,20 @@ def _source_label(d: IngredientData) -> str:
     return "USDA"
 
 
+def _shares(rows: Sequence[MappingRow], total: Decimal) -> None:
+    """Each row's share of the seed library's calories, to 0.1%, adding up to exactly 100.0% (the largest
+    remainders get the leftover tenths)."""
+    if not total:
+        return
+    exact = [row.seed_kcal / total * 1000 for row in rows]  # in tenths of a percent
+    tenths = [int(x) for x in exact]
+    by_remainder = sorted(range(len(rows)), key=lambda n: (-(exact[n] - tenths[n]), n))
+    for n in by_remainder[: 1000 - sum(tenths)]:
+        tenths[n] += 1
+    for row, t in zip(rows, tenths, strict=True):
+        row.share_pct = Decimal(t) / 10
+
+
 def build_rows(session: Session) -> list[MappingRow]:
     data = load_ingredients(session)
     kcal = seed_calories(session, data)
@@ -144,9 +158,6 @@ def build_rows(session: Session) -> list[MappingRow]:
         )
         if (reviewed_at := reviewed.get(d.id)) is not None:
             row.approved_on = reviewed_at.date()
-        row.share_pct = (
-            (row.seed_kcal / total * 100).quantize(Decimal("0.1"), ROUND_HALF_UP) if total else Decimal(0)
-        )
         row.flags = state_flags(d.name, usage, row.state)
         if d.nutrition_source == NutritionSource.USDA and d.usda_description:
             row.flags += keyword_flags(d.usda_description, d.category, implied.get(d.id, ""))
@@ -156,6 +167,7 @@ def build_rows(session: Session) -> list[MappingRow]:
             row.flags.append("note: approximate mapping (no exact USDA food)")
         rows.append(row)
     rows.sort(key=lambda r: (-r.seed_kcal, r.ingredient.name))
+    _shares(rows, total)
     for row in rows[:REVIEW_TOP_N]:
         row.review = row.approved_on is None
     return rows

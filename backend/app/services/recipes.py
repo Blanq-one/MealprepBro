@@ -1,19 +1,21 @@
 """Seed recipe drafts with computed nutrition and cost, and rendered recipe versions at any portion count."""
 
 from dataclasses import dataclass
+from decimal import Decimal
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.models import Recipe, RecipeFamily, RecipeIngredient, RecipeStep, RecipeVersion
 from app.domain.enums import PortionSize, RecipeOrigin
+from app.domain.quantities import display_unit
 from app.domain.scaling import PORTION_MULTIPLIERS
-from app.domain.units import grams_of
+from app.domain.units import ConversionError, UnitError, convert, grams_of
 from app.planning.reference import daily_values
 from app.planning.rendering import LineInput as RenderLine
 from app.planning.rendering import RenderedRecipe, RenderInput, StepInput, render
 from app.services.calculations import LineInput, RecipeCalculation, calculate, calculate_scaled
-from app.services.ingredient_data import load_ingredients
+from app.services.ingredient_data import IngredientData, load_ingredients
 from app.services.settings import load_settings
 
 
@@ -88,6 +90,17 @@ def _version(session: Session, user_id: int, version_id: int) -> tuple[RecipeVer
     return row[0], row[1]
 
 
+def shown_in(amount: Decimal, unit: str, d: IngredientData) -> tuple[Decimal, str]:
+    """A line as you measure it: scoop-based items always in scoops (A1)."""
+    wanted = display_unit(unit, dict(d.units.named_units))
+    if wanted == unit:
+        return amount, unit
+    try:
+        return convert(amount, unit, wanted, d.units).quantize(Decimal("0.01")), wanted
+    except (ConversionError, UnitError):
+        return amount, unit
+
+
 def version_view(
     session: Session,
     user_id: int,
@@ -112,13 +125,14 @@ def version_view(
     render_lines = []
     for row, line, result in zip(rows, scaled.scaled, calc.lines, strict=True):
         d = data[row.ingredient_id]
+        amount, unit = shown_in(line.amount, line.unit, d)
         render_lines.append(
             RenderLine(
                 row.ingredient_id,
                 d.name,
-                line.amount,
-                line.unit,
-                grams_of(result.quantity, result.unit, d.units),
+                amount,
+                unit,
+                grams_of(result.quantity, result.unit, d.units) * d.profile.edible_fraction,  # M5
                 row.role,
                 d.safety_category,
                 row.preparation,

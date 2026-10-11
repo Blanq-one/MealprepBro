@@ -159,6 +159,12 @@ Phase 2b (cook-first flow, `docs/FLOW_SPEC.md`):
   Mark cooked takes); Settings' `diet_review` items list their `versions`. The package sizes, versions, forms
   and culinary groups are in `backend/app/seed/data/pantry_catalog.json` (written by
   `backend/scripts/build_pantry_catalog.py`, with a review sheet in `docs/review/pantry_catalog.md`)
+- 2b.4 approval follow-ups: `GET /api/v1/inventory/{id}/correct-options` (any lot: ¾, ½ or ¼ of its package,
+  another size, or custom) and `PATCH /api/v1/inventory/{id}` with `package_fraction`; Settings'
+  `usual_versions` (your usual version of a held item, by slug; it only pre-selects it); search hits carry
+  `closest_match` and a `label` ("Closest match: peas, frozen"); chicken cuts are exact in search, the resolver and
+  substitutes; bone-in cuts count only their edible weight (USDA refuse); cards carry `swaps`, a mood `section`
+  and "to buy today". The 37 extra draft recipes are written by `backend/scripts/build_seed_recipes_m13.py`
 
 Phase 2:
 

@@ -12,6 +12,25 @@ from app.seed.mapping_review import (
     state_flags,
 )
 
+# Mappings the M13 seed recipes (step 2b.4 approval) moved into the top 25 by calories; you reviewed and
+# approved them on 2026-10-10 (ground turkey 93% lean, farmed Atlantic salmon, chickpeas drained, lentils and
+# quinoa dry).
+NEW_IN_TOP_25 = {
+    "chicken-whole",
+    "chicken-thigh-bone-in-skin-on",
+    "chicken-breast-bone-in-skin-on",
+    "chicken-drumstick",
+    "chicken-wing",
+    "chickpeas-canned",
+    "ground-turkey-93",
+    "ground-chicken",
+    "pita",
+    "salmon",
+    "potato-russet",
+    "quinoa",
+    "lentils-red",
+}
+
 
 def test_canned_is_flagged_unless_the_ingredient_says_canned():
     desc = "Soup, chicken broth, low sodium, canned"
@@ -55,15 +74,17 @@ def test_state_flags():
 
 def test_review_sheet_rows(seeded_db):
     rows = build_rows(seeded_db)
-    assert len(rows) == 205  # 185, plus the 20 versions and forms of 2b.4 (J4, J5)
+    assert len(rows) == 210  # 185, the 20 versions and forms of 2b.4 (J4, J5), the 5 chicken cuts (M4)
     kcal = [r.seed_kcal for r in rows]
     assert kcal == sorted(kcal, reverse=True)
     assert sum(r.share_pct for r in rows) == Decimal("100.0")
-    # you approved the whole top 25 on 2026-10-08, so nothing is left marked for review
-    assert all(r.approved_on == date(2026, 10, 8) for r in rows[:REVIEW_TOP_N])
+    # you approved the whole top 25 on 2026-10-08, and the 13 the M13 recipes moved into it on 2026-10-10
     assert not any(r.review for r in rows)
-    assert not any(r.approved_on for r in rows[REVIEW_TOP_N:])
-    assert rows[0].ingredient.slug == "chicken-thigh-boneless-skinless"
+    top = {r.ingredient.slug: r.approved_on for r in rows[:REVIEW_TOP_N]}
+    assert {s for s, on in top.items() if on == date(2026, 10, 10)} == NEW_IN_TOP_25
+    assert all(on == date(2026, 10, 8) for s, on in top.items() if s not in NEW_IN_TOP_25)
+    assert sum(1 for r in rows if r.approved_on) == REVIEW_TOP_N + len(NEW_IN_TOP_25)
+    assert rows[0].ingredient.slug == "rice-long-grain-white"
     by_slug = {r.ingredient.slug: r for r in rows}
     tortilla = by_slug["flour-tortilla-small"]
     assert tortilla.source.startswith("package label")
@@ -80,9 +101,10 @@ def test_review_sheet_markdown(seeded_db):
     rows = build_rows(seeded_db)
     text = render_markdown(rows, date(2026, 10, 8))
     assert "| # | Ingredient | Nutrition source | USDA description | FDC id | State | kcal per 100 g " in text
-    assert text.count(f"**{REVIEW_MARK}**") == 1  # only the legend: the top 25 are approved
+    assert text.count(f"**{REVIEW_MARK}**") == 1  # only the legend: everything in the top 25 is approved
     assert text.count("approved 2026-10-08") == REVIEW_TOP_N
-    assert "| 1 | chicken thigh, boneless skinless | USDA |" in text
+    assert text.count("approved 2026-10-10") == len(NEW_IN_TOP_25)
+    assert "| 1 | long-grain white rice (dry) | USDA |" in text
     assert "| 2 | flour tortilla (Price Rite, 37 g) | package label" in text
     summary = flag_summary(rows)
     assert any(line.startswith("description says 'canned': 3") for line in summary)

@@ -1,0 +1,133 @@
+{
+ "family": "Egg breakfast",
+ "title": "Egg kathi rolls with green chutney",
+ "description": "Street-style rolls: egg cooked right onto the tortilla, with cucumber, onion and a cilantro-mint yogurt chutney.",
+ "meal_slots": [
+  "breakfast",
+  "lunch"
+ ],
+ "mood": "fancy",
+ "cuisine": "Indian",
+ "flavor_tags": [
+  "herby",
+  "tangy",
+  "street food"
+ ],
+ "base_servings": 4,
+ "active_minutes": 30,
+ "total_minutes": 30,
+ "equipment": [
+  "stovetop"
+ ],
+ "freezer_friendly": false,
+ "draft_note": "Draft quantities: adjust them in the app. Best made fresh.",
+ "ingredients": [
+  {
+   "ingredient": "egg-large",
+   "quantity": "8",
+   "unit": "count",
+   "preparation": "beaten in pairs",
+   "role": "protein"
+  },
+  {
+   "ingredient": "flour-tortilla-small",
+   "quantity": "8",
+   "unit": "count",
+   "preparation": "2 per serving",
+   "role": "carb",
+   "component": "tortillas"
+  },
+  {
+   "ingredient": "vegetable-oil",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "fat"
+  },
+  {
+   "ingredient": "onion-red",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "thinly sliced",
+   "role": "vegetable"
+  },
+  {
+   "ingredient": "cucumber",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "cut in thin sticks",
+   "role": "vegetable"
+  },
+  {
+   "ingredient": "cilantro",
+   "quantity": "30",
+   "unit": "g",
+   "role": "sauce",
+   "component": "chutney"
+  },
+  {
+   "ingredient": "mint",
+   "quantity": "10",
+   "unit": "g",
+   "role": "sauce",
+   "component": "chutney"
+  },
+  {
+   "ingredient": "greek-yogurt-nonfat",
+   "quantity": "120",
+   "unit": "g",
+   "role": "sauce",
+   "component": "chutney"
+  },
+  {
+   "ingredient": "lime-juice",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "sauce",
+   "component": "chutney"
+  },
+  {
+   "ingredient": "jalapeno",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "seeded",
+   "role": "sauce",
+   "component": "chutney"
+  },
+  {
+   "ingredient": "garam-masala",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "3/4",
+   "unit": "tsp",
+   "role": "seasoning"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Chop the cilantro, mint and jalapeño as finely as you can and stir them into the yogurt with the lime juice and a pinch of salt for the chutney. Slice the onion and cut the cucumber."
+  },
+  {
+   "section": "stovetop",
+   "text": "Heat a little oil in a skillet over medium heat. Pour in 1 beaten egg with a pinch of salt and garam masala, lay a tortilla on top and cook until the egg sets, about 1 minute; flip and cook 30 seconds. Repeat for each roll.",
+   "duration_minutes": 16,
+   "doneness_check_for": "egg-large"
+  },
+  {
+   "section": "assembly",
+   "text": "Fill each roll with onion, cucumber and chutney, egg side in, and roll up."
+  },
+  {
+   "section": "portioning",
+   "text": "Serve 2 rolls per person."
+  },
+  {
+   "section": "storage",
+   "text": "Cool, then refrigerate in the containers."
+  }
+ ]
+}

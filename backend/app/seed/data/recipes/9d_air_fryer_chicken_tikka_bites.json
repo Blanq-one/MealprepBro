@@ -1,0 +1,112 @@
+{
+ "family": "Snacks",
+ "title": "Air-fryer chicken tikka bites",
+ "description": "Bite-size chicken breast in a tandoori yogurt marinade, air-fried, with a squeeze of lemon.",
+ "meal_slots": [
+  "snack",
+  "lunch"
+ ],
+ "mood": "medium",
+ "cuisine": "Indian",
+ "flavor_tags": [
+  "smoky",
+  "tangy"
+ ],
+ "base_servings": 4,
+ "active_minutes": 15,
+ "total_minutes": 50,
+ "equipment": [
+  "air_fryer"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Draft quantities: adjust them in the app. Freeze cooked bites; reheat in the air fryer.",
+ "ingredients": [
+  {
+   "ingredient": "chicken-breast-boneless-skinless",
+   "quantity": "450",
+   "unit": "g",
+   "preparation": "bite-size cubes",
+   "role": "protein"
+  },
+  {
+   "ingredient": "greek-yogurt-nonfat",
+   "quantity": "100",
+   "unit": "g",
+   "role": "sauce"
+  },
+  {
+   "ingredient": "lemon-juice",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "sauce"
+  },
+  {
+   "ingredient": "garlic",
+   "quantity": "3",
+   "unit": "clove",
+   "preparation": "grated",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "ginger",
+   "quantity": "10",
+   "unit": "g",
+   "preparation": "grated",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "garam-masala",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "paprika",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "cumin-ground",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "3/4",
+   "unit": "tsp",
+   "role": "seasoning"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Cut the chicken into bite-size cubes and grate the garlic and ginger."
+  },
+  {
+   "section": "marinate",
+   "text": "Mix the yogurt, lemon juice, garlic, ginger, spices and salt; coat the chicken and marinate 30 minutes.",
+   "duration_minutes": 30
+  },
+  {
+   "section": "air_fryer",
+   "text": "Air fry in one layer at 400F for 10 to 12 minutes, shaking halfway, until browned and cooked through.",
+   "duration_minutes": 12,
+   "appliance_temp_f": 400,
+   "doneness_check_for": "chicken-breast-boneless-skinless"
+  },
+  {
+   "section": "portioning",
+   "text": "Divide among 4 containers."
+  },
+  {
+   "section": "storage",
+   "text": "Cool, then refrigerate in the containers."
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat covered, stirring halfway, until hot all the way through."
+  }
+ ]
+}

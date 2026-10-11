@@ -1,0 +1,117 @@
+{
+ "family": "Egg breakfast",
+ "title": "Egg and veggie muffin cups",
+ "description": "Baked egg cups with spinach, peppers and green onion: grab-and-go breakfasts for the week.",
+ "meal_slots": [
+  "breakfast",
+  "snack"
+ ],
+ "mood": "medium",
+ "cuisine": null,
+ "flavor_tags": [
+  "savory"
+ ],
+ "base_servings": 4,
+ "active_minutes": 15,
+ "total_minutes": 40,
+ "equipment": [
+  "oven"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Draft quantities: adjust them in the app. Freeze in a single layer, then bag.",
+ "ingredients": [
+  {
+   "ingredient": "egg-large",
+   "quantity": "6",
+   "unit": "count",
+   "role": "protein"
+  },
+  {
+   "ingredient": "egg-white",
+   "quantity": "6",
+   "unit": "count",
+   "role": "protein"
+  },
+  {
+   "ingredient": "spinach",
+   "quantity": "100",
+   "unit": "g",
+   "preparation": "chopped",
+   "role": "vegetable"
+  },
+  {
+   "ingredient": "bell-pepper",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "finely diced",
+   "role": "vegetable"
+  },
+  {
+   "ingredient": "green-onion",
+   "quantity": "3",
+   "unit": "count",
+   "preparation": "sliced",
+   "role": "vegetable"
+  },
+  {
+   "ingredient": "milk-2",
+   "quantity": "60",
+   "unit": "ml",
+   "role": "dairy"
+  },
+  {
+   "ingredient": "garlic-powder",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "3/4",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "black-pepper",
+   "quantity": "1/4",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "vegetable-oil",
+   "quantity": "1",
+   "unit": "tsp",
+   "preparation": "for the pan",
+   "role": "fat"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Heat the oven to 350F and oil a 12-cup muffin pan. Chop the spinach, dice the pepper and slice the green onions."
+  },
+  {
+   "section": "assembly",
+   "text": "Whisk the eggs, egg whites, milk, garlic powder, salt and pepper. Divide the vegetables among the cups and pour the egg mixture over them."
+  },
+  {
+   "section": "oven",
+   "text": "Bake at 350F for 20 to 22 minutes, until puffed and set in the center.",
+   "duration_minutes": 22,
+   "appliance_temp_f": 350,
+   "doneness_check_for": "egg-large"
+  },
+  {
+   "section": "portioning",
+   "text": "Cool 5 minutes, then pack 3 cups per serving."
+  },
+  {
+   "section": "storage",
+   "text": "Cool, then refrigerate in the containers."
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat covered, stirring halfway, until hot all the way through."
+  }
+ ]
+}

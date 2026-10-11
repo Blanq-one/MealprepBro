@@ -86,6 +86,8 @@ def version_out(
                 display=ln.display,
                 preparation=ln.preparation,
                 optional=ln.optional,
+                amount_display=ln.amount_display,
+                portion_note=ln.portion_note,
             )
             for ln in rendered.lines
         ],

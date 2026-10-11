@@ -1,7 +1,9 @@
 """Ingredient names from the LLM → canonical ingredients (deliverable 7) and accepted substitutions (8).
 
-exact alias → normalized alias (parentheses dropped, simple plurals) → trigram with a margin over the
-runner-up → unresolved, with suggestions for the retry message. Unresolved names are collected for the
+exact alias → normalized alias (parentheses dropped, simple plurals) → a labeled close match (M7: "canned
+peas" → peas, frozen, via "close") → trigram with a margin over the runner-up → unresolved, with suggestions
+for the retry message. Chicken cuts are exact (M6): a name that says bone-in or boneless, skin-on or skinless
+never resolves to a cut of the other form, whichever step found it. Unresolved names are collected for the
 "suggested new ingredients" queue. A resolved excluded item (beef broth) or held item (unspecified gelatin)
 is a domain error, which makes the LLM retry. An accepted substitution (chapati → flour tortilla) is
 applied after resolution.
@@ -14,8 +16,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.models import IngredientAlias, IngredientSubstitution
+from app.domain.chicken_cuts import CutForm, conflicts, stated_form
 from app.domain.exclusions import ExclusionResult, ExclusionStatus
 from app.seed.files import normalize_name
+from app.services.catalog import load_catalog
 from app.services.exclusions import diet_status
 from app.services.ingredient_data import IngredientData, load_ingredients
 from app.services.ingredients import search
@@ -30,7 +34,7 @@ class Resolution:
     name: str  # as written
     ingredient_id: int | None = None
     canonical_name: str | None = None
-    via: str | None = None  # exact | normalized | trigram
+    via: str | None = None  # exact | normalized | close (labeled, M7) | trigram
     substituted_from: str | None = None  # canonical name before an accepted substitution
     quantity_rule: dict[str, str] | None = None
     error: str | None = None
@@ -49,6 +53,8 @@ class IngredientResolver:
     data: dict[int, IngredientData] = field(init=False)
     statuses: dict[int, ExclusionResult] = field(init=False)
     substitutions: dict[int, tuple[int, dict[str, str]]] = field(init=False)
+    cut_of: dict[int, CutForm] = field(init=False)
+    close_of: dict[str, int] = field(init=False)
     unresolved: dict[str, int] = field(default_factory=dict)  # name -> times seen this run
 
     def __post_init__(self) -> None:
@@ -57,6 +63,8 @@ class IngredientResolver:
         }
         self.data = load_ingredients(self.session)
         self.statuses = diet_status(self.session, self.user_id, self.data).results
+        catalog = load_catalog(self.session)
+        self.cut_of, self.close_of = catalog.cut_of, catalog.close_of
         self.substitutions = {
             s.from_ingredient_id: (s.to_ingredient_id, dict(s.quantity_rule))
             for s in self.session.scalars(
@@ -79,12 +87,24 @@ class IngredientResolver:
         return [v for v in dict.fromkeys(out) if v]
 
     def _find(self, name: str) -> tuple[int | None, str | None, tuple[str, ...]]:
+        found = self._find_any(name)
+        ingredient_id = found[0]
+        if ingredient_id is not None and ingredient_id in self.cut_of:
+            wanted = stated_form(name)
+            if conflicts(wanted, self.cut_of[ingredient_id]):  # M6: never the other bone or skin form
+                return None, None, ()
+        return found
+
+    def _find_any(self, name: str) -> tuple[int | None, str | None, tuple[str, ...]]:
         key = normalize_name(name)
         if key in self.aliases:
             return self.aliases[key], "exact", ()
         for variant in self._variants(name):
             if variant in self.aliases:
                 return self.aliases[variant], "normalized", ()
+        for variant in (key, *self._variants(name)):
+            if variant in self.close_of:
+                return self.close_of[variant], "close", ()
         hits = search(self.session, self.user_id, name, limit=5)
         suggestions = tuple(dict.fromkeys(h.name for h in hits))[:MAX_SUGGESTIONS]
         if hits and hits[0].score >= TRIGRAM_ACCEPT:

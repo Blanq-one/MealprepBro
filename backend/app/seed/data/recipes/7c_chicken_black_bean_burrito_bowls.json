@@ -1,0 +1,141 @@
+{
+ "family": "Chicken rice bowls",
+ "title": "Chicken and black bean burrito bowls",
+ "description": "Chili-lime chicken with black beans, corn, rice and salsa.",
+ "meal_slots": [
+  "lunch",
+  "dinner"
+ ],
+ "mood": "medium",
+ "cuisine": "Tex-Mex",
+ "flavor_tags": [
+  "chili-lime",
+  "smoky"
+ ],
+ "base_servings": 4,
+ "active_minutes": 25,
+ "total_minutes": 40,
+ "equipment": [
+  "stovetop"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Draft quantities: adjust them in the app. Freeze the chicken, beans and rice; add salsa and lettuce fresh.",
+ "ingredients": [
+  {
+   "ingredient": "chicken-breast-boneless-skinless",
+   "quantity": "680",
+   "unit": "g",
+   "preparation": "diced",
+   "role": "protein",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "chili-powder",
+   "quantity": "2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "cumin-ground",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "garlic-powder",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "vegetable-oil",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "fat"
+  },
+  {
+   "ingredient": "lime-juice",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "sauce"
+  },
+  {
+   "ingredient": "black-beans-canned",
+   "quantity": "480",
+   "unit": "g",
+   "preparation": "drained, rinsed",
+   "role": "protein",
+   "component": "beans"
+  },
+  {
+   "ingredient": "corn-frozen",
+   "quantity": "200",
+   "unit": "g",
+   "role": "vegetable",
+   "component": "beans"
+  },
+  {
+   "ingredient": "rice-long-grain-white",
+   "quantity": "300",
+   "unit": "g",
+   "preparation": "rinsed",
+   "role": "carb",
+   "component": "rice"
+  },
+  {
+   "ingredient": "salsa",
+   "quantity": "240",
+   "unit": "ml",
+   "role": "sauce",
+   "component": "salsa"
+  },
+  {
+   "ingredient": "romaine",
+   "quantity": "150",
+   "unit": "g",
+   "preparation": "shredded",
+   "role": "vegetable",
+   "component": "salsa"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Dice the chicken and toss it with the chili powder, cumin, garlic powder and salt. Drain and rinse the beans."
+  },
+  {
+   "section": "rice",
+   "text": "Bring 540 ml of water to a boil, add the rinsed rice, cover and simmer on low 15 minutes. Rest off the heat 10 minutes, then fluff.",
+   "duration_minutes": 25
+  },
+  {
+   "section": "stovetop",
+   "text": "Heat the oil in a large skillet over medium-high heat and cook the chicken until browned and cooked through, 8 to 10 minutes. Squeeze in the lime juice.",
+   "duration_minutes": 10,
+   "doneness_check_for": "chicken-breast-boneless-skinless"
+  },
+  {
+   "section": "stovetop",
+   "text": "Warm the beans and corn in the same pan, 3 minutes.",
+   "duration_minutes": 3
+  },
+  {
+   "section": "portioning",
+   "text": "Divide the rice, chicken, beans and corn among 4 containers. Pack the salsa and romaine separately."
+  },
+  {
+   "section": "storage",
+   "text": "Cool, then refrigerate in the containers."
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat covered, stirring halfway, until hot all the way through."
+  }
+ ]
+}

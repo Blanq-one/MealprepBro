@@ -173,7 +173,7 @@ def test_quick_picks_offer_usual_packages_and_skip_staples_and_beef(client):
     picks = client.get("/api/v1/inventory/quick-picks").json()
     names = {p["name"] for p in picks}
     assert picks and "salt" not in names and not any("beef" in n for n in names)
-    eggs = next(p for p in picks if p["name"].startswith("egg"))
+    eggs = next(p for p in picks if p["name"] == "egg, large")  # (egg whites are a pick of their own)
     assert eggs["product_id"] and Decimal(eggs["quantity"]) == 12
 
 

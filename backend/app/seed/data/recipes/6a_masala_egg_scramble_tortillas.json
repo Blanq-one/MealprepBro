@@ -1,0 +1,125 @@
+{
+ "family": "Egg breakfast",
+ "title": "Masala egg scramble with tortillas",
+ "description": "Anda bhurji: eggs scrambled with onion, tomato, green chili and turmeric, with tortillas warmed like chapati.",
+ "meal_slots": [
+  "breakfast"
+ ],
+ "mood": "simple",
+ "cuisine": "Indian",
+ "flavor_tags": [
+  "spiced",
+  "onion-tomato"
+ ],
+ "base_servings": 4,
+ "active_minutes": 15,
+ "total_minutes": 20,
+ "equipment": [
+  "stovetop"
+ ],
+ "freezer_friendly": false,
+ "draft_note": "Draft quantities: adjust them in the app. Best made fresh.",
+ "ingredients": [
+  {
+   "ingredient": "egg-large",
+   "quantity": "8",
+   "unit": "count",
+   "preparation": "beaten",
+   "role": "protein"
+  },
+  {
+   "ingredient": "vegetable-oil",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "fat"
+  },
+  {
+   "ingredient": "onion-yellow",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "medium, finely chopped",
+   "role": "vegetable"
+  },
+  {
+   "ingredient": "tomato",
+   "quantity": "2",
+   "unit": "count",
+   "preparation": "medium, chopped",
+   "role": "vegetable"
+  },
+  {
+   "ingredient": "jalapeno",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "seeded, minced",
+   "role": "vegetable"
+  },
+  {
+   "ingredient": "turmeric",
+   "quantity": "1/4",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "chili-powder",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "3/4",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "cilantro",
+   "quantity": "10",
+   "unit": "g",
+   "preparation": "chopped",
+   "role": "garnish",
+   "optional": true
+  },
+  {
+   "ingredient": "flour-tortilla-small",
+   "quantity": "8",
+   "unit": "count",
+   "preparation": "2 per serving",
+   "role": "carb",
+   "component": "tortillas"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Chop the onion and tomatoes, mince the jalapeño and beat the eggs with the salt."
+  },
+  {
+   "section": "stovetop",
+   "text": "Heat the oil in a skillet over medium heat. Cook the onion and jalapeño until soft, about 4 minutes, then add the tomatoes, turmeric and chili powder and cook 3 minutes more.",
+   "duration_minutes": 7
+  },
+  {
+   "section": "stovetop",
+   "text": "Pour in the eggs and stir gently until softly set and no liquid egg remains, 3 to 4 minutes.",
+   "duration_minutes": 4,
+   "doneness_check_for": "egg-large"
+  },
+  {
+   "section": "assembly",
+   "text": "Warm each tortilla on a dry pan about 30 seconds per side, like chapati."
+  },
+  {
+   "section": "portioning",
+   "text": "Divide the scramble among 4 plates with 2 tortillas each, topped with cilantro."
+  },
+  {
+   "section": "storage",
+   "text": "Cool, then refrigerate in the containers."
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat covered, stirring halfway, until hot all the way through."
+  }
+ ]
+}

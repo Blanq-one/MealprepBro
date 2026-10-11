@@ -219,6 +219,24 @@ function HeldItemsEditor({ onDone, online }: { onDone: () => void; online: boole
     if (loaded.data) setItems(loaded.data.diet_review ?? []);
   }, [loaded.data]);
 
+  /** Your usual version of a held item, saved in your settings (M3); null forgets it. */
+  async function usual(item: DietReview, key: string | null) {
+    setBusy(item.ingredient_id);
+    setProblem(null);
+    try {
+      const current = { ...(loaded.data?.settings.usual_versions ?? {}) };
+      if (key === null) delete current[item.slug];
+      else current[item.slug] = key;
+      const out = await api<SettingsOut>("/api/v1/settings", { method: "PATCH", json: { usual_versions: current } });
+      loaded.setData(out);
+      setItems(out.diet_review ?? []);
+    } catch (e) {
+      setProblem(e);
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function decide(item: DietReview, allow: boolean) {
     setBusy(item.ingredient_id);
     setProblem(null);
@@ -241,7 +259,7 @@ function HeldItemsEditor({ onDone, online }: { onDone: () => void; online: boole
       {items === null ? (
         loaded.error ? <ErrorState error={loaded.error} onRetry={() => void loaded.reload()} /> : <Skeleton cards={2} />
       ) : (
-        <HeldItemsControl items={items} onDecide={(item, allow) => void decide(item, allow)} disabled={!online} busyId={busy} />
+        <HeldItemsControl items={items} onDecide={(item, allow) => void decide(item, allow)} onUsual={(item, key) => void usual(item, key)} disabled={!online} busyId={busy} />
       )}
       {!online && <p className="small muted">Changing a held item needs a connection.</p>}
       {problem !== null && <ErrorState error={problem} title="Couldn't change that item" />}

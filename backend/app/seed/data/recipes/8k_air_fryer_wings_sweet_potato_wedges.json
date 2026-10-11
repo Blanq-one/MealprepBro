@@ -1,0 +1,131 @@
+{
+ "family": "Bone-in chicken",
+ "title": "Air-fryer chicken wings with sweet potato wedges",
+ "description": "Crispy smoky wings tossed in a buttery hot sauce, with air-fried sweet potato wedges.",
+ "meal_slots": [
+  "dinner",
+  "snack"
+ ],
+ "mood": "medium",
+ "cuisine": "American",
+ "flavor_tags": [
+  "crispy",
+  "spicy",
+  "smoky"
+ ],
+ "base_servings": 4,
+ "active_minutes": 20,
+ "total_minutes": 55,
+ "equipment": [
+  "air_fryer",
+  "stovetop"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Draft quantities: adjust them in the app. Freeze the wings before saucing; re-crisp them in the air fryer.",
+ "ingredients": [
+  {
+   "ingredient": "chicken-wing",
+   "quantity": "1100",
+   "unit": "g",
+   "preparation": "patted dry",
+   "role": "protein",
+   "component": "wings"
+  },
+  {
+   "ingredient": "baking-powder",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "other",
+   "component": "wings"
+  },
+  {
+   "ingredient": "smoked-paprika",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "garlic-powder",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1 1/4",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "black-pepper",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "hot-sauce",
+   "quantity": "60",
+   "unit": "ml",
+   "role": "sauce",
+   "component": "sauce"
+  },
+  {
+   "ingredient": "butter-unsalted",
+   "quantity": "20",
+   "unit": "g",
+   "role": "fat",
+   "component": "sauce"
+  },
+  {
+   "ingredient": "sweet-potato",
+   "quantity": "3",
+   "unit": "count",
+   "preparation": "medium, in wedges",
+   "role": "carb",
+   "component": "wedges"
+  },
+  {
+   "ingredient": "olive-oil",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "fat",
+   "component": "wedges"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Pat the wings very dry and toss with the baking powder, smoked paprika, garlic powder, salt and pepper. Cut the sweet potatoes into wedges and toss with the oil."
+  },
+  {
+   "section": "air_fryer",
+   "text": "Air fry the wedges at 400F for 16 to 18 minutes, shaking halfway; keep warm.",
+   "duration_minutes": 18,
+   "appliance_temp_f": 400
+  },
+  {
+   "section": "air_fryer",
+   "text": "Air fry the wings in one layer at 400F for 22 to 25 minutes, flipping halfway, until crisp and cooked through to the bone.",
+   "duration_minutes": 25,
+   "appliance_temp_f": 400,
+   "doneness_check_for": "chicken-wing"
+  },
+  {
+   "section": "stovetop",
+   "text": "Melt the butter with the hot sauce in a small pan and toss the wings in it.",
+   "duration_minutes": 2
+  },
+  {
+   "section": "portioning",
+   "text": "Divide the wings and wedges among 4 containers."
+  },
+  {
+   "section": "storage",
+   "text": "Cool, then refrigerate in the containers."
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat covered, stirring halfway, until hot all the way through."
+  }
+ ]
+}

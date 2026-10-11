@@ -1,0 +1,130 @@
+{
+ "family": "Breakfast burritos and hash",
+ "title": "Chicken sausage and egg breakfast burritos",
+ "description": "Chicken sausage, peppers and scrambled eggs rolled in tortillas with salsa. Wrap and freeze for busy mornings.",
+ "meal_slots": [
+  "breakfast",
+  "lunch"
+ ],
+ "mood": "medium",
+ "cuisine": "Tex-Mex",
+ "flavor_tags": [
+  "savory",
+  "smoky"
+ ],
+ "base_servings": 4,
+ "active_minutes": 25,
+ "total_minutes": 30,
+ "equipment": [
+  "stovetop"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Draft quantities: adjust them in the app. Freeze the wrapped burritos; add the salsa after reheating.",
+ "ingredients": [
+  {
+   "ingredient": "chicken-sausage",
+   "quantity": "340",
+   "unit": "g",
+   "preparation": "sliced",
+   "role": "protein",
+   "component": "filling"
+  },
+  {
+   "ingredient": "egg-large",
+   "quantity": "8",
+   "unit": "count",
+   "preparation": "beaten",
+   "role": "protein",
+   "component": "filling"
+  },
+  {
+   "ingredient": "bell-pepper",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "diced",
+   "role": "vegetable",
+   "component": "filling"
+  },
+  {
+   "ingredient": "onion-yellow",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "small, diced",
+   "role": "vegetable",
+   "component": "filling"
+  },
+  {
+   "ingredient": "vegetable-oil",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "fat"
+  },
+  {
+   "ingredient": "smoked-paprika",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "black-pepper",
+   "quantity": "1/4",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "flour-tortilla-small",
+   "quantity": "8",
+   "unit": "count",
+   "preparation": "2 per serving",
+   "role": "carb",
+   "component": "tortillas"
+  },
+  {
+   "ingredient": "salsa",
+   "quantity": "120",
+   "unit": "ml",
+   "role": "sauce",
+   "component": "salsa"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Slice the sausage, dice the pepper and onion, and beat the eggs with the salt and pepper."
+  },
+  {
+   "section": "stovetop",
+   "text": "Heat the oil in a large skillet over medium-high heat. Brown the sausage with the pepper, onion and smoked paprika, 6 to 8 minutes, until the sausage is cooked through.",
+   "duration_minutes": 8,
+   "doneness_check_for": "chicken-sausage"
+  },
+  {
+   "section": "stovetop",
+   "text": "Lower the heat, pour in the eggs and stir until softly set with no liquid egg left, about 3 minutes.",
+   "duration_minutes": 3,
+   "doneness_check_for": "egg-large"
+  },
+  {
+   "section": "assembly",
+   "text": "Warm the tortillas, spoon in the filling and roll them up tightly."
+  },
+  {
+   "section": "portioning",
+   "text": "Wrap 2 burritos per serving. Pack the salsa separately."
+  },
+  {
+   "section": "storage",
+   "text": "Cool, then refrigerate in the containers."
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat in a dry skillet or the microwave until hot all the way through, then add the salsa."
+  }
+ ]
+}

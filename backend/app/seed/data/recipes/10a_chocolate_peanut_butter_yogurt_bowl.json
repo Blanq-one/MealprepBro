@@ -1,0 +1,78 @@
+{
+ "family": "Protein pudding",
+ "title": "Chocolate peanut butter protein yogurt bowl",
+ "description": "Greek yogurt whipped with double chocolate protein powder and cocoa, swirled with peanut butter and banana.",
+ "meal_slots": [
+  "protein_dessert",
+  "snack"
+ ],
+ "mood": "simple",
+ "cuisine": null,
+ "flavor_tags": [
+  "chocolate",
+  "nutty"
+ ],
+ "base_servings": 3,
+ "active_minutes": 5,
+ "total_minutes": 5,
+ "equipment": [],
+ "freezer_friendly": false,
+ "draft_note": "Draft quantities: adjust them in the app. Add the banana just before eating.",
+ "ingredients": [
+  {
+   "ingredient": "greek-yogurt-nonfat",
+   "quantity": "600",
+   "unit": "g",
+   "role": "dairy"
+  },
+  {
+   "ingredient": "protein-powder-double-chocolate",
+   "quantity": "2",
+   "unit": "scoop",
+   "role": "protein"
+  },
+  {
+   "ingredient": "cocoa-powder",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "other"
+  },
+  {
+   "ingredient": "milk-2",
+   "quantity": "60",
+   "unit": "ml",
+   "role": "dairy"
+  },
+  {
+   "ingredient": "peanut-butter",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "fat"
+  },
+  {
+   "ingredient": "banana",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "sliced",
+   "role": "fruit"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Slice the banana. Warm the peanut butter for 10 seconds so it drizzles."
+  },
+  {
+   "section": "no_cook",
+   "text": "Whisk the protein powder, cocoa and milk into a paste, then whisk it into the yogurt until smooth."
+  },
+  {
+   "section": "portioning",
+   "text": "Divide among 3 bowls, swirl in the peanut butter and top with the banana."
+  },
+  {
+   "section": "storage",
+   "text": "Refrigerate the yogurt base covered; add the banana when serving."
+  }
+ ]
+}

@@ -3,7 +3,7 @@ diet rules (AC 2), the cache (AC 3), the gap rule's outcome with no LLM call (AC
 the recipe page's search context (E17)."""
 
 from datetime import date, datetime
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import Decimal
 from typing import Any
 
 import pytest
@@ -32,7 +32,8 @@ from app.db.models import (
 from app.domain.cost import money_display
 from app.domain.enums import StorageLocation
 
-DINNER_SEEDS = 6
+DINNER_SEEDS = 25  # 6, plus the 19 dinner drafts of the step 2b.4 approval (M13)
+MEDIUM_DINNER_SEEDS = 15  # Wednesday is medium: your mood's recipes are the good matches (M10)
 
 
 def count(session: Any, table: Any) -> int:
@@ -80,7 +81,13 @@ def test_every_card_equals_the_recipe_page_at_the_same_portions(api, people):
         nutrients = {n["code"]: Decimal(str(n["amount"])) for n in page["per_portion"]["nutrients"]}
         kcal, protein, minutes, cost = card["numbers"][:4]
         assert kcal == f"{page['per_portion']['kcal']} kcal"
-        assert protein == f"{nutrients['protein_g'].quantize(Decimal(1), ROUND_HALF_UP)} g protein"
+        # the card rounds the exact grams; the page shows them to 0.1 g ("45.5" for 45.47), so round once only
+        grams = Decimal(protein.removesuffix(" g protein"))
+        assert abs(grams - nutrients["protein_g"]) <= Decimal("0.5"), (
+            card["title"],
+            protein,
+            nutrients["protein_g"],
+        )
         assert minutes == f"{page['total_minutes']} min"
         store = next(c for c in page["costs"] if c["store_name"] == "Stop & Shop")
         assert store["complete"]
@@ -91,8 +98,9 @@ def test_every_card_equals_the_recipe_page_at_the_same_portions(api, people):
 
 def test_goal_numbers_follow_your_goals(api):
     card = results(meal_now(api, slot="dinner", goals=["iron_rich", "high_carb"]))[0]
-    assert len(card["numbers"]) == 6
-    assert card["numbers"][4].endswith("mg heme, est.)") and card["numbers"][5].endswith("g carbs")
+    assert len(card["numbers"]) == 7  # kcal, protein, time, a portion, to buy today (M12), then the goals'
+    assert card["numbers"][4].endswith("to buy today")
+    assert card["numbers"][5].endswith("mg heme, est.)") and card["numbers"][6].endswith("g carbs")
 
 
 # ---------------- AC 2: diet rules ----------------
@@ -190,9 +198,9 @@ def test_changing_the_pantry_answers_settings_pool_or_prices_misses_the_cache(ap
 
 
 # ---------------- AC 4: the gap rule, and no LLM call ----------------
-def test_the_gap_rule_reports_ideas_needed_exactly_below_three_good_matches(api, seeded_db):
+def test_the_gap_rule_reports_ideas_needed_below_six_good_matches(api, seeded_db):
     empty = final(meal_now(api, slot="dinner"))
-    assert (empty["good_matches"], empty["ideas_needed"]) == (DINNER_SEEDS, False)  # an empty pantry
+    assert (empty["good_matches"], empty["ideas_needed"]) == (MEDIUM_DINNER_SEEDS, False)  # an empty pantry
     add_stock(seeded_db, "onion-yellow", 3, "count", location=StorageLocation.PANTRY)
     thin = final(meal_now(api, slot="dinner"))
     assert (thin["good_matches"], thin["ideas_needed"]) == (0, True)  # nothing uses your protein or carb
@@ -202,12 +210,15 @@ def test_the_gap_rule_reports_ideas_needed_exactly_below_three_good_matches(api,
     add_stock(seeded_db, "chicken-thigh-boneless-skinless", 2000)
     add_stock(seeded_db, "tomato", 6, "count", location=StorageLocation.PANTRY)
     add_stock(seeded_db, "flour-tortilla-small", 20, "count", location=StorageLocation.PANTRY)
-    enough = final(meal_now(api, slot="dinner"))
-    # the three gravies use your chicken and tortillas, with at most two missing items (the sheet-pan chicken
-    # misses its peppers too: tomatoes aren't sweet peppers, J2)
-    assert (enough["good_matches"], enough["ideas_needed"]) == (3, False)
+    short = final(meal_now(api, slot="dinner"))
+    # the three gravies, the keema and the shakshuka use your chicken or tortillas, with at most two missing
+    # items: one short of the 6 the gap rule wants (M14)
+    assert (short["good_matches"], short["ideas_needed"]) == (5, True)
+    add_stock(seeded_db, "rice-long-grain-white", 2000, location=StorageLocation.PANTRY)
+    enough = final(meal_now(api, slot="dinner"))  # rice brings in the chana masala and the salmon
+    assert (enough["good_matches"], enough["ideas_needed"]) == (7, False)
     assert count(seeded_db, LlmCall) == 0 and NoLLM.calls == 0
-    assert all(e["llm_call_count"] == 0 and e["total_tokens"] == 0 for e in (empty, thin, enough))
+    assert all(e["llm_call_count"] == 0 and e["total_tokens"] == 0 for e in (empty, thin, short, enough))
 
 
 # ---------------- your pantry choices ----------------

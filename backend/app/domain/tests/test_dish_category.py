@@ -23,6 +23,44 @@ SEED_EXPECTED = {
     "3b_chocolate_protein_chia_pudding.json": C.DESSERT,
     "4a_egg_spinach_pepper_breakfast_wraps.json": C.WRAP,
     "5a_chocolate_protein_overnight_oats.json": C.OATS,
+    # the 37 drafts of the step 2b.4 approval (M13)
+    "6a_masala_egg_scramble_tortillas.json": C.EGGS,  # "scramble" beats "masala" (table order)
+    "6b_chicken_sausage_egg_burritos.json": C.WRAP,
+    "6c_peanut_butter_banana_overnight_oats.json": C.OATS,
+    "6d_egg_white_veggie_muffin_cups.json": C.EGGS,  # an egg breakfast
+    "6e_shakshuka_with_tortillas.json": C.EGGS,
+    "6f_turkey_sweet_potato_hash.json": C.OTHER,
+    "6g_egg_kathi_rolls_green_chutney.json": C.EGGS,
+    "7a_chicken_tikka_rice_bowls.json": C.BOWL,
+    "7b_yogurt_chicken_salad_wraps.json": C.WRAP,  # wrap comes before salad in the table
+    "7c_chicken_black_bean_burrito_bowls.json": C.BOWL,  # a burrito bowl is a bowl
+    "7d_tuna_chickpea_salad_bowls.json": C.SALAD,
+    "7e_egg_fried_rice_peas_carrots.json": C.BOWL,
+    "7f_dal_tadka_with_rice.json": C.CURRY,
+    "7g_chicken_shawarma_pitas.json": C.SANDWICH,  # pita is the main carb
+    "7h_ground_turkey_tacos.json": C.WRAP,
+    "8a_butter_chicken_with_rice.json": C.CURRY,
+    "8b_chicken_korma_with_tortillas.json": C.CURRY,
+    "8c_chicken_chana_masala_with_rice.json": C.CURRY,
+    "8d_tandoori_drumsticks_rice_raita.json": C.BOWL,
+    "8e_sheet_pan_bone_in_thighs_potatoes.json": C.ROAST,
+    "8f_lemon_garlic_salmon_rice_broccoli.json": C.BOWL,
+    "8g_coconut_shrimp_curry_rice.json": C.CURRY,
+    "8h_chicken_keema_matar_tortillas.json": C.CURRY,  # a curry, though it's served with tortillas
+    "8i_whole_roast_chicken_root_vegetables.json": C.ROAST,
+    "8j_chicken_broccoli_pepper_stir_fry.json": C.BOWL,
+    "8k_air_fryer_wings_sweet_potato_wedges.json": C.ROAST,
+    "8l_bone_in_chicken_breast_quinoa_asparagus.json": C.ROAST,
+    "9a_masala_roasted_chickpeas.json": C.SNACK,  # snack words come before curry and roast
+    "9b_yogurt_cucumber_dip_pita.json": C.SNACK,
+    "9c_egg_chaat.json": C.SNACK,
+    "9d_air_fryer_chicken_tikka_bites.json": C.SNACK,
+    "9e_chili_lime_edamame.json": C.SNACK,
+    "10a_chocolate_peanut_butter_yogurt_bowl.json": C.DESSERT,  # a yogurt bowl isn't a rice bowl
+    "10b_strawberry_protein_parfait.json": C.DESSERT,
+    "10c_chocolate_protein_mug_cakes.json": C.DESSERT,
+    "10d_mango_lassi_smoothie.json": C.DRINK,
+    "10e_chocolate_protein_mousse_strawberries.json": C.DESSERT,
 }
 
 
@@ -75,6 +113,12 @@ def line(name, role, grams=0, optional=False):
         ("Teriyaki chicken bowls", C.BOWL),
         ("Roasted chicken thighs", C.ROAST),
         ("Air-fried chicken wings", C.ROAST),
+        ("Chicken burrito bowls", C.BOWL),  # before the table: not a wrap
+        ("Butter chicken", C.CURRY),
+        ("Chicken keema", C.CURRY),
+        ("Berry yogurt bowl", C.DESSERT),
+        ("Spinach dip", C.SNACK),
+        ("Masala roasted chickpeas", C.SNACK),  # snack words come before curry and roast
     ],
 )
 def test_title_words_with_plurals_and_hyphens(title, expected):

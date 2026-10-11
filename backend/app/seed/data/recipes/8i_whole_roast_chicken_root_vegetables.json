@@ -1,0 +1,145 @@
+{
+ "family": "Bone-in chicken",
+ "title": "Whole roast chicken with root vegetables",
+ "description": "A whole chicken roasted with lemon, garlic, thyme and butter over carrots, potatoes and onions.",
+ "meal_slots": [
+  "dinner"
+ ],
+ "mood": "fancy",
+ "cuisine": "European",
+ "flavor_tags": [
+  "herby",
+  "lemony",
+  "roasty"
+ ],
+ "base_servings": 6,
+ "active_minutes": 30,
+ "total_minutes": 110,
+ "equipment": [
+  "oven"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Draft quantities: adjust them in the app. Pull the meat off the bone before freezing.",
+ "ingredients": [
+  {
+   "ingredient": "chicken-whole",
+   "quantity": "1800",
+   "unit": "g",
+   "preparation": "about a 4 lb bird, giblets removed",
+   "role": "protein",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "butter-unsalted",
+   "quantity": "30",
+   "unit": "g",
+   "preparation": "softened",
+   "role": "fat",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "lemon",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "halved",
+   "role": "sauce",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "garlic",
+   "quantity": "8",
+   "unit": "clove",
+   "preparation": "4 crushed, 4 whole",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "thyme-dried",
+   "quantity": "2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "paprika",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "black-pepper",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "carrot",
+   "quantity": "4",
+   "unit": "count",
+   "preparation": "large chunks",
+   "role": "vegetable",
+   "component": "vegetables"
+  },
+  {
+   "ingredient": "potato-russet",
+   "quantity": "4",
+   "unit": "count",
+   "preparation": "large chunks",
+   "role": "carb",
+   "component": "vegetables"
+  },
+  {
+   "ingredient": "onion-yellow",
+   "quantity": "2",
+   "unit": "count",
+   "preparation": "wedges",
+   "role": "vegetable",
+   "component": "vegetables"
+  },
+  {
+   "ingredient": "olive-oil",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "fat",
+   "component": "vegetables"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Heat the oven to 425F. Pat the chicken dry. Cut the vegetables into large chunks. Mash the butter with the crushed garlic, thyme, paprika and half the salt and pepper."
+  },
+  {
+   "section": "assembly",
+   "text": "Rub the butter under and over the skin. Put the lemon halves and whole garlic inside the bird and tie the legs. Toss the vegetables with the oil and the rest of the salt and pepper in a roasting pan and set the chicken on top."
+  },
+  {
+   "section": "oven",
+   "text": "Roast at 425F for 70 to 85 minutes, until the skin is deep golden and the juices run clear at the thigh.",
+   "duration_minutes": 85,
+   "appliance_temp_f": 425,
+   "doneness_check_for": "chicken-whole"
+  },
+  {
+   "section": "assembly",
+   "text": "Rest the chicken 15 minutes before carving.",
+   "duration_minutes": 15
+  },
+  {
+   "section": "portioning",
+   "text": "Carve and divide the chicken and vegetables among 6 containers."
+  },
+  {
+   "section": "storage",
+   "text": "Cool, then refrigerate in the containers."
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat covered, stirring halfway, until hot all the way through."
+  }
+ ]
+}

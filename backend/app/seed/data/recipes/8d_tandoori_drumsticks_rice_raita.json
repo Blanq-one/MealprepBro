@@ -1,0 +1,168 @@
+{
+ "family": "Bone-in chicken",
+ "title": "Tandoori-style drumsticks with rice and raita",
+ "description": "Bone-in drumsticks in a tandoori yogurt marinade, roasted until charred, with rice and a cucumber-mint raita.",
+ "meal_slots": [
+  "dinner"
+ ],
+ "mood": "medium",
+ "cuisine": "Indian",
+ "flavor_tags": [
+  "smoky",
+  "tangy",
+  "warm spices"
+ ],
+ "base_servings": 4,
+ "active_minutes": 25,
+ "total_minutes": 90,
+ "equipment": [
+  "oven",
+  "stovetop"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Draft quantities: adjust them in the app. Freeze the chicken and rice; make the raita fresh.",
+ "ingredients": [
+  {
+   "ingredient": "chicken-drumstick",
+   "quantity": "1400",
+   "unit": "g",
+   "preparation": "about 8 drumsticks, skin slashed",
+   "role": "protein",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "yogurt-plain-whole",
+   "quantity": "200",
+   "unit": "g",
+   "role": "sauce",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "lemon-juice",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "sauce",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "garlic",
+   "quantity": "5",
+   "unit": "clove",
+   "preparation": "grated",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "ginger",
+   "quantity": "15",
+   "unit": "g",
+   "preparation": "grated",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "paprika",
+   "quantity": "2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "chili-powder",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "garam-masala",
+   "quantity": "2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "cumin-ground",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1 1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "vegetable-oil",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "fat"
+  },
+  {
+   "ingredient": "rice-long-grain-white",
+   "quantity": "300",
+   "unit": "g",
+   "preparation": "rinsed",
+   "role": "carb",
+   "component": "rice"
+  },
+  {
+   "ingredient": "greek-yogurt-nonfat",
+   "quantity": "200",
+   "unit": "g",
+   "role": "sauce",
+   "component": "raita"
+  },
+  {
+   "ingredient": "cucumber",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "grated",
+   "role": "vegetable",
+   "component": "raita"
+  },
+  {
+   "ingredient": "mint",
+   "quantity": "5",
+   "unit": "g",
+   "preparation": "chopped",
+   "role": "garnish",
+   "component": "raita"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Slash the drumsticks to the bone in 2 or 3 places. Grate the garlic, ginger and cucumber; chop the mint."
+  },
+  {
+   "section": "marinate",
+   "text": "Mix the whole-milk yogurt, lemon juice, garlic, ginger, paprika, chili powder, garam masala, half the cumin, oil and 1 1/4 tsp of the salt. Coat the drumsticks and marinate at least 1 hour.",
+   "duration_minutes": 60
+  },
+  {
+   "section": "rice",
+   "text": "Bring 540 ml of water to a boil, add the rinsed rice, cover and simmer on low 15 minutes. Rest off the heat 10 minutes, then fluff.",
+   "duration_minutes": 25
+  },
+  {
+   "section": "oven",
+   "text": "Roast on a rack over a lined sheet at 425F for 35 to 40 minutes, turning once, until charred and cooked through to the bone.",
+   "duration_minutes": 40,
+   "appliance_temp_f": 425,
+   "doneness_check_for": "chicken-drumstick"
+  },
+  {
+   "section": "assembly",
+   "text": "Stir the Greek yogurt with the cucumber, mint, the remaining cumin and salt for the raita."
+  },
+  {
+   "section": "portioning",
+   "text": "Divide the rice and drumsticks among 4 containers; pack the raita separately."
+  },
+  {
+   "section": "storage",
+   "text": "Cool, then refrigerate in the containers."
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat covered, stirring halfway, until hot all the way through."
+  }
+ ]
+}

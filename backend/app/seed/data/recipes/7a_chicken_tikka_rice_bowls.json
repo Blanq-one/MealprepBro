@@ -1,0 +1,162 @@
+{
+ "family": "Chicken rice bowls",
+ "title": "Chicken tikka rice bowls",
+ "description": "Yogurt-marinated chicken tikka from the air fryer over rice, with cucumber-onion salad.",
+ "meal_slots": [
+  "lunch",
+  "dinner"
+ ],
+ "mood": "medium",
+ "cuisine": "Indian",
+ "flavor_tags": [
+  "smoky",
+  "tangy",
+  "warm spices"
+ ],
+ "base_servings": 4,
+ "active_minutes": 25,
+ "total_minutes": 60,
+ "equipment": [
+  "air_fryer",
+  "stovetop"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Draft quantities: adjust them in the app. Freeze the chicken and rice; keep the salad fresh.",
+ "ingredients": [
+  {
+   "ingredient": "chicken-thigh-boneless-skinless",
+   "quantity": "680",
+   "unit": "g",
+   "preparation": "large chunks",
+   "role": "protein",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "greek-yogurt-nonfat",
+   "quantity": "150",
+   "unit": "g",
+   "role": "sauce",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "lemon-juice",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "sauce",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "garlic",
+   "quantity": "4",
+   "unit": "clove",
+   "preparation": "grated",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "ginger",
+   "quantity": "15",
+   "unit": "g",
+   "preparation": "grated",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "garam-masala",
+   "quantity": "2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "paprika",
+   "quantity": "2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "cumin-ground",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "chili-powder",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1 1/4",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "vegetable-oil",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "fat"
+  },
+  {
+   "ingredient": "rice-long-grain-white",
+   "quantity": "300",
+   "unit": "g",
+   "preparation": "rinsed",
+   "role": "carb",
+   "component": "rice"
+  },
+  {
+   "ingredient": "cucumber",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "diced",
+   "role": "vegetable",
+   "component": "salad"
+  },
+  {
+   "ingredient": "onion-red",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "small, diced",
+   "role": "vegetable",
+   "component": "salad"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Cut the chicken into large chunks. Grate the garlic and ginger. Dice the cucumber and red onion."
+  },
+  {
+   "section": "marinate",
+   "text": "Mix the yogurt, lemon juice, garlic, ginger, spices, oil and 1 tsp of the salt; coat the chicken and marinate at least 30 minutes.",
+   "duration_minutes": 30
+  },
+  {
+   "section": "rice",
+   "text": "Bring 540 ml of water to a boil, add the rinsed rice, cover and simmer on low 15 minutes. Rest off the heat 10 minutes, then fluff.",
+   "duration_minutes": 25
+  },
+  {
+   "section": "air_fryer",
+   "text": "Air fry the chicken in one layer at 400F for 14 to 16 minutes, turning once, until charred at the edges and cooked through.",
+   "duration_minutes": 16,
+   "appliance_temp_f": 400,
+   "doneness_check_for": "chicken-thigh-boneless-skinless"
+  },
+  {
+   "section": "assembly",
+   "text": "Toss the cucumber and onion with the remaining salt."
+  },
+  {
+   "section": "portioning",
+   "text": "Divide the rice and chicken among 4 containers. Pack the salad separately."
+  },
+  {
+   "section": "storage",
+   "text": "Cool, then refrigerate in the containers."
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat covered, stirring halfway, until hot all the way through."
+  }
+ ]
+}

@@ -96,6 +96,9 @@ class UserSettings(_Strict):
     default_portion_size: PortionSize = PortionSize.NORMAL
     region_code: str | None = None
     units: Literal["us", "metric"] = "us"
+    # a held item that comes in versions -> the version you usually buy (M3, slug -> choice key). It only
+    # pre-selects that version when you add the item; it never allows the held item itself.
+    usual_versions: dict[str, str] = Field(default_factory=dict)
 
     @field_validator("leftover_fridge_days")
     @classmethod
@@ -154,6 +157,7 @@ class DietReviewOut(BaseModel):
     """A possibly-beef item: held (left out of plans) until you allow it, with why it's held."""
 
     ingredient_id: int
+    slug: str = ""  # the key of usual_versions (M3)
     name: str
     note: str | None
     decision: Literal["held", "allowed"]

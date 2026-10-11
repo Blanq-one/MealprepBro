@@ -1,4 +1,8 @@
-"""Ingredient search (exact alias, then trigram) and ingredient detail."""
+"""Ingredient search (exact alias, then trigram) and ingredient detail.
+
+Two catalog rules (step 2b.4 approval): chicken cuts are exact (M6), so a search that says "bone in" or
+"skinless" never offers a cut of the other form; and a name with no ingredient of its own can map to its
+closest one (M7), always labeled ("Closest match: peas, frozen")."""
 
 from dataclasses import dataclass
 from decimal import Decimal
@@ -7,14 +11,17 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from app.db.models import Ingredient, IngredientAlias, IngredientNutrient, IngredientUnit, Nutrient
+from app.domain.chicken_cuts import conflicts, stated_form
 from app.domain.exclusions import ExclusionStatus
 from app.seed.files import normalize_name
+from app.services.catalog import load_catalog
 from app.services.exclusions import diet_status
 from app.services.ingredient_data import load_ingredients
 from app.services.pricing import StorePrice, current_prices
 
 TRIGRAM_MIN_SCORE = 0.35
 NON_EXACT_MAX_SCORE = 0.99
+CLOSE_MATCH_SCORE = 0.995  # below an exact alias, above any fuzzy match
 MAX_LIMIT = 50
 
 
@@ -33,6 +40,11 @@ class SearchHit:
     status: ExclusionStatus
     reasons: tuple[str, ...]
     frequency_caps: tuple[str, ...]
+    closest_match: bool = False  # not what you typed: the closest ingredient (M7), labeled on screen
+
+    @property
+    def label(self) -> str | None:
+        return f"Closest match: {self.name}" if self.closest_match else None
 
 
 @dataclass(frozen=True)
@@ -96,6 +108,19 @@ def search(session: Session, user_id: int, query: str, limit: int = 20) -> list[
         value = 1.0 if normalized == key else min(float(sim), NON_EXACT_MAX_SCORE)
         if ingredient_id not in best or value > best[ingredient_id][1]:
             best[ingredient_id] = (alias, value)
+    catalog = load_catalog(session)
+    closest: set[int] = set()
+    close_id = catalog.close_of.get(key)
+    if close_id is not None and best.get(close_id, ("", 0.0))[1] < CLOSE_MATCH_SCORE:
+        best[close_id] = (query.strip(), CLOSE_MATCH_SCORE)
+        closest.add(close_id)
+    wanted = stated_form(query)
+    if wanted.said:  # chicken cuts are exact (M6): never the other bone or skin form
+        best = {
+            i: hit
+            for i, hit in best.items()
+            if i not in catalog.cut_of or not conflicts(wanted, catalog.cut_of[i])
+        }
     ranked = sorted(best.items(), key=lambda item: (-item[1][1], item[0]))[:limit]
     data = load_ingredients(session, [i for i, _ in ranked])
     status = diet_status(session, user_id, load_ingredients(session))
@@ -110,6 +135,7 @@ def search(session: Session, user_id: int, query: str, limit: int = 20) -> list[
             status=status.results[i].status,
             reasons=status.results[i].reasons,
             frequency_caps=status.caps_for(i),
+            closest_match=i in closest,
         )
         for i, (alias, value) in ranked
     ]

@@ -1,0 +1,179 @@
+{
+ "family": "Curries with rice",
+ "title": "Butter chicken with rice",
+ "description": "Murgh makhani: yogurt-marinated chicken in a silky tomato, butter and cream sauce with fenugreek and garam masala.",
+ "meal_slots": [
+  "dinner"
+ ],
+ "mood": "fancy",
+ "cuisine": "Indian",
+ "flavor_tags": [
+  "creamy",
+  "tomato",
+  "warm spices"
+ ],
+ "base_servings": 4,
+ "active_minutes": 40,
+ "total_minutes": 75,
+ "equipment": [
+  "stovetop"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Draft quantities: adjust them in the app. Freeze the curry; cook the rice fresh or freeze it separately.",
+ "ingredients": [
+  {
+   "ingredient": "chicken-thigh-boneless-skinless",
+   "quantity": "680",
+   "unit": "g",
+   "preparation": "bite-size pieces",
+   "role": "protein",
+   "component": "curry"
+  },
+  {
+   "ingredient": "greek-yogurt-nonfat",
+   "quantity": "120",
+   "unit": "g",
+   "role": "sauce",
+   "component": "curry"
+  },
+  {
+   "ingredient": "garam-masala",
+   "quantity": "2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "chili-powder",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "cumin-ground",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "butter-unsalted",
+   "quantity": "40",
+   "unit": "g",
+   "role": "fat",
+   "component": "curry"
+  },
+  {
+   "ingredient": "onion-yellow",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "finely chopped",
+   "role": "vegetable",
+   "component": "curry"
+  },
+  {
+   "ingredient": "garlic",
+   "quantity": "5",
+   "unit": "clove",
+   "preparation": "grated",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "ginger",
+   "quantity": "20",
+   "unit": "g",
+   "preparation": "grated",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "tomato-sauce",
+   "quantity": "425",
+   "unit": "ml",
+   "role": "sauce",
+   "component": "curry"
+  },
+  {
+   "ingredient": "heavy-cream",
+   "quantity": "120",
+   "unit": "ml",
+   "role": "dairy",
+   "component": "curry"
+  },
+  {
+   "ingredient": "fenugreek",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "sugar",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "other"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1 1/4",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "rice-long-grain-white",
+   "quantity": "300",
+   "unit": "g",
+   "preparation": "rinsed",
+   "role": "carb",
+   "component": "rice"
+  },
+  {
+   "ingredient": "cilantro",
+   "quantity": "10",
+   "unit": "g",
+   "preparation": "chopped",
+   "role": "garnish",
+   "optional": true
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Cut the chicken into bite-size pieces. Chop the onion and grate the ginger and garlic."
+  },
+  {
+   "section": "marinate",
+   "text": "Toss the chicken with the yogurt, half the garam masala, the chili powder, cumin and 1/2 tsp of the salt. Marinate at least 20 minutes.",
+   "duration_minutes": 20
+  },
+  {
+   "section": "rice",
+   "text": "Bring 540 ml of water to a boil, add the rinsed rice, cover and simmer on low 15 minutes. Rest off the heat 10 minutes, then fluff.",
+   "duration_minutes": 25
+  },
+  {
+   "section": "stovetop",
+   "text": "Melt half the butter in a heavy pot over medium heat. Cook the onion until soft and golden, 8 minutes, then the ginger and garlic for 1 minute.",
+   "duration_minutes": 9
+  },
+  {
+   "section": "stovetop",
+   "text": "Add the tomato sauce, fenugreek, sugar and remaining salt and simmer 10 minutes.",
+   "duration_minutes": 10
+  },
+  {
+   "section": "stovetop",
+   "text": "Add the chicken with its marinade and simmer, covered, until cooked through, 12 to 15 minutes. Stir in the cream, the remaining butter and garam masala.",
+   "duration_minutes": 15,
+   "doneness_check_for": "chicken-thigh-boneless-skinless"
+  },
+  {
+   "section": "portioning",
+   "text": "Divide the rice and curry among 4 containers; top with cilantro."
+  },
+  {
+   "section": "storage",
+   "text": "Cool, then refrigerate in the containers."
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat covered, stirring halfway, until hot all the way through."
+  }
+ ]
+}

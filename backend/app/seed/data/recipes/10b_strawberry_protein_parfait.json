@@ -1,0 +1,94 @@
+{
+ "family": "Protein desserts",
+ "title": "Strawberry protein yogurt parfaits",
+ "description": "Layers of chocolate protein yogurt, strawberries, oats and toasted almonds, drizzled with honey.",
+ "meal_slots": [
+  "protein_dessert",
+  "breakfast",
+  "snack"
+ ],
+ "mood": "simple",
+ "cuisine": null,
+ "flavor_tags": [
+  "fruity",
+  "chocolate",
+  "crunchy"
+ ],
+ "base_servings": 4,
+ "active_minutes": 15,
+ "total_minutes": 15,
+ "equipment": [
+  "stovetop"
+ ],
+ "freezer_friendly": false,
+ "draft_note": "Draft quantities: adjust them in the app. Keep the oat-almond crunch separate until serving.",
+ "ingredients": [
+  {
+   "ingredient": "greek-yogurt-nonfat",
+   "quantity": "600",
+   "unit": "g",
+   "role": "dairy"
+  },
+  {
+   "ingredient": "protein-powder-double-chocolate",
+   "quantity": "2",
+   "unit": "scoop",
+   "role": "protein"
+  },
+  {
+   "ingredient": "milk-2",
+   "quantity": "60",
+   "unit": "ml",
+   "role": "dairy"
+  },
+  {
+   "ingredient": "strawberries",
+   "quantity": "300",
+   "unit": "g",
+   "preparation": "sliced",
+   "role": "fruit"
+  },
+  {
+   "ingredient": "rolled-oats",
+   "quantity": "60",
+   "unit": "g",
+   "role": "carb"
+  },
+  {
+   "ingredient": "almonds",
+   "quantity": "30",
+   "unit": "g",
+   "preparation": "chopped",
+   "role": "fat"
+  },
+  {
+   "ingredient": "honey",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "other"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Slice the strawberries and chop the almonds."
+  },
+  {
+   "section": "stovetop",
+   "text": "Toast the oats and almonds in a dry pan over medium heat, stirring, until fragrant, 4 minutes. Cool.",
+   "duration_minutes": 4
+  },
+  {
+   "section": "no_cook",
+   "text": "Whisk the protein powder with the milk into a paste and stir it into the yogurt."
+  },
+  {
+   "section": "portioning",
+   "text": "Layer the yogurt and strawberries in 4 jars; pack the oat-almond crunch and honey separately."
+  },
+  {
+   "section": "storage",
+   "text": "Refrigerate the jars."
+  }
+ ]
+}

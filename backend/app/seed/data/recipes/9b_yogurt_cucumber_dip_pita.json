@@ -1,0 +1,94 @@
+{
+ "family": "Snacks",
+ "title": "Garlic yogurt cucumber dip with pita",
+ "description": "A thick tzatziki-style dip of Greek yogurt, cucumber, garlic, lemon and mint with warm pita wedges.",
+ "meal_slots": [
+  "snack",
+  "lunch"
+ ],
+ "mood": "simple",
+ "cuisine": "Mediterranean",
+ "flavor_tags": [
+  "cool",
+  "garlicky",
+  "fresh"
+ ],
+ "base_servings": 4,
+ "active_minutes": 10,
+ "total_minutes": 10,
+ "equipment": [],
+ "freezer_friendly": false,
+ "draft_note": "Draft quantities: adjust them in the app. Squeeze the cucumber well so the dip stays thick.",
+ "ingredients": [
+  {
+   "ingredient": "greek-yogurt-nonfat",
+   "quantity": "400",
+   "unit": "g",
+   "role": "dairy"
+  },
+  {
+   "ingredient": "cucumber",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "grated, squeezed dry",
+   "role": "vegetable"
+  },
+  {
+   "ingredient": "garlic",
+   "quantity": "1",
+   "unit": "clove",
+   "preparation": "grated",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "lemon-juice",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "sauce"
+  },
+  {
+   "ingredient": "mint",
+   "quantity": "5",
+   "unit": "g",
+   "preparation": "chopped",
+   "role": "garnish"
+  },
+  {
+   "ingredient": "olive-oil",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "fat"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "pita",
+   "quantity": "4",
+   "unit": "count",
+   "preparation": "cut in wedges",
+   "role": "carb"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Grate the cucumber and squeeze out the liquid. Grate the garlic and chop the mint."
+  },
+  {
+   "section": "no_cook",
+   "text": "Stir the yogurt, cucumber, garlic, lemon juice, mint and salt; drizzle with the oil."
+  },
+  {
+   "section": "portioning",
+   "text": "Divide the dip into 4 containers with a pita, cut in wedges, each."
+  },
+  {
+   "section": "storage",
+   "text": "Refrigerate the dip; keep the pita in its bag."
+  }
+ ]
+}

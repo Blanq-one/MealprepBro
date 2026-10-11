@@ -18,6 +18,8 @@ export type RecipeLine = {
   note?: string | null;
   /** A longer line under it: what it uses of what you have, or a substitute (server text). */
   detail?: string | null;
+  /** "1 scoop per portion · 4 scoops for the batch of 4" (server text, A1). */
+  portionNote?: string | null;
 };
 
 const SECTION_LABELS: Record<string, string> = {
@@ -69,9 +71,10 @@ export function RecipeView({
     recipe.lines.map((l, i) => ({
       key: `${l.ingredient_id}-${i}`,
       name: l.name,
-      display: l.display,
+      display: l.amount_display || l.display,
       preparation: l.preparation,
       optional: l.optional,
+      portionNote: l.portion_note ?? null,
     }));
   const nutrition = recipe.per_portion;
   const heme = nutrition.heme_iron;
@@ -122,6 +125,7 @@ export function RecipeView({
                 {line.optional && <span className="muted"> (optional)</span>}
               </span>
               {line.note && <span className="badge"> {line.note}</span>}
+              {line.portionNote && <span className={styles.detail}>{line.portionNote}</span>}
               {line.detail && <span className={styles.detail}>{line.detail}</span>}
             </li>
           ))}

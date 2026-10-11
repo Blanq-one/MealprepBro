@@ -3,18 +3,20 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.schemas.api import NutritionOut, StoreCostOut
-from app.schemas.cards import CostLineOut, MissingLineOut, SearchContextOut
+from app.schemas.cards import CostLineOut, MissingLineOut, SearchContextOut, SwapLineOut
 
 
 class RenderedLineOut(BaseModel):
     ingredient_id: int
     name: str
-    display: str
+    display: str  # "1¼ tsp salt"
     preparation: str | None
     optional: bool
+    amount_display: str = ""  # "1¼ tsp": the amount alone
+    portion_note: str | None = None  # "1 scoop per portion · 4 scoops for the batch of 4" (A1)
 
 
 class RenderedStepOut(BaseModel):
@@ -100,8 +102,9 @@ class SavedRecipeOut(BaseModel):
     portions: int  # your household size
     portion_size: str  # your portion size (the recipe page's portion_size for the same numbers)
     portions_display: str  # "1 portion" / "for 2 people"
-    numbers: list[str]  # "540 kcal", "41 g protein", "35 min", "$2.10 a portion est."
+    numbers: list[str]  # "540 kcal", "41 g protein", "35 min", "$2.10 a portion est.", "$4.29 to buy today"
     uses: list[str]  # your items it uses
     could_buy: list[CostLineOut]  # always empty here (no could-buy items outside a search)
-    missing: list[MissingLineOut]  # with a code-suggested substitute, or a price
+    missing: list[MissingLineOut]  # what you'd buy, with its price (M11)
+    swaps: list[SwapLineOut] = Field(default_factory=list)  # what you can make with something you have
     saved_at: datetime

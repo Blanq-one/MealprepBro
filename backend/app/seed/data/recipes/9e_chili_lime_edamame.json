@@ -1,0 +1,72 @@
+{
+ "family": "Snacks",
+ "title": "Chili-lime edamame",
+ "description": "Steamed edamame tossed with lime juice, chili powder and flaky salt.",
+ "meal_slots": [
+  "snack"
+ ],
+ "mood": "simple",
+ "cuisine": "Japanese",
+ "flavor_tags": [
+  "tangy",
+  "spicy"
+ ],
+ "base_servings": 4,
+ "active_minutes": 5,
+ "total_minutes": 10,
+ "equipment": [
+  "microwave"
+ ],
+ "freezer_friendly": false,
+ "draft_note": "Draft quantities: adjust them in the app. Good warm or cold.",
+ "ingredients": [
+  {
+   "ingredient": "edamame",
+   "quantity": "340",
+   "unit": "g",
+   "preparation": "frozen, in the pod",
+   "role": "protein"
+  },
+  {
+   "ingredient": "lime-juice",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "sauce"
+  },
+  {
+   "ingredient": "chili-powder",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Put the frozen edamame in a microwave-safe bowl with 2 tbsp of water and cover."
+  },
+  {
+   "section": "microwave",
+   "text": "Microwave on high 4 to 5 minutes, stirring halfway, until hot. Drain.",
+   "duration_minutes": 5
+  },
+  {
+   "section": "assembly",
+   "text": "Toss with the lime juice, chili powder and salt."
+  },
+  {
+   "section": "portioning",
+   "text": "Divide among 4 containers."
+  },
+  {
+   "section": "storage",
+   "text": "Cool, then refrigerate in the containers."
+  }
+ ]
+}

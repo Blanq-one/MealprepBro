@@ -14,6 +14,7 @@ from decimal import Decimal
 from enum import StrEnum
 
 from app.cook.substitutes import AcceptedPair, Have, MissingLine, Substitute, find_substitute
+from app.domain.chicken_cuts import CutForm
 from app.domain.purchase import EMPTY_COVER_TOLERANCE, Offer, cheapest_cover
 
 
@@ -54,6 +55,7 @@ class NeedLine:
     optional: bool = False
     owned: bool = False
     group: str | None = None  # its culinary group (vegetables and herbs, J2)
+    cut: CutForm | None = None  # a chicken cut's bone and skin (M6)
 
 
 @dataclass(frozen=True)
@@ -146,6 +148,7 @@ def cover_line(
             line.protein_g,
             line.kcal,
             line.group,
+            line.cut,
         ),
         inputs.haves,
         inputs.pairs,

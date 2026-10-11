@@ -78,7 +78,8 @@
    "safety_category": "poultry",
    "is_perishable": true,
    "typical_location": "fridge",
-   "assume_in_stock": false
+   "assume_in_stock": false,
+   "nutrition_reviewed_on": "2026-10-10"
   },
   {
    "name": "ground turkey, 93% lean",
@@ -99,7 +100,8 @@
    "safety_category": "poultry",
    "is_perishable": true,
    "typical_location": "fridge",
-   "assume_in_stock": false
+   "assume_in_stock": false,
+   "nutrition_reviewed_on": "2026-10-10"
   },
   {
    "name": "turkey breast, boneless",
@@ -169,7 +171,8 @@
      "name": "fillet",
      "usda_portion_id": 95787
     }
-   ]
+   ],
+   "nutrition_reviewed_on": "2026-10-10"
   },
   {
    "name": "tilapia fillet",
@@ -1543,7 +1546,8 @@
    "count_rounding_step": "1",
    "count_unit_weight": {
     "usda_portion_id": 95146
-   }
+   },
+   "nutrition_reviewed_on": "2026-10-10"
   },
   {
    "name": "pasta (dry)",
@@ -1586,7 +1590,8 @@
    "density": {
     "usda_portion_id": 83924,
     "measure": "cup"
-   }
+   },
+   "nutrition_reviewed_on": "2026-10-10"
   },
   {
    "name": "couscous (dry)",
@@ -1657,7 +1662,8 @@
      "name": "can",
      "usda_portion_id": 93273
     }
-   ]
+   ],
+   "nutrition_reviewed_on": "2026-10-10"
   },
   {
    "name": "black beans, canned",
@@ -1752,7 +1758,8 @@
    "density": {
     "usda_portion_id": 94081,
     "measure": "cup"
-   }
+   },
+   "nutrition_reviewed_on": "2026-10-10"
   },
   {
    "name": "tofu, firm",
@@ -2515,7 +2522,8 @@
    "count_rounding_step": "0.5",
    "count_unit_weight": {
     "usda_portion_id": 85923
-   }
+   },
+   "nutrition_reviewed_on": "2026-10-10"
   },
   {
    "name": "sweet potato",
@@ -5047,6 +5055,159 @@
     "frozen blueberries"
    ],
    "notes": "The frozen form of blueberries (decision J5), unsweetened."
+  },
+  {
+   "name": "chicken thigh, bone-in skin-on",
+   "slug": "chicken-thigh-bone-in-skin-on",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 172385,
+   "aliases": [
+    "bone-in chicken thighs",
+    "bone-in chicken thigh",
+    "chicken thighs bone in",
+    "chicken thigh bone in",
+    "bone-in skin-on chicken thighs",
+    "skin-on chicken thighs",
+    "bone-in thighs"
+   ],
+   "diet_tags": [
+    "poultry"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": "poultry",
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "refuse": {
+    "pct": "27",
+    "description": "bone",
+    "source": "USDA SR28 FOOD_DES: USDA's raw thigh record (05091) gives no refuse, so this uses the raw leg, meat and skin (05075, thigh + drumstick): Bone 27%. Kept at your review on 2026-10-10: it slightly underestimates protein, the safe direction. You may replace it with a measured value later"
+   },
+   "notes": "Bone-in, skin-on thighs (M4): nutrition is USDA thigh, meat and skin, raw, on the edible 73% of the weight.",
+   "nutrition_reviewed_on": "2026-10-10"
+  },
+  {
+   "name": "chicken breast, bone-in skin-on",
+   "slug": "chicken-breast-bone-in-skin-on",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 171474,
+   "aliases": [
+    "bone-in chicken breast",
+    "bone-in chicken breasts",
+    "split chicken breast",
+    "split chicken breasts",
+    "bone-in skin-on chicken breasts",
+    "chicken breast bone in",
+    "skin-on chicken breast"
+   ],
+   "diet_tags": [
+    "poultry"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": "poultry",
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "refuse": {
+    "pct": "20",
+    "description": "bone",
+    "source": "USDA SR28 FOOD_DES (the refuse field of the SR Legacy record this maps to): breast, meat and skin, raw (05057): Bone 20%"
+   },
+   "notes": "Split breasts (M4): nutrition is USDA breast, meat and skin, raw, on the edible 80% of the weight.",
+   "nutrition_reviewed_on": "2026-10-10"
+  },
+  {
+   "name": "chicken drumstick",
+   "slug": "chicken-drumstick",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 172373,
+   "aliases": [
+    "chicken drumsticks",
+    "drumsticks",
+    "drumstick",
+    "chicken drumstick"
+   ],
+   "diet_tags": [
+    "poultry"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": "poultry",
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "refuse": {
+    "pct": "33",
+    "description": "bone and cartilage",
+    "source": "USDA SR28 FOOD_DES (the refuse field of the SR Legacy record this maps to): drumstick, meat and skin, raw (05066): bone and cartilage 33% (the record's total of 66 counts the same bone twice; the drumstick meat-only record 05071 gives 33% too)"
+   },
+   "notes": "Drumsticks are bone-in and skin-on (M4).",
+   "nutrition_reviewed_on": "2026-10-10"
+  },
+  {
+   "name": "chicken wing",
+   "slug": "chicken-wing",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 172390,
+   "aliases": [
+    "chicken wings",
+    "wings",
+    "chicken wing",
+    "party wings",
+    "wingettes"
+   ],
+   "diet_tags": [
+    "poultry"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": "poultry",
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "refuse": {
+    "pct": "38",
+    "description": "bone and connective tissue",
+    "source": "USDA SR28 FOOD_DES (the refuse field of the SR Legacy record this maps to): wing, meat and skin, raw (05100): bone and connective tissue 38%"
+   },
+   "notes": "Wings are bone-in and skin-on (M4).",
+   "nutrition_reviewed_on": "2026-10-10"
+  },
+  {
+   "name": "whole chicken",
+   "slug": "chicken-whole",
+   "category": "protein",
+   "default_unit_kind": "mass",
+   "nutrition_source": "usda",
+   "fdc_id": 171447,
+   "aliases": [
+    "whole chicken",
+    "a whole chicken",
+    "roasting chicken",
+    "whole roaster",
+    "whole bird"
+   ],
+   "diet_tags": [
+    "poultry"
+   ],
+   "heme_iron_fraction": "0.40",
+   "safety_category": "poultry",
+   "is_perishable": true,
+   "typical_location": "fridge",
+   "assume_in_stock": false,
+   "refuse": {
+    "pct": "32",
+    "description": "bone",
+    "source": "USDA SR28 FOOD_DES (the refuse field of the SR Legacy record this maps to): meat and skin, raw (05006): Bone 32%"
+   },
+   "notes": "A whole bird (M4): USDA meat and skin, raw, on the edible 68%; a giblet bag, if there is one, isn't counted.",
+   "nutrition_reviewed_on": "2026-10-10"
   }
  ]
 }

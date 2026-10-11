@@ -27,7 +27,7 @@ export type DraftExtra = {
 };
 
 export type MealNowDraft = {
-  slot: MealSlot | null; // null = the server guesses it from the clock
+  slot: MealSlot | null; // you pick it every time (M9); null = not picked yet
   people: number | null; // null = your household size
   goals: GoalKey[]; // in tap order
   quickMinutes: number | null; // with Quick
@@ -43,12 +43,13 @@ export function emptyDraft(): MealNowDraft {
   return { slot: null, people: null, goals: [], quickMinutes: null, mood: null, off: [], extras: [] };
 }
 
-/** The draft from your last answers as sent (Same as last time, or a new search starting from them). */
+/** A new search starting from your last answers. The meal is never carried over (M9: you pick it each time;
+ * Same as last time covers repeats), and neither are last time's extras. */
 export function draftFromAnswers(answers: Partial<CookAnswers> | null | undefined): MealNowDraft {
   if (!answers) return emptyDraft();
   const keys = Object.entries(GOAL_TILES);
   return {
-    slot: answers.slot ?? null,
+    slot: null,
     people: answers.people ?? null,
     goals: (answers.goals ?? []).flatMap((g) => keys.filter(([, tile]) => tile === g).map(([key]) => key as GoalKey)),
     quickMinutes: answers.time_limit_minutes ?? null,
@@ -137,16 +138,6 @@ export function loadPending(run: string, storage: Pick<Storage, "getItem"> | nul
   }
 }
 
-/** The meal the server will guess from the clock when none is picked (C2): breakfast until 10:30, lunch until
- * 15:00, dinner until 21:00, then snack. Only for the "For" line; the server makes the real guess. */
-export function guessSlot(now: Date = new Date()): MealSlot {
-  const clock = now.getHours() * 60 + now.getMinutes();
-  if (clock < 10 * 60 + 30) return "breakfast";
-  if (clock < 15 * 60) return "lunch";
-  if (clock < 21 * 60) return "dinner";
-  return "snack";
-}
-
 function safeSession(): Storage | null {
   try {
     return typeof window === "undefined" ? null : window.sessionStorage;
@@ -164,8 +155,3 @@ export function nextQuick(minutes: number | null): number | null {
 }
 
 export const MOODS: readonly RecipeMood[] = ["simple", "medium", "fancy"];
-
-export function nextMood(mood: RecipeMood | null): RecipeMood | null {
-  const index = mood === null ? -1 : MOODS.indexOf(mood);
-  return MOODS[index + 1] ?? null;
-}

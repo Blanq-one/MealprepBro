@@ -15,6 +15,7 @@ from app.domain.cost import money_display
 from app.domain.exclusions import Preference
 from app.domain.frequency_caps import CapTarget
 from app.schemas.settings import ALWAYS_EXCLUDED_TAGS, SlotAllocationSetting, UserSettings, Weekday
+from app.services.catalog import catalog_file
 
 WEEKDAY_LABELS = {
     Weekday.MON: "Mon",
@@ -104,6 +105,14 @@ def database_errors(session: Session, settings: UserSettings) -> list[FieldError
                     f"{ingredient.name} is tagged {', '.join(sorted(hard))}, which is always excluded",
                 )
             )
+    versions = {v.generic: v for v in catalog_file().versions}
+    for generic, key in settings.usual_versions.items():
+        held = versions.get(generic)
+        choice = next((c for c in held.choices if c.key == key), None) if held else None
+        if held is None:
+            errors.append(FieldError(("usual_versions", generic), f"{generic} doesn't come in versions"))
+        elif choice is None or choice.ingredient is None:
+            errors.append(FieldError(("usual_versions", generic), f"{generic}: no version '{key}' to pick"))
     return errors
 
 

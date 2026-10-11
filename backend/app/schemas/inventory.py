@@ -42,6 +42,9 @@ class InventoryLotPatch(_Strict):
         max_length=40,
         description="a package preset key: the lot holds that amount",
     )
+    package_fraction: Literal["full", "three_quarters", "half", "quarter"] | None = Field(
+        default=None, description="what's left: full, ¾, ½ or ¼ of the lot's package (M2)"
+    )
     location: StorageLocation | None = None
     opened_on: date | None = None
     expires_on: date | None = None
@@ -49,8 +52,9 @@ class InventoryLotPatch(_Strict):
 
     @model_validator(mode="after")
     def _one_amount(self) -> Self:
-        if self.preset is not None and (self.quantity is not None or self.unit is not None):
-            raise ValueError("give the amount one way: quantity (+ unit) or preset")
+        ways = [self.quantity is not None, self.preset is not None, self.package_fraction is not None]
+        if sum(ways) > 1:
+            raise ValueError("give the amount one way: quantity (+ unit), preset or package_fraction")
         if self.unit is not None and self.quantity is None:
             raise ValueError("unit needs a quantity")
         return self
@@ -244,6 +248,7 @@ class VersionsOut(BaseModel):
     question: str  # "Which pepperoni is it?"
     guidance: str  # "Check the label: …"
     choices: list[VersionChoiceOut]
+    usual: str | None = None  # the version you usually buy (your settings, M3): pre-selected
 
 
 class AddOptionsOut(BaseModel):
@@ -258,6 +263,21 @@ class AddOptionsOut(BaseModel):
     food: str | None  # "Cauliflower" when it comes in more than one form
     forms: list[FormOut]  # at least one; the one you searched for is `selected_form`
     selected_form: str
+
+
+class CorrectOptionsOut(BaseModel):
+    """GET /inventory/{id}/correct-options (M2): ways to say how much of a lot is really there. Every amount
+    and display string is code-computed; send a fraction's key as `package_fraction`, a preset's key as
+    `preset`, or a custom amount as `quantity` + `unit`."""
+
+    lot_id: int
+    name: str
+    display: str  # what Pantry shows now
+    estimated: bool  # added with "Not sure"
+    package_display: str  # "12 oz bag" / "2.5 lb (1,134 g)": the package the fractions are of
+    fractions: list[AmountOptionOut]  # ¾, ½, ¼ of that package
+    presets: list[PresetOut]  # a different package size
+    custom_units: list[CustomUnitOut]
 
 
 class VersionIn(_Strict):

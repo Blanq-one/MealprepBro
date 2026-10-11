@@ -201,6 +201,38 @@
  ],
  "foods": [
   {
+   "key": "chicken_thighs",
+   "label": "Chicken thighs",
+   "forms": [
+    {
+     "form": "boneless_skinless",
+     "label": "Boneless, skinless",
+     "ingredient": "chicken-thigh-boneless-skinless"
+    },
+    {
+     "form": "bone_in_skin_on",
+     "label": "Bone-in, skin-on",
+     "ingredient": "chicken-thigh-bone-in-skin-on"
+    }
+   ]
+  },
+  {
+   "key": "chicken_breasts",
+   "label": "Chicken breasts",
+   "forms": [
+    {
+     "form": "boneless_skinless",
+     "label": "Boneless, skinless",
+     "ingredient": "chicken-breast-boneless-skinless"
+    },
+    {
+     "form": "bone_in_skin_on",
+     "label": "Bone-in, skin-on (split)",
+     "ingredient": "chicken-breast-bone-in-skin-on"
+    }
+   ]
+  },
+  {
    "key": "cauliflower",
    "label": "Cauliflower",
    "forms": [
@@ -538,6 +570,151 @@
      "amount": "3",
      "unit": "lb",
      "container": "pack",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "chicken-thigh-bone-in-skin-on",
+   "options": [
+    {
+     "key": "1_5lb",
+     "label": "1.5 lb pack",
+     "amount": "1.5",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    },
+    {
+     "key": "2_5lb",
+     "label": "2.5 lb pack",
+     "amount": "2.5",
+     "unit": "lb",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "4lb",
+     "label": "4 lb pack",
+     "amount": "4",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "chicken-breast-bone-in-skin-on",
+   "options": [
+    {
+     "key": "1_5lb",
+     "label": "1.5 lb pack",
+     "amount": "1.5",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    },
+    {
+     "key": "2_5lb",
+     "label": "2.5 lb pack",
+     "amount": "2.5",
+     "unit": "lb",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "4lb",
+     "label": "4 lb pack",
+     "amount": "4",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "chicken-drumstick",
+   "options": [
+    {
+     "key": "1_5lb",
+     "label": "1.5 lb pack",
+     "amount": "1.5",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    },
+    {
+     "key": "2_5lb",
+     "label": "2.5 lb pack",
+     "amount": "2.5",
+     "unit": "lb",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "4_5lb",
+     "label": "4.5 lb pack",
+     "amount": "4.5",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "chicken-wing",
+   "options": [
+    {
+     "key": "1lb",
+     "label": "1 lb pack",
+     "amount": "1",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    },
+    {
+     "key": "2_5lb",
+     "label": "2.5 lb pack",
+     "amount": "2.5",
+     "unit": "lb",
+     "container": "pack",
+     "default": true
+    },
+    {
+     "key": "4lb",
+     "label": "4 lb pack",
+     "amount": "4",
+     "unit": "lb",
+     "container": "pack",
+     "default": false
+    }
+   ]
+  },
+  {
+   "ingredient": "chicken-whole",
+   "options": [
+    {
+     "key": "3_5lb",
+     "label": "3.5 lb bird",
+     "amount": "3.5",
+     "unit": "lb",
+     "container": "bird",
+     "default": false
+    },
+    {
+     "key": "4_5lb",
+     "label": "4.5 lb bird",
+     "amount": "4.5",
+     "unit": "lb",
+     "container": "bird",
+     "default": true
+    },
+    {
+     "key": "5_5lb",
+     "label": "5.5 lb bird",
+     "amount": "5.5",
+     "unit": "lb",
+     "container": "bird",
      "default": false
     }
    ]
@@ -5391,6 +5568,145 @@
      "default": false
     }
    ]
+  }
+ ],
+ "chicken_cuts": [
+  {
+   "ingredient": "chicken-thigh-boneless-skinless",
+   "bone": "boneless",
+   "skin": "skinless"
+  },
+  {
+   "ingredient": "chicken-breast-boneless-skinless",
+   "bone": "boneless",
+   "skin": "skinless"
+  },
+  {
+   "ingredient": "chicken-thigh-bone-in-skin-on",
+   "bone": "bone_in",
+   "skin": "skin_on"
+  },
+  {
+   "ingredient": "chicken-breast-bone-in-skin-on",
+   "bone": "bone_in",
+   "skin": "skin_on"
+  },
+  {
+   "ingredient": "chicken-drumstick",
+   "bone": "bone_in",
+   "skin": "skin_on"
+  },
+  {
+   "ingredient": "chicken-wing",
+   "bone": "bone_in",
+   "skin": "skin_on"
+  },
+  {
+   "ingredient": "chicken-whole",
+   "bone": "bone_in",
+   "skin": "skin_on"
+  }
+ ],
+ "close_matches": [
+  {
+   "alias": "garlic paste",
+   "ingredient": "garlic"
+  },
+  {
+   "alias": "ginger paste",
+   "ingredient": "ginger"
+  },
+  {
+   "alias": "canned peas",
+   "ingredient": "peas-frozen"
+  },
+  {
+   "alias": "fresh peas",
+   "ingredient": "peas-frozen"
+  },
+  {
+   "alias": "canned spinach",
+   "ingredient": "spinach-frozen"
+  },
+  {
+   "alias": "fresh corn",
+   "ingredient": "corn-frozen"
+  },
+  {
+   "alias": "corn on the cob",
+   "ingredient": "corn-frozen"
+  },
+  {
+   "alias": "tomato puree",
+   "ingredient": "tomato-sauce"
+  },
+  {
+   "alias": "roma tomatoes",
+   "ingredient": "tomato"
+  },
+  {
+   "alias": "cherry tomatoes",
+   "ingredient": "tomato"
+  },
+  {
+   "alias": "shallot",
+   "ingredient": "onion-red"
+  },
+  {
+   "alias": "shallots",
+   "ingredient": "onion-red"
+  },
+  {
+   "alias": "yukon gold potatoes",
+   "ingredient": "potato-russet"
+  },
+  {
+   "alias": "red potatoes",
+   "ingredient": "potato-russet"
+  },
+  {
+   "alias": "brown basmati rice",
+   "ingredient": "rice-brown"
+  },
+  {
+   "alias": "whole wheat tortilla",
+   "ingredient": "chapati"
+  },
+  {
+   "alias": "naan",
+   "ingredient": "pita"
+  },
+  {
+   "alias": "lime",
+   "ingredient": "lime-juice"
+  },
+  {
+   "alias": "limes",
+   "ingredient": "lime-juice"
+  },
+  {
+   "alias": "lemon zest",
+   "ingredient": "lemon"
+  },
+  {
+   "alias": "sour cream",
+   "ingredient": "greek-yogurt-whole"
+  },
+  {
+   "alias": "light cream",
+   "ingredient": "heavy-cream"
+  },
+  {
+   "alias": "coconut cream",
+   "ingredient": "coconut-milk"
+  },
+  {
+   "alias": "avocado oil",
+   "ingredient": "vegetable-oil"
+  },
+  {
+   "alias": "rice vinegar",
+   "ingredient": "vinegar-white"
   }
  ]
 }

@@ -6,6 +6,7 @@ every number comes from the plan."""
 
 from collections.abc import Mapping, Sequence
 from decimal import ROUND_HALF_UP, Decimal
+from typing import Any
 
 from app.domain.enums import CalorieMode, MealSlot, NutritionPriority, PlanningMode
 from app.domain.quantities import format_fraction
@@ -263,9 +264,16 @@ def format_failure(outcome: PlanOutcome) -> str:
         f"({outcome.llm_calls} LLM calls, {outcome.tokens:,} tokens)",
         f"{error.get('title', 'No plan')}:",
     ]
-    diagnostics: Sequence[dict[str, object]] = error.get("diagnostics") or []
-    if diagnostics:
-        lines += [f"  - {d['message']}" for d in diagnostics]
-    else:
+    diagnostics: Sequence[dict[str, Any]] = error.get("diagnostics") or []
+    for d in diagnostics:
+        lines.append(f"  - {d['message']}")
+        if items := d.get("items"):
+            lines.append(f"    It would buy: {'; '.join(str(i) for i in items)}.")
+        dollars = int(d["suggested_cents"]) // 100 if d.get("suggested_cents") else None
+        if dollars is not None and d.get("code") == "INVENTORY_SHORT":
+            lines.append(f"    Raise --topup to at least {dollars}, or plan with --mode shop.")
+        elif dollars is not None and d.get("code") == "BUDGET_SHORT":
+            lines.append(f"    Raise --budget to at least {dollars}.")
+    if not diagnostics:
         lines.append(f"  - {error.get('detail', 'unknown error')}")
     return "\n".join(lines)

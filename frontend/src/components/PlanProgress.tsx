@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import type { PlanStreamEvent } from "@/lib/api/types";
+import { formatCents } from "@/lib/format/money";
 
 import { Spinner } from "./Status";
 import styles from "./PlanProgress.module.css";
@@ -25,21 +26,70 @@ export function PlanProgress({ startedAt, event }: { startedAt: number; event: P
   );
 }
 
-/** The final `result` line when it isn't a plan: the problem and each diagnostic, plus any notes. */
-export function PlanFailure({ event }: { event: PlanStreamEvent }) {
+/** One problem diagnostic as the server sends it (planning/orchestrator.problem_json). */
+type PlanDiagnostic = { code?: string; message?: string; suggested_cents?: number; items?: string[] };
+
+/** "$37" for a whole-dollar suggestion (formatting only: the server rounded it up). */
+function dollars(cents: number): string {
+  return formatCents(cents).replace(/\.00$/, "");
+}
+
+export type FailureActions = {
+  /** Plan again from what you have, allowing this top-up. */
+  onTopUp?: (cents: number) => void;
+  /** Plan again in shopping mode. */
+  onShop?: () => void;
+  /** Plan again with this budget. */
+  onBudget?: (cents: number) => void;
+};
+
+/** The final `result` line when it isn't a plan (2b.4 approval, B): each problem once, in plain words, with buttons
+ * for the money fixes ("Allow a $37 top-up", "Switch to shopping", "Raise the budget to $55") and what the fix
+ * would buy behind "See what it would buy". */
+export function PlanFailure({ event, actions = {}, busy = false }: { event: PlanStreamEvent; actions?: FailureActions; busy?: boolean }) {
   const problem = event.problem;
-  const diagnostics = (problem?.diagnostics ?? []) as { message?: string }[];
+  const all = (problem?.diagnostics ?? []) as PlanDiagnostic[];
+  const diagnostics = all.filter((d, i) => all.findIndex((o) => o.message === d.message) === i); // never twice
   return (
     <section className="notice notice-danger" role="alert">
       <strong>{problem?.title ?? (event.status === "infeasible" ? "No plan fits this week" : "Planning failed")}</strong>
-      {problem?.detail && <p>{problem.detail}</p>}
-      {diagnostics.length > 0 && (
-        <ul>
-          {diagnostics.map((d, i) => (
-            <li key={`${i}-${d.message ?? ""}`}>{d.message}</li>
-          ))}
-        </ul>
-      )}
+      {diagnostics.length === 0 && problem?.detail && <p>{problem.detail}</p>}
+      {diagnostics.map((d, i) => (
+        <div key={`${i}-${d.message ?? ""}`} className={styles.diagnostic}>
+          <p>{d.message}</p>
+          {d.code === "INVENTORY_SHORT" && d.suggested_cents && (
+            <div className={styles.actions}>
+              {actions.onTopUp && (
+                <button type="button" className="btn btn-primary" disabled={busy} onClick={() => actions.onTopUp?.(d.suggested_cents ?? 0)}>
+                  Allow a {dollars(d.suggested_cents)} top-up
+                </button>
+              )}
+              {actions.onShop && (
+                <button type="button" className="btn" disabled={busy} onClick={() => actions.onShop?.()}>
+                  Switch to shopping
+                </button>
+              )}
+            </div>
+          )}
+          {d.code === "BUDGET_SHORT" && d.suggested_cents && actions.onBudget && (
+            <div className={styles.actions}>
+              <button type="button" className="btn btn-primary" disabled={busy} onClick={() => actions.onBudget?.(d.suggested_cents ?? 0)}>
+                Raise the budget to {dollars(d.suggested_cents)}
+              </button>
+            </div>
+          )}
+          {d.items && d.items.length > 0 && (
+            <details>
+              <summary>See what it would buy</summary>
+              <ul className="small">
+                {d.items.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </div>
+      ))}
       {(event.notes ?? []).map((n, i) => (
         <p key={`note-${i}`} className="small">
           {n}

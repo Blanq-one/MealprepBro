@@ -25,7 +25,6 @@ from app.planning.solver.model import (
 
 SLACK_TOLERANCE = 0.5
 MIN_LISTED = {"g": 5.0, "ml": 5.0, "count": 0.25}
-MAX_LISTED_ITEMS = 12
 
 
 def _day(d: date) -> str:
@@ -68,11 +67,14 @@ def shopping_gap(problem: PlanningProblem, model: _Model) -> list[tuple[str, str
     return sorted(items, key=lambda item: (-item[2], item[0]))
 
 
-def _gap_text(items: list[tuple[str, str, int]]) -> str:
-    shown = [f"{name} about {amount} ({_money(cents)})" for name, amount, cents in items[:MAX_LISTED_ITEMS]]
-    if len(items) > MAX_LISTED_ITEMS:
-        shown.append(f"and {len(items) - MAX_LISTED_ITEMS} more")
-    return "; ".join(shown)
+def _whole_dollars(cents: int) -> int:
+    """A limit to offer, rounded up to whole dollars ($36.20 -> $37)."""
+    return -(-cents // 100) * 100
+
+
+def _gap_items(items: list[tuple[str, str, int]]) -> tuple[str, ...]:
+    """What the smallest fix would buy, one line each ("chicken thigh about 2 lb ($8.98)")."""
+    return tuple(f"{name} about {amount} ({_money(cents)})" for name, amount, cents in items)
 
 
 def _reasons_for_slot(excluded: tuple[ExcludedRecipe, ...], slot: MealSlot) -> list[str]:
@@ -308,19 +310,30 @@ def _report(problem: PlanningProblem, model: _Model) -> tuple[Diagnostic, ...]:
                 if purchase_limit == 0
                 else f"Your inventory plus a {_money(purchase_limit)} top-up doesn't cover this week"
             )
-            message = (
-                f"{start}. The smallest top-up that makes a plan is about {_money(needed)} "
-                f"(raise --topup to at least that, or plan in shop mode). It would buy: {_gap_text(gap)}."
+            message = f"{start}. The smallest top-up that makes a plan is about {_money(needed)}."
+            out.append(
+                Diagnostic(
+                    "INVENTORY_SHORT",
+                    message,
+                    amount=cents,
+                    suggested_cents=_whole_dollars(needed),
+                    items=_gap_items(gap),
+                )
             )
-            out.append(Diagnostic("INVENTORY_SHORT", message, amount=cents))
         else:
             message = (
                 f"The cheapest plan that fits costs about {_money(needed)} in regular groceries, "
                 f"{_money(cents)} over your budget of {_money(purchase_limit)}."
             )
-            if gap:
-                message += f" It would buy: {_gap_text(gap)}."
-            out.append(Diagnostic("BUDGET_SHORT", message, amount=cents))
+            out.append(
+                Diagnostic(
+                    "BUDGET_SHORT",
+                    message,
+                    amount=cents,
+                    suggested_cents=_whole_dollars(needed),
+                    items=_gap_items(gap),
+                )
+            )
     for label, var in model.slacks.get("cap", {}).items():
         if amount(var) > SLACK_TOLERANCE:
             out.append(

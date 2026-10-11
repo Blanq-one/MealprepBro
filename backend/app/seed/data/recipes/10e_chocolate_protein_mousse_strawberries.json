@@ -1,0 +1,95 @@
+{
+ "family": "Protein pudding",
+ "title": "Chocolate protein mousse with strawberries",
+ "description": "An airy chocolate mousse of protein yogurt folded with whipped cream, layered with fresh strawberries.",
+ "meal_slots": [
+  "protein_dessert"
+ ],
+ "mood": "fancy",
+ "cuisine": null,
+ "flavor_tags": [
+  "chocolate",
+  "airy",
+  "fruity"
+ ],
+ "base_servings": 4,
+ "active_minutes": 20,
+ "total_minutes": 80,
+ "equipment": [],
+ "freezer_friendly": false,
+ "draft_note": "Draft quantities: adjust them in the app. Chill at least an hour so it sets.",
+ "ingredients": [
+  {
+   "ingredient": "greek-yogurt-nonfat",
+   "quantity": "450",
+   "unit": "g",
+   "role": "dairy"
+  },
+  {
+   "ingredient": "protein-powder-double-chocolate",
+   "quantity": "2",
+   "unit": "scoop",
+   "role": "protein"
+  },
+  {
+   "ingredient": "cocoa-powder",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "other"
+  },
+  {
+   "ingredient": "milk-2",
+   "quantity": "60",
+   "unit": "ml",
+   "role": "dairy"
+  },
+  {
+   "ingredient": "heavy-cream",
+   "quantity": "120",
+   "unit": "ml",
+   "role": "dairy"
+  },
+  {
+   "ingredient": "honey",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "other"
+  },
+  {
+   "ingredient": "vanilla-extract",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "strawberries",
+   "quantity": "250",
+   "unit": "g",
+   "preparation": "sliced",
+   "role": "fruit"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Slice the strawberries. Chill a bowl for whipping the cream."
+  },
+  {
+   "section": "no_cook",
+   "text": "Whisk the protein powder, cocoa and milk to a paste and stir it into the yogurt with the honey and vanilla."
+  },
+  {
+   "section": "no_cook",
+   "text": "Whip the cream to soft peaks and fold it gently into the chocolate yogurt."
+  },
+  {
+   "section": "portioning",
+   "text": "Layer the mousse and strawberries in 4 glasses and chill at least 1 hour.",
+   "duration_minutes": 60
+  },
+  {
+   "section": "storage",
+   "text": "Cover the glasses and refrigerate."
+  }
+ ]
+}

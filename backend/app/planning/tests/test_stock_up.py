@@ -108,14 +108,16 @@ def test_the_budget_still_binds_the_regular_groceries():
     assert isinstance(result, SolverInfeasible)
     (short,) = [d for d in result.diagnostics if d.code == "BUDGET_SHORT"]
     assert "costs about $10.00 in regular groceries, $1.00 over your budget of $9.00" in short.message
-    assert "protein powder" not in short.message and "rice" not in short.message  # not under the budget
+    items = " | ".join(short.items)
+    assert "protein powder" not in items and "rice" not in items  # not under the budget
 
 
 def test_an_inventory_top_up_covers_stock_up_items_too():
     result = solve(powder_week(mode=PlanningMode.INVENTORY, topup_cents=5000))
     assert isinstance(result, SolverInfeasible)
     (short,) = [d for d in result.diagnostics if d.code == "INVENTORY_SHORT"]
-    assert "protein powder" in short.message and "about $76.50" in short.message
+    assert any("protein powder" in i for i in short.items) and "about $76.50" in short.message
+    assert short.suggested_cents == 7700  # $76.50, rounded up to whole dollars
 
 
 def test_buying_powder_at_other_is_not_a_store_trip():

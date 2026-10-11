@@ -74,3 +74,7 @@
   color: var(--herb-ink);
   font-weight: 600;
 }
+
+.swap {
+  color: var(--herb-ink, var(--text));
+}

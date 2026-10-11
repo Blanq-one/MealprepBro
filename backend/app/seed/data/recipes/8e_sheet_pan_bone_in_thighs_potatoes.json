@@ -1,0 +1,121 @@
+{
+ "family": "Bone-in chicken",
+ "title": "Sheet-pan bone-in thighs with potatoes and green beans",
+ "description": "Crispy-skinned bone-in thighs roasted on one pan with garlicky potatoes and green beans.",
+ "meal_slots": [
+  "dinner"
+ ],
+ "mood": "simple",
+ "cuisine": "American",
+ "flavor_tags": [
+  "garlicky",
+  "crispy",
+  "herby"
+ ],
+ "base_servings": 4,
+ "active_minutes": 15,
+ "total_minutes": 55,
+ "equipment": [
+  "oven"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Draft quantities: adjust them in the app. Freeze the chicken and potatoes; the green beans soften when frozen.",
+ "ingredients": [
+  {
+   "ingredient": "chicken-thigh-bone-in-skin-on",
+   "quantity": "1100",
+   "unit": "g",
+   "preparation": "about 6 thighs",
+   "role": "protein",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "potato-russet",
+   "quantity": "3",
+   "unit": "count",
+   "preparation": "medium, in wedges",
+   "role": "carb",
+   "component": "potatoes"
+  },
+  {
+   "ingredient": "green-beans",
+   "quantity": "340",
+   "unit": "g",
+   "preparation": "trimmed",
+   "role": "vegetable",
+   "component": "beans"
+  },
+  {
+   "ingredient": "olive-oil",
+   "quantity": "3",
+   "unit": "tbsp",
+   "role": "fat"
+  },
+  {
+   "ingredient": "garlic-powder",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "paprika",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "thyme-dried",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1 1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "black-pepper",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "lemon-juice",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "sauce",
+   "optional": true
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Heat the oven to 425F. Cut the potatoes into wedges and trim the green beans. Pat the chicken dry."
+  },
+  {
+   "section": "assembly",
+   "text": "Toss the potatoes with half the oil and seasoning and spread on a large sheet pan. Rub the chicken with the rest and nestle it skin side up among the potatoes."
+  },
+  {
+   "section": "oven",
+   "text": "Roast at 425F for 25 minutes. Add the green beans, toss them in the pan juices and roast 15 to 20 minutes more, until the skin is crisp and the chicken is cooked through to the bone.",
+   "duration_minutes": 45,
+   "appliance_temp_f": 425,
+   "doneness_check_for": "chicken-thigh-bone-in-skin-on"
+  },
+  {
+   "section": "portioning",
+   "text": "Divide among 4 containers; squeeze the lemon over."
+  },
+  {
+   "section": "storage",
+   "text": "Cool, then refrigerate in the containers."
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat covered, stirring halfway, until hot all the way through."
+  }
+ ]
+}

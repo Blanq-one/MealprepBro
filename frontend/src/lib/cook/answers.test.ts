@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { MemoryStorage } from "@/lib/offline/queue";
 
-import { buildAnswers, draftFromAnswers, emptyDraft, guessSlot, loadPending, nextMood, nextQuick, savePending } from "./answers";
+import { buildAnswers, draftFromAnswers, emptyDraft, loadPending, nextQuick, savePending } from "./answers";
 
 describe("the meal-now answers", () => {
   it("only the pantry items you turned off are sent, and goals go out in tap order", () => {
@@ -36,8 +36,8 @@ describe("the meal-now answers", () => {
     ]);
   });
 
-  it("last time's answers pre-fill the draft, but not last time's extras", () => {
-    const draft = draftFromAnswers({ mode: "now", goals: ["high_protein", "cheap"], mood: "fancy", time_limit_minutes: 20, pantry: [{ ingredient_id: 4, include: false }], extras: [{ ingredient_id: 7, status: "could_buy", save_to_pantry: false }] });
+  it("last time's answers pre-fill the draft, but not the meal (M9) or last time's extras", () => {
+    const draft = draftFromAnswers({ mode: "now", slot: "dinner", goals: ["high_protein", "cheap"], mood: "fancy", time_limit_minutes: 20, pantry: [{ ingredient_id: 4, include: false }], extras: [{ ingredient_id: 7, status: "could_buy", save_to_pantry: false }] });
     expect(draft).toEqual({ slot: null, people: null, goals: ["protein", "cheap"], quickMinutes: 20, mood: "fancy", off: [4], extras: [] });
   });
 
@@ -52,15 +52,9 @@ describe("the meal-now answers", () => {
     expect(loadPending(next, storage)?.mood).toBe("simple");
   });
 
-  it("the clock's meal, and the empty state's next limits", () => {
-    expect(guessSlot(new Date(2026, 9, 10, 10, 29))).toBe("breakfast");
-    expect(guessSlot(new Date(2026, 9, 10, 10, 30))).toBe("lunch");
-    expect(guessSlot(new Date(2026, 9, 10, 18, 0))).toBe("dinner");
-    expect(guessSlot(new Date(2026, 9, 10, 21, 0))).toBe("snack");
+  it("the empty state's next limits", () => {
     expect(nextQuick(20)).toBe(30);
     expect(nextQuick(null)).toBe(45);
     expect(nextQuick(120)).toBeNull();
-    expect(nextMood("simple")).toBe("medium");
-    expect(nextMood("fancy")).toBeNull();
   });
 });

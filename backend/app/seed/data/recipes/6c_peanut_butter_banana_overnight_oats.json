@@ -1,0 +1,92 @@
+{
+ "family": "Protein oats",
+ "title": "Peanut butter banana overnight oats",
+ "description": "Oats soaked overnight in milk and Greek yogurt with peanut butter, banana and flaxseed.",
+ "meal_slots": [
+  "breakfast",
+  "snack"
+ ],
+ "mood": "simple",
+ "cuisine": null,
+ "flavor_tags": [
+  "nutty",
+  "creamy"
+ ],
+ "base_servings": 4,
+ "active_minutes": 10,
+ "total_minutes": 490,
+ "equipment": [],
+ "freezer_friendly": false,
+ "draft_note": "Draft quantities: adjust them in the app. Make up to the night before.",
+ "ingredients": [
+  {
+   "ingredient": "rolled-oats",
+   "quantity": "160",
+   "unit": "g",
+   "role": "carb"
+  },
+  {
+   "ingredient": "milk-2",
+   "quantity": "480",
+   "unit": "ml",
+   "role": "dairy"
+  },
+  {
+   "ingredient": "greek-yogurt-nonfat",
+   "quantity": "200",
+   "unit": "g",
+   "role": "dairy"
+  },
+  {
+   "ingredient": "peanut-butter",
+   "quantity": "3",
+   "unit": "tbsp",
+   "role": "fat"
+  },
+  {
+   "ingredient": "banana",
+   "quantity": "2",
+   "unit": "count",
+   "preparation": "sliced",
+   "role": "fruit"
+  },
+  {
+   "ingredient": "flaxseed",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "other"
+  },
+  {
+   "ingredient": "honey",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "other",
+   "optional": true
+  },
+  {
+   "ingredient": "cinnamon",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Slice the bananas. Stir the peanut butter with a splash of the milk until smooth."
+  },
+  {
+   "section": "no_cook",
+   "text": "Mix the oats, milk, yogurt, peanut butter, flaxseed, cinnamon and honey until even."
+  },
+  {
+   "section": "portioning",
+   "text": "Divide among 4 jars, top with the banana and chill overnight.",
+   "duration_minutes": 480
+  },
+  {
+   "section": "storage",
+   "text": "Cover the jars and refrigerate."
+  }
+ ]
+}

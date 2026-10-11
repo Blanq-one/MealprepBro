@@ -12,6 +12,8 @@ In order:
      never becomes spinach. Seasonings, garnishes and "other" lines (broth, water) get no pantry
      substitute: they carry the flavor or the structure. The amount keeps the line's protein grams for a
      protein, its kcal for a carb, and its mass otherwise.
+Chicken cuts are exact (M6): a cut never stands in for, or is replaced by, a cut of another bone or skin form
+(bone-in thighs never become boneless ones), in any of the three steps.
 Each thing you have stands in for at most one line of a recipe (the caller passes what is already taken).
 Amounts are code-computed and rounded to something you can measure. Nothing is stored; the recipe's numbers
 stay those of the recipe as written.
@@ -23,6 +25,7 @@ from datetime import date
 from decimal import Decimal
 from typing import Any
 
+from app.domain.chicken_cuts import CutForm, same_form
 from app.domain.nutrition import NutritionLine, NutritionProfile, line_amounts
 from app.domain.quantities import format_quantity
 from app.domain.scaling import (
@@ -59,6 +62,7 @@ class Have:
     expires_on: date | None = None
     roles: frozenset[str] = frozenset()  # the roles your recipes use it in
     group: str | None = None  # its culinary group (vegetables and herbs, J2)
+    cut: CutForm | None = None  # a chicken cut's bone and skin (M6)
 
 
 @dataclass(frozen=True)
@@ -80,6 +84,7 @@ class MissingLine:
     protein_g: Decimal
     kcal: Decimal
     group: str | None = None  # its culinary group (vegetables and herbs, J2)
+    cut: CutForm | None = None  # a chicken cut's bone and skin (M6)
 
     @property
     def grouped(self) -> bool:
@@ -186,6 +191,8 @@ def find_substitute(
     for pair in sorted(pairs, key=lambda p: p.to_id):
         if pair.from_id != line.ingredient_id or pair.to_id not in by_id:
             continue
+        if not same_form(line.cut, by_id[pair.to_id].cut):  # M6: never another bone or skin form
+            continue
         if (found := _pair_substitute(line, pair, by_id[pair.to_id], units)) is not None:
             return found
     if not line.grouped and line.role not in PANTRY_ROLES:
@@ -193,6 +200,8 @@ def find_substitute(
     rule = ROLE_RULES.get(line.role, SAME_MASS)
     for have in sorted(by_id.values(), key=_order):
         if have.ingredient_id == line.ingredient_id or have.ingredient_id in recipe_ingredient_ids:
+            continue
+        if not same_form(line.cut, have.cut):  # M6: never another bone or skin form
             continue
         if line.grouped:
             if line.group is None or have.group != line.group:  # the group decides, whatever the role

@@ -1,0 +1,92 @@
+{
+ "family": "Snacks",
+ "title": "Masala roasted chickpeas",
+ "description": "Crunchy oven-roasted chickpeas tossed with cumin, chili, garam masala and lime.",
+ "meal_slots": [
+  "snack"
+ ],
+ "mood": "simple",
+ "cuisine": "Indian",
+ "flavor_tags": [
+  "crunchy",
+  "spicy",
+  "tangy"
+ ],
+ "base_servings": 4,
+ "active_minutes": 10,
+ "total_minutes": 45,
+ "equipment": [
+  "oven"
+ ],
+ "freezer_friendly": false,
+ "draft_note": "Draft quantities: adjust them in the app. They soften over time: keep them in a jar with the lid loose.",
+ "ingredients": [
+  {
+   "ingredient": "chickpeas-canned",
+   "quantity": "2",
+   "unit": "can",
+   "preparation": "drained, patted dry",
+   "role": "protein"
+  },
+  {
+   "ingredient": "olive-oil",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "fat"
+  },
+  {
+   "ingredient": "cumin-ground",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "chili-powder",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "garam-masala",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "3/4",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "lime-juice",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "sauce"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Heat the oven to 400F. Drain the chickpeas and pat them very dry."
+  },
+  {
+   "section": "oven",
+   "text": "Toss with the oil and roast on a sheet at 400F for 30 to 35 minutes, shaking twice, until crisp.",
+   "duration_minutes": 35,
+   "appliance_temp_f": 400
+  },
+  {
+   "section": "assembly",
+   "text": "Toss the hot chickpeas with the spices, salt and lime juice."
+  },
+  {
+   "section": "portioning",
+   "text": "Cool completely and divide into 4 small jars."
+  },
+  {
+   "section": "storage",
+   "text": "Keep at room temperature with the lids loose."
+  }
+ ]
+}

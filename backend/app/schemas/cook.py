@@ -10,7 +10,7 @@ from typing import Any, Literal, Self
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.domain.enums import MealSlot, PortionSize, RecipeMood
-from app.schemas.cards import CostLineOut, MissingLineOut
+from app.schemas.cards import CostLineOut, MissingLineOut, SwapLineOut
 from app.schemas.plans import PlanSummaryOut, ProblemOut
 
 ANSWERS_SCHEMA_VERSION = 1
@@ -123,11 +123,15 @@ class RecipeSuggestionOut(BaseModel):
     portions: int
     portion_size: PortionSize
     portions_display: str  # "1 portion" / "for 2 people"
-    numbers: list[str]  # "540 kcal", "41 g protein", "35 min", "$2.10 a portion" (+ goal extras)
+    # "540 kcal", "41 g protein", "35 min", "$2.10 a portion", "$4.29 to buy today" (+ goal extras)
+    numbers: list[str]
     uses: list[str]  # your items
     could_buy: list[CostLineOut]
-    missing: list[MissingLineOut]
+    missing: list[MissingLineOut]  # only what you'd need to buy (M11)
+    swaps: list[SwapLineOut] = Field(default_factory=list)  # "Swap: X instead of Y (you have it)"
     why: list[str]  # templated from the score components
+    # mood is a preference (M10): a mood match first, then "A bit more effort" and "Simpler options"
+    section: Literal["match", "more_effort", "simpler"] = "match"
     score: Decimal  # kept for the exposure log and debugging
     good_match: bool  # the gap rule's test (FLOW_SPEC §14)
 

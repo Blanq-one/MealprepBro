@@ -106,9 +106,10 @@ def test_saved_lists_are_cards_most_recently_saved_first(client, seeded_db):
     assert top["dish_category"] == "dessert" and top["badges"] == ["favorite", "saved", "draft"]
     assert top["version_id"] == pudding.default_version_id and top["steps_ready"] is True
     assert top["portions"] == 1 and top["portions_display"] == "1 portion"
-    kcal, protein, minutes, cost = top["numbers"]
+    kcal, protein, minutes, cost, buy = top["numbers"]
     assert kcal.endswith(" kcal") and protein.endswith(" g protein") and minutes.endswith(" min")
     assert cost.endswith("a portion est.") and cost.startswith("$")  # seed prices are estimates
+    assert buy.endswith("to buy today") or buy == "nothing to buy today"  # M12
     assert cards[1]["dish_category"] == "curry" and cards[1]["badges"] == ["favorite", "draft"]
     later = client.get("/api/v1/recipes/saved?list=later").json()
     assert [c["recipe_id"] for c in later] == [pudding.id]

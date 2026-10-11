@@ -32,7 +32,7 @@ def get_batch(batch_id: int, session: DbSession, user: CurrentUser) -> BatchDeta
     category = dish_categories(session, [v.version.id])[v.version.id].value
     meal_cents: dict[str, int] = view.plan.totals.get("costs", {}).get("meal_cents", {})
     notes = service.batch_pantry_notes(session, user.id, b, view.plan) if b.status == "planned" else {}
-    names = {row.ingredient_id: name for row, name, _, _, _ in view.lines}
+    names = {row.ingredient_id: name for row, name, *_ in view.lines}
     return BatchDetailOut(
         id=b.id,
         plan_id=view.plan.id,
@@ -69,8 +69,9 @@ def get_batch(batch_id: int, session: DbSession, user: CurrentUser) -> BatchDeta
                 preparation=prep,
                 optional=optional,
                 adjustment=row.adjustment,
+                portion_note=note,
             )
-            for row, name, display, prep, optional in view.lines
+            for row, name, display, prep, optional, note in view.lines
         ],
         package_notes=view.package_notes,
         freeze_notes=view.freeze_notes,
