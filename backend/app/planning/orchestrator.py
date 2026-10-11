@@ -7,7 +7,7 @@
     (≤ 2) → still failing: a clear error
   → persist the plan and its grocery list.
 
-Meal prep (step 2b.5) fills gaps with the ideas pass (`recipe_ideas/1`, F20) and saves the plan with its
+Meal prep (step 2b.5) fills gaps with the ideas pass (`recipe_ideas/2`, F20) and saves the plan with its
 kind; POST /plans keeps the Phase 1 complete-recipe calls.
 
 LLM failures end the run as `failed` with a problem+json error; nothing from the failing call and no plan is

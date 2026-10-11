@@ -101,7 +101,7 @@ def test_an_uncovered_meal_makes_one_ideas_call_and_every_idea_reaches_the_solve
     assert [c.purpose for c in calls] == ["recipe_ideas"]  # one ideas call, no complete-recipe batch
     assert len(fake.requests) == 1
     ideas = seeded_db.scalars(
-        select(RecipeVersion).where(RecipeVersion.prompt_version == "recipe_ideas/1")
+        select(RecipeVersion).where(RecipeVersion.prompt_version == "recipe_ideas/2")
     ).all()
     assert len(ideas) == 6 and all(v.steps_status == "pending" for v in ideas)
     offered = {

@@ -278,7 +278,7 @@ def test_fewer_make_exactly_one_ideas_call_merged_with_new_badges(api, llm, seed
     assert "chicken thigh, boneless skinless" not in prompt  # short names only
     for version_id in new:
         version = seeded_db.get(RecipeVersion, version_id)
-        assert version.steps_status == "pending" and version.prompt_version == "recipe_ideas/1"
+        assert version.steps_status == "pending" and version.prompt_version == "recipe_ideas/2"
         assert count_where(seeded_db, RecipeStep, RecipeStep.recipe_version_id == version_id) == 0
     stored = api.get(f"/api/v1/cook/searches/{last['search_id']}").json()
     assert [c["version_id"] for c in stored["suggestions"]] == [
@@ -351,7 +351,7 @@ def test_when_no_idea_passes_one_revision_is_made(api, llm, seeded_db):
     assert "None of these ideas passed" in revision and "excluded" in revision and "unicorn meat" in revision
     assert fake.requests[1].reasoning_effort == "low"
     version = seeded_db.get(RecipeVersion, last["new_version_ids"][0])
-    assert version.prompt_version == "idea_revision/1"
+    assert version.prompt_version == "idea_revision/2"
 
 
 def test_one_passing_idea_means_no_revision(api, llm, seeded_db):

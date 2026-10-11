@@ -1,10 +1,11 @@
 """The ideas pass (planning/ideas.py, step 2b.3b): the count chosen from the token estimate, the idea checks,
 short names mapping back, revision only when none pass, ideas saved without steps, and the reasoning effort on
-every request (AC 4, 5)."""
+every request (AC 4, 5); the optional freeze note under the seeds' rules (2b.5 approval)."""
 
 import json
 
 import pytest
+from pydantic import ValidationError
 from sqlalchemy import select
 
 from app.db.models import GenerationRun, LlmCall, RecipeIngredient, RecipeVersion
@@ -13,6 +14,8 @@ from app.llm.client import RateLimitInfo
 from app.llm.errors import LLMProviderOutputError
 from app.llm.fake import FakeLLMClient, response
 from app.llm.pacing import RateState
+from app.llm.prompts.common import IDEA_RULES
+from app.llm.schema import transport_schema
 from app.llm.structured import LLMRunContext
 from app.planning.ideas import (
     MAX_IDEAS,
@@ -22,10 +25,12 @@ from app.planning.ideas import (
     IdeaGenerator,
     IdeaRequest,
     IdeasDontFitError,
+    salvage_ideas,
     size_call,
 )
 from app.planning.resolver import IngredientResolver
-from app.schemas.llm_recipe import RecipeIdea
+from app.schemas.llm_recipe import RecipeIdea, RecipeIdeaBatch
+from app.schemas.seed import SeedRecipe
 from app.services.ingredient_data import load_by_slug
 from app.services.settings import current_user
 from app.testing.llm import FakeClock, make_settings
@@ -135,7 +140,7 @@ def test_a_passing_idea_is_saved_without_steps(seeded_db):
     (version_id,) = outcome.created
     version = seeded_db.get(RecipeVersion, version_id)
     assert version.steps_status == "pending" and version.description.startswith("Sear the chicken")
-    assert version.prompt_version == "recipe_ideas/1" and version.created_by == "llm"
+    assert version.prompt_version == "recipe_ideas/2" and version.created_by == "llm"
     data = load_by_slug(seeded_db)
     lines = seeded_db.scalars(
         select(RecipeIngredient.ingredient_id).where(RecipeIngredient.recipe_version_id == version_id)
@@ -298,3 +303,48 @@ def test_ideas_go_to_the_ideas_model_on_the_runs_own_call_cap(seeded_db):
     assert gen.llm.calls is ctx.calls and ctx.client is fake
     plain = LLMRunContext(fake, seeded_db, make_settings(), run.id, FakeClock())
     assert plain.for_ideas() is plain
+
+
+# ---------------- the freeze note (2b.5 approval): the seeds' freezer rules ----------------
+NOTE = "Freeze the chicken and rice; make the yogurt sauce fresh."
+
+
+def test_an_ideas_freeze_note_is_saved_with_it(seeded_db):
+    fake = FakeLLMClient([response({"ideas": [idea(freeze_note=NOTE), idea("Chicken rice skillet")]})])
+    created = generator(seeded_db, fake).generate(request()).created
+    noted, plain = (seeded_db.get(RecipeVersion, v) for v in created)
+    assert noted.freeze_note == NOTE and noted.freezer_friendly
+    assert plain.freeze_note is None  # the note is optional
+
+
+@pytest.mark.parametrize(
+    ("changes", "expected"),
+    [
+        ({"freezer_friendly": False, "freeze_note": NOTE}, "freeze_note needs freezer_friendly: true"),
+        ({"freeze_note": "Rice"}, "at least 5 characters"),
+        ({"freeze_note": "Freeze the rice. " * 12}, "at most 200 characters"),
+    ],
+)
+def test_a_freeze_note_follows_the_seed_rules(changes, expected):
+    """Only on a recipe that freezes well, 5–200 characters, like SeedRecipe's; a bad note drops only its
+    idea from the batch."""
+    assert RecipeIdea.model_fields["freeze_note"].metadata == SeedRecipe.model_fields["freeze_note"].metadata
+    with pytest.raises(ValidationError, match=expected):
+        RecipeIdea.model_validate(idea(**changes))
+    kept = salvage_ideas({"ideas": [idea(), idea("Bad note", **changes)]})
+    assert kept is not None and [i.title for i in kept.ideas] == ["Garlic chicken spinach rice"]
+
+
+def test_a_freeze_note_passes_the_prose_filter(seeded_db):
+    gen = generator(seeded_db, FakeLLMClient())
+    timed = RecipeIdea.model_validate(idea(freeze_note="Freeze the curry for up to 3 months."))
+    validated, errors = gen.check(timed, request())
+    assert validated is None and any("storage time" in e for e in errors), errors
+    assert gen.check(RecipeIdea.model_validate(idea(freeze_note=NOTE)), request())[0] is not None
+
+
+def test_the_ideas_schema_and_rules_ask_for_the_note():
+    item = transport_schema(RecipeIdeaBatch)["properties"]["ideas"]["items"]
+    assert "freeze_note" in item["required"]  # strict mode: always present, null when there's no note
+    assert {o.get("type") for o in item["properties"]["freeze_note"]["anyOf"]} == {"string", "null"}
+    assert "otherwise freeze_note is null" in IDEA_RULES

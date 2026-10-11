@@ -113,6 +113,7 @@ def idea_of(version: RecipeVersion, rows: list[RecipeIngredient], resolver: Ingr
         total_minutes=version.total_minutes,
         equipment=[Equipment(e) for e in version.equipment],
         freezer_friendly=version.freezer_friendly,
+        freeze_note=version.freeze_note,
         ingredients=ingredients,
     )
 

@@ -17,6 +17,11 @@ you want to cook?" step with four options (C1b), the per-day fridge and freezer 
 (C6, for 2b.7), and a **Not for me** action separate from Swap (C6, C8, S0, for 2b.6 and 2b.7); changes F23 and
 F24 (§16). Meal prep's engine (2b.5) already returns what the batch view needs: each batch's portions with
 fridge and freezer counts, each meal's source line, the thaw notes, and the Prep notes items.
+**Designs for your review (2026-10-11, at the 2b.5 approval; nothing built):** smart prep, "Cook basics, mix and
+match", a fifth meal-prep option where a few prep items combine into the week's meals (§19), and parallel cooking
+on a cook day, a real schedule of hands-on and hands-off work per piece of equipment (§20). The proposed build
+order, the token impact and the open questions are in §21; the earlier decisions they would change are F25–F32
+(§16, proposed). The ideas pass now carries an optional freeze note (§13.5, built).
 **Sources:** your redesign brief (2026-10-10), `CLAUDE.md` (wins on conflict), `docs/PRD.md` (new "Primary user flow"
 section), `docs/BUILD_PLAN.md` (Phase 2b build steps, §9).
 
@@ -45,6 +50,9 @@ changes.
 | 16 | Changes to earlier decisions (approved) |
 | 17 | What moves between phases |
 | 18 | Questions (answered) |
+| 19 | Smart prep: "Cook basics, mix and match" (design for review) |
+| 20 | Parallel cooking on a cook day (design for review) |
+| 21 | Build order, LLM tokens and open questions for §19–§20 |
 
 ---
 
@@ -447,6 +455,9 @@ the earlier two tiles, "Today, all at once" and "On my cook days". The route kee
 | **Same dish, many portions** | The day to cook (as above). The portion count comes from C1 | One recipe scaled to every portion. For this request the weekly 5-portions-per-recipe cap doesn't apply (§16 F22) |
 | **Mix it up** | None | Today's behavior: your cook days and the variety rule |
 
+*Proposed fifth tile (design for review, §19):* **Cook basics, mix and match** ("Make a few basics and combine them
+all week"): a few prep items cooked on as few of your cook days as fit, combined into every meal.
+
 - **Why line:** "Cooked food keeps 3 days in the fridge, so anything past that goes in the freezer."
 - **Fridge and freezer:** portions eaten within the fridge window (`leftover_fridge_days`, 3) stay in the fridge.
   Later portions go to the freezer, with a plain instruction on the day before: "Thaw tomorrow's lunch in the fridge
@@ -577,7 +588,8 @@ The Building steps from 5.4.
   - **Day header:** "Today · Wed 14" + "1,780 kcal · 112 g protein · $8.40" (the cost of the food eaten that day).
   - **Cook session, inside its day:** "Cook: Chicken over rice, 5 portions (3 fridge, 2 freezer) · 35 min hands-on ·
     about 50 min start to finish" with a recipe card, and the **prep order** when there is one (C1b): "1. Start the
-    rice · 2. Sheet-pan chicken in the oven · 3. Make the curry while both cook".
+    rice · 2. Sheet-pan chicken in the oven · 3. Make the curry while both cook". *(Proposed: the cook-day timeline
+    replaces the prep order, §20.4, F30.)*
   - **Day note:** "Cook: Chicken over rice (5 portions)" on a cook day, or **"Nothing to cook, eating prepped
     meals"** on a day with nothing to cook (replaces "Cook day · 0 min hands-on").
   - **Shopping day:** its freeze steps are listed on that day too ("Freeze 1 pack of chicken thighs today"), not
@@ -1190,11 +1202,20 @@ class RecipeIdea(_Strict):            # creative content only, like GeneratedRec
     active_minutes: int; total_minutes: int
     equipment: list[Equipment]
     freezer_friendly: bool
+    freeze_note: str | None           # added at the 2b.5 approval: the seeds' rules (5–200 characters, only
+                                      # with freezer_friendly, prose filter); null when there's nothing to say
     ingredients: list[IdeaIngredient] # 2–20: everything the cooking will use, water, salt and oil included
 
 class RecipeIdeaBatch(_Strict):
     ideas: list[RecipeIdea]           # 1–8
 ```
+
+- **The freeze note (built at the 2b.5 approval, BUILD_PLAN D127):** the rules say when a dish freezes well (rice
+  dishes, curries, gravies, cooked meats yes; mostly fresh, raw or creamy dishes no) and, when part of it is best
+  fresh, to say what to freeze and what to make fresh ("Freeze the chicken and rice; make the yogurt sauce fresh").
+  A note on a recipe that doesn't freeze well fails that idea (salvage keeps the others); a storage time in it fails
+  the prose filter. A passing idea's note is saved on the version, so plans show it like a seed's. The prompts are
+  now `recipe_ideas/2` and `idea_revision/2`.
 
 - **Compared with `GeneratedRecipe`:** no steps, description, cuisine or flavor tags, and ingredient lines without
   preparation, component or optional. The transport schema is 1,835 characters instead of 3,324.
@@ -1595,6 +1616,19 @@ A user-editable variety cap stays deferred (your carried decision). The one exce
 | F23 | C6 lists days and meal rows; freeze and spoil notes collapse into one Prep notes row (H4) | **Batch view (2b.7):** each cook day lists every batch, its portion count and where each portion goes ("×4 → Mon lunch, Tue dinner, Wed lunch, Sat dinner (1 to the freezer)"); each meal row shows its source ("cooked Mon" / "from freezer, cooked Mon, thaw Fri night"); "Left out" notes and freeze notes only behind Prep notes or **About this plan** | "Cook once, eat many" |
 | F24 | Swap is the only way to turn down a meal (E5) | **Not for me (2b.6, 2b.7):** on recipe pages and meal rows, separate from Swap; hides that recipe from every future suggestion and plan, logs a feedback event, undone from **Hidden recipes** in Settings. Swap still replaces just one meal | A recipe you never want again shouldn't need a swap every time |
 
+**Proposed with the smart prep and parallel cooking designs (2026-10-11, for your review; §19–§21):**
+
+| # | Earlier decision | Change | Why |
+|---|---|---|---|
+| F25 | C1b has four cook styles (H5) | A fifth: **Cook basics, mix and match** (`cook_style = "basics"`, §19) | Prep a few things once and combine them all week |
+| F26 | A meal is one portion of one batch (build plan §2 item 3; C6) | In smart prep a meal is an **assembly** that draws portions from several prep batches, with **finish tasks** on the eating day that count as that day's time (days that aren't cook days had 0 minutes) | Mix and match; prep that stops at marinated and finishes on the day |
+| F27 | A recipe is a whole dish | `recipe_version.kind`: **dish**, **prep item** (stages, each ending in a state) or **assembly** (items + fresh add-ons). Every dish also works as a one-item assembly | Prep items and assemblies reuse versioning, nutrition, costing, ♥, 🔖, ideas and steps-on-first-open |
+| F28 | Every batch keeps for the cooked-leftover window (3 days, BUILD_PLAN Q4) | Storage per item **and** stored state from the FoodSafety.gov chart in the repo: raw and marinated proteins use their raw rows (poultry 1 day), cooked food your 3-day window; items the chart doesn't cover follow V1 (§21.3) | Raw marinated chicken doesn't keep like cooked curry |
+| F29 | Q14/F22: at most 5 portions of one recipe a week | In smart prep the variety rule is per assembly (at most once a day and 3 times a week, V5); a prep item can feed any number of meals | Feeding many meals is the point of a prep item |
+| F30 | C1 (2026-10-08): a cook day's minutes are hands-on minutes, added up; D121: hands-on doesn't grow with batch size; 2b.5's prep order (D122) | A cook day's minutes are **start to finish**, from a real schedule of hands-on and hands-off work per piece of equipment (§20, V11); hands-on grows with batch size, and big batches take extra rounds on their equipment; the **timeline** replaces the prep order | Parallel cooking makes a cook day shorter than its recipes in sequence, and big batches take longer |
+| F31 | E19/F19: the steps can't change an idea's ingredients, amounts, equipment or times | Also: the steps' timing fields must match the idea's **tasks**; an idea's active and total minutes are computed by code from its tasks (no longer written by the LLM) | A plan's times never change when the steps arrive |
+| F32 | E5: swap replaces one meal's recipe; F24: Not for me hides a recipe | Swap also works on an assembly and on one prep item ("Swap this item"); Not for me also hides an assembly (that combination) or a prep item (and its assemblies) | Smart prep meals are built from parts |
+
 ---
 
 ## 17. What moves between phases
@@ -1624,3 +1658,543 @@ You accepted the defaults for all ten.
 | Q8 | **Meal now** writes new ideas automatically only when fewer than 3 saved recipes fit well (plus More ideas)? | **Yes.** The background batch (F21) keeps this: it starts only after your first More ideas tap. **Changed 2026-10-10 (M14):** fewer than 6 |
 | Q9 | **Phase 2 approval?** | **Approved 2026-10-10** |
 | Q10 | **CLAUDE.md** phase outline update? | **Yes**; applied with the BUILD_PLAN §11 item 7 wording |
+
+---
+
+## 19. Smart prep: "Cook basics, mix and match" (design, 2026-10-11)
+
+*Design only, for your review: nothing here is built. The open questions (V1–V17) are in §21.3 with my recommended
+defaults, the build steps are proposed in BUILD_PLAN §9 (2b.9–2b.12), and the earlier decisions it would change are
+F25–F32 (§16).*
+
+### 19.1 What it is
+
+**The goal.** Prep once, efficiently and safely: each thing you make feeds 2–3 or more meals, nothing spoils, and
+every day still meets your calorie and protein targets, your active goals and your caps (the daily protein powder
+cap, the pork cap, the budget), with variety across the week.
+
+**Where it lives.** A fifth tile on C1b, **Cook basics, mix and match** ("Make a few basics and combine them all
+week"), with day chips for the days you could cook (pre-filled from your cook days). The plan uses as few of them as
+fit. C1, C2, C3 and C3b are unchanged.
+
+**An example:** lunch and dinner Monday to Thursday, cooking Sunday, with your 3-day fridge window.
+
+| Sunday you make | Stops at | Feeds |
+|---|---|---|
+| Chicken curry ×3 | cooked | Mon dinner, Tue dinner; 1 to the freezer for Thu lunch |
+| Roasted chicken thighs ×3 | cooked | Mon lunch, Tue lunch, Wed lunch |
+| Tandoori-marinated chicken ×2 | marinated, frozen raw | Wed dinner, Thu dinner (thaw the night before, roast on the day) |
+| Plain rice ×6 | cooked | Mon lunch, Mon dinner, Tue dinner, Wed lunch, Wed dinner; 1 to the freezer for Thu lunch |
+| Roasted vegetables ×2 | cooked | Mon lunch, Wed lunch |
+
+| Meal | Assembly | Eating-day instruction |
+|---|---|---|
+| Mon lunch, Wed lunch | Roasted chicken over rice with roasted vegetables | Reheat 1 portion chicken, 1 cup rice and 1 portion vegetables |
+| Mon dinner, Tue dinner | Chicken curry with rice | Reheat 1 portion curry and 1 cup rice |
+| Tue lunch | Roasted chicken wrap with peppers and hot sauce | Warm 1 tortilla; fill with 1 portion chicken, ¼ cup sliced peppers and 1 tbsp hot sauce |
+| Wed dinner | Tandoori chicken with rice | Roast the thawed chicken (425°F, 25 min); reheat 1 cup rice |
+| Thu lunch | Chicken curry with rice | From the freezer, thawed overnight: reheat 1 portion curry and 1 cup rice |
+| Thu dinner | Tandoori chicken wrap with peppers | Roast the thawed chicken (425°F, 25 min); warm 1 tortilla and fill it |
+
+Five items, one cook session, every item in at least two meals, five different meals, no portion past its window.
+(Illustrative only; the solver chooses the items, amounts and days.)
+
+### 19.2 The words
+
+- **Prep item:** anything made in bulk and stored: a full dish (chicken curry, roasted chicken, veg pulao), a base
+  (plain or flavored rice), a side (roasted veggies, salad, fresh veggies) or a partial prep (a marinade, marinated
+  raw chicken, chopped vegetables). There are **no fixed main or side categories**. Code works out what an item
+  *brings* (mostly protein, a carb base, vegetables, a sauce) from its lines and nutrition, and uses that only to
+  name meals and suggest combinations. A full dish such as curry stands alone or takes a base.
+- **Stages and states:** an item's steps are grouped into stages. After each stage it is in a **state**: raw,
+  marinated, partly cooked or fully cooked. Prep can **stop after any stage** where storage allows it (§19.4).
+- **Finish task:** what's left on the eating day: the remaining stages (roast, air fry) and the last touch (reheat,
+  assemble, dress). It counts as that day's hands-on time and is scheduled on that day (§20.3).
+- **Assembly:** a meal built from prep items plus fresh **add-ons** (a tortilla, sliced peppers, a spoon of hot
+  sauce), e.g. "Roasted chicken over flavored rice".
+- **Every existing recipe is also a prep item:** a dish stored cooked (or as it is stored today), eaten as a
+  one-item assembly. So smart prep can use the whole library from day one, breakfasts, snacks and desserts included.
+
+### 19.3 Data model
+
+Prep items and assemblies are recipe versions, so versioning, nutrition, costing, rounding, ♥, 🔖, Not for me, the
+exposure log, ideas and steps-on-first-open all work on them unchanged.
+
+```
+-- 0009_smart_prep (proposed; 0008 is the step timing of §20; later phases renumber by two)
+ALTER recipe_version ADD kind text NOT NULL DEFAULT 'dish'  -- dish | prep_item | assembly
+ALTER recipe_version ADD stages jsonb NULL      -- prep_item: [{"n": 1, "state": "marinated"}, {"n": 2, "state": "cooked"}]
+ALTER recipe_version ADD pairs_with text[] NULL -- prep_item: style tags (indian, mexican, mediterranean,
+                                                -- east_asian, american, any) for suggesting combinations
+ALTER recipe_version ADD label text NULL        -- prep_item: "roasted chicken", for meal names and instructions
+ALTER recipe_step   ADD stage smallint NULL     -- prep_item: the stage a step belongs to
+
+assembly_component                              -- an assembly's prep items
+  assembly_version_id FK→recipe_version, position smallint,
+  component_recipe_id FK→recipe                 -- a lineage: a plan uses its default version when it's built
+  portions numeric(3,1) NN                      -- usual portions per person
+  min_portions, max_portions numeric(3,1) NN, step numeric(2,1) NN (0.5 or 1)
+  PK (assembly_version_id, position)
+-- an assembly's add-ons are its own recipe_ingredient rows, per portion (base_servings 1)
+
+ALTER plan_cook_batch ADD stop_stage smallint NULL, ADD stop_state text NULL   -- prep batches
+ALTER plan_cook_batch ADD fridge_until date NULL   -- last day a portion may come from the fridge (code, §19.4)
+ALTER plan_meal       ADD assembly_version_id bigint NULL FK→recipe_version    -- NULL = a dish meal, as today
+
+plan_meal_component                             -- an assembled meal's portions, one row per prep batch
+  id, plan_meal_id FK, cook_batch_id FK, portions numeric(4,1) NN (per person), from_freezer bool NN,
+  finish_task_id bigint NULL FK→plan_finish_task
+
+plan_finish_task                                -- eating-day work
+  id, meal_plan_id FK, day date NN, cook_batch_id FK, kind text NN (stage | reheat | assemble),
+  portions numeric(4,1) NN, hands_on_minutes smallint NN, hands_off_minutes smallint NN,
+  equipment text NULL, status text NN DEFAULT 'planned'   -- Done deducts that day's add-ons
+```
+
+| | Prep item | Dish (today's recipes) | Assembly |
+|---|---|---|---|
+| Stored as | `recipe_version`, kind `prep_item`, with stages | kind `dish` | kind `assembly` + `assembly_component` |
+| Lines | its ingredients, raw/as-sold, for base servings | the same | its add-ons only, per portion |
+| Steps | by stage, with §20's timing | with §20's timing | none: its instruction is composed by code (§19.5) |
+| Nutrition and cost | per portion, by code | the same | its items' portions + add-ons, by code |
+| In a plan | prep batches (`plan_cook_batch` + stop stage) | batches | `plan_meal` + `plan_meal_component` |
+| ♥, 🔖, Not for me, Phase 3 ratings and edits | yes | yes | yes |
+
+- A dish plan (the other four cook styles) is unchanged: one meal, one batch.
+- Plans keep exact versions; an assembly's components resolve to their recipes' default versions when a plan is
+  built, so your edited curry is used next time.
+- Phase 3's `prepared_portion` (what's actually left in your fridge) is unchanged by this; prep batches are what
+  the plan expects.
+
+### 19.4 Storage per item and state (code; the LLM never sets these)
+
+Code gives each prep batch a fridge window and a freezer rule from its lines and its stop state, using the
+FoodSafety.gov chart already in the repo (`domain/storage_chart.py`) and the existing rules: the short end of the
+chart's range, and your 3-day setting for cooked food.
+
+| Stop state | The item has | Fridge window | Freezer | Chart row |
+|---|---|---|---|---|
+| raw or marinated | poultry pieces | 1 day (1 to 2 days) | yes, the same day; thaw in the fridge the night before its finish day | Fresh poultry, pieces |
+| raw or marinated | ground meat or poultry | 1 day (1 to 2 days) | yes | Hamburger, ground meats and ground poultry |
+| raw or marinated | fin fish | 1 day (1 to 3 days) | yes | Fin fish |
+| raw or marinated | shrimp | 3 days (3 to 5 days) | yes | Shellfish: shrimp |
+| raw or marinated | pork chops or roasts | 3 days (3 to 5 days) | yes | Fresh beef, veal, lamb and pork: chops |
+| partly cooked | meat, poultry, fish or eggs | **not stored**: finished the same day (V2) | no | — |
+| fully cooked | meat or poultry (curry, roasted chicken) | your 3 days (3 to 4 days) | only if it freezes well | Leftovers: cooked meat or poultry; Soups and stews |
+| fully cooked | an egg dish | 3 days (3 to 4 days) | only if it freezes well | Casseroles with eggs |
+| fully cooked | hard-cooked eggs | 7 days (1 week) | no ("Do not freeze") | Hard-cooked eggs |
+| fully cooked | no meat, fish or eggs (plain rice, veg pulao, roasted vegetables, dal) | **no chart row** (V1); until then your 3 days, as every cooked recipe today | only if it freezes well | — |
+| raw, ready to eat | cut vegetables, salad, a yogurt sauce | **no chart row** (V1); until then made on the eating day as a 5-minute finish task | no | — |
+| as bought | whole produce, tortillas | the ingredient's own shelf life (seed data, D38) | — | — |
+
+- **The strictest line wins:** a curry with shrimp takes the shorter of its rows.
+- **Nothing is planned past its window.** A later meal can use the item only from the freezer, only if that stage
+  freezes well (a cooked item: its freezes-well flag; raw or marinated meat, poultry or fish: the chart lists a
+  freezer time), with "thaw in the fridge the night before".
+- **Fresh items are eaten early:** the windows force it, and a small objective term prefers eating the
+  shortest-window items first when there's a choice.
+- **Safety lines are injected as today:** the safe internal temperature on the stage that cooks a protein (on the
+  eating day when it's a finish task), and "reheat to 165°F" on every reheat.
+- Raw ingredients bought on shopping day keep today's rule: what isn't prepped within its window is frozen on
+  shopping day.
+
+### 19.5 Assemblies: names and short instructions
+
+**Names** are composed by code from each item's label and what it brings. An LLM-written assembly may carry its own
+title (prose-filtered); otherwise it gets the composed name.
+
+| Shape | Name | Example |
+|---|---|---|
+| a dish alone | its title | Chicken curry |
+| a dish + a base | "{dish} with {base}" | Chicken curry with rice |
+| protein + base (+ vegetables) | "{protein} over {base}" (+ "with {vegetables}") | Roasted chicken over flavored rice with roasted veggies |
+| protein + vegetables | "{protein} with {vegetables}" | Roasted chicken with fresh veggies |
+| with a flatbread add-on | "{protein} wrap with {add-ons}" | Roasted chicken wrap with peppers and hot sauce |
+| plus a side | "… and a side {side}" | Chicken curry with rice and a side salad |
+
+**Short instructions** per meal, from templates: amounts from code, appliance temperatures and times from the item's
+tasks (§20.1), safety lines injected. The LLM writes none of this text.
+
+| Component state | Instruction |
+|---|---|
+| cooked, from the fridge | "Reheat 1 portion curry and 1 cup rice." |
+| from the freezer | "From the freezer, thawed overnight in the fridge: reheat 1 portion curry and 1 cup rice." |
+| a finish stage | "Roast the marinated chicken: 425°F for 25 min, until it reaches 165°F. Reheat 1 cup rice." |
+| add-ons | "Warm 1 tortilla; fill with 1 portion roasted chicken, ¼ cup sliced peppers and 1 tbsp hot sauce." |
+| a fresh item made on the day | "Chop the salad (5 min) and add it cold." |
+
+Amounts are portions of each item ("1 portion curry", "½ portion rice"); cups only where a reviewed cooked-volume
+factor exists (V3).
+
+### 19.6 Seed recipes → prep items
+
+1. **All 47 seeds stay dishes,** each usable as a one-item assembly with today's numbers.
+2. **New draft prep items, split from the lunch and dinner seeds** along their ingredient `component` tags (31 seeds
+   tag components today: chicken, rice, sauce, salad, gravy, beans, …). About 16–20 items, for example: spiced
+   seared chicken thighs and broth rice (1a), air-fryer chicken (1b), sheet-pan chicken and peppers (1c), chicken
+   curry gravy (2a, 2b, 2c), tandoori drumsticks that can stop at marinated or cooked (8d), dal (7f), roasted root
+   vegetables (8i), black beans (7c), quinoa (8l), plain rice.
+   - Lines without a component (salt, garlic, lemon) are assigned by hand; each item keeps its seed's base
+     servings.
+   - Each item's steps are adapted from its seed's steps, grouped into stages and tagged with §20's timing.
+   - Its family is the seed's family, and its draft note names the seed it came from.
+3. **About 10 draft assemblies,** including wraps and bowls (tortillas are add-ons, never prep items).
+4. Nutrition and cost by code. The full list goes in the step summary for your review, like M13's drafts. No pork
+   component (CLAUDE.md).
+
+### 19.7 The solver
+
+A second model, `planning/smart/`, next to today's. The supply side (purchases, packages, inventory, stores, the
+budget, waste: today's `solver/model.py` from "ingredient supply" on) is factored out into `solver/supply.py`
+unchanged, and both models use it.
+
+**Decisions**
+- **Prep batches:** (item, cook day, stop stage), a yes/no and a yield in portions (whole, or half for items that
+  allow half portions).
+- **Meals:** each (day, meal) picks one assembly, and each of its items gets a portion count within the assembly's
+  range (half or whole steps). The portion count of the base is the main lever for calories, much as people meal-prep:
+  protein fixed, rice to taste.
+- **Draws:** the portions a meal takes from each batch, from the fridge (only within the batch's window) or from
+  its freezer share (only for stages that freeze).
+- **Finish tasks:** one per (batch, eating day) when a meal that day draws from a batch stopped before its last stage
+  (both portions roast together), and a reheat or assemble task per meal.
+- **Cook sessions:** a yes/no per cook day.
+
+**Hard limits**
+- Every meal filled once; its portions drawn exactly; each batch's yield = its draws + its frozen extras, so no
+  cooked food is left over to spoil.
+- Windows and freezer rules (§19.4).
+- Each cooked batch feeds at least 2 meals (V4).
+- Variety: an assembly at most once a day and 3 times a week (V5).
+- Calories and protein per day (strict or weekly mode, as today), the capped protein reward, daily amount caps,
+  frequency caps per Monday–Sunday week (a meal counts when any of its items has a member), the purchase limit,
+  "Use what I have", household size.
+- Time: each cook day's schedule (§20.3); each eating day's finish tasks within that day's finish time (V7).
+- Equipment and mood per cook day, from each stage's tasks.
+
+**Objective** (maximized, in today's plan points; weights V6)
+- minus **effort**: cook sessions (20 min each) + cook-day hands-on minutes + 1.5 × eating-day hands-on minutes;
+- minus cost, waste and the slot-calorie deviation, as today;
+- minus a variety penalty for each repeat of an assembly, plus a small reward for a third or later use of an item;
+- plus your goals (the High protein reward up to its cap, nutrition priorities), ♥ on items or assemblies, and
+  never-favored rules for pork components (unchanged).
+
+**Size and speed.** An 8-meal plan with 12 shortlisted items (1–2 stop stages each, up to 3 cook days) and up to
+30 assemblies is roughly 300–400 yes/no variables, 100 integers and 600 continuous ones: about today's weekly model
+with its shortlist (a default week in about 6 s). The shortlist picks items by what they bring and how they pair;
+assemblies come only from shortlisted items (seed assemblies, ideas, and code's own combinations of compatible
+items: one item that brings protein, at most one base, at most one vegetable item). Target under 10 s; the K6 rules
+hold (small instances, no wall-clock dependence in tests); the 30 s limit is unchanged.
+
+**Rounding and checking.** Each prep batch is rounded like a recipe batch (practical amounts, packages) and its
+per-portion nutrition recomputed on the rounded amounts; each meal's numbers are its portions of those rounded items
+plus its add-ons. The validator checks that rounded plan:
+- every existing check (calories, protein, caps, exclusions, equipment, money, safety lines, prose);
+- draws within each batch's window for its stop state, and frozen draws only from stages that freeze;
+- no stored partly cooked protein;
+- yields equal draws + frozen extras;
+- at least 2 uses per cooked batch;
+- finish tasks within their days.
+
+The re-solve loop tightens per item as it does per recipe today.
+
+### 19.8 The LLM ideas pass for prep items and assemblies
+
+When the pool can't make a plan, or a meal has fewer than 3 workable assemblies, one `prep_ideas/1` call asks for
+3–6 new prep items and 3–6 assemblies built from new and existing items:
+
+```python
+class PrepTask(_Strict):              # §20.1: one piece of work, on one piece of equipment
+    component: str                    # ≤ 30: "rice", "chicken"
+    equipment: Equipment | None       # None = hands only, or waiting (marinating, resting)
+    hands_on_minutes: int             # 0–60
+    hands_off_minutes: int            # 0–240
+    appliance_temp_f: int | None      # oven and air fryer
+
+class PrepStageIdea(_Strict):
+    state: Literal["marinated", "partly_cooked", "cooked"]
+    method: str                       # ≤ 100: "Roast until browned at the edges"
+    tasks: list[PrepTask]             # 1–4
+
+class PrepItemIdea(_Strict):
+    title: str; label: str            # label ≤ 30: "roasted chicken"
+    pairs_with: list[PairStyle]       # 1–3
+    meal_slots: list[MealSlot]
+    mood: RecipeMood
+    base_servings: int
+    stages: list[PrepStageIdea]       # 1–3, in order
+    freezer_friendly: bool            # after its last stage
+    freeze_note: str | None
+    ingredients: list[IdeaIngredient] # 2–15
+
+class AssemblyIdea(_Strict):
+    title: str | None                 # None = code names it
+    meal_slots: list[MealSlot]
+    items: list[str]                  # 1–3 labels, new or from EXISTING ITEMS
+    add_ons: list[IdeaIngredient]     # 0–4, per portion: tortilla, peppers, hot sauce
+
+class PrepIdeaBatch(_Strict):
+    items: list[PrepItemIdea]         # 1–6
+    assemblies: list[AssemblyIdea]    # 1–6
+```
+
+- **Code derives** each stage's storage and whether prep may stop there (§19.4), the finish tasks, active and total
+  minutes (from the tasks, §20), nutrition and cost per portion, and names for untitled assemblies.
+- **Checks:**
+  - every idea check today: names and units, the as-sold rule, exclusions and held items, caps, equipment, mood,
+    and the prose filter on titles, labels, methods and the freeze note;
+  - stages in order (raw → marinated → partly cooked → cooked);
+  - task equipment you have, and plausible minutes;
+  - an assembly's items exist (new or listed), and its add-ons are allowed ingredients;
+  - complete nutrition.
+- **When an idea fails:** an item that fails takes its assemblies with it; an assembly that fails is dropped
+  alone; salvage keeps whatever validates, as today. One `prep_idea_revision/1` call runs only when nothing passes.
+- **The prompt** sends the meals, the cook days' mood and minutes, your equipment, the vocabulary in short names,
+  lots to use up, the existing items (label and pairing styles, at most 15) and the never-use list. It sends no
+  nutrition numbers.
+- **Steps on first open** (`prep_steps/1`): one call writes an item's steps, grouped by stage, with every step
+  tagged with its component, equipment and minutes (§20.1). They are checked against the idea's stages and tasks, so
+  no number changes when they arrive.
+
+### 19.9 Swap and Not for me
+
+| On | Swap | Not for me |
+|---|---|---|
+| A meal row (an assembly) | Replaces that meal's assembly. It tries combinations of items already in the plan first (no extra cooking), then a new batch on a cook day whose window covers the meal, then **Write a new one** (one prep ideas call). Every other meal keeps its assembly and portions; changed batch sizes are listed under "Also changed" | Hides that combination from future plans; its items stay. Logs `recipe_hidden` (kind assembly) |
+| A prep item (from the batch view) | **Swap this item**: replaces it in every meal that uses it with another item that brings the same thing and pairs with the rest; those meals' names update; everything else stays | Hides the item and every assembly that uses it |
+
+- **Two uses become a preference in a swap:** a swap that would leave an item feeding one meal pays a penalty
+  instead of failing, and the sheet says so ("Rice now feeds 1 meal").
+- Cooked batches and finished tasks stay fixed (E5).
+- Events: `meal_swapped` (payload v2: the assembly and the items that changed) and `recipe_hidden`; exposures under
+  `swap`. **Hidden recipes** in Settings lists dishes, assemblies and items, each with Undo.
+
+### 19.10 Batch view, plan view and grocery list
+
+- **A cook day** shows its timeline first (§20.4), then each item with its stop state and where its portions go:
+  - "Chicken curry ×3, cooked → Mon dinner, Tue dinner (1 to the freezer for Thu lunch)";
+  - "Tandoori chicken ×2, marinate only → freeze today; roast Wed and Thu";
+  - "Fresh veggies: made on the day".
+- **Each eating day** lists its finish tasks first ("Today: roast the tandoori chicken, 25 min, 5 hands-on"), then
+  its meal rows: the assembly's name, kcal and protein, the short instruction, and badges such as "from the freezer:
+  thaw Tue night".
+- **The recipe page (C8):**
+  - an **assembly** lists its items (each opens its own page), its add-ons, the instruction and the per-portion
+    numbers;
+  - a **prep item** shows its steps by stage, with "In this plan: marinate on Sun, roast on Wed".
+- **Prep notes and About this plan** keep their rules (H4, F23).
+- **The shopping list** is one list: every prep batch's ingredients plus the assemblies' add-ons, with packages,
+  stores, stock-up and "check you have" exactly as today (the same grocery-list code).
+  - Add-ons are bought on shopping day like everything else; perishable ones get today's freshness and waste rules
+    (peppers keep as raw produce).
+- **Mark cooked** on a prep batch deducts its ingredients (as today); **Done** on a finish task deducts that day's
+  add-ons.
+
+---
+
+## 20. Parallel cooking on a cook day (design, 2026-10-11)
+
+*Design only, for your review. It applies to every meal-prep style (and to smart prep's cook days and finish tasks),
+to swap, and to `POST /plans`.*
+
+### 20.1 Timing on steps and ideas
+
+**Each step gets four fields** (`recipe_step`, proposed migration `0008_step_timing`):
+
+| Field | Meaning |
+|---|---|
+| `component` | the part of the dish it works on ("rice", "chicken"); none = shared (prep for everything, assembly, portioning) |
+| `equipment` | what it occupies: oven, air fryer, a stovetop burner, rice cooker, pressure cooker, slow cooker, microwave, grill; none = hands only, or waiting |
+| `hands_on_minutes` | you're busy: chopping, marinating, stirring, searing |
+| `hands_off_minutes` | it runs on its own: simmering, baking, resting, chilling |
+
+**How they're filled:**
+- **Seeds:** tagged by hand, every step of all 47 seeds and of the new prep items, in a review table in the step
+  summary. A seed whose tagged hands-on total differs from its stated active minutes by more than 5 minutes gets
+  a revision (D107).
+- **Ideas** have no steps, so each idea carries a compact **task list** instead: one task per component and piece of
+  equipment (`PrepTask` in §19.8: component, equipment, hands-on, hands-off, appliance temperature). Code then
+  computes the idea's **active minutes** (the hands-on total) and **total minutes** (its own schedule), so they
+  always agree. The LLM no longer writes those two numbers.
+- **The steps pass** (`recipe_steps/2`) writes the four fields on every step. The checks:
+  - hands-on 0–60 and hands-off 0–240 (up to 720 for chilling or soaking);
+  - the step's equipment is in the recipe's equipment and matches its section (oven steps on the oven);
+  - per component, the steps' minutes match the idea's tasks within 25% or 3 minutes, whichever is larger.
+  A failure retries with the errors (rule 5). So a card's or a plan's times never change when the steps arrive
+  (F31).
+- **Steps written before this** (Phase 1 recipes, ideas whose steps exist, and later your own edits without tags):
+  code derives the fields from each step's section and duration, and the timeline marks them "estimated":
+  - oven, air fryer, rice and cooker steps: 2 min hands-on, the rest hands-off;
+  - stovetop, prep and assembly steps: all hands-on;
+  - marinate and chill steps: waiting.
+
+**The scheduler works on tasks:** consecutive steps of one component on one piece of equipment, added up. A seed's
+tasks come from its tagged steps; an idea's are the idea's own.
+
+### 20.2 Batch size
+
+- **Hands-on time grows with portions, more slowly than the portions:** hands-on = base × (portions ÷ base
+  servings)^0.6, rounded up, and never below the base (doubling a batch adds about half, V12). Hands-off time doesn't
+  grow: a pot simmers as long for 8 as for 4.
+- **Equipment capacity** (estimates, V13), in portions per round:
+
+  | Equipment | Capacity | Notes |
+  |---|---|---|
+  | Oven | 8 | two sheet pans; tasks whose temperatures are within 25°F can share it (V14) |
+  | Air fryer | 4 | one basket |
+  | Stovetop | 4 burners | a skillet sears 4 portions per round; a pot holds 12 |
+  | Rice cooker | 10 | |
+  | Pressure cooker | 8 | |
+  | Slow cooker | 10 | |
+  | Microwave | 2 | |
+  | Grill | 6 | |
+
+- **A batch above capacity takes extra rounds:** each round repeats the hands-off time and its share of the loading.
+  For example, 8 portions of air-fryer chicken take 2 rounds of 18 minutes.
+- This replaces D121 (a batch's hands-on time didn't grow).
+
+### 20.3 The schedule
+
+Each cook day is a schedule, built by `domain/cook_schedule.py`: pure code, deterministic, no LLM.
+
+**Resources**
+- **Your hands:** one hands-on task at a time.
+- **Each piece of equipment:** one task at a time. The stovetop has 4 burners. The oven can hold several tasks at
+  once when their portions fit its capacity and their temperatures are within 25°F.
+
+**Order**
+- Within a dish, each component's tasks run in order.
+- Shared prep comes before the components it serves; assembly and portioning come after all of them.
+- Different dishes don't depend on each other.
+
+**A task** needs your hands for its hands-on minutes, at its start, and holds its equipment from its start to the end
+of its hands-off minutes. Waiting tasks (marinating, resting) hold nothing. The oven preheats for 10 minutes
+(hands-off) before its first task, overlapping other work.
+
+**Algorithm:** list scheduling.
+1. Take the ready task with the longest chain of work still behind it (ties: longer hands-off first, then dish
+   order).
+2. Place it at the earliest time its hands and its equipment are free.
+3. Repeat the whole thing for every starting order of the day's dishes (up to 6 dishes, 720 orders) and keep the
+   shortest; ties keep the first.
+
+A cook day of up to 6 dishes (about 40 tasks) takes a few milliseconds per order, under 50 ms in all. Days with
+more dishes use the priority order alone.
+
+**Result:** the elapsed minutes (start to finish), the hands-on minutes, and the timeline.
+
+**The cook-day time check uses the elapsed minutes** (V11):
+- **In the solver,** linear limits that every schedule must meet: the day's hands-on total, each piece of
+  equipment's busy minutes (per burner on the stovetop), and each dish's own chain each fit the day's minutes.
+- **After the solve,** the exact schedule. A day over its minutes adds a cut (that set of batches can't share that
+  day) and re-solves, like today's tightening loop, at most 2 rounds before the time fix.
+- **The validator** schedules the rounded plan again, so no plan passes with a day over its minutes. The fix reads
+  "Allow 1 h 35 min on Sunday" (rounded up to 5 minutes).
+
+**Elsewhere**
+- **Eating days:** finish tasks (§19) are scheduled the same way on their own day, against that day's finish time
+  (V7).
+- **Meal now:** a recipe's total time is its own schedule (its components in parallel); for seeds it should stay
+  within a few minutes of today's numbers.
+
+### 20.4 The timeline
+
+```
+Sunday · about 1 h start to finish · 35 min hands-on
+0:00  Preheat the oven to 425°F
+0:00  Chop the chicken, peppers and onion (12 min)
+0:12  Chicken and peppers into the oven (35 min)
+0:14  Rice on the stove (25 min)
+0:16  Fish into the air fryer (12 min, flip at 0:22)
+0:28  Make the yogurt sauce (5 min)
+0:47  Portion everything out (10 min)
+0:57  Done
+```
+
+- **Lines are templated by code** from each task's component, equipment and section; times come from the schedule.
+  The LLM writes no timeline text.
+- **API:** each cook day gets `timeline` (`at_min`, `at_display`, `text`, `kind` hands_on / runs / wait, `minutes`,
+  `equipment`, `estimated`), `elapsed_minutes` and `hands_on_minutes`. They replace `prep_order` (2b.5
+  deliverable 11, D122).
+- **Cooking mode (2b.7)** gains a cook-day mode that steps through the timeline across dishes; each line opens its
+  dish's steps.
+
+### 20.5 Tests
+
+- Three dishes, one each on the oven, the air fryer and the rice cooker, finish faster together than in sequence; the
+  elapsed time is the longest chain plus the hands-on work that can't overlap.
+- Two oven dishes can't overlap unless their portions fit the oven together and their temperatures are within 25°F;
+  otherwise the second starts when the first ends.
+- Hands-on work never overlaps; each piece of equipment runs one task at a time; the stovetop runs at most 4.
+- A batch above capacity takes extra rounds; hands-on grows by the rule and never drops below the base.
+- Determinism: the same day gives the same timeline, whatever order the dishes arrive in.
+- Finish tasks are scheduled on their eating day only.
+- Solver and validator agree: no plan passes with a cook day over its minutes, and the cut re-solve finds a plan
+  that fits when one exists (a small instance solved to optimality, K6).
+- Ideas: the task list is required and checked; active and total minutes are computed from it; steps that don't
+  match it fail with the errors; a plan's numbers are unchanged after the steps arrive.
+- Seeds: every step tagged; each seed's hands-on total within 5 minutes of its stated active minutes.
+- Speed: a 6-dish day schedules in under 50 ms (opt-in timing test).
+
+---
+
+## 21. Build order, LLM tokens and open questions for §19–§20
+
+### 21.1 Proposed build order
+
+Four new steps before swap, because swap (2b.6) works on the plan shape these designs change. The step numbers
+continue from 2b.8, so every earlier reference still points at the right step (as with H3). Details are in BUILD_PLAN
+§9.
+
+| Order | Step | What |
+|---|---|---|
+| 1 | **2b.9** Cook-day schedule (backend) | §20: step timing (migration `0008_step_timing`), the seeds tagged, the scheduler, the elapsed check in the solver and validator, ideas' task lists, the steps' timing fields, the timeline in place of the prep order |
+| 2 | **2b.10** Smart prep: data, storage and seed prep items (backend) | §19.3–§19.6: migration `0009_smart_prep`, storage per item and state, the draft prep items and assemblies, names and instructions |
+| 3 | **2b.11** Smart prep: solver and plan (backend) | §19.7, §19.10: the shared supply side, the smart model, its validator checks, `cook_style = "basics"` from the seed pool (0 LLM calls), the plan data and shopping list |
+| 4 | **2b.12** Smart prep: ideas (backend) | §19.8: the prep ideas pass, its revision and the prep steps, with an opt-in live test |
+| 5 | **2b.6** Swap (changed) | Also assemblies and "Swap this item" (§19.9), Not for me on dishes, assemblies and items, the time check through the schedule |
+| 6 | **2b.7** Screens (changed) | The fifth tile; the cook-day timeline and cook-day cooking mode; finish tasks on eating days; the batch view with items and stop states; assembly and item pages; start-to-finish minutes in C1b and Settings |
+| 7 | **2b.8** What should I buy? (unchanged) | It plans dishes as designed; smart prep for grocery advice goes to the backlog (V17) |
+
+### 21.2 LLM token impact
+
+Measured today (§15.1): an ideas call ≈ 4.7K (1.5K prompt + 3.1K for 8 ideas), a steps call ≈ 1.2K.
+
+| Call | Today | With these designs | Why |
+|---|---|---|---|
+| Ideas (meal now, meal prep, swap) | ≈ 4.7K | ≈ 5.6K | The freeze note (built this session): +≈ 170 prompt tokens (rules and schema), +≈ 5 a null and ≈ 20 a note per idea. The task list (§20.1): +≈ 80 tokens an idea, schema +≈ 100. The count rule moves from 360 to about 450 tokens an idea; 8 ideas still fit (1.8K + 8 × 450 + 300 ≈ 5.7K of 7.6K) |
+| Steps for one recipe | ≈ 1.2K | ≈ 1.45K | 4 fields a step (≈ +15 tokens), schema +≈ 90 |
+| Prep ideas (new; smart prep gaps only) | – | ≈ 5K | ≈ 2.3K prompt (the full vocabulary, the rules, a larger schema, up to 15 existing items) + ≈ 2.6K for 5 items and 5 assemblies |
+| Prep item steps (first open) | – | ≈ 1.4K | Like a recipe's steps, with stages |
+
+- **Smart prep from the seed pool:** 0 calls. With a gap: 1 prep ideas call (≈ 5K), then ≈ 1.4K for each new item
+  you open.
+- **A typical day** (one meal-now search that writes ideas, one new idea opened): ≈ 6K → ≈ 7K.
+- **The heavy day of §15.2:** ≈ 37K → ≈ 44K, about 29% of the daily guard. The 30K background reserve is still
+  about five searches' worth.
+- **Per minute:** an ideas call (5.6K) or a prep ideas call (5K), then a steps call (1.4K), still fits one minute's
+  8K, so opening a new idea right after usually doesn't wait.
+- The task lists and steps' fields get re-measured in 2b.9's opt-in live test (under 20K tokens), and the count rule
+  uses what it finds.
+
+### 21.3 Open questions (each with my recommended default)
+
+| # | Question | Recommended default |
+|---|---|---|
+| V1 | **Storage rows the chart doesn't have:** cooked rice and grains, cooked vegetables and dal, cut fresh vegetables and salads, sauces and dressings. The FoodSafety.gov chart in the repo covers meat, poultry, fish, eggs, soups and stews, and leftovers of cooked meat or poultry only | You save a second official source as a PDF in `docs/sources/` (the USDA FoodKeeper entries for those foods, or FSIS "Leftovers and Food Safety"), and I transcribe the rows, as for A1. Until then: cooked items use your 3-day leftover window (today's rule for every recipe, dal and rice included), and fresh items (salad, cut vegetables, yogurt sauces) are made on the eating day as a 5-minute finish task |
+| V2 | **Partly cooked meat, poultry, fish or eggs:** may prep stop there? | No: those stop at raw, marinated or fully cooked; "partly cooked" can be stored only for items without them (par-boiled potatoes, blanched vegetables). USDA advises against partly cooking meat or poultry to finish later; I'd add that FSIS page to `docs/sources/` as the cited rule |
+| V3 | **Portion steps and cups:** how are portions measured and shown? | Bases and sides in half portions, proteins and dishes in whole portions. Shown as "1 portion curry · ½ portion rice", and as cups only for grains with a reviewed cooked-volume factor in seed data (cited like D38) |
+| V4 | **Uses per item:** at least 2 meals, or 3? | At least 2 (a hard limit), with a small reward for each use from the third on |
+| V5 | **Variety in smart prep** | An assembly at most once a day and 3 times a week; with 6 or more meals, at least 2 different items that bring the protein |
+| V6 | **Effort against money:** how much is a saved minute worth? | 10 minutes of cook-day hands-on time weighs like $1; a cook session like 20 minutes; a minute of eating-day hands-on time like 1.5 cook-day minutes. Tunable constants, like the other weights |
+| V7 | **Finish time on eating days:** a new per-day setting? | Yes: every day gets a "weeknight time" for finish tasks, default 30 min start to finish (a 25-minute roast fits); reheats always fit. In Settings next to cook days |
+| V8 | **Which cook days** does smart prep use? | Your cook days in the plan's range (or the days you pick on C1b), as few of them as fit |
+| V9 | **Breakfasts, snacks and desserts** in smart prep | Whole dishes as today (one-item assemblies); split items only where seeds or ideas have them |
+| V10 | **Assembly names** | Composed by code from the items (§19.5); an LLM-written assembly may keep its own title; renaming comes with Phase 3's editing |
+| V11 | **Start to finish replaces hands-on for a cook day's minutes** (as you asked; this reverses C1 of 2026-10-08). 45 minutes start to finish is tight: most seeds take 30–60 minutes on their own | One number per cook day, "time in the kitchen, start to finish", checked against the schedule; hands-on is shown but not limited (the mood still limits each recipe's hands-on). The default becomes 90 min, and your saved cook days double (45 → 90, at most 600) with a one-time note in Settings. Quick means "ready within N minutes, start to finish"; One big cook day's stepper is the same start-to-finish time |
+| V12 | **How fast hands-on grows** with batch size | base × (portions ÷ base servings)^0.6: doubling adds about half, quadrupling about 130% |
+| V13 | **Equipment capacity** | The §20.2 table as code constants; a size choice per appliance in Settings → Equipment goes to the backlog |
+| V14 | **Oven sharing** | Two dishes share the oven when their portions fit (8) and their temperatures are within 25°F |
+| V15 | **Recipes without timing tags** (Phase 1 recipes, ideas whose steps are already written) | Code derives the timing from each step's section and duration, marked "estimated" on the timeline; the seeds are tagged by hand |
+| V16 | **Build order** | 2b.9 → 2b.10 → 2b.11 → 2b.12 → 2b.6 → 2b.7 → 2b.8 (§21.1). Phase 2b grows from 9 to 13 steps, so CLAUDE.md's phase outline needs your OK to update (as F18) |
+| V17 | **Smart prep in What should I buy?** | Not in 2b.8 (grocery advice plans dishes, as designed); added to the backlog |

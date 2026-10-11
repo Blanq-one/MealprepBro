@@ -141,12 +141,21 @@ class RecipeIdea(BaseModel):
     total_minutes: int = Field(ge=1, le=720, description="Start-to-finish minutes, including waiting")
     equipment: list[Equipment] = Field(default_factory=list)
     freezer_friendly: bool
+    # the seeds' freeze-note rules (SeedRecipe): same bounds, and only on a recipe that freezes well
+    freeze_note: str | None = Field(
+        default=None,
+        min_length=5,
+        max_length=200,
+        description="Only if freezer_friendly: what to freeze and what to make fresh when serving; else null",
+    )
     ingredients: list[IdeaIngredient] = Field(min_length=2, max_length=20)
 
     @model_validator(mode="after")
     def _structure(self) -> Self:
         if self.total_minutes < self.active_minutes:
             raise ValueError("total_minutes must be >= active_minutes")
+        if self.freeze_note is not None and not self.freezer_friendly:
+            raise ValueError("freeze_note needs freezer_friendly: true; otherwise set it to null")
         names = [i.name.strip().lower() for i in self.ingredients]
         if len(set(names)) != len(names):
             raise ValueError("duplicate ingredient names; combine them into one line")

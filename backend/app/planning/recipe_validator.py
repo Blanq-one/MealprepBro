@@ -209,11 +209,12 @@ def validate_idea(
     idea: RecipeIdea, resolver: IngredientResolver, equipment: frozenset[Equipment]
 ) -> tuple[ValidatedIdea | None, list[str]]:
     """Every recipe check except the step checks: names, units and the as-sold rule, exclusions and held
-    items, plausible amounts, equipment, hands-on time for the mood, and the prose filter on the title and
-    method. (Complete nutrition, caps and the request's own limits are checked by the caller.)"""
+    items, plausible amounts, equipment, hands-on time for the mood, and the prose filter on the title, the
+    method and the freeze note. (Complete nutrition, caps and the request's own limits are checked by the
+    caller.)"""
     lines, _, errors = check_lines(idea.ingredients, idea.base_servings, resolver)
     errors += _basics(idea.equipment, equipment, idea.mood, idea.active_minutes)
-    errors += _prose([idea.title, idea.method])
+    errors += _prose([idea.title, idea.method, idea.freeze_note or ""])
     if errors:
         return None, list(dict.fromkeys(errors))
     return ValidatedIdea(idea, tuple(lines)), []

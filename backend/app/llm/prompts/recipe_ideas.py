@@ -4,7 +4,7 @@ one-line method, equipment and times, and no steps."""
 from app.llm.client import Message
 from app.llm.prompts.common import IDEA_RULES, IdeaContext, equipment_line, ingredient_lists
 
-PROMPT_VERSION = "recipe_ideas/1"
+PROMPT_VERSION = "recipe_ideas/2"  # /2: the optional freeze note (2b.5 approval)
 PURPOSE = "recipe_ideas"
 
 

@@ -8,7 +8,7 @@ advice from step 2b.5.
             request's own: the meal, the mood, the time limits, this week's used-up caps, complete nutrition;
   save      a passing idea becomes a recipe version with `steps_status = pending` and no steps (§13.4), so its
             numbers are code-computed and it ranks and plans like any saved recipe;
-  revise    only when no idea in a batch passes: one `idea_revision/1` call with at most 3 failed ideas.
+  revise    only when no idea in a batch passes: one `idea_revision/2` call with at most 3 failed ideas.
 A failing idea is dropped, with its reasons logged on the call (CLAUDE.md rule 5).
 """
 
@@ -365,6 +365,7 @@ class IdeaGenerator:
             total_minutes=idea.total_minutes,
             equipment=[e.value for e in idea.equipment],
             freezer_friendly=idea.freezer_friendly,
+            freeze_note=idea.freeze_note,
             content_hash=digest,
             prompt_version=prompt_version,
             source_llm_call_id=call_id,

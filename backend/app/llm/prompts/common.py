@@ -68,7 +68,12 @@ deal, sale), internal food temperatures, how many days food keeps, or health cla
 7. equipment lists every appliance the cooking needs, chosen only from the available equipment; pots, \
 pans, sheet pans and knives aren't equipment.
 8. active_minutes is hands-on time; total_minutes also includes waiting (simmering, chilling, soaking).
-9. Reply with JSON only."""
+9. freezer_friendly is true when the cooked dish freezes and reheats well (rice dishes, curries, gravies, \
+cooked meats), false when it is mostly fresh, raw or creamy (salads, yogurt sauces, puddings). When it \
+freezes well but part of it is best fresh, freeze_note is one line saying what to freeze and what to make \
+fresh when serving ("Freeze the chicken and rice; make the yogurt sauce fresh."); otherwise freeze_note is \
+null.
+10. Reply with JSON only."""
 
 STEP_RULES = """\
 You write clear, practical cooking steps for one saved recipe. Its ingredients, amounts, equipment and \
