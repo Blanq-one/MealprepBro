@@ -117,16 +117,21 @@ def test_full_week_becomes_active_and_validator_recomputation_matches_stored_tot
 
 
 def test_a_drink_slot_with_too_little_monday_time_is_explained(seeded_db):
-    # (with the M13 library the default 45 minutes fit a Monday with a drink, so Monday gets 25)
+    # (with the M13 library the default 45 minutes fit a Monday with a drink, so Monday gets 25; every
+    # eligible recipe is tried before no plan fits, P3, so the quickest Monday needs 40)
     monday_25 = [DayOverride(day=WEEK, cook_minutes=25)]
     client = FakeLLMClient([fixture_response("drinks_batch.json")])
     out = run(seeded_db, client, slot_kcal=WITH_DRINK, day_overrides=monday_25)
     assert out.status == "infeasible"
     assert any(
-        d.code == "COOK_TIME_SHORT" and "you have 25 (short by 20)" in d.message for d in out.diagnostics
+        d.code == "COOK_TIME_SHORT"
+        and d.message == "Monday needs 40 minutes of hands-on cooking; you set 25."
+        and d.suggested_minutes == 40
+        for d in out.diagnostics
     )
 
 
+@pytest.mark.slow  # one of the heaviest solver tests: --run-slow (2b.3b approval, P6)
 def test_a_drink_slot_triggers_generation_for_that_slot_only(seeded_db):
     client = FakeLLMClient([fixture_response("drinks_batch.json")])
     out = run(seeded_db, client, slot_kcal=WITH_DRINK, day_overrides=MONDAY_60)
@@ -135,6 +140,7 @@ def test_a_drink_slot_triggers_generation_for_that_slot_only(seeded_db):
     assert sum(1 for m in out.plan.meals if m.slot is MealSlot.DRINK) == 7
 
 
+@pytest.mark.slow  # one of the heaviest solver tests: --run-slow (2b.3b approval, P6)
 def test_identical_rerun_makes_zero_llm_calls(seeded_db):
     first = run(
         seeded_db,
@@ -237,7 +243,7 @@ def unprice(session, slug):
     session.flush()
 
 
-@pytest.mark.parametrize("budget_cents", [15000, None])
+@pytest.mark.parametrize("budget_cents", [15000, pytest.param(None, marks=pytest.mark.slow)])  # P6
 def test_an_unpriced_regular_item_with_and_without_a_budget(seeded_db, budget_cents):
     """Your rule: a budget (a hard limit on regular groceries) excludes recipes with unpriced regular
     ingredients and says why; without a budget they stay and the cost is marked incomplete."""
@@ -246,7 +252,8 @@ def test_an_unpriced_regular_item_with_and_without_a_budget(seeded_db, budget_ce
     if budget_cents is not None:
         assert out.status == "infeasible"
         text = " ".join(d.message for d in out.diagnostics)
-        assert "Greek yogurt, plain nonfat has no price" in text and "budget can't be checked" in text
+        assert "recipes use Greek yogurt, plain nonfat, which has no price at your stores" in text
+        assert "so your budget can't be checked" in text
     else:
         assert out.status == "succeeded", out.error
         assert not out.plan.totals.cost_complete and not out.plan.costs.complete
@@ -262,6 +269,7 @@ def add_powder(session, scoops=40):
     add_lot(session, user.id, LotInput(powder, Decimal(scoops), "scoop", StorageLocation.PANTRY))
 
 
+@pytest.mark.slow  # one of the heaviest solver tests: --run-slow (2b.3b approval, P6)
 def test_inventory_mode_with_an_empty_fridge_explains_exactly_what_is_missing(seeded_db):
     add_powder(seeded_db)  # the powder is the only thing in stock
     out = run(seeded_db, None, mode=PlanningMode.INVENTORY, allow_llm=False)
@@ -276,6 +284,7 @@ def test_inventory_mode_with_an_empty_fridge_explains_exactly_what_is_missing(se
     assert out.error["code"] == "infeasible" and plans(seeded_db) == 0
 
 
+@pytest.mark.slow  # one of the heaviest solver tests: --run-slow (2b.3b approval, P6)
 def test_shop_budget_too_low_for_the_seed_week_says_what_the_cheapest_plan_costs(seeded_db):
     add_powder(seeded_db)  # with the powder in stock, the budget can be checked
     out = run(seeded_db, None, budget_cents=3000, allow_llm=False)

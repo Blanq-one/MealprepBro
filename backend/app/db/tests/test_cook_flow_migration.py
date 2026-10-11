@@ -13,6 +13,7 @@ from sqlalchemy.engine import make_url
 
 from app.schemas.settings import UserSettings
 from app.seed.files import DATA_DIR
+from app.testing.databases import per_worker
 from conftest import alembic_config
 
 TABLES_0005 = {"recipe_favorite", "recipe_saved", "feedback_event", "cook_search"}
@@ -27,7 +28,7 @@ V3_DEFAULTS = {
 @pytest.fixture
 def scratch_db_url(test_db_url: str) -> Iterator[str]:
     url = make_url(test_db_url)
-    name = "mealbro_cook_flow_check"
+    name = per_worker("mealbro_cook_flow_check")
     admin = create_engine(url, isolation_level="AUTOCOMMIT")
     with admin.connect() as conn:
         conn.execute(text(f"DROP DATABASE IF EXISTS {name}"))

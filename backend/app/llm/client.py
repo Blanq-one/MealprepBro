@@ -1,14 +1,15 @@
 """The LLM client protocol and the Groq implementation.
 
 This is the ONLY module that imports the Groq SDK (CLAUDE.md rule 6). The model name comes from
-LLM_MODEL. Requests are never streamed and never use tools: `LLMRequest` has no way to ask for either,
-and structured outputs are always sent as a JSON-schema response format. The one exception is plain JSON
-mode (no schema), used only by the opt-in live test to measure what the schema costs (step 2b.3b).
+LLM_MODEL (the ideas pass: LLM_IDEAS_MODEL, see `OnModel`). Requests are never streamed and never use tools:
+`LLMRequest` has no way to ask for either, and structured outputs are always sent as a JSON-schema response
+format. The one exception is plain JSON mode (no schema), used only by the opt-in live test to measure what
+the schema costs (step 2b.3b).
 """
 
 import time
 from collections.abc import Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Protocol
 
 import groq
@@ -38,6 +39,7 @@ class LLMRequest:
     max_completion_tokens: int
     reasoning_effort: str | None = None
     timeout_s: float | None = None  # this call only (what's left of the request's budget); None = the default
+    model: str | None = None  # this call only (LLM_IDEAS_MODEL); None = the client's model (LLM_MODEL)
 
 
 @dataclass(frozen=True)
@@ -159,7 +161,7 @@ class GroqLLMClient:
             }
         )
         kwargs: dict[str, Any] = {
-            "model": self.model,
+            "model": request.model or self.model,
             "messages": list(request.messages),
             "response_format": response_format,
             "max_completion_tokens": request.max_completion_tokens,
@@ -209,6 +211,18 @@ class GroqLLMClient:
             latency_ms=latency_ms,
             rate_limit=parse_rate_limit(raw.headers),
         )
+
+
+class OnModel:
+    """A client sending every request to another model of the same provider (LLM_IDEAS_MODEL)."""
+
+    def __init__(self, inner: LLMClient, model: str) -> None:
+        self.inner = inner
+        self.provider = inner.provider
+        self.model = model
+
+    def complete(self, request: LLMRequest) -> LLMResponse:
+        return self.inner.complete(replace(request, model=self.model))
 
 
 def make_client(settings: Settings) -> GroqLLMClient:

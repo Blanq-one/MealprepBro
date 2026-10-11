@@ -261,11 +261,21 @@ def build_problem(
                 reasons.append(f"incomplete nutrition: {profile.name} has no {', '.join(missing_core)}")
                 codes.append("nutrition_incomplete")
         mood = RecipeMood(version.mood)
+        blocker: str | None = None
         if not _cook_day_fits(c, mood, version.active_minutes):
-            reasons.append(
-                f"needs {version.active_minutes} hands-on minutes on a {mood.value}-or-busier cook day; "
-                "none of this week's cook days allows that"
-            )
+            days = [d for d in c.days if d.is_cook_day and mood_allows(d.mood, mood)]
+            if not days:
+                blocker = "mood"
+                reasons.append(
+                    f"it's a {mood.value} recipe and none of your cook days is set to {mood.value}"
+                )
+            else:
+                blocker = "minutes"
+                longest = max(d.cook_minutes_available for d in days)
+                reasons.append(
+                    f"it needs {version.active_minutes} minutes of hands-on cooking; your longest cook day "
+                    f"for it allows {longest}"
+                )
             codes.append("time")
         for line in counted:
             plan = plans[line.ingredient_id]
@@ -304,6 +314,9 @@ def build_problem(
                     tuple(held),
                     tuple(unpriced),
                     tuple(dict.fromkeys(codes)),
+                    blocker=blocker,
+                    mood=mood,
+                    active_minutes=version.active_minutes,
                 )
             )
             continue

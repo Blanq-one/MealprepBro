@@ -5799,6 +5799,30 @@
    "kind": "whole_cut",
    "bone": "boneless",
    "skin": "skinless"
+  },
+  {
+   "ingredient": "salmon",
+   "kind": "fish_fillet",
+   "bone": null,
+   "skin": null
+  },
+  {
+   "ingredient": "tilapia",
+   "kind": "fish_fillet",
+   "bone": null,
+   "skin": null
+  },
+  {
+   "ingredient": "cod",
+   "kind": "fish_fillet",
+   "bone": null,
+   "skin": null
+  },
+  {
+   "ingredient": "shrimp",
+   "kind": "shellfish",
+   "bone": null,
+   "skin": null
   }
  ]
 }

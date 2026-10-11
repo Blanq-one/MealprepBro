@@ -234,8 +234,10 @@ def test_the_gap_rule_counts_good_matches_below_six(api, seeded_db):
     add_stock(seeded_db, "rice-long-grain-white", 2000, location=StorageLocation.PANTRY)
     add_stock(seeded_db, "egg-large", 12, "count")
     add_stock(seeded_db, "chickpeas-canned", 500, location=StorageLocation.PANTRY)
-    enough = final(meal_now(api, slot="dinner"))  # rice, eggs and chickpeas bring in four more
-    assert (enough["good_matches"], enough["ideas_needed"]) == (8, False)
+    # rice, eggs and chickpeas bring in two more; the salmon and shrimp dishes don't count your chicken (fish
+    # and shellfish swap only within their own groups, 2b.3b approval P2)
+    enough = final(meal_now(api, slot="dinner"))
+    assert (enough["good_matches"], enough["ideas_needed"]) == (6, False)
     assert enough["status"] == "succeeded" and enough["notes"] == []
 
 

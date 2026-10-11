@@ -136,9 +136,10 @@ CHICKEN_CUTS: list[tuple[str, str, str]] = [
     ("chicken-whole", "bone_in", "skin_on"),
 ]
 
-# ---------------- ground meat vs whole cuts (2b.4 fixes approval): never swapped for each other ----------------
-# Ground swaps only with ground; a whole cut only with a whole cut of the same bone and skin. Pork and beef have
-# no skin to speak of, so their cuts are "skinless". Sausages, deli meats, fish and eggs are neither.
+# ---------------- swap groups for meat and fish (2b.4 fixes approval N2, 2b.3b approval P2) ----------------
+# Ground swaps only with ground; a whole cut only with a whole cut of the same bone and skin; fish fillets
+# only with fish fillets; shellfish only with shellfish. Pork and beef have no skin to speak of, so their
+# cuts are "skinless". Sausages, deli meats, canned tuna, eggs and tofu are in no group.
 MEAT_FORMS: list[tuple[str, str, str | None, str | None]] = [
     ("ground-chicken", "ground", None, None),
     ("ground-turkey-93", "ground", None, None),
@@ -149,6 +150,10 @@ MEAT_FORMS: list[tuple[str, str, str | None, str | None]] = [
     ("pork-chop-boneless", "whole_cut", "boneless", "skinless"),
     ("pork-tenderloin", "whole_cut", "boneless", "skinless"),
     ("beef-sirloin-steak", "whole_cut", "boneless", "skinless"),
+    ("salmon", "fish_fillet", None, None),
+    ("tilapia", "fish_fillet", None, None),
+    ("cod", "fish_fillet", None, None),
+    ("shrimp", "shellfish", None, None),
 ]
 
 # ---------------- close matches, always labeled (M7): a name with no ingredient of its own ----------------
@@ -875,7 +880,8 @@ def build() -> dict[str, Any]:
         ],
         "close_matches": [{"alias": alias, "ingredient": slug} for alias, slug in CLOSE_MATCHES],
         "meat_forms": [
-            {"ingredient": slug, "kind": kind, "bone": bone, "skin": skin} for slug, kind, bone, skin in MEAT_FORMS
+            {"ingredient": slug, "kind": kind, "bone": bone, "skin": skin}
+            for slug, kind, bone, skin in MEAT_FORMS
         ],
     }
 
@@ -915,10 +921,11 @@ def review_sheet() -> str:
     ]
     out += [
         "",
-        "## Ground meat and whole cuts are never swapped for each other",
+        "## Swap groups for meat and fish",
         "",
-        "Ground swaps only with ground; a whole cut only with a whole cut of the same bone and skin;",
-        "neither ever stands in for, or is replaced by, anything else.",
+        "Ground swaps only with ground; a whole cut only with a whole cut of the same bone and skin; fish",
+        "fillets only with fish fillets; shellfish only with shellfish. Nothing in a group stands in for,",
+        "or is replaced by, anything outside it.",
         "",
         "| Ingredient | Kind | Bone | Skin |",
         "|---|---|---|---|",

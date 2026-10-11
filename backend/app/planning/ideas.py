@@ -156,7 +156,7 @@ class IdeaGenerator:
     ) -> None:
         self.session = session
         self.user_id = user_id
-        self.llm = llm
+        self.llm = llm.for_ideas()  # LLM_IDEAS_MODEL when set (P5)
         self.resolver = resolver or IngredientResolver(session, user_id)
 
     # ---- size ----
@@ -232,7 +232,11 @@ class IdeaGenerator:
                 failed.append((idea, errors))
                 continue
             self._keep(outcome, validated, result.final_call_id, recipe_ideas.PROMPT_VERSION)
-        self._note(result.final_call_id, outcome.dropped)
+        self._note(
+            result.final_call_id,
+            outcome.dropped,
+            rate=(size.count, len(result.value.ideas), len(outcome.passed)),
+        )
         if not outcome.passed and failed and revise:
             outcome.revised = True
             self._revise(req, failed[:MAX_REVISED], result.final_call_id, outcome, daily_reserve)
@@ -285,8 +289,14 @@ class IdeaGenerator:
         first = self.session.get(LlmCall, result.call_ids[0])
         if first is not None and first.parent_call_id is None:
             first.parent_call_id = parent_id
+        kept_before = len(outcome.passed)
         for n in sorted(holder):
             self._keep(outcome, holder[n], result.final_call_id, idea_revision.PROMPT_VERSION)
+        self._note(
+            result.final_call_id,
+            {},
+            rate=(len(failed), len(result.value.ideas), len(outcome.passed) - kept_before),
+        )
 
     def _keep(
         self, outcome: IdeasOutcome, validated: ValidatedIdea, call_id: int, prompt_version: str
@@ -298,11 +308,20 @@ class IdeaGenerator:
         if created:
             outcome.created.append(version_id)
 
-    def _note(self, call_id: int, issues: dict[str, list[str]]) -> None:
+    def _note(self, call_id: int, issues: dict[str, list[str]], *, rate: tuple[int, int, int]) -> None:
+        """On the call's log row: why ideas were dropped, and the pass rate (P7): ideas asked for, returned
+        and kept (passed the checks; one identical to a saved idea counts too)."""
         row = self.session.get(LlmCall, call_id)
         if row is None:
             return
         detail = dict(row.error_detail or {})
+        asked, returned, kept = rate
+        detail["ideas"] = {
+            "asked": asked,
+            "returned": returned,
+            "kept": kept,
+            "pass_rate": round(kept / asked, 3) if asked else None,
+        }
         if issues:
             detail["idea_issues"] = issues
         if self.resolver.unresolved:

@@ -230,3 +230,79 @@ def test_two_stage_generation_token_report(seeded_db):
     purposes = {r.purpose for r in seeded_db.scalars(select(LlmCall))}
     assert {"candidate_generation", "recipe_ideas", "recipe_steps"} <= purposes
     assert steps.status == "ready", steps.error
+
+
+# ---------------- the ideas model: speed vs pass rate (2b.3b approval, P5) ----------------
+COMPARE = os.environ.get("LLM_COMPARE_MODELS", "openai/gpt-oss-20b,openai/gpt-oss-120b").split(",")
+
+
+def test_ideas_model_comparison(seeded_db):
+    """The same ideas prompt on each model in LLM_COMPARE_MODELS, 2 runs each, alternating (each model has
+    its own per-minute allowance): latency, tokens, and ideas asked / returned / passing the checks. About 4
+    calls, ~20K tokens. Run alone: RUN_LIVE_LLM_TESTS=1 uv run pytest -m live_llm -s -k comparison"""
+    settings = get_settings()
+    user = current_user(seeded_db)
+    clock = SystemClock()
+    thighs = seeded_db.scalars(
+        select(Ingredient.id).where(Ingredient.slug == "chicken-thigh-boneless-skinless")
+    )
+    add_lot(seeded_db, user.id, LotInput(thighs.one(), Decimal(700), "g", StorageLocation.FRIDGE))
+    answers = CookAnswers(mode="now", slot=MealSlot.DINNER, goals=["high_protein"])
+    user_settings = load_settings(seeded_db, user.id)
+    query = answers_mod.resolve(answers, user_settings, datetime.now(ZoneInfo(user.timezone)))
+    pool = load_pool(seeded_db, user.id, user_settings, query)
+    resolver = IngredientResolver(seeded_db, user.id)
+    req = meal_now_request(
+        seeded_db,
+        user.id,
+        user_settings,
+        query,
+        pool,
+        resolver=resolver,
+        on_screen=[card["title"] for card in rank_pool(seeded_db, pool, query).cards],
+    )
+    rows: list[dict[str, Any]] = []
+    for model in [m.strip() for _ in range(2) for m in COMPARE]:
+        model_settings = settings.model_copy(update={"llm_model": model, "llm_ideas_model": None})
+        client = make_client(model_settings)
+        run = GenerationRun(user_id=user.id, purpose="meal_now", status="running")
+        seeded_db.add(run)
+        seeded_db.flush()
+        ctx = LLMRunContext(
+            client, seeded_db, model_settings, run.id, clock, deadline=Deadline.after(clock, 240)
+        )
+        started = time.monotonic()
+        try:
+            outcome = IdeaGenerator(seeded_db, user.id, ctx, resolver).generate(req, revise=False)
+            error = None
+        except LLMError as exc:
+            outcome, error = None, str(exc)[:200]
+        wall = round(time.monotonic() - started, 1)
+        logged = list(
+            seeded_db.scalars(select(LlmCall).where(LlmCall.generation_run_id == run.id).order_by(LlmCall.id))
+        )
+        ideas = (
+            next(
+                (c.error_detail or {}).get("ideas")
+                for c in reversed(logged)
+                if (c.error_detail or {}).get("ideas")
+            )
+            if logged
+            else None
+        )
+        row = {
+            "model": model,
+            "wall_s": wall,
+            "attempts": [
+                (c.attempt, c.outcome, c.latency_ms, c.prompt_tokens, c.completion_tokens) for c in logged
+            ],
+            "tokens": sum((c.prompt_tokens or 0) + (c.completion_tokens or 0) for c in logged),
+            "ideas": ideas,
+            "passed": len(outcome.passed) if outcome else 0,
+            "dropped": {k: v[:1] for k, v in (outcome.dropped if outcome else {}).items()},
+            "error": error,
+        }
+        rows.append(row)
+        print("\nCOMPARE " + json.dumps(row))
+    print("\nCOMPARISON " + json.dumps(rows))
+    assert sum(r["tokens"] for r in rows) < 40_000

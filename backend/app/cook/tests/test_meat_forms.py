@@ -1,6 +1,8 @@
-"""Ground meat and whole cuts are never swapped for each other (2b.4 fixes approval): ground swaps only with
-ground (ground turkey and ground chicken are fine for each other), a whole cut only with a whole cut of the
-same bone and skin, and neither with anything that is neither."""
+"""Swap groups for meat and fish. Ground meat and whole cuts are never swapped for each other (2b.4 fixes
+approval, N2): ground swaps only with ground (ground turkey and ground chicken are fine for each other), a
+whole cut only with a whole cut of the same bone and skin. Fish fillets swap only with fish fillets and
+shellfish only with shellfish (2b.3b approval, P2); eggs and tofu never stand in for either, and fish never
+becomes chicken."""
 
 from decimal import Decimal
 
@@ -88,7 +90,9 @@ def test_the_catalog_names_every_ground_meat_and_whole_cut(seeded_db):
     for cut in catalog_file().chicken_cuts:  # every chicken cut is a whole cut of its own bone and skin
         assert meat_of[data[cut.ingredient].id] == MeatForm("whole_cut", CutForm(cut.bone, cut.skin))
     assert kinds["turkey-breast"] == "whole_cut"
-    assert not {"salmon", "chicken-sausage", "egg-large", "tofu-firm"} & set(kinds)  # neither
+    assert {kinds["salmon"], kinds["tilapia"], kinds["cod"], kinds["shrimp"]} == {"fish_fillet", "shellfish"}
+    assert kinds["shrimp"] == "shellfish"
+    assert not {"tuna-canned", "chicken-sausage", "egg-large", "tofu-firm"} & set(kinds)  # in no group
 
 
 def test_on_a_card_ground_turkey_is_never_swapped_for_your_chicken_thighs(api, seeded_db):
@@ -106,3 +110,50 @@ def test_on_a_card_ground_turkey_is_never_swapped_for_your_chicken_thighs(api, s
     add_stock(seeded_db, "ground-chicken", 500)  # ground chicken you have is fine
     card = next(c for c in results(meal_now(api, slot="dinner")) if c["title"] == "Turkey test skillet")
     assert [s["substitute"]["name"] for s in card["swaps"]] == ["ground chicken"]
+
+
+# ---------------- fish fillets and shellfish (2b.3b approval, P2) ----------------
+FISH = MeatForm("fish_fillet")
+SHELLFISH = MeatForm("shellfish")
+
+
+def test_fish_and_shellfish_each_swap_only_within_their_group():
+    assert may_swap(FISH, FISH) and may_swap(SHELLFISH, SHELLFISH)
+    assert not may_swap(FISH, SHELLFISH) and not may_swap(FISH, BONELESS) and not may_swap(SHELLFISH, GROUND)
+    assert not may_swap(None, FISH) and not may_swap(SHELLFISH, None)
+
+
+def test_salmon_becomes_cod_never_chicken_eggs_or_tofu():
+    salmon = _line(FISH, "salmon, Atlantic, fillet")
+    assert find_substitute(salmon, [_have(2, BONELESS, "chicken thigh, boneless skinless")], []) is None
+    assert find_substitute(salmon, [_have(3, None, "egg, large")], []) is None
+    assert find_substitute(salmon, [_have(4, None, "tofu")], []) is None
+    assert find_substitute(salmon, [_have(5, SHELLFISH, "shrimp, raw")], []) is None
+    cod = find_substitute(salmon, [_have(6, FISH, "cod fillet")], [])
+    assert cod is not None and cod.ingredient_id == 6
+
+
+def test_shrimp_swaps_only_with_shellfish_and_chicken_never_becomes_fish():
+    shrimp = _line(SHELLFISH, "shrimp, raw")
+    assert find_substitute(shrimp, [_have(2, FISH, "salmon"), _have(3, None, "tofu")], []) is None
+    other = find_substitute(shrimp, [_have(4, SHELLFISH, "scallops")], [])
+    assert other is not None and other.ingredient_id == 4
+    thigh = _line(BONELESS, "chicken thigh, boneless skinless")
+    assert find_substitute(thigh, [_have(5, FISH, "salmon")], []) is None
+
+
+def test_on_a_card_salmon_swaps_for_your_cod_but_never_your_chicken_or_eggs(api, seeded_db):
+    add_recipe(
+        seeded_db,
+        "Salmon test bowl",
+        [("salmon", 450, "g", "protein"), ("rice-long-grain-white", 200, "g", "carb")],
+    )
+    add_stock(seeded_db, "chicken-thigh-boneless-skinless", 900)
+    add_stock(seeded_db, "egg-large", 12, "count")
+    card = next(c for c in results(meal_now(api, slot="dinner")) if c["title"] == "Salmon test bowl")
+    assert "salmon, Atlantic, fillet" not in [s["name"] for s in card["swaps"]]
+    add_stock(seeded_db, "cod", 500)
+    card = next(c for c in results(meal_now(api, slot="dinner")) if c["title"] == "Salmon test bowl")
+    assert [s["substitute"]["name"] for s in card["swaps"] if s["name"] == "salmon, Atlantic, fillet"] == [
+        "cod fillet"
+    ]

@@ -2,6 +2,8 @@
 
 from datetime import date
 
+import pytest
+
 from app.schemas.plans import PlanRequest
 from app.services.inventory import list_lots
 from app.services.plans import run_plan_now
@@ -30,6 +32,7 @@ def test_leftovers_carry_over_frozen_protein_and_stock_up_but_not_at_risk_food(s
     assert any(item.name == "protein powder, double chocolate" for item in carried)  # the rest of the tub
 
 
+@pytest.mark.slow  # one of the heaviest solver tests: --run-slow (2b.3b approval, P6)
 def test_week_two_plans_from_week_ones_leftovers(seeded_db):
     user = current_user(seeded_db)
     sim = simulate(seeded_db, user.id, WEEK, 2, last_week_budget_cents=5000)

@@ -392,19 +392,19 @@ class CloseMatch(_Strict):
 
 
 class MeatFormEntry(_Strict):
-    """Ground meat or a whole cut (2b.4 fixes approval): ground swaps only with ground, a whole cut only with
-    a whole cut of the same bone and skin, never one for the other."""
+    """Ground meat, a whole cut, a fish fillet or shellfish (2b.4 fixes approval, N2; 2b.3b approval, P2):
+    each swaps only within its group, and a whole cut only with one of the same bone and skin."""
 
     ingredient: str
-    kind: Literal["ground", "whole_cut"]
+    kind: Literal["ground", "whole_cut", "fish_fillet", "shellfish"]
     bone: Literal["bone_in", "boneless"] | None = None  # whole cuts only
     skin: Literal["skin_on", "skinless"] | None = None
 
     @model_validator(mode="after")
     def _form(self) -> Self:
         has_form = self.bone is not None or self.skin is not None
-        if self.kind == "ground" and has_form:
-            raise ValueError(f"{self.ingredient}: ground meat has no bone or skin")
+        if self.kind != "whole_cut" and has_form:
+            raise ValueError(f"{self.ingredient}: only a whole cut has a bone and skin form")
         if self.kind == "whole_cut" and (self.bone is None or self.skin is None):
             raise ValueError(f"{self.ingredient}: a whole cut needs its bone and skin")
         return self

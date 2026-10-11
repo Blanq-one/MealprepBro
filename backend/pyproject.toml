@@ -24,6 +24,7 @@ dev = [
     "httpx>=0.28",
     "ruff>=0.8",
     "mypy>=1.13",
+    "pytest-xdist>=3.8.0",
 ]
 
 [tool.uv]
@@ -32,7 +33,7 @@ package = false
 
 [tool.pytest.ini_options]
 testpaths = ["app"]
-addopts = "-ra --strict-markers"
+addopts = "-ra --strict-markers -n auto"  # in parallel, one database per worker (conftest.py)
 filterwarnings = [
     # Starlette suggests a different HTTP client package for TestClient; httpx is the approved one.
     "ignore:Using `httpx` with `starlette.testclient` is deprecated",

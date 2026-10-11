@@ -263,3 +263,38 @@ def test_a_batch_with_no_valid_idea_is_retried_with_the_errors(seeded_db):
     outcome = generator(seeded_db, fake).generate(request())
     assert fake.calls == 2 and len(outcome.created) == 1
     assert "method" in fake.requests[1].messages[-1]["content"]
+
+
+def test_the_pass_rate_is_logged_on_the_call(seeded_db):
+    """P7 (2b.3b approval): ideas asked for, returned and kept, on the ideas call's log row."""
+    fake = FakeLLMClient([response({"ideas": [idea(), idea("Fancy", mood="fancy"), idea("Third")]})])
+    gen = generator(seeded_db, fake, limit=8000)
+    asked = gen.size(request()).count
+    gen.generate(request())
+    row = seeded_db.scalars(select(LlmCall).where(LlmCall.purpose == "recipe_ideas")).one()
+    assert row.error_detail["ideas"] == {
+        "asked": asked,
+        "returned": 3,
+        "kept": 2,
+        "pass_rate": round(2 / asked, 3),
+    }
+
+
+def test_ideas_go_to_the_ideas_model_on_the_runs_own_call_cap(seeded_db):
+    """P5: with LLM_IDEAS_MODEL set, the ideas call goes to that model and is logged under it; the run keeps
+    one call cap, and everything else stays on LLM_MODEL."""
+    user = current_user(seeded_db)
+    run = GenerationRun(user_id=user.id, purpose="meal_now", status="running")
+    seeded_db.add(run)
+    seeded_db.flush()
+    fake = FakeLLMClient([response({"ideas": [idea()]})])
+    settings = make_settings(llm_ideas_model="ideas-model")
+    ctx = LLMRunContext(fake, seeded_db, settings, run.id, FakeClock())
+    gen = IdeaGenerator(seeded_db, user.id, ctx)
+    gen.generate(request())
+    assert [r.model for r in fake.requests] == ["ideas-model"]
+    row = seeded_db.scalars(select(LlmCall).where(LlmCall.purpose == "recipe_ideas")).one()
+    assert row.model == "ideas-model"
+    assert gen.llm.calls is ctx.calls and ctx.client is fake
+    plain = LLMRunContext(fake, seeded_db, make_settings(), run.id, FakeClock())
+    assert plain.for_ideas() is plain

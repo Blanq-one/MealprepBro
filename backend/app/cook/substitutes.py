@@ -216,6 +216,8 @@ def find_substitute(
         if line.grouped:
             if line.group is None or have.group != line.group:  # the group decides, whatever the role
                 continue
+        elif line.meat is not None:
+            pass  # a meat or fish group decides too (_same_kind): cod for salmon, even if no recipe uses cod
         elif have.category != line.category or line.role not in have.roles:
             continue
         grams = _grams_for(line, have, rule)

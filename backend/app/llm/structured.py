@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from app.config import Settings
 from app.db.models import GenerationRun, LlmCall
-from app.llm.client import LLMClient, LLMRequest, LLMResponse, Message
+from app.llm.client import LLMClient, LLMRequest, LLMResponse, Message, OnModel
 from app.llm.errors import (
     LLMConfigError,
     LLMOutputError,
@@ -123,6 +123,24 @@ class LLMRunContext:
     @property
     def strict(self) -> bool:
         return self.settings.llm_structured_mode == "strict"
+
+    def for_ideas(self) -> "LLMRunContext":
+        """This run on LLM_IDEAS_MODEL: the same call cap, daily guard and deadline, paced on that model's own
+        per-minute allowance and logged under its name. Itself when LLM_IDEAS_MODEL is empty or the same."""
+        model = self.settings.llm_ideas_model
+        if not model or model == self.client.model:
+            return self
+        view = LLMRunContext(
+            OnModel(self.client, model),
+            self.session,
+            self.settings,
+            self.run_id,
+            self.clock,
+            deadline=self.deadline,
+            on_wait=self.on_wait,
+        )
+        view.calls = self.calls
+        return view
 
     def generate[T: BaseModel](self, spec: StructuredSpec[T]) -> StructuredResult[T]:
         return _generate(self, spec)

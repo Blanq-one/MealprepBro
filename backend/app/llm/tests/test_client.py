@@ -166,6 +166,26 @@ def test_groq_client_sends_the_env_model_and_never_streams(monkeypatch, strict):
     assert result.rate_limit.remaining_tokens == 7000
 
 
+def test_the_ideas_model_comes_from_its_own_variable_and_rides_on_the_request(monkeypatch):
+    """P5: LLM_IDEAS_MODEL (empty = LLM_MODEL) reaches the provider through `OnModel`; logs use its name."""
+    monkeypatch.setenv("LLM_MODEL", "model-from-env")
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+    monkeypatch.setenv("LLM_IDEAS_MODEL", "  ")
+    assert Settings(_env_file=None).llm_ideas_model is None
+    monkeypatch.setenv("LLM_IDEAS_MODEL", "ideas-model-from-env")
+    settings = Settings(_env_file=None)
+    client = make_client(settings)
+    stub = _StubCompletions()
+    monkeypatch.setattr(client, "_client", SimpleNamespace(chat=SimpleNamespace(completions=stub)))
+    assert settings.llm_ideas_model is not None
+    routed = client_module.OnModel(client, settings.llm_ideas_model)
+    assert (routed.provider, routed.model) == ("groq", "ideas-model-from-env")
+    routed.complete(_request(True))
+    assert stub.kwargs["model"] == "ideas-model-from-env"
+    client.complete(_request(True))
+    assert stub.kwargs["model"] == "model-from-env"
+
+
 def test_make_client_needs_a_key_and_a_model(monkeypatch):
     monkeypatch.delenv("GROQ_API_KEY", raising=False)
     monkeypatch.delenv("LLM_MODEL", raising=False)

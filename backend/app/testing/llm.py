@@ -23,6 +23,7 @@ def make_settings(mode: str = "strict", **overrides: Any) -> Settings:
     values: dict[str, Any] = {
         "llm_structured_mode": mode,
         "llm_model": "fake-model",
+        "llm_ideas_model": None,  # not LLM_IDEAS_MODEL from the container's environment
         "llm_max_attempts": 3,
         "llm_max_transport_retries": 3,
         "llm_daily_token_budget": 150_000,

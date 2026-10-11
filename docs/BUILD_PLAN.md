@@ -1,7 +1,8 @@
 # Mealbro Build Plan
 
 **Status:** v3, **approved** 2026-10-08 with the changes recorded in §12.1. Phase 0 approved. Phase 1 approved 2026-10-09 (with C1–C8 and D1–D22); a post-approval round (C9–C14, D23–D28) is done. A3 is answered in `docs/hosting.md`; the hosting decision changed at the Phase 2 kickoff to Vercel Hobby + Neon Free, $0/month (K1, §12.1). Phase 2 (PWA, deploy prep only) was approved 2026-10-10. **Phase 2b (cook-first redesign) was added and its spec approved 2026-10-10** (with changes E10–E13, §12.1): the spec is `docs/FLOW_SPEC.md` and the build steps are in §9. Step 2b.1 (backend foundations) was built and **approved 2026-10-10, including D44–D53**; step 2b.2 (look, shell, onboarding, Settings, Pantry) started the same day. **Addition (2026-10-10, E15–E17):** two-stage recipe generation (ideas for the cards, steps on first open, and after the first More ideas tap a background batch for later taps) to fit Groq's 8K tokens a minute; the target-0 fallback for the protein cap; and step 2b.3 split into 2b.3a (ranking and cards) and 2b.3b (ideas, steps, background batch). All approved. **Step 2b.2 was approved 2026-10-10, including D54–D64** (H1–H6, §12.1): a footer fix on question screens, a new build order (**2b.3a → 2b.4 → 2b.3b**, then 2b.5–2b.8, so the meal-now flow can be used before LLM ideas exist), notes for 2b.5 and 2b.7 (the plan view's Prep notes row; a "How do you want to cook?" step with four options) and a pre-deploy item (§12.4). Step 2b.3a (ranking and cards) was built the same day and **approved, including D65–D76** (J1–J6, §12.1: culinary groups for vegetable swaps, a Mark cooked fix, and three additions to 2b.4). Step 2b.4 (the meal-now screens, with J2–J6) was built the same day and **approved, including D77–D88** (M1–M20, §12.1); its follow-up fixes were built and committed on their own, and **approved 2026-10-10 (N1–N3, §12.1:
-the ground-vs-whole-cut swap rule and the mapping review)**. Step 2b.3b (LLM ideas, steps on first open, More ideas and the background batch, rate-limit waits, the live token test, and the screens that need ideas) was built 2026-10-11 with D89–D101 and awaits approval; the live findings are in FLOW_SPEC §15.1.
+the ground-vs-whole-cut swap rule and the mapping review)**. Step 2b.3b (LLM ideas, steps on first open, More ideas and the background batch, rate-limit waits, the live token test, and the screens that need ideas) was built 2026-10-11 with D89–D101 and **approved the same day (P1–P8, §12.1: fish and shellfish swap groups, a shortlist regression fix, a plainer time/mood message, an ideas-model speed check, faster tests, the ideas pass rate)**; the live findings are in FLOW_SPEC §15.1. The pre-work (P2–P7) was done 2026-10-11 with
+D102–D106 (2b.3b's approval note in §9); step 2b.5 waits on one storage question (the freeze note) asked there.
 **Source documents:** `CLAUDE.md` (build rules, wins on conflict), `docs/PRD.md` (product vision; "Primary user flow" at the top), `docs/FLOW_SPEC.md` (screens and backend work for Phase 2b).
 
 This plan covers Phases 0–6, plus Phase 2b. One phase per session; Phase 2b is split into build steps, one per session (§9). A phase or step is done only when its acceptance criteria are met, its tests pass, and the test output has been shown.
@@ -20,7 +21,7 @@ This plan covers Phases 0–6, plus Phase 2b. One phase per session; Phase 2b is
 | — | Pre-Phase 1 tasks | Done | 2026-10-08 | 2026-10-08 | Package-label data (tortillas, protein powder), USDA mapping review sheet (`docs/review/usda_mappings.md`), raw/dry/as-sold rule + check (§7.8), CLAUDE.md machine-boundaries rule. Round 2: FoodSafety.gov chart transcribed (53 rows, §7.2), top-25 mappings approved, tortilla renamed, Docker rule clarified, fresh-clone check made a per-phase step. |
 | 1 | Planning brain | Approved 2026-10-09; post-approval round done | 2026-10-08 | 2026-10-09 | First pass: 645 tests, fresh-clone check passed; D1–D13 and C1–C3 approved 2026-10-09. Fix-up round (C4–C8: budget per request with inventory/shop modes, cash vs food eaten, freeze-on-shopping-day and waste, 100 g protein floor, elapsed time): 705 tests pass (the opt-in live test skips), domain coverage 99%, ruff/mypy clean, fresh-clone check passed; deviations D14–D22 in the fix-up note. Approved 2026-10-09. Post-approval round (C9–C14: powder prices, stock-up items, shelf-life fix, regular chicken packs, two-week steady-state check, A3 hosting): 721 tests pass (the opt-in live test skips), domain coverage 99%; deviations D23–D28. |
 | 2 | Mobile PWA + cloud deploy (deploy prep only, K7) | Approved 2026-10-10 | 2026-10-09 | 2026-10-09 | Pre-work K2–K6 done; PWA, auth, shopping, Mark cooked, quick add, exposure log. 800 backend tests pass (2 opt-in skipped), 78 frontend tests; not deployed (your step, `docs/deploy.md`). Deviations D29–D43 in the Phase 2 outcome note (§9). |
-| 2b | Cook-first flow redesign | 2b.1 approved 2026-10-10 (D44–D53); 2b.2 approved 2026-10-10 (D54–D64, H1–H6); 2b.3a approved 2026-10-10 (D65–D76, J1–J6); 2b.4 approved 2026-10-10 (D77–D88, M1–M20); 2b.4 fixes approved 2026-10-10 (N1–N3); 2b.3b built 2026-10-11 (D89–D101), awaiting approval | 2026-10-10 | | `docs/FLOW_SPEC.md`; PRD "Primary user flow"; 9 build steps, built in the order 2b.1, 2b.2, 2b.3a, **2b.4, 2b.3b**, 2b.5–2b.8 (H3; §9); changes F1–F21 approved (FLOW_SPEC §16); decisions E1–E17 (§12.1). Two-stage generation added the same day (E15, E17; built in 2b.3b). **2b.1 (backend foundations):** 898 backend tests pass (2 opt-in skipped), 78 frontend tests, ruff/mypy clean; deviations D44–D53 in the 2b.1 outcome note (§9). **2b.2 (look, shell, onboarding, Settings, Pantry):** 180 frontend tests (78 before), 899 backend tests pass (2 opt-in skipped), type checks clean, static export builds; AA contrast tested, 375 px not yet checked on a device; deviations D54–D64 in the 2b.2 outcome note (§9). Footer fix H2 done before 2b.3a. **2b.3a (ranking and cards, no LLM calls):** 964 backend tests pass (2 opt-in skipped), 187 frontend tests, ruff, mypy and type check clean; deviations D65–D76 in the 2b.3a outcome note (§9). **2b.4 (A meal now: screens, with J2–J6):** 993 backend tests pass (2 opt-in skipped), 236 frontend tests, ruff, mypy and type check clean, static export builds; migration `0006_pantry_presets`; deviations D77–D88 in the 2b.4 outcome note (§9). **2b.4 fixes (M2–M13, M15, M17, M20):** 1056 backend tests pass (2 opt-in skipped), 244 frontend tests, ruff, mypy and type check clean; no migration; 37 new draft seed recipes (47 in all); solver shortlist; fixes outcome note (§9). **2b.3b (ideas, steps, More ideas, background batch, rate-limit waits, live test, screens; with N2, ground vs whole cuts):** 1132 backend tests pass (2 opt-in skipped), 263 frontend tests, ruff, mypy and type check clean, static export builds; no migration, no new dependency; the live Groq test ran (FLOW_SPEC §15.1); deviations D89–D101 in the 2b.3b outcome note (§9). |
+| 2b | Cook-first flow redesign | 2b.1 approved 2026-10-10 (D44–D53); 2b.2 approved 2026-10-10 (D54–D64, H1–H6); 2b.3a approved 2026-10-10 (D65–D76, J1–J6); 2b.4 approved 2026-10-10 (D77–D88, M1–M20); 2b.4 fixes approved 2026-10-10 (N1–N3); 2b.3b approved 2026-10-11 (D89–D101, P1–P8); pre-work P2–P7 done 2026-10-11 (D102–D106); 2b.5 not started | 2026-10-10 | | `docs/FLOW_SPEC.md`; PRD "Primary user flow"; 9 build steps, built in the order 2b.1, 2b.2, 2b.3a, **2b.4, 2b.3b**, 2b.5–2b.8 (H3; §9); changes F1–F21 approved (FLOW_SPEC §16); decisions E1–E17 (§12.1). Two-stage generation added the same day (E15, E17; built in 2b.3b). **2b.1 (backend foundations):** 898 backend tests pass (2 opt-in skipped), 78 frontend tests, ruff/mypy clean; deviations D44–D53 in the 2b.1 outcome note (§9). **2b.2 (look, shell, onboarding, Settings, Pantry):** 180 frontend tests (78 before), 899 backend tests pass (2 opt-in skipped), type checks clean, static export builds; AA contrast tested, 375 px not yet checked on a device; deviations D54–D64 in the 2b.2 outcome note (§9). Footer fix H2 done before 2b.3a. **2b.3a (ranking and cards, no LLM calls):** 964 backend tests pass (2 opt-in skipped), 187 frontend tests, ruff, mypy and type check clean; deviations D65–D76 in the 2b.3a outcome note (§9). **2b.4 (A meal now: screens, with J2–J6):** 993 backend tests pass (2 opt-in skipped), 236 frontend tests, ruff, mypy and type check clean, static export builds; migration `0006_pantry_presets`; deviations D77–D88 in the 2b.4 outcome note (§9). **2b.4 fixes (M2–M13, M15, M17, M20):** 1056 backend tests pass (2 opt-in skipped), 244 frontend tests, ruff, mypy and type check clean; no migration; 37 new draft seed recipes (47 in all); solver shortlist; fixes outcome note (§9). **2b.3b (ideas, steps, More ideas, background batch, rate-limit waits, live test, screens; with N2, ground vs whole cuts):** 1132 backend tests pass (2 opt-in skipped), 263 frontend tests, ruff, mypy and type check clean, static export builds; no migration, no new dependency; the live Groq test ran (FLOW_SPEC §15.1); deviations D89–D101 in the 2b.3b outcome note (§9). **2b.3b approval pre-work (P2–P7):** 1143 backend tests pass with `--run-slow` (3 opt-in skipped); the default run is parallel and skips 6 `slow` tests (100 s, was about 20 min); 265 frontend tests; ruff, mypy and type check clean; no migration; new dev dependency pytest-xdist (approved); `LLM_IDEAS_MODEL` (20b by default in compose); deviations D102–D106 in 2b.3b's approval note (§9). |
 | 3 | Feedback loop | Not started | | | Favorites moved to 2b. |
 | 4 | Daily overrides | Not started | | | |
 | 5 | Grocery intelligence | Not started | | | |
@@ -2329,6 +2330,98 @@ migration, no new dependency. The live test ran twice against Groq (findings in 
 **Dev database.** No migration and no seed change (the catalog's `meat_forms` is read from the seed file at
 runtime). Nothing to upgrade.
 
+**Approved 2026-10-11, including D89–D101 (P1).** The approval's pre-work (P2–P7, §12.1) was done the next
+session; see the note below.
+
+**2b.3b approval pre-work (P2–P7, 2026-10-11).** All six items are done, with tests. 2b.5 was not started
+(P8: it opens with a storage question, below, and doesn't fit the same session).
+
+- **P3, the regression (done first).** Reproduced with your dev settings (seven 45-minute cook days, Tuesday and
+  Friday simple, a protein dessert, your pantry): "No plan fits". The hard filters (diet, equipment, the day's
+  allowed mood, hands-on time that can fit some cook day) already ran before the shortlist (`build_problem`). The
+  cause was the shortlist itself: it kept the best-scoring 3 recipes per meal whatever their hands-on minutes, so
+  Monday, which cooks every one of its meals itself, got only slow ones. Each meal's shortlist now always keeps its
+  quickest recipe and the quickest one its strictest cook day's mood allows; and when the shortlist finds no plan,
+  the planner tries 6 per meal, then every eligible recipe, before it says no plan fits. Your week now plans
+  (12 s). Tests: `test_week_always_plans.py` (default settings plus the seed library always plan a shop-mode week
+  with no budget; your week plans again, with Monday within its 45 minutes) and a shortlist test. Profiling for
+  P6 then showed the widening made weeks with no plan slow: each try ran the diagnostic solve, and on every
+  recipe that solve outlasts any time limit (an infeasible inventory-mode test took 372 s; the budget-too-low
+  test hit the 300 s test guard). Fixed: each try only checks whether a plan fits (under 0.2 s when none does),
+  and the reason is worked out once, on the wider shortlist (that test now takes 16 s). With a money limit the
+  planner stops at the wider shortlist (D102).
+- **P4, the time/mood message.** One sentence per blocker, each said once, joined with spaces (never ".;"):
+  "Monday needs 35 minutes of hands-on cooking; you set 20." and "20 recipes are medium and 6 are fancy, and your
+  cook days are set to simple." (the weekday gets its date when a plan has the same weekday twice). Buttons:
+  "Allow 35 min on Monday" and "Use simpler recipes" (that day's minutes or mood) or "Allow fancy recipes" (every
+  cook day's mood), for this plan only (`day_overrides`; Settings don't change). The other reasons a recipe was
+  left out read the same way ("19 recipes use Greek yogurt, plain nonfat, which has no price at your stores, so
+  your budget can't be checked (enter a price, or plan without a budget)"; "1 recipe has incomplete nutrition
+  data").
+- **P2, fish and shellfish.** New swap groups: `fish_fillet` (salmon, tilapia, cod) and `shellfish` (shrimp).
+  Canned tuna, eggs and tofu are in no group, so they never stand in for fish or shellfish; fish never swaps with
+  chicken. One meal-now test changed with it: with chicken, rice, eggs and chickpeas in stock, the salmon and
+  shrimp dishes no longer count as good matches (6, not 8; still no ideas call).
+- **P5, the ideas model.** Measured with the opt-in comparison (FLOW_SPEC §15.1): `openai/gpt-oss-20b` answered
+  in 3.1 s vs 6.9–7.4 s on 120b, with the same share of ideas passing (15 of 16 each). So the ideas pass has its
+  own model setting, `LLM_IDEAS_MODEL`, defaulting to 20b; steps and planning stay on `LLM_MODEL`.
+- **P7, the pass rate.** Each ideas call's log row carries `error_detail.ideas = {asked, returned, kept,
+  pass_rate}`; a revision call's row carries its own (asked = the ideas sent back).
+- **P6, test speed.** Same machine (12 logical CPUs) and the same db-test:
+
+  | Run | Tests | Time |
+  |---|---|---|
+  | Before: the 2b.3b commit, one process | 1132 | 1218 s (about 20 min) |
+  | Today's code, one process, every test (`-n 0 --run-slow`) | 1143 | 626 s |
+  | **Default now:** `uv run pytest` (parallel, `slow` skipped) | 1137 (+6 skipped) | **100 s** |
+  | Everything in parallel (`--run-slow`, as the fresh-clone check runs it) | 1143 | 305 s |
+
+  Most of the drop from 1218 s to 626 s is the P3 fix above: infeasible weeks used to run the diagnostic solve
+  on every tier. Profile (one process): the six tests now marked `slow` take 384 of the 626 s; the inventory-mode
+  empty-fridge test alone takes 139 s. The first whole-week solve in a process costs 20–35 s, and identical
+  solves after it reuse the answer (the test solve memo), so in parallel each worker pays for its own first one.
+  `--dist worksteal` and 8 workers measured the same as the default (97–100 s).
+
+Decisions and deviations:
+
+- **D102. The shortlist keeps a quick recipe per meal** (P3), and the planner widens in three steps (3 per meal,
+  6, everything) before "no plan fits"; the old shortlist note is gone. Two limits on "everything", both for
+  speed, **for your approval**:
+  - *The reason comes from the wider shortlist.* Its fixes (the minutes, the mood, the top-up) always make a
+    plan, but with every recipe a smaller one might do: the inventory test's top-up reads about $82.13 where every
+    recipe might allow about $79 (the diagnostic solve on every recipe didn't finish in 25 s).
+  - *With a money limit* (a budget, or inventory mode's top-up) *the planner stops at the wider shortlist*, as in
+    2b.4: proving that no mix of every recipe fits the money took over 300 s, while hands-on time, moods and stock
+    are settled in under 0.2 s. A budget week could still miss a cheaper mix outside the shortlist. A possible
+    follow-up: the shortlist also keeps each meal's cheapest recipe when there's a money limit.
+- **D103. The fix buttons change this plan only** (P4): they resend the request with day overrides. "Use simpler
+  recipes" sets the blocked day to simple; "Allow fancy recipes" (or medium) sets every cook day.
+- **D104. A swap group decides on its own** (P2): within ground, whole cuts, fish fillets or shellfish, the
+  category and role check is skipped, so cod can stand in for salmon though no recipe uses cod yet.
+- **D105. Where the 20b default lives** (P5). CLAUDE.md says the model name comes from the environment and is
+  never hardcoded, and an architecture test keeps model names out of app code. So the app reads
+  `LLM_IDEAS_MODEL` like `LLM_MODEL` (empty = `LLM_MODEL`), and the 20b default is in `docker-compose.yml`
+  (`${LLM_IDEAS_MODEL-openai/gpt-oss-20b}`) and `.env.example`, not in code. Your running stack picks it up
+  after `docker compose up -d backend`; to keep ideas on `LLM_MODEL`, set `LLM_IDEAS_MODEL=` (empty) in `.env`. A
+  cloud deploy needs the variable set there. The ideas pass talks to it through the same client (`OnModel`), paced
+  on that model's own per-minute allowance; the run's call cap and the daily guard stay shared.
+- **D106. The parallel suite** (P6). Each pytest-xdist worker gets its own database beside db-test's
+  (`mealbro_test_gw0`, …, about 14 MB each), created on first use, then migrated and seeded as before. That
+  takes 2–5 s per worker, so no template database was needed. The migration tests' scratch databases get the
+  worker's name too. `-n auto` is in `addopts`. `-s` turns it off by itself, since a worker's prints never reach
+  the terminal and the live test prints its findings; `-n 0` also runs in one process. The 6 tests marked `slow`
+  are the heaviest whole-week solves, 50–150 s each when running in parallel: the inventory-mode empty-fridge,
+  drink-slot generation, identical-rerun, unpriced-without-budget and budget-too-low orchestrator tests, and the
+  week-two simulation. They run with `--run-slow` or `RUN_SLOW_TESTS=1`, and always in the fresh-clone check.
+  The P3 regression test stays in the default run.
+
+**Dev database.** No migration and no seed change. After pulling: `docker compose up -d backend` (it picks up
+`LLM_IDEAS_MODEL`).
+
+**For 2b.5 (asked before it starts).** Where the freeze note lives (deliverable 9): a nullable
+`recipe_version.freeze_note` column (a migration; user versions and later LLM recipes can carry it) or the seed
+file only (no migration; seeds only). I recommend the column.
+
 #### 2b.4 A meal now: screens (frontend)
 
 *Reads FLOW_SPEC §5, §7 (C0, C2–C5, C7, C8). Built right after 2b.3a and before 2b.3b (H3), so it uses seed and saved recipes only.*
@@ -2904,8 +2997,9 @@ Listed in CLAUDE.md: Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2.0, Alembic,
 | `next` 16.3.6, `react` / `react-dom` 19.3.0, `typescript` 5.9.3, `vitest` 4.1.11 | 2 | Listed in CLAUDE.md | Pinned exactly; `@types/react`, `@types/react-dom` 19.3.0 and `@types/node` 22.20.2 come with TypeScript |
 | `@testing-library/react` 16.3.3, `user-event` 14.6.7, `jest-dom` 6.9.1, `jsdom` 29.1.1, `openapi-typescript` 7.13.0 | 2 | Approved (Q17) | jsdom 30 needs Node ≥ 22.22 and jest-dom 6.10.0 is deprecated, so the previous releases |
 | `@testing-library/dom` 10.4.2 | 2 | Required peer of `@testing-library/react` 16 | Part of the approved testing-library set; nothing else was added |
+| `pytest-xdist` 3.8.0 (dev; pulls in `execnet` 2.1.2) | 2b | **Approved 2026-10-11 (P6)** | Runs the backend suite in parallel, one test database per worker |
 
-No other dependencies are planned. Auth uses the stdlib, and the solver uses HiGHS through PuLP (C3). **Phase 2b adds none:** the screen-wake lock is a browser API, icons are emoji and in-house inline SVG, and fonts are system fonts. If one becomes necessary, I'll ask first with a one-line justification.
+No other dependencies are planned. Auth uses the stdlib, and the solver uses HiGHS through PuLP (C3). **Phase 2b adds no app dependency** (pytest-xdist is a test tool, P6): the screen-wake lock is a browser API, icons are emoji and in-house inline SVG, and fonts are system fonts. If one becomes necessary, I'll ask first with a one-line justification.
 
 ---
 
@@ -3106,6 +3200,20 @@ No other dependencies are planned. Auth uses the stdlib, and the solver uses HiG
 | N1 | 2b.4 fixes | Approved: M2–M13, M15, M17 and M20, including every decision and deviation in the fixes outcome note (§9). |
 | N2 | Ground vs whole cuts | Ground meat swaps only with ground meat (ground turkey and ground chicken are fine for each other); a whole cut swaps only with a whole cut of the same form (bone and skin, as M6). Never between ground and whole cuts. Tests include "ground turkey never becomes chicken thigh". Built at the start of 2b.3b: `meat_forms` in the pantry catalog, `domain/meat_forms.py`, checked in every substitute step (accepted pairs and pantry). As built, the rule is symmetric: neither kind stands in for, or is replaced by, something that is neither (eggs, tofu, beans, fish, sausage), so chicken thighs no longer stand in for salmon, shrimp or eggs on a card. |
 | N3 | Mapping review (13 ingredients new to the top 25) | Ground turkey: 93% lean (FDC 172850). Salmon: farmed Atlantic, raw (FDC 175167). Canned chickpeas: drained solids (173800). Red lentils (174284) and quinoa (168874): dry, uncooked. Approved as-is: the five chicken cuts, ground chicken, pita, russet potato. Bone-in thigh keeps the raw leg's 27% refuse for now, noted in the seed as replaceable with a measured value. All 13 are marked reviewed (`nutrition_reviewed_on` 2026-10-10, already in the seed; no mapping changed). |
+
+**Step 2b.3b approval (2026-10-11).** You approved 2b.3b, then (worked through overnight without waiting, per
+your instruction; real design decisions stop and wait):
+
+| # | Topic | Decision |
+|---|---|---|
+| P1 | 2b.3b | Approved, including D89–D101. |
+| P2 | Fish and shellfish swaps | Fish fillets get their own group and swap only with other fish fillets; shrimp and other shellfish get their own group. Eggs and tofu never stand in for fish or shellfish; fish never swaps with chicken. With tests. |
+| P3 | Regression (first) | A shop-mode week with no budget and the current settings (45 hands-on minutes per cook day, medium mood) returns "No plan fits" (Monday needs 50 min vs 45; 6 fancy recipes left out), though it planned before the 2b.4 fixes. Likely the shortlist picking recipes before the time and mood limits: apply every hard filter (equipment, the day's allowed mood, hands-on time that can fit) before the shortlist, and widen to every eligible recipe before declaring no plan. Test: default settings + the seed library always plan a shop-mode week with no budget. |
+| P4 | Time/mood "no plan fits" message | One message, never repeated, no stray punctuation, plain wording ("Monday needs 50 minutes of hands-on cooking; you set 45", "6 recipes are fancy and your cook days are set to medium"), with action buttons "Allow X min on <day>" and "Use simpler recipes" (or "Allow fancy recipes" where that's the blocker). Same rules as the top-up fix (M17). |
+| P5 | Model speed | An opt-in live comparison of the ideas pass on two gpt-oss sizes (same prompt, 2 runs each): latency, tokens, ideas passing. If the smaller is clearly faster with a similar pass rate, a separate ideas model setting (`LLM_IDEAS_MODEL`) defaulting to it; steps stay on the main model. Under 40K tokens. |
+| P6 | Test speed | Profile the slowest tests; run the suite in parallel (**pytest-xdist approved** as a dev dependency); mark the heaviest solver tests `slow` so the default local run skips them while the fresh-clone check runs everything. Before/after times. |
+| P7 | Ideas pass rate | Ideas kept vs asked recorded in the LLM call log. |
+| P8 | Next | Then step 2b.5 (meal prep engine), with C1b's four cooking options, the freezes-well rules and A2 (M16: the daily amount cap for protein powder, usually 1 scoop, at most 2). If the pre-work plus 2b.5 doesn't fit one session, the pre-work is committed first and the step stops with what's left. |
 
 ### 12.2 Remaining questions (from applying your answers)
 

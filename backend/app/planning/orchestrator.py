@@ -18,7 +18,7 @@ candidate-exposure log (plan_candidate), one row per recipe offered to the solve
 
 import logging
 import math
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
 from decimal import Decimal
@@ -50,7 +50,7 @@ from app.planning.solver.model import (
     SolverInfeasible,
     SolverSolution,
 )
-from app.planning.solver.solve import solve
+from app.planning.solver.solve import explain_infeasible, solve
 from app.schemas.plans import PlanRequest
 
 log = logging.getLogger(__name__)
@@ -64,10 +64,6 @@ HOLDBACK_MARGIN = {"g": Decimal(5), "ml": Decimal(5), "count": Decimal(1)}
 TARGETED_COUNT = 2
 MIN_SOLVE_SECONDS = 5.0  # a solve starts only with at least this much of the time budget left
 SOLVE_MARGIN_SECONDS = 2.0
-SHORTLIST_NOTE = (
-    "No plan fit the best-fitting recipes for each meal (up to 6 a meal were tried); the reasons below are "
-    "for those recipes."
-)
 OUT_OF_TIME_NOTE = (
     "Recipe generation stopped early: this request ran out of time ({reason}). The recipes made so far are "
     "saved, so planning again carries on from there."
@@ -103,6 +99,18 @@ class PlanOutcome:
 ValidatorSpy = Callable[[RoundedPlan], None]
 
 
+def sentences(parts: Iterable[str]) -> str:
+    """Messages as one paragraph (P4): each one a sentence, said once, never ".;" between them."""
+    out: list[str] = []
+    for part in parts:
+        text = part.strip().rstrip(";")
+        if text and text[-1] not in ".!?":
+            text += "."
+        if text and text not in out:
+            out.append(text)
+    return " ".join(out)
+
+
 def problem_json(
     title: str,
     detail: str,
@@ -128,6 +136,8 @@ def problem_json(
                     "amount": d.amount,
                     "suggested_cents": d.suggested_cents,
                     "items": list(d.items) or None,
+                    "suggested_minutes": d.suggested_minutes,
+                    "mood": d.mood,
                 }.items()
                 if v is not None
             }
@@ -297,13 +307,25 @@ class Orchestrator:
 
     def _solve(self, problem: PlanningProblem) -> SolverSolution | SolverInfeasible:
         """Solve the shortlist (the best candidates per meal, planning/shortlist.py), then a wider one when
-        it can't make a plan, and the whole library only when it is small. An infeasible week is explained
-        from the last set tried."""
+        it can't make a plan, then every eligible recipe before saying no plan fits (2b.3b approval, P3). A
+        small library is solved whole from the start.
+
+        Finding that the hands-on time, moods or stock can't make a plan takes a fraction of a second, even
+        with every recipe. Money is different: proving that no combination of every recipe fits a budget
+        (or inventory mode's top-up) takes longer than any time limit, so with a money limit the planner
+        stops at the wider shortlist, as before P3. Explaining why no plan fits (the elastic solve) takes
+        seconds on a shortlist and longer than any time limit on a big library, so an infeasible week is
+        explained once, from the wider shortlist: its fixes always make a plan, though a smaller fix might do
+        with every recipe."""
+        small = len(problem.candidates) <= FULL_SOLVE_MAX
+        if small:
+            tiers: tuple[int | None, ...] = (None,)
+        elif problem.constraints.has_purchase_limit:
+            tiers = (SHORTLIST_PER_SLOT, SHORTLIST_WIDER)
+        else:
+            tiers = (SHORTLIST_PER_SLOT, SHORTLIST_WIDER, None)
         tried: set[int] = set()
-        result: SolverSolution | SolverInfeasible | None = None
-        for per_slot in (SHORTLIST_PER_SLOT, SHORTLIST_WIDER, None):
-            if per_slot is None and len(problem.candidates) > FULL_SOLVE_MAX:
-                break
+        for per_slot in tiers:
             short = problem if per_slot is None else shortlist(problem, per_slot)
             if len(short.candidates) in tried:
                 continue
@@ -311,14 +333,8 @@ class Orchestrator:
             result = self._solve_exactly(short)
             if isinstance(result, SolverSolution):
                 return result
-        if (
-            result is not None
-            and len(problem.candidates) > FULL_SOLVE_MAX
-            and SHORTLIST_NOTE not in self.notes
-        ):
-            self.notes.append(SHORTLIST_NOTE)
-        assert result is not None
-        return result
+        why = problem if small else shortlist(problem, SHORTLIST_WIDER)
+        return explain_infeasible(why, time_limit_s=self._time_limit())
 
     def _solve_exactly(self, problem: PlanningProblem) -> SolverSolution | SolverInfeasible:
         return solve(
@@ -326,6 +342,7 @@ class Orchestrator:
             time_limit_s=self._time_limit(),
             gap_rel=self.settings.solver_gap_rel,
             gap_abs=self.settings.solver_gap_abs,
+            explain=False,
         )
 
     def _generate(self, generator: CandidateGenerator, problem: PlanningProblem, gaps: list[Gap]) -> bool:
@@ -374,7 +391,7 @@ class Orchestrator:
                 break
             slots = sorted({d.slot for d in result.diagnostics if d.slot is not None}, key=lambda s: s.value)
             if generator is None or out_of_time or not slots or rounds >= MAX_TARGETED_ROUNDS:
-                detail = "; ".join(d.message for d in result.diagnostics)
+                detail = sentences(d.message for d in result.diagnostics)
                 if out_of_time and slots:
                     detail += (
                         " (this request ran out of time for new recipes; the ones made so far are saved, so "
@@ -443,7 +460,7 @@ class Orchestrator:
                     ),
                 )
             if not report.resolvable or resolves >= MAX_RESOLVES:
-                detail = "; ".join(e.message for e in report.errors)
+                detail = sentences(e.message for e in report.errors)
                 return self._finish(
                     run,
                     PlanOutcome(
@@ -467,7 +484,7 @@ class Orchestrator:
             self._progress(run, "re-solving", resolves=resolves)
             resolved = self._solve(problem)
             if isinstance(resolved, SolverInfeasible):
-                detail = "; ".join(e.message for e in report.errors)
+                detail = sentences(e.message for e in report.errors)
                 return self._finish(
                     run,
                     PlanOutcome(

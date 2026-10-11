@@ -44,6 +44,9 @@ services:
       # LLM settings come from the repo's .env (compose substitutes them; the container can't read .env itself)
       GROQ_API_KEY: ${GROQ_API_KEY:-}
       LLM_MODEL: ${LLM_MODEL:-}
+      # The ideas pass's model (2b.3b approval, P5: about 2x faster than 120b with the same pass rate). Set
+      # LLM_IDEAS_MODEL in .env to change it, or leave it empty there to use LLM_MODEL.
+      LLM_IDEAS_MODEL: ${LLM_IDEAS_MODEL-openai/gpt-oss-20b}
       LLM_STRUCTURED_MODE: ${LLM_STRUCTURED_MODE:-strict}
       LLM_REASONING_EFFORT: ${LLM_REASONING_EFFORT-low}  # empty in .env = a model without the setting
       # Sign-in (Phase 2): make both with `python -m app.cli hash-password` and put them in .env.

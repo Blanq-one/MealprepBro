@@ -8,9 +8,10 @@ import { ProblemNotice } from "@/components/Status";
 import { Segmented } from "@/components/ui/Segmented";
 import { api } from "@/lib/api/client";
 import { streamPlan } from "@/lib/api/ndjson";
-import type { GenerationRun, NutritionPriority, PlanRequestBody, PlanStreamEvent } from "@/lib/api/types";
+import type { GenerationRun, NutritionPriority, PlanRequestBody, PlanStreamEvent, RecipeMood } from "@/lib/api/types";
 import { nextMonday } from "@/lib/format/dates";
 import { centsToInput, parseDollarsToCents } from "@/lib/format/money";
+import { type DayOverride, weekDays, withOverrides } from "@/lib/plan/overrides";
 
 const PRIORITIES: { value: "" | NutritionPriority; label: string }[] = [
   { value: "", label: "My usual (settings)" },
@@ -34,6 +35,7 @@ export default function NewPlanPage() {
   const [latest, setLatest] = useState<PlanStreamEvent | null>(null);
   const [failure, setFailure] = useState<PlanStreamEvent | null>(null);
   const [error, setError] = useState<unknown>(null);
+  const [overrides, setOverrides] = useState<DayOverride[]>([]); // this plan only: "no plan fits" fixes (P4)
   const cents = parseDollarsToCents(money);
 
   async function recover(runId: number): Promise<boolean> {
@@ -51,22 +53,31 @@ export default function NewPlanPage() {
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    void plan(mode, cents);
+    setOverrides([]);
+    void plan(mode, cents, []);
+  }
+
+  /** A time or mood fix (P4): the same week again with that day's minutes or mood changed for this plan. */
+  function retryDays(changes: DayOverride[]) {
+    const next = withOverrides(overrides, changes);
+    setOverrides(next);
+    void plan(mode, cents ?? null, next);
   }
 
   /** A "no plan fits" fix (2b.4 approval, B): the same week again with the suggested money or mode. */
   function retry(nextMode: Mode, nextCents: number | null) {
     setMode(nextMode);
     setMoney(nextCents === null ? "" : centsToInput(nextCents));
-    void plan(nextMode, nextCents);
+    void plan(nextMode, nextCents, overrides);
   }
 
-  async function plan(planMode: Mode, planCents: number | null | undefined) {
+  async function plan(planMode: Mode, planCents: number | null | undefined, days: DayOverride[]) {
     if (running || planCents === undefined) return;
     const request: PlanRequestBody = {
       week_start: weekStart,
       mode: planMode,
       allow_llm: allowLlm,
+      ...(days.length ? { day_overrides: days } : {}),
       ...(priority ? { nutrition_priority: priority } : {}),
       ...(planCents !== null ? (planMode === "shop" ? { budget_cents: planCents } : { topup_cents: planCents }) : {}),
     };
@@ -168,6 +179,8 @@ export default function NewPlanPage() {
             onTopUp: (c) => retry("inventory", c),
             onShop: () => retry("shop", null),
             onBudget: (c) => retry("shop", c),
+            onMinutes: (day, minutes) => retryDays([{ day, cook_minutes: minutes }]),
+            onMood: (day, mood) => retryDays((day ? [day] : weekDays(weekStart)).map((d) => ({ day: d, mood: mood as RecipeMood }))),
           }}
         />
       )}

@@ -3,7 +3,8 @@
 # dependencies didn't change.
 #
 # Clones the committed HEAD into a temp directory, builds the backend image from that clone alone, and runs
-# the full test suite inside it against this repo's db-test container; then builds the frontend image from the
+# the full test suite inside it against this repo's db-test container (slow tests included; in parallel, each
+# worker with its own database beside db-test's: backend/conftest.py); then builds the frontend image from the
 # clone and runs its type check, its tests and the production build (the static export) inside it. Proves the
 # committed files are enough (nothing depends on untracked local files, the local virtualenv or node_modules).
 # Cleans up the clone and the images.
@@ -36,10 +37,10 @@ docker build --quiet -t "$IMAGE" "$WORK/clone/backend" >/dev/null
 NETWORK="$(docker inspect -f '{{range $name, $_ := .NetworkSettings.Networks}}{{$name}}{{end}}' \
   "$("${COMPOSE[@]}" ps -q db-test)")"
 
-echo "== running the test suite in the fresh image"
+echo "== running the test suite in the fresh image (every test, slow ones included, in parallel)"
 docker run --rm --network "$NETWORK" \
   -e TEST_DATABASE_URL=postgresql+psycopg://mealbro:mealbro@db-test:5432/mealbro_test \
-  "$IMAGE" uv run --frozen pytest -q -p no:cacheprovider
+  "$IMAGE" uv run --frozen pytest -q -p no:cacheprovider --run-slow
 
 echo "== building the frontend image from the clone"
 docker build --quiet -t "$WEB_IMAGE" "$WORK/clone/frontend" >/dev/null

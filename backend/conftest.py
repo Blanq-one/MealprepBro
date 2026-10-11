@@ -3,6 +3,11 @@
 DB tests run against the `db-test` Postgres (docker compose up -d db-test). The schema is migrated once per
 session, the committed USDA subset is imported and the seed is loaded once; every test then runs inside a
 transaction that is rolled back.
+
+The suite runs in parallel (pytest-xdist, `-n auto` in pyproject): each worker process has its own database
+beside db-test's (mealbro_test_gw0, ...), migrated and seeded the same way. `-s` runs in one process, since a
+worker's prints never reach the terminal; `-n 0` does too. Tests marked `slow` (the heaviest solver tests) are
+skipped unless `--run-slow` or RUN_SLOW_TESTS=1; the fresh-clone check runs everything (2b.3b approval, P6).
 """
 
 import hashlib
@@ -17,7 +22,7 @@ import pytest
 from alembic import command
 from alembic.config import Config
 from fastapi.testclient import TestClient
-from sqlalchemy import Engine, create_engine, text
+from sqlalchemy import Engine, create_engine, make_url, text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
@@ -28,6 +33,7 @@ from app.db.session import get_session
 from app.llm.pacing import reset_rate_states
 from app.main import create_app
 from app.seed.loader import seed_all
+from app.testing.databases import ensure_database, per_worker, worker_id
 from app.usda.importer import import_release
 from app.usda.release import find_releases
 
@@ -121,18 +127,42 @@ def alembic_config(url: str) -> Config:
     return cfg
 
 
-def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+def pytest_addoption(parser: pytest.Parser) -> None:
+    parser.addoption(
+        "--run-slow",
+        action="store_true",
+        help="also run the tests marked slow (or set RUN_SLOW_TESTS=1); the fresh-clone check does",
+    )
+
+
+@pytest.hookimpl(optionalhook=True)
+def pytest_xdist_auto_num_workers(config: pytest.Config) -> int | None:
+    """`-n auto` runs in one process when output capture is off (`-s`): a worker's prints are lost."""
+    return 0 if config.getoption("capture") == "no" else None  # None: xdist's own count (one per CPU)
+
+
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
     run_perf = os.environ.get("RUN_PERF_TESTS") == "1"
+    run_slow = config.getoption("--run-slow") or os.environ.get("RUN_SLOW_TESTS") == "1"
     for item in items:
         if DB_FIXTURES & set(getattr(item, "fixturenames", ())):
             item.add_marker(pytest.mark.db)
         if "perf" in item.keywords and not run_perf:
             item.add_marker(pytest.mark.skip(reason="wall-clock performance test: set RUN_PERF_TESTS=1"))
+        if "slow" in item.keywords and not run_slow:
+            item.add_marker(pytest.mark.skip(reason="slow test: --run-slow runs it"))
 
 
 @pytest.fixture(scope="session")
 def test_db_url() -> str:
-    return get_settings().test_database_url
+    """db-test's database; in a pytest-xdist worker, the worker's own one beside it (created on first use)."""
+    url = get_settings().test_database_url
+    if worker_id() is None:
+        return url
+    try:
+        return ensure_database(url, per_worker(make_url(url).database or "mealbro_test"))
+    except OperationalError as exc:  # pragma: no cover - environment problem, not a test failure mode
+        pytest.exit(f"db-test is not reachable at {url}: run `docker compose up -d db-test` ({exc})")
 
 
 @pytest.fixture(scope="session")

@@ -87,7 +87,9 @@ switches to Dark or Match my phone (stored on each device).
 cd backend
 uv sync                                  # Python 3.12 + locked dependencies
 docker compose up -d db db-test
-uv run pytest                            # all tests
+uv run pytest                            # all tests but the slow ones, in parallel (one database per worker)
+uv run pytest --run-slow                 # every test (the fresh-clone check runs this)
+uv run pytest -n 0 app/cook              # in one process (automatic with -s, whose prints workers would lose)
 uv run pytest --cov=app/domain           # domain coverage
 uv run ruff check . && uv run ruff format --check . && uv run mypy app conftest.py
 ../scripts/fresh_clone_check.sh          # end of every phase: clone HEAD, build, test backend + frontend in Docker

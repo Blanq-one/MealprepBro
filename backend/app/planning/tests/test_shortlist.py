@@ -4,7 +4,7 @@ same shortlist."""
 
 from decimal import Decimal
 
-from app.domain.enums import MealSlot
+from app.domain.enums import MealSlot, RecipeMood
 from app.planning import shortlist as sl
 from app.planning.problem import CandidateRecipe, IngredientPlan, PlanningProblem
 from app.planning.shortlist import shortlist
@@ -87,3 +87,22 @@ def test_favorites_are_kept_and_never_favored_or_disliked_recipes_come_last():
     ]
     out = shortlist(problem(cands, ing), 2)
     assert sorted(c.version_id for c in out.candidates) == [3, 4]
+
+
+def test_each_meal_always_keeps_its_quickest_recipe_and_one_its_strictest_day_allows(monkeypatch):
+    """P3 (2b.3b approval): the first day of the week cooks every meal itself, so the shortlist always holds
+    the quickest recipe for each meal, and the quickest one a simple cook day allows."""
+    ing = ingredients()
+    cands = [
+        dinner(1, [(CHICKEN, 600), (RICE, 300)], ing, active=40, mood=RecipeMood.MEDIUM),
+        dinner(2, [(CHICKEN, 500), (RICE, 350)], ing, active=35, mood=RecipeMood.MEDIUM),
+        dinner(3, [(SALMON, 550), (PASTA, 300)], ing, active=30, mood=RecipeMood.MEDIUM),
+        dinner(4, [(LENTILS, 300), (PASTA, 300)], ing, active=10, mood=RecipeMood.MEDIUM),  # quickest
+        dinner(5, [(TOFU, 400), (PASTA, 400)], ing, active=25, mood=RecipeMood.SIMPLE),  # quickest simple
+    ]
+    scores = {1: Decimal(3), 2: Decimal(2), 3: Decimal(1), 4: Decimal(0), 5: Decimal(0)}
+    monkeypatch.setattr(sl, "score_pool", lambda pool, problem, kcal: scores)
+    medium_week = f.problem(f.constraints(slots={D: 650}), cands, ing)
+    assert sorted(c.version_id for c in shortlist(medium_week, 3).candidates) == [1, 2, 4]
+    with_simple = f.problem(f.constraints(slots={D: 650}, mood=RecipeMood.SIMPLE), cands, ing)
+    assert sorted(c.version_id for c in shortlist(with_simple, 3).candidates) == [1, 4, 5]

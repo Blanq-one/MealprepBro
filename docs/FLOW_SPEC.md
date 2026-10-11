@@ -1440,6 +1440,23 @@ two runs, the second after the fixes below. Measured in the second run:
    say pots and pans aren't equipment and fresh herbs go in grams.
 5. **Calibration** starts at 1.2 (measured 1.03–1.11) instead of 2.5 until five calls of a purpose are logged.
 
+**Ideas model comparison (2026-10-11, BUILD_PLAN P5).** The same meal-now ideas prompt (8 asked, 1,537 prompt
+tokens), strict mode, low reasoning, 2 runs per model, alternating:
+
+| Model | Run | Attempts | Latency of the passing call | Tokens | Ideas returned / passed (of 8) |
+|---|---|---|---|---|---|
+| `openai/gpt-oss-20b` | 1 | 2: both rejected by Groq (`json_validate_failed`, no usage reported); the second reply's valid ideas were kept | – (5.5 s for both) | not reported | 7 / 7 |
+| `openai/gpt-oss-120b` | 1 | 1 | 6.9 s | 4,717 | 7 / 7 |
+| `openai/gpt-oss-20b` | 2 | 1 | 3.1 s | 4,018 | 8 / 8 |
+| `openai/gpt-oss-120b` | 2 | 1 | 7.4 s | 4,580 | 8 / 8 |
+
+20b answered about **2.3× faster** (3.1 s vs 6.9–7.4 s a call; 5.5 s even with a rejected attempt) with the same
+share of ideas passing (15 of 16 for each) and fewer completion tokens (2,481 vs 3,043–3,180). Its one rejected run is the same
+strict-mode behavior as 120b's (finding 4), and salvage covered it. So the ideas pass (ideas and their revision)
+now has its own model, `LLM_IDEAS_MODEL`, which docker compose defaults to `openai/gpt-oss-20b`; steps and planning
+stay on `LLM_MODEL`. Groq counts each model's per-minute allowance on its own, and the app paces each model on its
+own. The comparison used about 13.3K reported tokens plus the two unreported attempts, well under the 40K cap.
+
 The planning numbers below now use the measured case. The ideas count (8), the background reserve (30K) and the
 heavy-day estimate were re-checked against them.
 

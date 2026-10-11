@@ -160,6 +160,11 @@ class ExcludedRecipe:
     # one per reason kind, for the exposure log: excluded | held | frequency_cap | equipment | time |
     # nutrition_incomplete | unpriced | conversion
     codes: tuple[str, ...] = ()
+    # why the time filter left it out (P4): "mood" = no cook day allows its mood; "minutes" = no such day has
+    # enough hands-on time
+    blocker: str | None = None
+    mood: RecipeMood | None = None
+    active_minutes: int | None = None
 
 
 @dataclass(frozen=True)

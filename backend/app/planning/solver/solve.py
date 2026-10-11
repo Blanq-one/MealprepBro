@@ -19,9 +19,11 @@ def solve(
     gap_rel: float = 0.005,
     gap_abs: float = 1.0,
     allowed_store_ids: Iterable[int] | None = None,
+    explain: bool = True,
 ) -> SolverResult:
     """Solve the week. Raises EmptyCandidatePoolError when nothing survived the filters; returns
-    SolverInfeasible (with diagnostics in human units) when no plan fits."""
+    SolverInfeasible (with diagnostics in human units) when no plan fits. `explain=False` skips the
+    diagnostics (the elastic solve is far slower than finding that no plan fits): see `explain_infeasible`."""
     if not problem.candidates:
         raise diagnostics.empty_pool_error(problem)
     pre = diagnostics.precheck(problem)
@@ -38,4 +40,14 @@ def solve(
         status = run_solver(cheapest, time_limit_s, CHEAPEST_GAP_REL, CHEAPEST_GAP_ABS_CENTS / 100)
         if status in (pulp.LpSolutionOptimal, pulp.LpSolutionIntegerFeasible):
             return extract(problem, cheapest, status, status="cheapest")
+    if not explain:
+        return SolverInfeasible(())
     return SolverInfeasible(diagnostics.explain(problem, time_limit_s=time_limit_s))
+
+
+def explain_infeasible(problem: PlanningProblem, *, time_limit_s: int = 20) -> SolverInfeasible:
+    """Why no plan fits `problem`, in human units, without solving it first."""
+    if not problem.candidates:
+        raise diagnostics.empty_pool_error(problem)
+    pre = diagnostics.precheck(problem)
+    return SolverInfeasible(pre or diagnostics.explain(problem, time_limit_s=time_limit_s))

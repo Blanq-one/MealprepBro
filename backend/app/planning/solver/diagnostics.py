@@ -12,7 +12,8 @@ from decimal import ROUND_HALF_UP, Decimal
 
 import pulp
 
-from app.domain.enums import CalorieMode, MealSlot, PlanningMode
+from app.domain.cook_time import MOOD_ORDER
+from app.domain.enums import CalorieMode, MealSlot, PlanningMode, RecipeMood
 from app.planning.problem import ExcludedRecipe, PlanningProblem
 from app.planning.solver.model import (
     Diagnostic,
@@ -22,6 +23,7 @@ from app.planning.solver.model import (
     build_model,
     run_solver,
 )
+from app.schemas.constraints import PlanConstraints
 
 SLACK_TOLERANCE = 0.5
 MIN_LISTED = {"g": 5.0, "ml": 5.0, "count": 0.25}
@@ -29,6 +31,12 @@ MIN_LISTED = {"g": 5.0, "ml": 5.0, "count": 0.25}
 
 def _day(d: date) -> str:
     return f"{d:%a} {d:%b} {d.day}"
+
+
+def weekday(constraints: PlanConstraints, d: date) -> str:
+    """'Monday', or 'Monday Oct 12' when the plan has two Mondays."""
+    same = sum(1 for x in constraints.days if x.day.weekday() == d.weekday())
+    return f"{d:%A}" if same == 1 else f"{d:%A} {d:%b} {d.day}"
 
 
 def _slot(slot: MealSlot) -> str:
@@ -98,19 +106,96 @@ def _reason_summary(excluded: tuple[ExcludedRecipe, ...]) -> str:
         for reason in e.reasons:
             counts[reason] += 1
     return "; ".join(
-        f"{n} × {why}" if n > 1 else why for why, n in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+        f"{why} ({n} recipes)" if n > 1 else why
+        for why, n in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
     )
 
 
-def left_out_diagnostic(excluded: tuple[ExcludedRecipe, ...]) -> Diagnostic | None:
-    """Why recipes are missing from the pool, for an infeasible week (fewer recipes, fewer ways to fit)."""
+OTHER_REASONS = {  # the other filters, in plain words (P4)
+    "excluded": "use an ingredient that's off your list",
+    "frequency_cap": "use an ingredient whose frequency cap is 0",
+    "equipment": "need equipment you don't have",
+    "nutrition_incomplete": "have incomplete nutrition data",
+    "unpriced": "have an ingredient with no price yet",
+    "conversion": "have an amount that can't be converted",
+}
+
+
+def _capitalized(text: str) -> str:
+    return text[:1].upper() + text[1:]
+
+
+def _recipes(n: int) -> str:
+    return f"{n} recipe{'s' if n != 1 else ''}"
+
+
+SINGULAR = {"use": "uses", "need": "needs", "have": "has"}
+
+
+def _recipes_that(n: int, phrase: str) -> str:
+    """'3 recipes have incomplete nutrition data', '1 recipe has incomplete nutrition data'."""
+    verb, _, rest = phrase.partition(" ")
+    return f"{_recipes(n)} {SINGULAR.get(verb, verb) if n == 1 else verb} {rest}"
+
+
+def left_out_diagnostic(
+    excluded: tuple[ExcludedRecipe, ...], constraints: PlanConstraints
+) -> Diagnostic | None:
+    """Why recipes are missing from the pool, for an infeasible week (fewer recipes, fewer ways to fit), in
+    plain words with the fix the app can offer (P4): "6 recipes are fancy and your cook days are set to
+    medium" comes with "Allow fancy recipes"."""
     if not excluded:
         return None
-    n = len(excluded)
+    cook_days = [d for d in constraints.days if d.is_cook_day]
+    parts: list[str] = []
+    by_mood: dict[RecipeMood, int] = defaultdict(int)
+    for e in excluded:
+        if e.blocker == "mood" and e.mood is not None:
+            by_mood[e.mood] += 1
+    blocked_mood: RecipeMood | None = None
+    if by_mood:
+        moods = sorted(by_mood, key=lambda m: MOOD_ORDER[m])
+        blocked_mood = moods[-1]
+        top = max((d.mood for d in cook_days), key=lambda m: MOOD_ORDER[m], default=RecipeMood.SIMPLE)
+        items = []
+        for i, m in enumerate(moods):
+            n = by_mood[m]
+            verb = "is" if n == 1 else "are"
+            items.append(f"{_recipes(n) if i == 0 else n} {verb} {m.value}")
+        comma = "," if len(items) > 1 else ""
+        parts.append(f"{' and '.join(items)}{comma} and your cook days are set to {top.value}")
+    slow = [e for e in excluded if e.blocker == "minutes"]
+    if slow:
+        longest = max((d.cook_minutes_available for d in cook_days), default=0)
+        parts.append(
+            _recipes_that(len(slow), f"need more than the {longest} minutes of hands-on cooking a day allows")
+        )
+    unpriced: dict[str, int] = defaultdict(int)
+    other: dict[str, int] = defaultdict(int)
+    for e in excluded:
+        for name in e.unpriced_ingredients:
+            unpriced[name] += 1
+        for code in e.codes:
+            if code in OTHER_REASONS and not (code == "unpriced" and e.unpriced_ingredients):
+                other[code] += 1
+    if constraints.planning_mode is PlanningMode.INVENTORY:
+        no_price = "isn't in your inventory and has no price at your stores, so a top-up can't include it"
+    else:
+        no_price = (
+            "has no price at your stores, so your budget can't be checked (enter a price, or plan without "
+            "a budget)"
+        )
+    for name, n in sorted(unpriced.items(), key=lambda kv: (-kv[1], kv[0])):
+        parts.append(_recipes_that(n, f"use {name}, which {no_price}"))
+    for code, n in sorted(other.items(), key=lambda kv: (-kv[1], kv[0])):
+        parts.append(_recipes_that(n, OTHER_REASONS[code]))
+    if not parts:
+        return None
     return Diagnostic(
         "RECIPES_LEFT_OUT",
-        f"{n} recipe{'s were' if n > 1 else ' was'} left out of this week: {_reason_summary(excluded)}.",
-        amount=n,
+        _capitalized("; ".join(parts)) + ".",
+        amount=len(excluded),
+        mood=blocked_mood.value if blocked_mood is not None else None,
     )
 
 
@@ -267,9 +352,10 @@ def _report(problem: PlanningProblem, model: _Model) -> tuple[Diagnostic, ...]:
             out.append(
                 Diagnostic(
                     "COOK_TIME_SHORT",
-                    f"{_day(day)} needs about {have + n} hands-on minutes; you have {have} (short by {n}).",
+                    f"{weekday(c, day)} needs {have + n} minutes of hands-on cooking; you set {have}.",
                     day=day,
                     amount=n,
+                    suggested_minutes=have + n,
                 )
             )
     target = c.daily_protein_target_g
@@ -359,6 +445,6 @@ def _report(problem: PlanningProblem, model: _Model) -> tuple[Diagnostic, ...]:
     held = held_diagnostic(problem.excluded)
     if held is not None:
         out.append(held)
-    elif (left_out := left_out_diagnostic(problem.excluded)) is not None:
+    elif (left_out := left_out_diagnostic(problem.excluded, c)) is not None:
         out.append(left_out)
     return tuple(out)

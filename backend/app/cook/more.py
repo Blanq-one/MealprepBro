@@ -209,7 +209,7 @@ def _background(tap: _Tap) -> list[int] | None:
     daily = size.prompt_tokens + size.max_completion_tokens // 2
     if ctx.tokens.used_last_24h() + daily > tap.access.settings.llm_daily_token_budget - reserve:
         return None  # keep the reserve for calls you ask for
-    if not _room_soon(tap, ctx, size.prompt_tokens + size.max_completion_tokens):
+    if not _room_soon(tap, generator.llm, size.prompt_tokens + size.max_completion_tokens):
         return None
     ideas, _ = run_ideas(generator, request, revise=False, daily_reserve=reserve)
     if not ideas.created:

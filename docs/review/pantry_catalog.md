@@ -89,10 +89,11 @@ Every package size is a typical US size and an **estimate**.
 | chicken-wing | bone-in | skin-on |
 | chicken-whole | bone-in | skin-on |
 
-## Ground meat and whole cuts are never swapped for each other
+## Swap groups for meat and fish
 
-Ground swaps only with ground; a whole cut only with a whole cut of the same bone and skin;
-neither ever stands in for, or is replaced by, anything else.
+Ground swaps only with ground; a whole cut only with a whole cut of the same bone and skin; fish
+fillets only with fish fillets; shellfish only with shellfish. Nothing in a group stands in for,
+or is replaced by, anything outside it.
 
 | Ingredient | Kind | Bone | Skin |
 |---|---|---|---|
@@ -111,6 +112,10 @@ neither ever stands in for, or is replaced by, anything else.
 | pork-chop-boneless | whole cut | boneless | skinless |
 | pork-tenderloin | whole cut | boneless | skinless |
 | beef-sirloin-steak | whole cut | boneless | skinless |
+| salmon | fish fillet | — | — |
+| tilapia | fish fillet | — | — |
+| cod | fish fillet | — | — |
+| shrimp | shellfish | — | — |
 
 ## Close matches, always labeled (M7)
 

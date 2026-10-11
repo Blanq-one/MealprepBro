@@ -118,6 +118,9 @@ class Diagnostic:
     # it would buy, so the app can offer "Allow a $37 top-up" and "See what it would buy"
     suggested_cents: int | None = None
     items: tuple[str, ...] = ()
+    # time and mood fixes (2b.3b approval, P4): "Allow 50 min on Monday", "Allow fancy recipes"
+    suggested_minutes: int | None = None
+    mood: str | None = None
 
 
 @dataclass(frozen=True)

@@ -57,6 +57,9 @@ class Settings(BaseSettings):
     groq_api_key: SecretStr | None = None
     llm_provider: Literal["groq"] = "groq"
     llm_model: str | None = None
+    # The ideas pass (meal-now ideas and their revision) on its own model, with its own per-minute allowance;
+    # empty = LLM_MODEL. Steps and planning always use LLM_MODEL (2b.3b approval, P5).
+    llm_ideas_model: str | None = None
     llm_structured_mode: StructuredMode = "strict"  # anything else is a config error at startup
     llm_max_attempts: int = Field(default=3, ge=1, le=6)  # parse/validation attempts per call
     llm_max_transport_retries: int = Field(default=3, ge=0, le=6)  # 429 / timeouts, counted separately
@@ -74,9 +77,9 @@ class Settings(BaseSettings):
     # More ideas' background batch never leaves less than this much of the daily budget for calls you ask for
     llm_prefetch_daily_reserve: int = Field(default=30_000, ge=0)
 
-    @field_validator("llm_reasoning_effort", mode="before")
+    @field_validator("llm_reasoning_effort", "llm_ideas_model", mode="before")
     @classmethod
-    def _blank_effort_is_none(cls, value: object) -> object:
+    def _blank_is_none(cls, value: object) -> object:
         return None if isinstance(value, str) and not value.strip() else value
 
     # Solver (Phase 1)

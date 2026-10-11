@@ -4,8 +4,14 @@ With dozens of recipes per meal the weekly MILP stops proving its best plan with
 got slow and could differ between identical requests (the solve time grows with every candidate: the 10
 Phase 0 seeds solve in about 10 s, 15 candidates take 20–60 s). Before each solve, code keeps the best
 SHORTLIST_PER_SLOT candidates for each of the week's meals; the solver still does all the fitting. If they
-can't make a plan, the orchestrator widens the shortlist once (SHORTLIST_WIDER), and solves the whole library
-only when it is small (FULL_SOLVE_MAX).
+can't make a plan, the orchestrator widens the shortlist once (SHORTLIST_WIDER), then tries every eligible
+recipe before it says no plan fits (2b.3b approval, P3; not with a money limit, whose proof over every recipe
+outlasts any time limit: see Orchestrator._solve). The candidates are already eligible: build_problem
+applies every hard filter first (diet rules, equipment, mood and hands-on time that fit some cook day).
+
+Each meal's shortlist always starts with its quickest recipe, and the quickest one your strictest cook day's
+mood allows (P3): the first day of a week cooks every one of its meals itself, so a shortlist of slow recipes
+could miss a short cook day that the library fits easily.
 
 Each candidate is scored within its meal, every term scaled 0–1 across that meal's pool, ties by version id:
   nutrition   your priority per kcal (protein, carbs, or iron with heme counted twice; none for balanced)
@@ -24,12 +30,13 @@ from collections.abc import Mapping, Sequence
 from dataclasses import replace
 from decimal import Decimal
 
+from app.domain.cook_time import MOOD_ORDER
 from app.domain.enums import GroceryMode, MealSlot, NutritionPriority
 from app.planning.problem import CandidateRecipe, IngredientPlan, PlanningProblem
 
 SHORTLIST_PER_SLOT = 3  # lunch and dinner share most recipes, so a week shortlists about 8–12
 SHORTLIST_WIDER = 6  # the second try when the shortlist can't make a plan
-FULL_SOLVE_MAX = 16  # a library this small is solved whole
+FULL_SOLVE_MAX = 16  # a library this small is solved whole from the start
 W_NUTRITION = Decimal(1)
 W_CALORIES = Decimal(1)
 W_FAVORITE = Decimal(1)
@@ -95,6 +102,25 @@ def score_pool(
     return out
 
 
+def quickest(
+    pool: Sequence[CandidateRecipe], problem: PlanningProblem, scores: Mapping[int, Decimal]
+) -> list[CandidateRecipe]:
+    """The meal's quickest recipe, and the quickest one the strictest cook day's mood allows (ties by score).
+    Never-favored and disliked recipes only when nothing else is there."""
+    usable = [x for x in pool if not (x.never_favored or x.has_disliked)] or list(pool)
+    moods = [MOOD_ORDER[d.mood] for d in problem.constraints.days if d.is_cook_day]
+    strictest = min(moods, default=max(MOOD_ORDER.values()))
+
+    def key(x: CandidateRecipe) -> tuple[int, Decimal, int]:
+        return (x.active_minutes, -scores[x.version_id], x.version_id)
+
+    out = [min(usable, key=key)]
+    allowed = [x for x in usable if MOOD_ORDER[x.mood] <= strictest]
+    if allowed and (fit := min(allowed, key=key)) not in out:
+        out.append(fit)
+    return out
+
+
 def shortlist(problem: PlanningProblem, per_slot: int = SHORTLIST_PER_SLOT) -> PlanningProblem:
     """The problem with each meal's best `per_slot` candidates (a recipe kept for any meal is kept for all its
     meals). The same problem when nothing needs cutting."""
@@ -114,6 +140,11 @@ def shortlist(problem: PlanningProblem, per_slot: int = SHORTLIST_PER_SLOT) -> P
             continue
         scores = score_pool(pool, problem, kcal)
         picked = [x for x in pool if x.version_id in keep][:per_slot]  # already kept for another meal
+        for fast in quickest(pool, problem, scores):  # so the shortest cook day can always be met
+            if fast not in picked:
+                picked.append(fast)
+                keep.add(fast.version_id)
+                used |= set(fast.need_per_portion)
         while len(picked) < per_slot:
             rest = [x for x in pool if x not in picked]
             best = min(

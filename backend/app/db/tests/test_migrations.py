@@ -9,6 +9,7 @@ from alembic import command
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.engine import make_url
 
+from app.testing.databases import per_worker
 from conftest import alembic_config
 
 TABLES_0001 = {
@@ -61,7 +62,7 @@ LATER_PHASE_TABLES = {
 @pytest.fixture
 def scratch_db_url(test_db_url: str) -> Iterator[str]:
     url = make_url(test_db_url)
-    name = "mealbro_migration_check"
+    name = per_worker("mealbro_migration_check")
     admin = create_engine(url, isolation_level="AUTOCOMMIT")
     with admin.connect() as conn:
         conn.execute(text(f"DROP DATABASE IF EXISTS {name}"))
