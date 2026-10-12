@@ -213,6 +213,10 @@ def _span(row: dict[str, Any], prefix: str) -> str:
 
 @pytest.mark.parametrize("row", FOODKEEPER_ROWS, ids=[r.key for r in FOODKEEPER_ROWS])
 def test_each_foodkeeper_row_matches_the_saved_file(row):
+    """The backend image is built from backend/ alone, so docs/sources isn't there and this is skipped (as the
+    pantry catalog's review sheet check); it runs in the repo."""
+    if not (REPO / FOODKEEPER_FILE).is_file():
+        pytest.skip("docs/sources isn't part of the backend image")
     product = _foodkeeper_products()[row.product_id]
     assert product["Name"] == row.name
     assert product.get("Name_subtitle") == row.subtitle

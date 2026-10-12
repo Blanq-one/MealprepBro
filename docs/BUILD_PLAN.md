@@ -3095,7 +3095,7 @@ What was built:
   Every recipe saved before it is a dish (`db/tests/test_smart_prep_migration.py`).
 - **Storage per item and state** (`domain/prep_storage.py`), with the FoodKeeper rows (`domain/foodkeeper.py`):
   `foodkeeper.json` was in `docs/sources/`, so the rows were transcribed (V1, X2), each cited by its Product ID
-  and checked against the file by a test: 174 leftovers without meat, fish, poultry or egg; 178 cooked rice; 177
+  and checked against the file by a test (in the repo; the backend image has no `docs/`, so it skips there): 174 leftovers without meat, fish, poultry or egg; 178 cooked rice; 177
   cooked pasta; 426 cooked quinoa; and two gaps the chart also had, 148 cooked fish and 162 cooked shellfish.
   **FoodKeeper has no row for cut fresh vegetables, green salads or homemade sauces** (every Product row
   checked: only commercial cut fruit, mayonnaise deli salads and bottled sauces), so those stay made on the
