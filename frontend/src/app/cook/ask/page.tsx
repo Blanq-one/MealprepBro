@@ -6,11 +6,22 @@ import { useEffect, useState } from "react";
 import { useOnline } from "@/components/AppShell";
 import { GoalsStep } from "@/components/cook/GoalsStep";
 import { HaveStep } from "@/components/cook/HaveStep";
+import { AmountStep, CookStyleStep, PrepGoalsStep, ShopStep } from "@/components/cook/PrepSteps";
 import { Page } from "@/components/Page";
-import { Redirect } from "@/components/Redirect";
 import { Skeleton } from "@/components/ui/States";
 import type { CookHome, SettingsOut } from "@/lib/api/types";
 import { buildAnswers, clearDraft, draftFromAnswers, emptyDraft, loadDraft, type MealNowDraft, saveDraft, savePending } from "@/lib/cook/answers";
+import {
+  buildPrepAnswers,
+  clearPrepDraft,
+  emptyPrepDraft,
+  loadPrepDraft,
+  PREP_STEPS,
+  type PrepDraft,
+  prepDraftFromAnswers,
+  type PrepStep,
+  savePrepDraft,
+} from "@/lib/cook/prep";
 import { useApi } from "@/lib/hooks/useApi";
 
 const ASK = "/cook/ask/?mode=now";
@@ -61,10 +72,70 @@ function MealNowQuestions() {
   );
 }
 
+const PREP = "/cook/ask/?mode=prep";
+
+// The meal-prep questions (FLOW_SPEC §7 C1, C1b, C2, C3, C3b): /cook/ask/?mode=prep&step=amount, when, goals,
+// have, shop. A fresh start from Cook home pre-fills from your last meal-prep answers; Back keeps the draft.
+function MealPrepQuestions() {
+  const params = useSearchParams();
+  const router = useRouter();
+  const raw = params.get("step");
+  const step: PrepStep = (PREP_STEPS as readonly string[]).includes(raw ?? "") ? (raw as PrepStep) : "amount";
+  const fresh = params.get("fresh") === "1";
+  const home = useApi<CookHome>("/api/v1/cook/home");
+  const loaded = useApi<SettingsOut>("/api/v1/settings");
+  const online = useOnline();
+  const [draft, setDraft] = useState<PrepDraft | null>(() => (fresh ? null : (loadPrepDraft() ?? null)));
+  const last = home.data?.last.find((l) => l.mode === "prep") ?? null;
+  const settings = loaded.data?.settings ?? null;
+
+  useEffect(() => {
+    if (draft !== null || home.loading) return;
+    clearPrepDraft();
+    setDraft(last ? prepDraftFromAnswers(last.answers) : emptyPrepDraft());
+    if (fresh) router.replace(`${PREP}&step=amount`);
+  }, [draft, home.loading, last, fresh, router]);
+
+  useEffect(() => {
+    if (draft) savePrepDraft(draft);
+  }, [draft]);
+
+  if (!draft) return <Skeleton cards={2} label="Getting your last answers" />;
+  const at = PREP_STEPS.indexOf(step);
+  const go = (to: PrepStep | null) => router.push(to === null ? "/cook/" : `${PREP}&step=${to}`);
+  const props = {
+    draft,
+    settings,
+    onChange: setDraft,
+    onBack: () => go(at > 0 ? (PREP_STEPS[at - 1] as PrepStep) : null),
+    onNext: () => go(PREP_STEPS[at + 1] as PrepStep),
+  };
+  switch (step) {
+    case "amount":
+      return <AmountStep {...props} />;
+    case "when":
+      return <CookStyleStep {...props} />;
+    case "goals":
+      return <PrepGoalsStep {...props} />;
+    case "have":
+      return <HaveStep draft={draft} onChange={setDraft} online={online} last={last} onBack={props.onBack} onFind={props.onNext} primaryLabel="Next" progress={{ step: 4, total: PREP_STEPS.length }} sends={false} />;
+    default:
+      return (
+        <ShopStep
+          {...props}
+          online={online}
+          onNext={() => {
+            const run = savePending(buildPrepAnswers(draft, settings));
+            router.push(`/cook/plan/?run=${run}`);
+          }}
+        />
+      );
+  }
+}
+
 function Questions() {
   const params = useSearchParams();
-  // meal prep's questions arrive with step 2b.7; until then Meal prep opens the existing plan flow (H3)
-  if (params.get("mode") === "prep") return <Redirect to="/plan/new/" label="Plan a week" />;
+  if (params.get("mode") === "prep") return <MealPrepQuestions />;
   return <MealNowQuestions />;
 }
 

@@ -20,6 +20,7 @@ from app.schemas.cook import StepsStreamEvent
 from app.schemas.recipes import (
     AssemblyItemOut,
     AssemblyOut,
+    HiddenRecipeOut,
     PrepItemOut,
     PrepStageOut,
     RecipeOut,
@@ -30,7 +31,7 @@ from app.schemas.recipes import (
     SavedRecipeOut,
     StorageOut,
 )
-from app.services import favorites
+from app.services import favorites, hidden
 from app.services.dishes import dish_categories
 from app.services.recipes import VersionView, recipe_view, seed_recipes, version_view
 
@@ -131,6 +132,7 @@ def version_out(
 ) -> RecipeVersionOut:
     v, r, rendered, calc = view.version, view.recipe, view.rendered, view.calculation
     marks = favorites.marks(session, r.user_id, [r.id])
+    is_hidden = r.id in hidden.hidden_recipe_ids(session, r.user_id)
     return RecipeVersionOut(
         version_id=v.id,
         recipe_id=r.id,
@@ -196,6 +198,7 @@ def version_out(
         kind=v.kind,
         prep=prep_out(view.item, list(v.pairs_with or [])) if view.item is not None else None,
         assembly=assembly_out(view.assembly) if view.assembly is not None else None,
+        is_hidden=is_hidden,
     )
 
 
@@ -236,6 +239,47 @@ def add_saved(recipe_id: int, session: DbSession, user: CurrentUser) -> Response
 @router.delete("/{recipe_id}/saved", status_code=204)
 def remove_saved(recipe_id: int, session: DbSession, user: CurrentUser) -> Response:
     return _mark(session, user.id, recipe_id, favorites.SavedList.LATER, False)
+
+
+@router.get("/hidden", response_model=list[HiddenRecipeOut])
+def list_hidden(session: DbSession, user: CurrentUser) -> list[HiddenRecipeOut]:
+    """Settings, Hidden recipes (step 2b.7, F24): every recipe you hid with Not for me, most recent first.
+    DELETE /recipes/{id}/hidden shows one again."""
+    rows = hidden.hidden_rows(session, user.id)
+    categories = dish_categories(session, [row.version.id for row in rows])
+    return [
+        HiddenRecipeOut(
+            recipe_id=row.recipe.id,
+            version_id=row.version.id,
+            title=row.version.title,
+            kind=row.version.kind,
+            dish_category=categories[row.version.id].value,
+            hidden_at=row.hidden_at,
+        )
+        for row in rows
+    ]
+
+
+@router.put("/{recipe_id}/hidden", status_code=204)
+def hide(
+    recipe_id: int,
+    session: DbSession,
+    user: CurrentUser,
+    plan_meal: Annotated[int | None, Query(description="the plan meal you tapped it on")] = None,
+) -> Response:
+    """Not for me (F24): leave this recipe out of every future suggestion and plan (plans already made keep
+    it). Logs recipe_hidden once; a repeat changes nothing."""
+    hidden.set_hidden(session, user.id, recipe_id, True, plan_meal_id=plan_meal)
+    session.commit()
+    return Response(status_code=204)
+
+
+@router.delete("/{recipe_id}/hidden", status_code=204)
+def unhide(recipe_id: int, session: DbSession, user: CurrentUser) -> Response:
+    """Show a hidden recipe again (Undo, or Settings, Hidden recipes). Logs recipe_unhidden once."""
+    hidden.set_hidden(session, user.id, recipe_id, False)
+    session.commit()
+    return Response(status_code=204)
 
 
 @router.get("/{recipe_id}", response_model=RecipeOut)

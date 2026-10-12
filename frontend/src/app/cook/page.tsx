@@ -26,9 +26,9 @@ export default function CookHomePage() {
       online={online}
       onRetry={() => void home.reload()}
       onSameAgain={(last) => {
-        // those exact answers again, with today's pantry (instant when nothing changed)
+        // those exact answers again, with today's pantry (a meal now is instant when nothing changed)
         const run = savePending(last.answers as unknown as CookAnswers);
-        router.push(`/cook/results/?run=${run}`);
+        router.push(last.mode === "prep" ? `/cook/plan/?run=${run}` : `/cook/results/?run=${run}`);
       }}
     />
   );

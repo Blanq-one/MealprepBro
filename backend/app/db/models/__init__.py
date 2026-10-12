@@ -1,6 +1,6 @@
 """All ORM models. Importing this package registers every table on Base.metadata."""
 
-from app.db.models.cook import CookSearch, FeedbackEvent, RecipeFavorite, RecipeSaved
+from app.db.models.cook import CookSearch, FeedbackEvent, RecipeFavorite, RecipeHidden, RecipeSaved
 from app.db.models.exposure import LoginAttempt, PlanCandidate
 from app.db.models.ingredient import (
     Ingredient,
@@ -64,6 +64,7 @@ __all__ = [
     "Recipe",
     "RecipeFamily",
     "RecipeFavorite",
+    "RecipeHidden",
     "RecipeIngredient",
     "RecipeSaved",
     "RecipeStep",

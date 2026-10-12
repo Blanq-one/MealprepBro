@@ -1,0 +1,32 @@
+.label {
+  margin: 16px 0 6px;
+  font-weight: 700;
+}
+
+/* Day buttons: they wrap on a 375 px screen, each a 48 px target. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.chip {
+  min-height: var(--tap);
+  min-width: var(--tap);
+  padding: 8px 14px;
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}

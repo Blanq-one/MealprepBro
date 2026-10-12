@@ -441,6 +441,9 @@ open from cache. Error loading home: the choice cards still work; the other sect
 "By portions" is a shortcut: N portions of one meal means that meal on N consecutive days from the start day. Both
 shapes become the same plan request (§13.3).
 
+*As built (2b.7, D164):* "By days" is a day count (1–14) from the start day rather than chips for 14 days, since a
+plan's days are consecutive; Starting offers the next 7 days as chips (Today, Tomorrow, Wed 14 …).
+
 ### C1b How do you want to cook? (meal prep)
 
 *Replaced 2026-10-10 at the 2b.2 approval (BUILD_PLAN H5); built in 2b.5 (engine) and 2b.7 (screen). It replaces
@@ -607,10 +610,22 @@ The Building steps from 5.4.
     notes row or an **About this plan** tap.
 - **Not for me** (recorded 2026-10-11 for 2b.6 and 2b.7, F24), on recipe pages (C8) and meal rows, separate from
   Swap: it hides that recipe from all future suggestions and plans, logs a feedback event, and can be undone from a
-  **Hidden recipes** list in Settings (S0). Swap still replaces just one meal.
+  **Hidden recipes** list in Settings (S0). Swap still replaces just one meal. *Built in 2b.7 (Z5): `recipe_hidden`
+  (migration 0010), `PUT`/`DELETE /recipes/{id}/hidden`, `GET /recipes/hidden`; plans already made keep the meal;
+  Undo right after, or Show again in Settings.*
 - **Shopping list view:** the plan's grocery list exactly as on the Grocery tab (store groups, stock-up section,
   "check you have", unpriced), read-only here, with **Open in Grocery** to check things off.
 - **Bottom bar:** **Use this plan** on a draft, "This is your current plan ✓" on the active one.
+- **As built (2b.7, D161–D167):**
+  - The Prep notes row also holds the plan's own notes and warnings (recipes left out, not proven best) under
+    **About this plan** in the same sheet: "3 to freeze · 4 may spoil · About this plan". Nothing about freezing,
+    spoiling or left-out recipes sits above the days.
+  - A cook day shows "Cook · about 1 h start to finish · 35 min hands-on", each batch as "Cook Chicken over rice ×4"
+    with "→ Mon lunch, Tue dinner, Sat dinner (1 to the freezer)" from the API, its freeze-today lines, and the
+    timeline behind a tap with **Start cooking** (the cook-day cooking mode).
+  - An assembled meal's row lists its items ("1 portion chicken curry · ½ portion rice") and its instruction, and
+    opens the assembly's page.
+  - Each meal row has a ⋯ beside it, opening a sheet with **Not for me** (Swap joins it in 2b.6).
 
 | Tap | Does |
 |---|---|
@@ -819,9 +834,9 @@ time.
 |---|---|
 | You | People · Calories per day · Protein target · Weekly budget (pre-fill) |
 | Meals | Meals to plan · Calories per meal · Calorie mode (strict daily / weekly) and, **in weekly mode only**, "each day within ±150 kcal" (pending fix: hidden in strict mode) · Portion size |
-| Cooking | Cook days · Time per cook day · Mood per cook day · Kitchen equipment · Fridge days for leftovers |
+| Cooking | Cook days · Time per cook day · Weeknight time (finishing prepped meals, V7; 2b.7) · Mood per cook day · Kitchen equipment · Fridge days for leftovers |
 | Shopping | Stores and their order · Separate-store trip only if it saves at least $5 |
-| Diet | Beef (locked) · Held items · Frequency caps (pork ≤ 1 a week, any other caps) · Excluded and disliked ingredients |
+| Diet | Beef (locked) · Held items · Frequency caps (pork ≤ 1 a week, any other caps) · Daily caps · Excluded and disliked ingredients · **Hidden recipes** (Not for me, F24; 2b.7) |
 | Kitchen staples | **Always have** (S2) |
 | Appearance | Light · Dark · Match my phone |
 | Account | Sign out |

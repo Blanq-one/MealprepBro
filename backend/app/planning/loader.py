@@ -10,7 +10,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db.models import InventoryItem, Product, Recipe, RecipeIngredient, RecipeVersion
+from app.db.models import InventoryItem, Product, Recipe, RecipeHidden, RecipeIngredient, RecipeVersion
 from app.domain.cook_schedule import DishTiming, dish_alone
 from app.domain.cook_time import mood_allows
 from app.domain.enums import Equipment, MealSlot, PlanningMode, RecipeKind, RecipeMood
@@ -37,7 +37,9 @@ ACTIVE_ORIGINS = ("seed", "llm", "user")
 
 def candidate_versions(session: Session, user_id: int) -> list[tuple[Recipe, RecipeVersion]]:
     """The default (latest) version of every live dish: seed drafts, saved LLM recipes, your versions. Prep
-    items and assemblies (step 2b.10) are smart prep's, from 2b.11."""
+    items and assemblies (step 2b.10) are smart prep's, from 2b.11. A recipe you hid (Not for me, step 2b.7)
+    is left out of every suggestion and plan: meal now and the planner both start here."""
+    hidden = select(RecipeHidden.recipe_id).where(RecipeHidden.user_id == user_id)
     rows = session.execute(
         select(Recipe, RecipeVersion)
         .join(RecipeVersion, RecipeVersion.id == Recipe.default_version_id)
@@ -47,6 +49,7 @@ def candidate_versions(session: Session, user_id: int) -> list[tuple[Recipe, Rec
             Recipe.origin.in_(ACTIVE_ORIGINS),
             RecipeVersion.status == "active",
             RecipeVersion.kind == RecipeKind.DISH.value,
+            Recipe.id.notin_(hidden),
         )
         .order_by(RecipeVersion.id)
     ).all()

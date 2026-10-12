@@ -19,6 +19,8 @@ class FeedbackEventType(StrEnum):
     SAVED_REMOVED = "saved_removed"  # 2b
     MEAL_SKIPPED = "meal_skipped"
     MEAL_SWAPPED = "meal_swapped"  # 2b (step 2b.6)
+    RECIPE_HIDDEN = "recipe_hidden"  # 2b (step 2b.7): Not for me (F24)
+    RECIPE_UNHIDDEN = "recipe_unhidden"  # 2b (step 2b.7): shown again from Settings, Hidden recipes
     OFF_PLAN_FOOD = "off_plan_food"
     INVENTORY_CORRECTION = "inventory_correction"
 
@@ -31,3 +33,16 @@ class BookmarkPayload(BaseModel):
 
 
 BOOKMARK_PAYLOAD_VERSION = 1
+
+
+class HiddenPayload(BaseModel):
+    """Not for me turned on or off (step 2b.7). The row's recipe_id and recipe_version_id say what, its
+    plan_meal_id the plan meal you tapped it on (None: the recipe page or Settings); `kind` is the recipe's
+    (dish, prep_item or assembly), so the ranker can tell a hidden combination from a hidden dish."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    kind: str
+
+
+HIDDEN_PAYLOAD_VERSION = 1

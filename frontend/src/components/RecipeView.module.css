@@ -53,3 +53,13 @@
   color: var(--muted);
   font-size: var(--text-small);
 }
+
+/* A prep item's stages (2b.7): each with how it keeps when prep stops there. */
+.stage {
+  margin: 0 0 8px;
+}
+
+.stageTitle {
+  margin: 16px 0 4px;
+  font-size: 1.2rem;
+}

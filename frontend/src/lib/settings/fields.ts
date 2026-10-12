@@ -14,6 +14,8 @@ export const PROTEIN_G: Bounds = { min: 0, max: 400, step: 5 };
 export const SLOT_KCAL: Bounds = { min: 25, max: 3000, step: 25 };
 // start to finish per cook day (V11, step 2b.9): up to 600, the backend's maximum
 export const COOK_MINUTES: Bounds = { min: 0, max: 600, step: 15 };
+// an eating day's time to finish a prepped meal (V7, step 2b.9's setting, shown from 2b.7): 0–240
+export const WEEKNIGHT_MINUTES: Bounds = { min: 0, max: 240, step: 5 };
 export const PORK_MEALS: Bounds = { min: 0, max: 7, step: 1 };
 /** Daily amount caps (M16): named units (scoops) in halves, grams and millilitres in 5s, counts in 1s. */
 export const DAILY_CAP_NAMED: Bounds = { min: 0, max: 10, step: 0.5 };

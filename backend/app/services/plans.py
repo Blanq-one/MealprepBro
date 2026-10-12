@@ -21,19 +21,23 @@ from app.db.models import (
     MealPlan,
     PlanBatchIngredient,
     PlanCookBatch,
+    PlanFinishTask,
     PlanMeal,
+    PlanMealComponent,
     Product,
     Recipe,
     RecipeIngredient,
     RecipeVersion,
     Store,
 )
+from app.domain.assembly_text import finish_task_text, portions_text
 from app.domain.cook_schedule import DaySchedule, DishTiming, minutes_text, timeline
 from app.domain.cost import money_display
 from app.domain.enums import MealSlot
 from app.domain.units import GRAMS_PER_UNIT, ML_PER_UNIT
 from app.llm.client import LLMClient
 from app.llm.errors import LLMConfigError
+from app.planning.assemblies import ItemPortion, PlannedPart, item_portion, planned_instruction, planned_item
 from app.planning.orchestrator import Orchestrator, PlanOutcome, ProgressListener, problem_json
 from app.planning.perishables import freeze_text
 from app.planning.persistence import SINGLE, PlanNotFoundError, accept_plan
@@ -44,14 +48,17 @@ from app.planning.solver.model import proven_best
 from app.planning.timing import day_schedules, dish_batch, load_timings
 from app.schemas.plans import (
     BatchOut,
+    BatchUseOut,
     CostsOut,
     DayOut,
+    FinishTaskOut,
     FreezeOut,
     GenerationRunOut,
     GroceryGroupOut,
     GroceryItemOut,
     GroceryListOut,
     LeftoverOut,
+    MealComponentOut,
     MealOut,
     PlanListItemOut,
     PlanRequest,
@@ -277,6 +284,28 @@ def _optional_lines(session: Session, rows: list[PlanBatchIngredient]) -> set[in
     )
 
 
+class _Items:
+    """Each prep batch's item (step 2b.7: labels, stages and finish steps for assembled meals), loaded
+    once."""
+
+    def __init__(
+        self, session: Session, versions: dict[int, tuple[RecipeVersion, Recipe]], fridge_days: int
+    ) -> None:
+        self.session = session
+        self.versions = versions
+        self.fridge_days = fridge_days
+        self.loaded: dict[int, ItemPortion] = {}
+
+    def of(self, batch: PlanCookBatch) -> ItemPortion:
+        vid = batch.recipe_version_id
+        if vid not in self.loaded:
+            version, recipe = self.versions[vid]
+            self.loaded[vid] = item_portion(
+                self.session, version, recipe, leftover_fridge_days=self.fridge_days
+            )
+        return self.loaded[vid]
+
+
 def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut:
     plan = _plan(session, user_id, plan_id)
     c: dict[str, Any] = plan.constraints
@@ -288,17 +317,38 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
             .order_by(PlanCookBatch.cook_on, PlanCookBatch.id)
         )
     )
+    meals = list(
+        session.scalars(
+            select(PlanMeal).where(PlanMeal.meal_plan_id == plan.id, PlanMeal.status != "replaced")
+        )
+    )
+    assembly_ids = {m.assembly_version_id for m in meals if m.assembly_version_id is not None}
     versions = {
         v.id: (v, r)
         for v, r in session.execute(
             select(RecipeVersion, Recipe)
             .join(Recipe, Recipe.id == RecipeVersion.recipe_id)
-            .where(RecipeVersion.id.in_([b.recipe_version_id for b in batches]))
+            .where(RecipeVersion.id.in_({b.recipe_version_id for b in batches} | assembly_ids))
         ).tuples()
     }
     nutrition = batch_nutrition(session, [b.id for b in batches])
     batch_by_id = {b.id: b for b in batches}
-    categories = dish_categories(session, [b.recipe_version_id for b in batches])
+    categories = dish_categories(session, sorted({b.recipe_version_id for b in batches} | assembly_ids))
+    components: dict[int, list[PlanMealComponent]] = defaultdict(list)
+    for comp in session.scalars(
+        select(PlanMealComponent)
+        .where(PlanMealComponent.plan_meal_id.in_([m.id for m in meals]))
+        .order_by(PlanMealComponent.id)
+    ):
+        components[comp.plan_meal_id].append(comp)
+    tasks = list(
+        session.scalars(
+            select(PlanFinishTask)
+            .where(PlanFinishTask.meal_plan_id == plan.id)
+            .order_by(PlanFinishTask.day, PlanFinishTask.id)
+        )
+    )
+    items = _Items(session, versions, int(c.get("leftover_fridge_days", 3)))
     costs = totals["costs"]
     meal_cents: dict[str, int] = costs.get("meal_cents", {})
     day_cents: dict[str, int] = costs.get("day_cents", {})
@@ -310,23 +360,13 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
         if len(stored_batch_cents) == len(in_plan_order)
         else {}
     )
-    meals = list(
-        session.scalars(
-            select(PlanMeal).where(PlanMeal.meal_plan_id == plan.id, PlanMeal.status != "replaced")
-        )
-    )
     slot_order = {s.value: i for i, s in enumerate(MealSlot)}
     meals.sort(key=lambda m: (m.eat_on, slot_order.get(m.slot, 99)))
+    meal_by_id = {m.id: m for m in meals}
     household = int(c.get("household_size", 1))
-    split = {
-        b.id: view.portion_split(
-            b.portions,
-            sum(1 for m in meals if m.cook_batch_id == b.id and m.from_freezer),
-            household,
-            b.portions_to_freeze,
-        )
-        for b in batches
-    }
+    with_date = len(c["days"]) > 7
+    uses = _batch_uses(batches, meals, components, meal_by_id, with_date)
+    split = {b.id: _portion_split(b, meals, components, household) for b in batches}
     freeze = _freeze_instructions(totals)
     schedules, lines = _cook_days(batches, versions, load_timings(session, [v for v, _ in versions.values()]))
     days_out = []
@@ -334,14 +374,31 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
         day = date.fromisoformat(spec["day"])
         meals_out = []
         thaw = [
-            view.thaw_note(
-                MealSlot(m.slot), versions[batch_by_id[m.cook_batch_id].recipe_version_id][0].title
-            )
+            view.thaw_note(MealSlot(m.slot), _meal_title(m, batch_by_id, versions))
             for m in meals
-            if m.from_freezer and m.cook_batch_id is not None and m.eat_on == day + timedelta(days=1)
+            if m.eat_on == day + timedelta(days=1)
+            and (m.from_freezer or any(comp.from_freezer for comp in components.get(m.id, ())))
         ]
         for m in meals:
-            if m.eat_on != day or m.cook_batch_id is None:
+            if m.eat_on != day:
+                continue
+            cents = meal_cents.get(meal_key(m.eat_on, m.slot))
+            if m.assembly_version_id is not None:
+                meals_out.append(
+                    _assembled_meal(
+                        session,
+                        m,
+                        comps=components.get(m.id, []),
+                        batch_by_id=batch_by_id,
+                        versions=versions,
+                        items=items,
+                        nutrition=nutrition,
+                        category=categories[m.assembly_version_id].value,
+                        cents=cents,
+                    )
+                )
+                continue
+            if m.cook_batch_id is None:
                 continue
             b = batch_by_id[m.cook_batch_id]
             v, r = versions[b.recipe_version_id]
@@ -349,7 +406,6 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
             protein = (
                 nutrition.get(b.id, {}).get("protein_g", Decimal(0)).quantize(Decimal("0.1"), ROUND_HALF_UP)
             )
-            cents = meal_cents.get(meal_key(m.eat_on, m.slot))
             meals_out.append(
                 MealOut(
                     eat_on=m.eat_on,
@@ -370,10 +426,11 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
                     cost_display=money(cents) if cents is not None else None,
                     storage=storage,
                     source_display=source,
+                    plan_meal_id=m.id,
                 )
             )
         today_batches = [b for b in batches if b.cook_on == day]
-        cooked = [(versions[b.recipe_version_id][0].title, b.portions) for b in today_batches]
+        cooked = [(_cook_title(b, versions), b.portions) for b in today_batches]
         cents_today = day_cents.get(day.isoformat())
         days_out.append(
             DayOut(
@@ -401,6 +458,18 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
                 thaw_notes=thaw,
                 timeline=lines.get(day, []),
                 time_display=_time_display(schedules[day]) if day in schedules else None,
+                finish_tasks=[
+                    _finish_task(
+                        t,
+                        batch_by_id=batch_by_id,
+                        items=items,
+                        components=components,
+                        meal_by_id=meal_by_id,
+                        versions=versions,
+                    )
+                    for t in tasks
+                    if t.day == day
+                ],
             )
         )
     stores = {s.id: s.name for s in session.scalars(select(Store))}
@@ -442,7 +511,19 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
     ]
     to_freeze = len(notes_items)
     notes_items += spoil
-    display = view.prep_notes_display(to_freeze, len(spoil))
+    # the plan's own notes (recipes left out, not proven best) and warnings sit behind the same row (F23)
+    about = [
+        PrepNoteOut(kind="about", text=text)
+        for text in dict.fromkeys(
+            [
+                *report.get("notes", []),
+                *(w.get("message") or w.get("code") or "" for w in report.get("warnings", [])),
+            ]
+        )
+        if text
+    ]
+    notes_items += about
+    display = view.prep_notes_display(to_freeze, len(spoil), len(about))
     search = session.scalars(select(CookSearch).where(CookSearch.meal_plan_id == plan.id)).first()
     return PlanSummaryOut(
         id=plan.id,
@@ -530,6 +611,12 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
                 portions_display=view.portions_display(b.portions, *split[b.id]),
                 freezer_friendly=versions[b.recipe_version_id][0].freezer_friendly,
                 freeze_note=versions[b.recipe_version_id][0].freeze_note,
+                uses=uses[b.id],
+                uses_display=view.uses_display([u.label for u in uses[b.id]], Decimal(split[b.id][1])),
+                kind="prep_item" if versions[b.recipe_version_id][0].kind == "prep_item" else "dish",
+                stop_state=b.stop_state,
+                stop_display=view.stop_display(b.stop_state),
+                fridge_until=b.fridge_until,
             )
             for b in batches
         ],
@@ -540,6 +627,173 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
         header=(search.results or {}).get("header") if search is not None else None,
         household_size=household,
         proven_best=proven_best(plan.solver_status),
+    )
+
+
+def _batch_uses(
+    batches: list[PlanCookBatch],
+    meals: list[PlanMeal],
+    components: dict[int, list[PlanMealComponent]],
+    meal_by_id: dict[int, PlanMeal],
+    with_date: bool,
+) -> dict[int, list[BatchUseOut]]:
+    """Where each batch's portions go (F23), in meal order: a dish batch's meals, a prep batch's draws."""
+    out: dict[int, list[BatchUseOut]] = {b.id: [] for b in batches}
+    for m in meals:
+        if m.cook_batch_id is not None and m.cook_batch_id in out:
+            label = view.meal_label(m.eat_on, MealSlot(m.slot), with_date=with_date)
+            out[m.cook_batch_id].append(
+                BatchUseOut(eat_on=m.eat_on, slot=MealSlot(m.slot), from_freezer=m.from_freezer, label=label)
+            )
+        for comp in components.get(m.id, ()):
+            if comp.cook_batch_id in out:
+                meal = meal_by_id[comp.plan_meal_id]
+                label = view.meal_label(meal.eat_on, MealSlot(meal.slot), with_date=with_date)
+                out[comp.cook_batch_id].append(
+                    BatchUseOut(
+                        eat_on=meal.eat_on,
+                        slot=MealSlot(meal.slot),
+                        from_freezer=comp.from_freezer,
+                        label=label,
+                    )
+                )
+    return out
+
+
+def _portion_split(
+    batch: PlanCookBatch,
+    meals: list[PlanMeal],
+    components: dict[int, list[PlanMealComponent]],
+    household: int,
+) -> tuple[int, int]:
+    """(fridge, freezer) portions of a batch: a dish batch's freezer meals, or a prep batch's freezer draws
+    (per person, times everyone eating), plus its extras frozen for later weeks."""
+    freezer_meals = sum(1 for m in meals if m.cook_batch_id == batch.id and m.from_freezer)
+    drawn = sum(
+        (
+            comp.portions
+            for group in components.values()
+            for comp in group
+            if comp.cook_batch_id == batch.id and comp.from_freezer
+        ),
+        Decimal(0),
+    )
+    if not drawn:
+        return view.portion_split(batch.portions, freezer_meals, household, batch.portions_to_freeze)
+    freezer = min(Decimal(batch.portions), drawn * household + batch.portions_to_freeze)
+    whole = int(freezer.quantize(Decimal(1), ROUND_HALF_UP))
+    return batch.portions - whole, whole
+
+
+def _meal_title(
+    meal: PlanMeal, batch_by_id: dict[int, PlanCookBatch], versions: dict[int, tuple[RecipeVersion, Recipe]]
+) -> str:
+    if meal.assembly_version_id is not None:
+        return versions[meal.assembly_version_id][0].title
+    if meal.cook_batch_id is None:
+        return "?"
+    return versions[batch_by_id[meal.cook_batch_id].recipe_version_id][0].title
+
+
+def _cook_title(batch: PlanCookBatch, versions: dict[int, tuple[RecipeVersion, Recipe]]) -> str:
+    """A cook day's batch in the day note: its title, and a prep batch's stop state ("marinate only")."""
+    title = versions[batch.recipe_version_id][0].title
+    stop = view.stop_display(batch.stop_state)
+    return f"{title}, {stop}" if stop and stop != "cooked" else title
+
+
+def _assembled_meal(
+    session: Session,
+    meal: PlanMeal,
+    *,
+    comps: list[PlanMealComponent],
+    batch_by_id: dict[int, PlanCookBatch],
+    versions: dict[int, tuple[RecipeVersion, Recipe]],
+    items: _Items,
+    nutrition: dict[int, dict[str, Decimal]],
+    category: str,
+    cents: int | None,
+) -> MealOut:
+    """An assembled meal (smart prep, FLOW_SPEC §19.10): each item's portions and where they come from, its
+    numbers (its items' rounded batches, per person) and its eating-day instruction."""
+    assert meal.assembly_version_id is not None
+    version, recipe = versions[meal.assembly_version_id]
+    parts: list[PlannedPart] = []
+    out_parts: list[MealComponentOut] = []
+    sources: list[tuple[str, date, date, bool]] = []
+    protein = Decimal(0)
+    for comp in comps:
+        batch = batch_by_id[comp.cook_batch_id]
+        item = items.of(batch)
+        parts.append(PlannedPart(item, comp.portions, comp.from_freezer, batch.stop_stage))
+        storage, source = view.meal_source(meal.eat_on, batch.cook_on, comp.from_freezer)
+        sources.append((item.label, meal.eat_on, batch.cook_on, comp.from_freezer))
+        protein += comp.portions * nutrition.get(batch.id, {}).get("protein_g", Decimal(0))
+        out_parts.append(
+            MealComponentOut(
+                cook_batch_id=batch.id,
+                recipe_version_id=batch.recipe_version_id,
+                title=versions[batch.recipe_version_id][0].title,
+                label=item.label,
+                portions=comp.portions,
+                portions_display=portions_text(comp.portions),
+                storage=storage,
+                source_display=source,
+                finish_task_id=comp.finish_task_id,
+            )
+        )
+    storage, source = view.assembly_source(sources) if sources else ("fresh", "Made today")
+    return MealOut(
+        eat_on=meal.eat_on,
+        slot=MealSlot(meal.slot),
+        recipe_version_id=version.id,
+        recipe_id=recipe.id,
+        title=version.title,
+        is_draft=version.is_draft,
+        kcal=meal.planned_kcal,
+        protein_g=protein.quantize(Decimal("0.1"), ROUND_HALF_UP),
+        from_freezer=any(comp.from_freezer for comp in comps),
+        cook_batch_id=None,
+        dish_category=category,
+        cost_cents=cents,
+        cost_display=money(cents) if cents is not None else None,
+        storage=storage,
+        source_display=source,
+        kind="assembly",
+        components=out_parts,
+        instruction=planned_instruction(session, version.id, parts) if parts else None,
+        plan_meal_id=meal.id,
+    )
+
+
+def _finish_task(
+    task: PlanFinishTask,
+    *,
+    batch_by_id: dict[int, PlanCookBatch],
+    items: _Items,
+    components: dict[int, list[PlanMealComponent]],
+    meal_by_id: dict[int, PlanMeal],
+    versions: dict[int, tuple[RecipeVersion, Recipe]],
+) -> FinishTaskOut:
+    """A finish task's line and time, templated from its item (FLOW_SPEC §19.10)."""
+    batch = batch_by_id[task.cook_batch_id]
+    linked = [comp for group in components.values() for comp in group if comp.finish_task_id == task.id]
+    part = PlannedPart(
+        items.of(batch), task.portions, any(comp.from_freezer for comp in linked), batch.stop_stage
+    )
+    meal = meal_by_id.get(linked[0].plan_meal_id) if linked else None
+    title = _meal_title(meal, batch_by_id, versions) if meal is not None else None
+    name = title[:1].lower() + title[1:] if title else None
+    return FinishTaskOut(
+        id=task.id,
+        cook_batch_id=batch.id,
+        kind=task.kind,
+        text=finish_task_text(task.kind, planned_item(part), meal=name, minutes=task.hands_on_minutes),
+        time_display=view.finish_time_display(task.hands_on_minutes, task.hands_off_minutes),
+        hands_on_minutes=task.hands_on_minutes,
+        hands_off_minutes=task.hands_off_minutes,
+        equipment=task.equipment,
+        status=task.status,
     )
 
 

@@ -322,6 +322,17 @@
       "title": "Id",
       "type": "integer"
      },
+     "in_plan": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "In Plan"
+     },
      "lines": {
       "items": {
        "$ref": "#/components/schemas/BatchLineOut"
@@ -518,9 +529,30 @@
       "title": "Fridge Portions",
       "type": "integer"
      },
+     "fridge_until": {
+      "anyOf": [
+       {
+        "format": "date",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Fridge Until"
+     },
      "id": {
       "title": "Id",
       "type": "integer"
+     },
+     "kind": {
+      "default": "dish",
+      "enum": [
+       "dish",
+       "prep_item"
+      ],
+      "title": "Kind",
+      "type": "string"
      },
      "planned_minutes": {
       "title": "Planned Minutes",
@@ -560,8 +592,42 @@
       "title": "Status",
       "type": "string"
      },
+     "stop_display": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Stop Display"
+     },
+     "stop_state": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Stop State"
+     },
      "title": {
       "title": "Title",
+      "type": "string"
+     },
+     "uses": {
+      "items": {
+       "$ref": "#/components/schemas/BatchUseOut"
+      },
+      "title": "Uses",
+      "type": "array"
+     },
+     "uses_display": {
+      "default": "",
+      "title": "Uses Display",
       "type": "string"
      }
     },
@@ -579,6 +645,35 @@
      "dish_category"
     ],
     "title": "BatchOut",
+    "type": "object"
+   },
+   "BatchUseOut": {
+    "description": "A meal one batch's portions go to (the batch view, \"cook once, eat many\", F23).",
+    "properties": {
+     "eat_on": {
+      "format": "date",
+      "title": "Eat On",
+      "type": "string"
+     },
+     "from_freezer": {
+      "title": "From Freezer",
+      "type": "boolean"
+     },
+     "label": {
+      "title": "Label",
+      "type": "string"
+     },
+     "slot": {
+      "$ref": "#/components/schemas/MealSlot"
+     }
+    },
+    "required": [
+     "eat_on",
+     "slot",
+     "from_freezer",
+     "label"
+    ],
+    "title": "BatchUseOut",
     "type": "object"
    },
    "BulkIn": {
@@ -2015,6 +2110,13 @@
       "title": "Elapsed Minutes",
       "type": "integer"
      },
+     "finish_tasks": {
+      "items": {
+       "$ref": "#/components/schemas/FinishTaskOut"
+      },
+      "title": "Finish Tasks",
+      "type": "array"
+     },
      "freeze_steps": {
       "items": {
        "type": "string"
@@ -2456,6 +2558,71 @@
      "msg"
     ],
     "title": "FieldErrorOut",
+    "type": "object"
+   },
+   "FinishTaskOut": {
+    "description": "Eating-day work (FLOW_SPEC \u00a719.10): what's left of a prep batch, a reheat or an assembly, at the top of\nits day. Templated by code from the item's tasks; read from 2b.10's table (filled from 2b.11).",
+    "properties": {
+     "cook_batch_id": {
+      "title": "Cook Batch Id",
+      "type": "integer"
+     },
+     "equipment": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Equipment"
+     },
+     "hands_off_minutes": {
+      "title": "Hands Off Minutes",
+      "type": "integer"
+     },
+     "hands_on_minutes": {
+      "title": "Hands On Minutes",
+      "type": "integer"
+     },
+     "id": {
+      "title": "Id",
+      "type": "integer"
+     },
+     "kind": {
+      "enum": [
+       "stage",
+       "reheat",
+       "assemble"
+      ],
+      "title": "Kind",
+      "type": "string"
+     },
+     "status": {
+      "default": "planned",
+      "title": "Status",
+      "type": "string"
+     },
+     "text": {
+      "title": "Text",
+      "type": "string"
+     },
+     "time_display": {
+      "title": "Time Display",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "cook_batch_id",
+     "kind",
+     "text",
+     "time_display",
+     "hands_on_minutes",
+     "hands_off_minutes"
+    ],
+    "title": "FinishTaskOut",
     "type": "object"
    },
    "FormOut": {
@@ -3332,6 +3499,46 @@
     "title": "HemeOut",
     "type": "object"
    },
+   "HiddenRecipeOut": {
+    "description": "Settings, Hidden recipes (step 2b.7, F24): a recipe you hid with Not for me, at its default version.",
+    "properties": {
+     "dish_category": {
+      "title": "Dish Category",
+      "type": "string"
+     },
+     "hidden_at": {
+      "format": "date-time",
+      "title": "Hidden At",
+      "type": "string"
+     },
+     "kind": {
+      "title": "Kind",
+      "type": "string"
+     },
+     "recipe_id": {
+      "title": "Recipe Id",
+      "type": "integer"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     },
+     "version_id": {
+      "title": "Version Id",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "recipe_id",
+     "version_id",
+     "title",
+     "kind",
+     "dish_category",
+     "hidden_at"
+    ],
+    "title": "HiddenRecipeOut",
+    "type": "object"
+   },
    "IngredientCategory": {
     "enum": [
      "protein",
@@ -4129,11 +4336,90 @@
     "title": "LoginIn",
     "type": "object"
    },
-   "MealOut": {
+   "MealComponentOut": {
+    "description": "One prep batch's share of an assembled meal (step 2b.7, read from 2b.10's tables; filled from\n2b.11).",
     "properties": {
      "cook_batch_id": {
       "title": "Cook Batch Id",
       "type": "integer"
+     },
+     "finish_task_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Finish Task Id"
+     },
+     "label": {
+      "title": "Label",
+      "type": "string"
+     },
+     "portions": {
+      "title": "Portions",
+      "type": "string"
+     },
+     "portions_display": {
+      "title": "Portions Display",
+      "type": "string"
+     },
+     "recipe_version_id": {
+      "title": "Recipe Version Id",
+      "type": "integer"
+     },
+     "source_display": {
+      "title": "Source Display",
+      "type": "string"
+     },
+     "storage": {
+      "enum": [
+       "fresh",
+       "fridge",
+       "freezer"
+      ],
+      "title": "Storage",
+      "type": "string"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     }
+    },
+    "required": [
+     "cook_batch_id",
+     "recipe_version_id",
+     "title",
+     "label",
+     "portions",
+     "portions_display",
+     "storage",
+     "source_display"
+    ],
+    "title": "MealComponentOut",
+    "type": "object"
+   },
+   "MealOut": {
+    "properties": {
+     "components": {
+      "items": {
+       "$ref": "#/components/schemas/MealComponentOut"
+      },
+      "title": "Components",
+      "type": "array"
+     },
+     "cook_batch_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cook Batch Id"
      },
      "cost_cents": {
       "anyOf": [
@@ -4170,6 +4456,17 @@
       "title": "From Freezer",
       "type": "boolean"
      },
+     "instruction": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Instruction"
+     },
      "is_draft": {
       "title": "Is Draft",
       "type": "boolean"
@@ -4177,6 +4474,15 @@
      "kcal": {
       "title": "Kcal",
       "type": "integer"
+     },
+     "kind": {
+      "default": "dish",
+      "enum": [
+       "dish",
+       "assembly"
+      ],
+      "title": "Kind",
+      "type": "string"
      },
      "note": {
       "anyOf": [
@@ -4188,6 +4494,17 @@
        }
       ],
       "title": "Note"
+     },
+     "plan_meal_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Plan Meal Id"
      },
      "protein_g": {
       "title": "Protein G",
@@ -5723,7 +6040,8 @@
       "enum": [
        "freeze",
        "freeze_portions",
-       "spoil"
+       "spoil",
+       "about"
       ],
       "title": "Kind",
       "type": "string"
@@ -5741,7 +6059,7 @@
     "type": "object"
    },
    "PrepNotesOut": {
-    "description": "The plan view's one Prep notes row (H4): \"3 to freeze \u00b7 4 may spoil\", with its items for the sheet.",
+    "description": "The plan view's one Prep notes row (H4, F23): \"3 to freeze \u00b7 4 may spoil \u00b7 About this plan\", with its\nitems for the sheet. Nothing about freezing, spoiling or recipes left out shows above the days.",
     "properties": {
      "display": {
       "title": "Display",
@@ -6756,6 +7074,11 @@
      },
      "is_favorite": {
       "title": "Is Favorite",
+      "type": "boolean"
+     },
+     "is_hidden": {
+      "default": false,
+      "title": "Is Hidden",
       "type": "boolean"
      },
      "is_saved": {
@@ -8042,8 +8365,15 @@
    "TodayMealOut": {
     "properties": {
      "cook_batch_id": {
-      "title": "Cook Batch Id",
-      "type": "integer"
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cook Batch Id"
      },
      "dish_category": {
       "title": "Dish Category",
@@ -10609,6 +10939,32 @@
     ]
    }
   },
+  "/api/v1/recipes/hidden": {
+   "get": {
+    "description": "Settings, Hidden recipes (step 2b.7, F24): every recipe you hid with Not for me, most recent first.\nDELETE /recipes/{id}/hidden shows one again.",
+    "operationId": "list_hidden_api_v1_recipes_hidden_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/HiddenRecipeOut"
+         },
+         "title": "Response List Hidden Api V1 Recipes Hidden Get",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "List Hidden",
+    "tags": [
+     "recipes"
+    ]
+   }
+  },
   "/api/v1/recipes/saved": {
    "get": {
     "description": "Your \u2665 favorites or \ud83d\udd16 saved-for-later recipes as cards, most recently saved first, at your household's\nportions, with pantry coverage against your current pantry.",
@@ -10788,6 +11144,94 @@
      }
     },
     "summary": "Add Favorite",
+    "tags": [
+     "recipes"
+    ]
+   }
+  },
+  "/api/v1/recipes/{recipe_id}/hidden": {
+   "delete": {
+    "description": "Show a hidden recipe again (Undo, or Settings, Hidden recipes). Logs recipe_unhidden once.",
+    "operationId": "unhide_api_v1_recipes__recipe_id__hidden_delete",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "recipe_id",
+      "required": true,
+      "schema": {
+       "title": "Recipe Id",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Unhide",
+    "tags": [
+     "recipes"
+    ]
+   },
+   "put": {
+    "description": "Not for me (F24): leave this recipe out of every future suggestion and plan (plans already made keep\nit). Logs recipe_hidden once; a repeat changes nothing.",
+    "operationId": "hide_api_v1_recipes__recipe_id__hidden_put",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "recipe_id",
+      "required": true,
+      "schema": {
+       "title": "Recipe Id",
+       "type": "integer"
+      }
+     },
+     {
+      "description": "the plan meal you tapped it on",
+      "in": "query",
+      "name": "plan_meal",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "integer"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "the plan meal you tapped it on",
+       "title": "Plan Meal"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Hide",
     "tags": [
      "recipes"
     ]

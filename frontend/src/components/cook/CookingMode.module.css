@@ -95,3 +95,7 @@
   min-height: 64px;
   font-size: 1.2rem;
 }
+
+.batchDone {
+  margin-bottom: 16px;
+}

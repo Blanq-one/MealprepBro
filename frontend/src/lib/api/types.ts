@@ -80,3 +80,7 @@ export type CorrectOptions = S["CorrectOptionsOut"];
 export type SwapLine = S["SwapLineOut"];
 // Step 2b.3b: steps on first open (E19)
 export type StepsStreamEvent = S["StepsStreamEvent"];
+// Step 2b.7: the plan view's smart prep side and Not for me (F24)
+export type MealComponent = S["MealComponentOut"];
+export type FinishTask = S["FinishTaskOut"];
+export type HiddenRecipe = S["HiddenRecipeOut"];

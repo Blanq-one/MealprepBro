@@ -249,7 +249,7 @@ class TodayMealOut(BaseModel):
     dish_category: str
     kcal: int
     from_freezer: bool
-    cook_batch_id: int
+    cook_batch_id: int | None  # None for an assembled meal (step 2b.7)
     recipe_version_id: int
 
 

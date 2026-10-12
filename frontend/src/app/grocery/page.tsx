@@ -32,7 +32,7 @@ function Grocery() {
     return (
       <>
         <h1>Grocery</h1>
-        <EmptyState message="No list yet." action={{ label: "Plan a week", href: "/plan/new/" }} />
+        <EmptyState message="No list yet." action={{ label: "Meal prep", href: "/cook/ask/?mode=prep&step=amount&fresh=1" }} />
       </>
     );
   }

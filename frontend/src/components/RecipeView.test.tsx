@@ -41,6 +41,59 @@ describe("RecipeView", () => {
     expect(screen.getByText("About 350 g per container")).toBeInTheDocument();
   });
 
+  it("shows each line's amount once, then the server's per-portion note (2b.4 approval, A1)", () => {
+    render(<RecipeView recipe={recipe()} />);
+    expect(screen.getByText("680 g")).toBeInTheDocument();
+    expect(screen.getByText("170 g per portion · 680 g for the batch of 4")).toBeInTheDocument();
+    expect(screen.queryByText(/680 g chicken thigh/)).toBeNull(); // the name isn't printed twice
+  });
+
+  it("a prep item shows its steps by stage, each with how it keeps when prep stops there (FLOW_SPEC §19.10)", () => {
+    const storage = (note: string) => ({ stored: true, made_on_the_day: false, fridge_days: 1, freezer: true, note, sources: ["FoodSafety.gov Cold Food Storage Chart: Fresh poultry, pieces (1 to 2 days; 9 months)"] });
+    const item = recipe({
+      kind: "prep_item",
+      title: "Tandoori drumsticks",
+      prep: {
+        label: "tandoori drumsticks",
+        brings: "protein",
+        pairs_with: ["indian"],
+        stages: [
+          { n: 1, state: "marinated", state_display: "Marinated", storage: storage("Keeps 1 day in the fridge, or freeze it the same day.") },
+          { n: 2, state: "cooked", state_display: "Cooked", storage: storage("Keeps 3 days in the fridge (your setting).") },
+        ],
+      },
+      steps: [
+        { section: "marinate", text: "Coat the drumsticks in the yogurt marinade.", duration_minutes: 60, appliance_temp_f: null, safety_note: null, added_by_app: false, stage: 1 },
+        { section: "oven", text: "Roast at 425°F for 40 minutes.", duration_minutes: 40, appliance_temp_f: 425, safety_note: "Cook chicken to 165°F (poultry).", added_by_app: false, stage: 2 },
+      ],
+    });
+    render(<RecipeView recipe={item} />);
+    expect(screen.getByRole("heading", { name: "Stage 1 · Marinated" })).toBeInTheDocument();
+    expect(screen.getByText("Keeps 1 day in the fridge, or freeze it the same day.")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Stage 2 · Cooked" })).toBeInTheDocument();
+    expect(screen.getByText("Roast at 425°F for 40 minutes.")).toBeInTheDocument();
+    expect(screen.getByText("Storage sources")).toBeInTheDocument();
+  });
+
+  it("an assembly lists its items (each opening its page), its add-ons and the eating-day instruction", () => {
+    const meal = recipe({
+      kind: "assembly",
+      title: "Spiced chicken wrap",
+      steps: [],
+      lines: [{ ingredient_id: 5, name: "flour tortilla", display: "2 flour tortilla", amount_display: "2", portion_note: null, preparation: null, optional: false }],
+      assembly: {
+        name: "Spiced chicken wrap",
+        items: [{ recipe_id: 40, version_id: 41, kind: "prep_item", title: "Spiced seared chicken thighs", label: "spiced chicken", brings: "protein", portions: "1.0", portions_display: "1 portion", min_portions: "1.0", max_portions: "2.0", step: "1.0", kcal: 320, protein_g: "38.0" }],
+        instruction: "Reheat 1 portion spiced chicken to 165°F. Warm 2 flour tortillas; fill with the spiced chicken.",
+      },
+    });
+    render(<RecipeView recipe={meal} />);
+    expect(screen.getByRole("link", { name: /1 portion Spiced seared chicken thighs/ })).toHaveAttribute("href", expect.stringMatching(/^\/recipe\/?\?version=41$/));
+    expect(screen.getByRole("heading", { name: "Add-ons, per portion" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "On the day" })).toBeInTheDocument();
+    expect(screen.getByText(/Warm 2 flour tortillas; fill with the spiced chicken\./)).toBeInTheDocument();
+  });
+
   it("shows a batch's own quantities and notes instead of the recipe's", () => {
     render(
       <RecipeView

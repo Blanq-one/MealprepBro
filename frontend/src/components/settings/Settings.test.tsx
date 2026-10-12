@@ -124,6 +124,23 @@ describe("Settings editors (S1)", () => {
     ]);
   });
 
+  it("the weeknight time (V7): one value for every day, or different each day, saved in the cook schedule", async () => {
+    const calls = settingsApi();
+    const onDone = vi.fn();
+    render(<SettingsList out={settingsOut()} onSignOut={() => undefined} />);
+    const cooking = screen.getByRole("region", { name: "Cooking" });
+    expect(within(cooking).getByRole("link", { name: /Weeknight time/ })).toHaveTextContent("30 min a day");
+    render(<SettingsEditor field="weeknight_minutes" online onDone={onDone} />);
+    await userEvent.click(await screen.findByRole("button", { name: "Different each day" }));
+    await userEvent.click(screen.getByRole("button", { name: "More friday" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(onDone).toHaveBeenCalled());
+    const [patch] = calls.filter((c) => c.method === "PATCH");
+    const schedule = (patch?.body as { cook_schedule: UserSettings["cook_schedule"] }).cook_schedule;
+    expect(schedule.map((d) => d.weeknight_minutes)).toEqual([30, 30, 30, 30, 35, 30, 30]);
+    expect(schedule.map((d) => d.cook_minutes)).toEqual([90, 0, 90, 90, 0, 90, 90]); // cook days unchanged
+  });
+
   it("offline, Save says it needs a connection", async () => {
     settingsApi();
     render(<SettingsEditor field="household_size" online={false} onDone={() => undefined} />);

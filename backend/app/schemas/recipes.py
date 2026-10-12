@@ -128,6 +128,19 @@ class RecipeVersionOut(BaseModel):
     kind: str = "dish"
     prep: PrepItemOut | None = None
     assembly: AssemblyOut | None = None
+    # step 2b.7: Not for me (F24) is on: left out of every suggestion and plan until shown again
+    is_hidden: bool = False
+
+
+class HiddenRecipeOut(BaseModel):
+    """Settings, Hidden recipes (step 2b.7, F24): a recipe you hid with Not for me, at its default version."""
+
+    recipe_id: int
+    version_id: int
+    title: str
+    kind: str  # dish | prep_item | assembly
+    dish_category: str
+    hidden_at: datetime
 
 
 class RecipeVersionSummaryOut(BaseModel):

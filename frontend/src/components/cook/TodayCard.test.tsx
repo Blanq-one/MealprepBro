@@ -24,7 +24,13 @@ describe("the Cook home Today card", () => {
     expect(screen.getByRole("img", { name: "Bowl" })).toHaveTextContent("🍚");
     expect(screen.getByText("Chicken over rice")).toBeInTheDocument();
     expect(screen.getByText("Cook: Chicken over rice (4 portions) · 45 min hands-on")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Today/ })).toHaveAttribute("href", expect.stringMatching(/^\/day\/?\?plan=7&date=2026-10-12$/));
+    // C6 opens at today (step 2b.7: the old day screen is retired)
+    expect(screen.getByRole("link", { name: /Today/ })).toHaveAttribute("href", expect.stringMatching(/^\/cook\/plan\/?\?id=7&date=2026-10-12$/));
+  });
+
+  it("an assembled meal (no batch of its own) shows like any other", () => {
+    render(<TodayCard today={today({ meals: [{ slot: "dinner", title: "Chicken curry with rice", dish_category: "curry", kcal: 640, from_freezer: false, cook_batch_id: null, recipe_version_id: 9 }] })} />);
+    expect(screen.getByText("Chicken curry with rice")).toBeInTheDocument();
   });
 
   it("a day with nothing to cook says so", () => {
@@ -37,6 +43,6 @@ describe("the Cook home Today card", () => {
     expect(screen.getByText("Your plan starts Monday.")).toBeInTheDocument();
     rerender(<TodayCard today={today({ state: "ended", message: "Your plan ended Sunday", day: null, meals: [] })} />);
     expect(screen.getByText("Your plan ended Sunday.")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open your plan" })).toHaveAttribute("href", expect.stringMatching(/^\/plan\/?\?id=7$/));
+    expect(screen.getByRole("link", { name: "Open your plan" })).toHaveAttribute("href", expect.stringMatching(/^\/cook\/plan\/?\?id=7$/));
   });
 });

@@ -209,6 +209,22 @@ def _finish_sentence(item: MealItem) -> str:
     return text + "."
 
 
+def finish_task_text(kind: str, item: MealItem, *, meal: str | None = None, minutes: int = 0) -> str:
+    """A finish task's line at the top of its eating day (step 2b.7, FLOW_SPEC §19.10): the stages left
+    ("Roast the marinated chicken (2 portions): 425°F for 25 min, until it reaches 165°F."), a reheat, or
+    putting a meal together."""
+    if kind == "stage" and item.finish is not None:
+        sentence = _finish_sentence(item)
+        return (
+            f"From the freezer, thawed overnight in the fridge: {sentence}" if item.from_freezer else sentence
+        )
+    if kind == "reheat":
+        return (
+            f"Serve {_amount(item)} cold." if item.cold else f"Reheat {_amount(item)} to {REHEAT_TEMP_F}°F."
+        )
+    return f"Put together {meal or 'the meal'} ({minutes} min)."
+
+
 def meal_instruction(
     items: Sequence[MealItem],
     add_ons: Sequence[str] = (),

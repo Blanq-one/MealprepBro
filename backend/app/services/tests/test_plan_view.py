@@ -2,6 +2,7 @@
 the thaw note the night before, freezing after cooking, and the one Prep notes row."""
 
 from datetime import date
+from decimal import Decimal
 
 from app.domain.enums import MealSlot
 from app.services import plan_view as view
@@ -42,3 +43,41 @@ def test_the_prep_notes_row_counts_its_items_and_disappears_when_empty():
     assert view.prep_notes_display(2, 0) == "2 to freeze"
     assert view.prep_notes_display(0, 1) == "1 may spoil"
     assert view.prep_notes_display(0, 0) is None
+    # the plan's own notes (recipes left out, not proven best) sit behind the same row (2b.7, F23)
+    assert view.prep_notes_display(3, 0, 2) == "3 to freeze · About this plan"
+    assert view.prep_notes_display(0, 0, 1) == "About this plan"
+
+
+def test_where_each_batchs_portions_go():
+    """F23: 'Cook Air-fryer chicken over rice ×4 → Mon lunch, Tue dinner, Wed lunch, Sat dinner (1 to the
+    freezer)'."""
+    labels = [view.meal_label(MON, MealSlot.LUNCH), view.meal_label(SAT, MealSlot.DINNER)]
+    assert labels == ["Mon lunch", "Sat dinner"]
+    assert view.meal_label(SAT, MealSlot.PROTEIN_DESSERT, with_date=True) == "Sat 17 dessert"
+    assert view.uses_display(labels, Decimal(1)) == "Mon lunch, Sat dinner (1 to the freezer)"
+    assert view.uses_display(labels, Decimal(0)) == "Mon lunch, Sat dinner"
+    assert view.uses_display([], Decimal(2)) == "2 to the freezer"
+    assert view.uses_display(["Mon lunch"], Decimal("1.5")) == "Mon lunch (1½ to the freezer)"
+
+
+def test_a_prep_batch_its_stop_and_finish_lines():
+    assert view.stop_display("marinated") == "marinate only"
+    assert view.stop_display("cooked") == "cooked"
+    assert view.stop_display(None) is None
+    assert view.finish_time_display(5, 25) == "30 min, 5 hands-on"
+    assert view.finish_time_display(5, 0) == "5 min hands-on"
+    assert view.in_plan_line("marinated", MON, [(WED, "oven"), (FRI, "oven")]) == (
+        "In this plan: marinate on Mon 12, roast on Wed 14 and Fri 16."
+    )
+    assert view.in_plan_line("cooked", MON, []) == "In this plan: cook on Mon 12."
+
+
+def test_an_assembled_meals_source_line():
+    same = [("chicken curry", WED, MON, False), ("rice", WED, MON, False)]
+    assert view.assembly_source(same) == ("fridge", "From the fridge, cooked Mon 12")
+    mixed = [("chicken curry", SAT, MON, True), ("rice", SAT, WED, False)]
+    assert view.assembly_source(mixed) == (
+        "freezer",
+        "From the fridge: rice cooked Wed 14; "
+        "from the freezer: chicken curry cooked Mon 12 · thaw Fri 16 night",
+    )

@@ -749,6 +749,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/recipes/hidden": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Hidden
+         * @description Settings, Hidden recipes (step 2b.7, F24): every recipe you hid with Not for me, most recent first.
+         *     DELETE /recipes/{id}/hidden shows one again.
+         */
+        get: operations["list_hidden_api_v1_recipes_hidden_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/recipes/saved": {
         parameters: {
             query?: never;
@@ -823,6 +844,31 @@ export interface paths {
         post?: never;
         /** Remove Favorite */
         delete: operations["remove_favorite_api_v1_recipes__recipe_id__favorite_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/recipes/{recipe_id}/hidden": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Hide
+         * @description Not for me (F24): leave this recipe out of every future suggestion and plan (plans already made keep
+         *     it). Logs recipe_hidden once; a repeat changes nothing.
+         */
+        put: operations["hide_api_v1_recipes__recipe_id__hidden_put"];
+        post?: never;
+        /**
+         * Unhide
+         * @description Show a hidden recipe again (Undo, or Settings, Hidden recipes). Logs recipe_unhidden once.
+         */
+        delete: operations["unhide_api_v1_recipes__recipe_id__hidden_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1109,6 +1155,8 @@ export interface components {
             freeze_notes: string[];
             /** Id */
             id: number;
+            /** In Plan */
+            in_plan?: string | null;
             /** Lines */
             lines: components["schemas"]["BatchLineOut"][];
             /** Meals */
@@ -1178,8 +1226,16 @@ export interface components {
              * @default 0
              */
             fridge_portions: number;
+            /** Fridge Until */
+            fridge_until?: string | null;
             /** Id */
             id: number;
+            /**
+             * Kind
+             * @default dish
+             * @enum {string}
+             */
+            kind: "dish" | "prep_item";
             /** Planned Minutes */
             planned_minutes: number;
             /** Portion Multiplier */
@@ -1204,8 +1260,35 @@ export interface components {
              * @default planned
              */
             status: string;
+            /** Stop Display */
+            stop_display?: string | null;
+            /** Stop State */
+            stop_state?: string | null;
             /** Title */
             title: string;
+            /** Uses */
+            uses?: components["schemas"]["BatchUseOut"][];
+            /**
+             * Uses Display
+             * @default
+             */
+            uses_display: string;
+        };
+        /**
+         * BatchUseOut
+         * @description A meal one batch's portions go to (the batch view, "cook once, eat many", F23).
+         */
+        BatchUseOut: {
+            /**
+             * Eat On
+             * Format: date
+             */
+            eat_on: string;
+            /** From Freezer */
+            from_freezer: boolean;
+            /** Label */
+            label: string;
+            slot: components["schemas"]["MealSlot"];
         };
         /** BulkIn */
         BulkIn: {
@@ -1679,6 +1762,8 @@ export interface components {
             day: string;
             /** Elapsed Minutes */
             elapsed_minutes: number;
+            /** Finish Tasks */
+            finish_tasks?: components["schemas"]["FinishTaskOut"][];
             /** Freeze Steps */
             freeze_steps?: string[];
             /** Freeze Today */
@@ -1833,6 +1918,37 @@ export interface components {
             loc: (string | number)[];
             /** Msg */
             msg: string;
+        };
+        /**
+         * FinishTaskOut
+         * @description Eating-day work (FLOW_SPEC §19.10): what's left of a prep batch, a reheat or an assembly, at the top of
+         *     its day. Templated by code from the item's tasks; read from 2b.10's table (filled from 2b.11).
+         */
+        FinishTaskOut: {
+            /** Cook Batch Id */
+            cook_batch_id: number;
+            /** Equipment */
+            equipment?: string | null;
+            /** Hands Off Minutes */
+            hands_off_minutes: number;
+            /** Hands On Minutes */
+            hands_on_minutes: number;
+            /** Id */
+            id: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "stage" | "reheat" | "assemble";
+            /**
+             * Status
+             * @default planned
+             */
+            status: string;
+            /** Text */
+            text: string;
+            /** Time Display */
+            time_display: string;
         };
         /**
          * FormOut
@@ -2124,6 +2240,27 @@ export interface components {
             non_heme_mg: string;
         };
         /**
+         * HiddenRecipeOut
+         * @description Settings, Hidden recipes (step 2b.7, F24): a recipe you hid with Not for me, at its default version.
+         */
+        HiddenRecipeOut: {
+            /** Dish Category */
+            dish_category: string;
+            /**
+             * Hidden At
+             * Format: date-time
+             */
+            hidden_at: string;
+            /** Kind */
+            kind: string;
+            /** Recipe Id */
+            recipe_id: number;
+            /** Title */
+            title: string;
+            /** Version Id */
+            version_id: number;
+        };
+        /**
          * IngredientCategory
          * @enum {string}
          */
@@ -2382,10 +2519,40 @@ export interface components {
             /** Password */
             password: string;
         };
-        /** MealOut */
-        MealOut: {
+        /**
+         * MealComponentOut
+         * @description One prep batch's share of an assembled meal (step 2b.7, read from 2b.10's tables; filled from
+         *     2b.11).
+         */
+        MealComponentOut: {
             /** Cook Batch Id */
             cook_batch_id: number;
+            /** Finish Task Id */
+            finish_task_id?: number | null;
+            /** Label */
+            label: string;
+            /** Portions */
+            portions: string;
+            /** Portions Display */
+            portions_display: string;
+            /** Recipe Version Id */
+            recipe_version_id: number;
+            /** Source Display */
+            source_display: string;
+            /**
+             * Storage
+             * @enum {string}
+             */
+            storage: "fresh" | "fridge" | "freezer";
+            /** Title */
+            title: string;
+        };
+        /** MealOut */
+        MealOut: {
+            /** Components */
+            components?: components["schemas"]["MealComponentOut"][];
+            /** Cook Batch Id */
+            cook_batch_id: number | null;
             /** Cost Cents */
             cost_cents?: number | null;
             /** Cost Display */
@@ -2399,12 +2566,22 @@ export interface components {
             eat_on: string;
             /** From Freezer */
             from_freezer: boolean;
+            /** Instruction */
+            instruction?: string | null;
             /** Is Draft */
             is_draft: boolean;
             /** Kcal */
             kcal: number;
+            /**
+             * Kind
+             * @default dish
+             * @enum {string}
+             */
+            kind: "dish" | "assembly";
             /** Note */
             note?: string | null;
+            /** Plan Meal Id */
+            plan_meal_id?: number | null;
             /** Protein G */
             protein_g: string;
             /** Recipe Id */
@@ -2946,13 +3123,14 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "freeze" | "freeze_portions" | "spoil";
+            kind: "freeze" | "freeze_portions" | "spoil" | "about";
             /** Text */
             text: string;
         };
         /**
          * PrepNotesOut
-         * @description The plan view's one Prep notes row (H4): "3 to freeze · 4 may spoil", with its items for the sheet.
+         * @description The plan view's one Prep notes row (H4, F23): "3 to freeze · 4 may spoil · About this plan", with its
+         *     items for the sheet. Nothing about freezing, spoiling or recipes left out shows above the days.
          */
         PrepNotesOut: {
             /** Display */
@@ -3304,6 +3482,11 @@ export interface components {
             incomplete_reasons: string[];
             /** Is Favorite */
             is_favorite: boolean;
+            /**
+             * Is Hidden
+             * @default false
+             */
+            is_hidden: boolean;
             /** Is Saved */
             is_saved: boolean;
             /**
@@ -3739,7 +3922,7 @@ export interface components {
         /** TodayMealOut */
         TodayMealOut: {
             /** Cook Batch Id */
-            cook_batch_id: number;
+            cook_batch_id: number | null;
             /** Dish Category */
             dish_category: string;
             /** From Freezer */
@@ -5300,6 +5483,26 @@ export interface operations {
             };
         };
     };
+    list_hidden_api_v1_recipes_hidden_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HiddenRecipeOut"][];
+                };
+            };
+        };
+    };
     list_saved_api_v1_recipes_saved_get: {
         parameters: {
             query?: {
@@ -5412,6 +5615,67 @@ export interface operations {
         };
     };
     remove_favorite_api_v1_recipes__recipe_id__favorite_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recipe_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    hide_api_v1_recipes__recipe_id__hidden_put: {
+        parameters: {
+            query?: {
+                /** @description the plan meal you tapped it on */
+                plan_meal?: number | null;
+            };
+            header?: never;
+            path: {
+                recipe_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unhide_api_v1_recipes__recipe_id__hidden_delete: {
         parameters: {
             query?: never;
             header?: never;

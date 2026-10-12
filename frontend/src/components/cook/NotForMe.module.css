@@ -1,0 +1,29 @@
+.notForMe {
+  margin: 8px 0 16px;
+}
+
+.hidden {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: var(--radius-tile);
+  background: var(--surface-2);
+  font-size: var(--text-small);
+}
+
+/* The meal row's ⋯: a 48 px target beside the row. */
+.more {
+  flex: none;
+  width: var(--tap);
+  min-height: var(--tap);
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 1.4rem;
+  cursor: pointer;
+}

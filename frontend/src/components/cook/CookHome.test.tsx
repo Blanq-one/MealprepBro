@@ -29,14 +29,23 @@ describe("the Cook home (C0)", () => {
     for (const section of sections) expect(choices.compareDocumentPosition(section) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
-  it("A meal now starts the questions; Meal prep opens the existing plan flow until step 2b.7", () => {
+  it("A meal now starts the questions; Meal prep starts its own at C1 (step 2b.7)", () => {
     view();
     // (the test Link drops the trailing slash the static export keeps)
     const choices = within(screen.getByTestId("choices"));
     expect(MEAL_NOW_HREF).toBe("/cook/ask/?mode=now&step=goals&fresh=1");
     expect(choices.getByRole("link", { name: /A meal now/ })).toHaveAttribute("href", "/cook/ask?mode=now&step=goals&fresh=1");
-    expect(MEAL_PREP_HREF).toBe("/plan/new/");
-    expect(choices.getByRole("link", { name: /Meal prep/ })).toHaveAttribute("href", expect.stringMatching(/^\/plan\/new\/?$/));
+    expect(MEAL_PREP_HREF).toBe("/cook/ask/?mode=prep&step=amount&fresh=1");
+    expect(choices.getByRole("link", { name: /Meal prep/ })).toHaveAttribute("href", "/cook/ask?mode=prep&step=amount&fresh=1");
+  });
+
+  it("Same as last time shows meal prep's answers too, one card per mode", async () => {
+    const onSameAgain = vi.fn();
+    const prep = { mode: "prep" as const, search_id: 6, summary: "Meal prep · 5 lunches from today · mix it up · shopping", answers: { mode: "prep" }, extras: [] };
+    view({ home: cookHome({ last: [prep, ...cookHome().last] }), onSameAgain });
+    await userEvent.click(screen.getByRole("button", { name: prep.summary }));
+    expect(onSameAgain).toHaveBeenCalledWith(prep);
+    expect(screen.getByRole("button", { name: /A meal now · Dinner for 1/ })).toBeInTheDocument();
   });
 
   it("the choices are at least 120 px tall, so both fit above the fold on a 375 x 667 phone", () => {

@@ -13,8 +13,8 @@ import { TodayCard } from "./TodayCard";
 
 /** Where "A meal now" starts: C2 Goals, pre-filled from your last meal-now answers. */
 export const MEAL_NOW_HREF = "/cook/ask/?mode=now&step=goals&fresh=1";
-/** Until step 2b.7 builds C1, Meal prep opens the existing plan flow (BUILD_PLAN H3). */
-export const MEAL_PREP_HREF = "/plan/new/";
+/** Where "Meal prep" starts: C1 How much, pre-filled from your last meal-prep answers (step 2b.7). */
+export const MEAL_PREP_HREF = "/cook/ask/?mode=prep&step=amount&fresh=1";
 
 function Choice({ href, mode, hint, online }: { href: string; mode: "now" | "prep"; hint: string; online: boolean }) {
   const icon = MODE_ICONS[mode];
@@ -98,8 +98,8 @@ export function CookHomeView({
   onRetry: () => void;
   onSameAgain: (last: LastSearch) => void;
 }) {
-  // meal prep's own answers arrive with step 2b.7; "What should I buy?" keeps its own in 2b.8
-  const again = (home?.last ?? []).filter((l) => l.mode === "now").slice(0, 2);
+  // one per mode, most recent first ("What should I buy?" keeps its own in 2b.8)
+  const again = (home?.last ?? []).filter((l) => l.mode === "now" || l.mode === "prep").slice(0, 2);
   const nothingSaved = home !== null && home.favorites_count === 0 && home.later_count === 0;
   return (
     <>

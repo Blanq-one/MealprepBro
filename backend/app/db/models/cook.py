@@ -33,6 +33,17 @@ class RecipeSaved(Base):
     created_at: Mapped[datetime] = created_at_column()
 
 
+class RecipeHidden(Base):
+    """Not for me (step 2b.7, F24; migration 0010): hidden from every future suggestion and plan, until you
+    show it again from Settings, Hidden recipes."""
+
+    __tablename__ = "recipe_hidden"
+
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("app_user.id"), primary_key=True)
+    recipe_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("recipe.id"), primary_key=True)
+    created_at: Mapped[datetime] = created_at_column()
+
+
 class FeedbackEvent(Base):
     """Structured feedback for the future ranker. 2b writes favorite_added/removed, saved_added/removed and
     meal_swapped; ratings, cook logs and the rest start in Phase 3. `payload` is validated by the Pydantic

@@ -48,6 +48,7 @@ TABLES_0001 = {
 TABLES_0004 = {"plan_candidate", "login_attempt"}
 TABLES_0005 = {"recipe_favorite", "recipe_saved", "feedback_event", "cook_search"}
 TABLES_0009 = {"assembly_component", "plan_meal_component", "plan_finish_task"}
+TABLES_0010 = {"recipe_hidden"}
 LATER_PHASE_TABLES = {
     "prepared_portion",
     "preference_profile",
@@ -87,13 +88,25 @@ def test_upgrade_check_downgrade(scratch_db_url):
     command.upgrade(cfg, "head")
     tables = _tables(scratch_db_url)
     assert len(TABLES_0001) == 31
-    assert tables == TABLES_0001 | TABLES_0004 | TABLES_0005 | TABLES_0009
+    every = TABLES_0001 | TABLES_0004 | TABLES_0005 | TABLES_0009 | TABLES_0010
+    assert tables == every
     assert not tables & LATER_PHASE_TABLES
     command.check(cfg)  # raises if the models and the migration disagree
     command.downgrade(cfg, "base")
     assert _tables(scratch_db_url) == set()
     command.upgrade(cfg, "head")  # and back up again cleanly
-    assert _tables(scratch_db_url) == TABLES_0001 | TABLES_0004 | TABLES_0005 | TABLES_0009
+    assert _tables(scratch_db_url) == every
+
+
+def test_0010_adds_the_hidden_recipes_table_and_drops_it(scratch_db_url):
+    """Step 2b.7 (Not for me, F24; Z5): one table like recipe_favorite, added and dropped cleanly."""
+    cfg = alembic_config(scratch_db_url)
+    command.upgrade(cfg, "0009")
+    assert "recipe_hidden" not in _tables(scratch_db_url)
+    command.upgrade(cfg, "0010")
+    assert "recipe_hidden" in _tables(scratch_db_url)
+    command.downgrade(cfg, "0009")
+    assert "recipe_hidden" not in _tables(scratch_db_url)
 
 
 def test_0004_adds_the_exposure_log_price_client_ref_and_login_attempts(scratch_db_url):

@@ -14,6 +14,7 @@ from app.domain.assembly_text import (
     NamePart,
     assembly_name,
     brings,
+    finish_task_text,
     is_grain_base,
     meal_instruction,
     portions_text,
@@ -144,6 +145,27 @@ def test_a_finish_stage_gets_its_appliance_setting_and_the_safe_temperature():
     assert text == (
         "Roast the marinated chicken (1 portion): 425°F for 25 min, until it reaches 165°F. "
         "Reheat 1 portion rice to 165°F."
+    )
+
+
+def test_a_finish_tasks_line_at_the_top_of_its_day():
+    """Step 2b.7 (FLOW_SPEC §19.10): the stages left, a reheat, or putting the meal together."""
+    roast = FinishStep("oven", 425, 25, SAFE_INTERNAL_TEMPS[SafetyCategory.POULTRY])
+    chicken = MealItem("chicken", Decimal(2), state_label="marinated", finish=roast)
+    assert finish_task_text("stage", chicken) == (
+        "Roast the marinated chicken (2 portions): 425°F for 25 min, until it reaches 165°F."
+    )
+    thawed = MealItem("chicken", ONE, state_label="marinated", from_freezer=True, finish=roast)
+    assert finish_task_text("stage", thawed).startswith(
+        "From the freezer, thawed overnight in the fridge: Roast"
+    )
+    assert finish_task_text("reheat", MealItem("curry", ONE)) == "Reheat 1 portion curry to 165°F."
+    assert (
+        finish_task_text("reheat", MealItem("overnight oats", ONE, cold=True))
+        == "Serve 1 portion overnight oats cold."
+    )
+    assert finish_task_text("assemble", MealItem("wrap", ONE), meal="spiced chicken wrap", minutes=5) == (
+        "Put together spiced chicken wrap (5 min)."
     )
 
 

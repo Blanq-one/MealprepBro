@@ -1,12 +1,16 @@
-.progress {
+.failure {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  font-size: 1.05rem;
 }
 
-.diagnostic {
-  margin-top: 8px;
+.title {
+  margin: 4px 0 0;
+}
+
+.reason {
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
 }
 
 .actions {

@@ -12,6 +12,8 @@ export class ApiError extends Error {
   readonly diagnostics: Diagnostic[];
   readonly retryAfterS: number | null;
   readonly errors: ValidationIssue[];
+  /** The problem as sent, for its extra fields (a 409 plan_overlap's `overlapping`). */
+  readonly body: Record<string, unknown> | null;
 
   constructor(
     status: number,
@@ -20,6 +22,7 @@ export class ApiError extends Error {
     diagnostics: Diagnostic[] = [],
     retryAfterS: number | null = null,
     errors: ValidationIssue[] = [],
+    body: Record<string, unknown> | null = null,
   ) {
     super(detail || title);
     this.name = "ApiError";
@@ -29,6 +32,7 @@ export class ApiError extends Error {
     this.diagnostics = diagnostics;
     this.retryAfterS = retryAfterS;
     this.errors = errors;
+    this.body = body;
   }
 }
 
@@ -78,6 +82,7 @@ export async function problemFrom(response: Response): Promise<ApiError> {
       diagnostics,
       retryAfterS,
       errors.map((e) => ({ loc: Array.isArray(e.loc) ? (e.loc as (string | number)[]) : [], msg: e.msg ?? "" })),
+      body as Record<string, unknown>,
     );
   }
   return new ApiError(

@@ -6,7 +6,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { Segmented } from "@/components/ui/Segmented";
-import type { SettingsOut, SummaryLine, UserSettings } from "@/lib/api/types";
+import type { HiddenRecipe, SettingsOut, SummaryLine, UserSettings } from "@/lib/api/types";
+import { useApi } from "@/lib/hooks/useApi";
 import { grouped, minutesLabel, slotLabel } from "@/lib/format/labels";
 import { formatCents } from "@/lib/format/money";
 import { dailyCapsValue, porkCap, previewSettings, WEEKDAYS } from "@/lib/settings/fields";
@@ -26,6 +27,11 @@ function cookMinutesValue(s: UserSettings): string {
   return minutes.size === 1 ? `${minutesLabel([...minutes][0] as number)} start to finish` : "Different each day";
 }
 
+function weeknightValue(s: UserSettings): string {
+  const minutes = new Set(s.cook_schedule.map((d) => d.weeknight_minutes ?? 30));
+  return minutes.size === 1 ? `${minutesLabel([...minutes][0] as number)} a day` : "Different each day";
+}
+
 function moodsValue(s: UserSettings): string {
   const days = s.cook_schedule.filter((d) => d.is_cook_day);
   const moods = new Set(days.map((d) => d.mood));
@@ -33,8 +39,14 @@ function moodsValue(s: UserSettings): string {
   return days.map((d) => `${WEEKDAYS.find((w) => w.key === d.weekday)?.label} ${MOOD_LABELS[d.mood]?.toLowerCase()}`).join(", ");
 }
 
-/** The rows, grouped. The weekly band row exists only in weekly mode (hidden in strict mode, FLOW_SPEC §11). */
-export function settingsGroups(out: SettingsOut, summary: Record<string, string>): Group[] {
+function hiddenValue(count: number | null): string {
+  if (count === null) return "Recipes you marked Not for me";
+  return count === 0 ? "None" : `${count} hidden`;
+}
+
+/** The rows, grouped. The weekly band row exists only in weekly mode (hidden in strict mode, FLOW_SPEC §11).
+ * `hidden`: how many recipes you hid with Not for me (null until it arrives). */
+export function settingsGroups(out: SettingsOut, summary: Record<string, string>, hidden: number | null = null): Group[] {
   const s = out.settings;
   const held = (out.diet_review ?? []).filter((d) => d.decision === "held").length;
   const allowed = (out.diet_review ?? []).filter((d) => d.decision === "allowed").length;
@@ -68,6 +80,7 @@ export function settingsGroups(out: SettingsOut, summary: Record<string, string>
       rows: [
         { field: "cook_days", label: "Cook days", value: s.cook_schedule.filter((d) => d.is_cook_day).map((d) => WEEKDAYS.find((w) => w.key === d.weekday)?.label).join(", ") || "None" },
         { field: "cook_minutes", label: "Time per cook day", value: cookMinutesValue(s) },
+        { field: "weeknight_minutes", label: "Weeknight time (finishing prepped meals)", value: weeknightValue(s) },
         { field: "moods", label: "Mood per cook day", value: moodsValue(s) },
         { field: "equipment", label: "Kitchen equipment", value: summary.equipment ?? s.equipment.join(", ") },
         { field: "leftover_fridge_days", label: "Fridge days for leftovers", value: `${s.leftover_fridge_days} ${s.leftover_fridge_days === 1 ? "day" : "days"}` },
@@ -92,6 +105,7 @@ export function settingsGroups(out: SettingsOut, summary: Record<string, string>
         },
         { field: "daily_amount_caps", label: "Daily caps", value: summary.daily_caps ?? dailyCapsValue(s) },
         { field: "preferences", label: "Excluded and disliked", value: prefs.length ? prefs.map((p) => p.name).join(", ") : "None" },
+        { field: "hidden_recipes", label: "Hidden recipes", value: hiddenValue(hidden) },
       ],
     },
     {
@@ -125,6 +139,7 @@ export function AppearanceControl() {
 
 export function SettingsList({ out, onSignOut }: { out: SettingsOut; onSignOut: () => void }) {
   const [summary, setSummary] = useState<Record<string, string>>({});
+  const hidden = useApi<HiddenRecipe[]>("/api/v1/recipes/hidden");
   useEffect(() => {
     let stale = false;
     previewSettings({})
@@ -139,7 +154,7 @@ export function SettingsList({ out, onSignOut }: { out: SettingsOut; onSignOut: 
 
   return (
     <>
-      {settingsGroups(out, summary).map((group) => (
+      {settingsGroups(out, summary, hidden.data ? hidden.data.length : null).map((group) => (
         <section key={group.title} className={styles.group} aria-label={group.title}>
           <h2 className={styles.groupTitle}>{group.title}</h2>
           <ul className={`list card ${styles.rows}`}>

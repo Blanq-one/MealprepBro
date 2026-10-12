@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { useCallback, useState } from "react";
 
 import { useOnline } from "@/components/AppShell";
+import { NotForMe } from "@/components/cook/NotForMe";
 import { RecipeActions } from "@/components/cook/RecipeActions";
 import { StepsPending } from "@/components/cook/StepsPending";
 import { MarkCooked } from "@/components/MarkCooked";
@@ -109,11 +110,13 @@ function BatchRecipe({ batchId }: { batchId: string }) {
           </p>
           <p className="small muted">
             Feeds:{" "}
-            {b.meals.map((m) => `${dayLabel(m.eat_on)} ${slotLabel(m.slot).toLowerCase()}${m.from_freezer ? " (from freezer)" : ""}`).join(", ")}
+            {b.meals.map((m) => `${dayLabel(m.eat_on)} ${slotLabel(m.slot).toLowerCase()}${m.kind === "assembly" ? ` (${m.title})` : ""}${m.from_freezer ? " (from freezer)" : ""}`).join(", ")}
           </p>
+          {b.in_plan && <p className="small">{b.in_plan}</p>}
           <MarkCooked batchId={b.id} status={b.status} onCooked={() => void batch.reload()} />
         </section>
         {b.status !== "cooked" && <RecipeActions recipe={b.recipe} cook={{ batchId: b.id }} online={online} blocked={steps.blocked} />}
+        <NotForMe recipeId={b.recipe.recipe_id} title={b.recipe.title} hidden={b.recipe.is_hidden} online={online} />
       </RecipeView>
     </>
   );
@@ -140,6 +143,7 @@ function SearchRecipe({ versionId, searchId }: { versionId: string; searchId: st
           online={online}
           blocked={steps.blocked}
         />
+        <NotForMe recipeId={recipe.recipe_id} title={recipe.title} hidden={recipe.is_hidden} online={online} />
       </RecipeView>
     </>
   );
@@ -182,6 +186,7 @@ function VersionRecipe({ versionId, portions, size }: { versionId: string; porti
           online={online}
           blocked={steps.blocked}
         />
+        <NotForMe recipeId={version.data.recipe_id} title={version.data.title} hidden={version.data.is_hidden} online={online} />
       </RecipeView>
     </>
   );

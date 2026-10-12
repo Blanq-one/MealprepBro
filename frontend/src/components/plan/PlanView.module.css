@@ -1,0 +1,260 @@
+.header {
+  margin-bottom: 12px;
+}
+
+.title {
+  margin: 0 0 4px;
+  font-size: 1.45rem;
+  overflow-wrap: anywhere;
+}
+
+.totals {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-small);
+}
+
+/* The one Prep notes row (H4): a full-width 48 px tap, never a block of warnings. */
+.notesRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: var(--tap);
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-tile);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.noteGroup h3 {
+  margin: 12px 0 4px;
+}
+
+.days {
+  margin-top: 16px;
+}
+
+.day {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dayHead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dayTitle {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.dayNumbers,
+.numbers {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-small);
+}
+
+.dayNote {
+  margin: 0;
+}
+
+.finish {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: var(--radius-tile);
+  background: var(--accent-soft);
+}
+
+.finish li {
+  display: flex;
+  flex-direction: column;
+}
+
+.nothing {
+  margin: 0;
+  font-weight: 600;
+  color: var(--herb-ink);
+}
+
+.cook {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: var(--radius-tile);
+  background: var(--surface-2);
+}
+
+.cookHead {
+  margin: 0;
+  font-weight: 700;
+}
+
+.batch {
+  margin: 0;
+}
+
+.batchLink {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: var(--tap);
+  padding: 6px 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.batchTitle {
+  display: block;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.uses {
+  display: block;
+  font-size: var(--text-small);
+}
+
+.freezeToday {
+  margin: 0;
+  font-size: var(--text-small);
+  color: var(--safety);
+}
+
+.timeline summary {
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lines {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.lines li {
+  display: grid;
+  grid-template-columns: 3.2em 1fr;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: var(--text-small);
+}
+
+.at {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.done {
+  font-weight: 700;
+}
+
+.meals {
+  display: flex;
+  flex-direction: column;
+}
+
+.mealRow {
+  display: flex;
+  align-items: flex-start;
+  border-top: 1px solid var(--border);
+}
+
+.meal {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: var(--tap);
+  padding: 8px 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.mealIcon {
+  flex: none;
+  font-size: 1.6rem;
+  line-height: 1.2;
+}
+
+.mealText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.slot {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.mealTitle {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.source {
+  font-size: var(--text-small);
+  color: var(--herb-ink);
+}
+
+.frozen {
+  color: var(--accent-ink);
+}
+
+.parts {
+  font-size: var(--text-small);
+}
+
+.instruction {
+  font-size: var(--text-small);
+  color: var(--muted);
+}
+
+.earlier {
+  margin: 8px 0 16px;
+}
+
+.earlier summary {
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.trip {
+  margin: 12px 0;
+  font-weight: 700;
+}
+
+.useBar {
+  margin-top: 16px;
+}
+
+.current {
+  margin: 16px 0;
+  font-weight: 700;
+  color: var(--herb-ink);
+  text-align: center;
+}

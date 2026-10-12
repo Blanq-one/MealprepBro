@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
 from decimal import Decimal
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.cook.your_terms import pantry_notes
@@ -26,6 +26,7 @@ from app.db.models import (
     PlanBatchIngredient,
     PlanCookBatch,
     PlanMeal,
+    PlanMealComponent,
     Recipe,
     RecipeIngredient,
     RecipeStep,
@@ -314,10 +315,14 @@ def batch_view(session: Session, user_id: int, batch_id: int) -> BatchView:
         )
     )
     view = VersionView(version, recipe, batch.portions, PortionSize(batch.portion_size), rendered, calc)
+    # its dish meals, and (a prep batch, step 2b.7) the assembled meals that draw from it
+    drawn = select(PlanMealComponent.plan_meal_id).where(PlanMealComponent.cook_batch_id == batch.id)
     meals = list(
         session.scalars(
             select(PlanMeal)
-            .where(PlanMeal.cook_batch_id == batch.id, PlanMeal.status != "replaced")
+            .where(
+                or_(PlanMeal.cook_batch_id == batch.id, PlanMeal.id.in_(drawn)), PlanMeal.status != "replaced"
+            )
             .order_by(PlanMeal.eat_on, PlanMeal.id)
         )
     )

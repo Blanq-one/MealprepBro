@@ -8,9 +8,10 @@ import { slotLabel } from "@/lib/format/labels";
 import styles from "./TodayCard.module.css";
 
 /** The Cook home Today card (C0 item 4), from GET /cook/home: today's meals from your current plan and what to
- * cook today, or when the plan starts or ended. Every line is the server's. */
+ * cook today, or when the plan starts or ended. Every line is the server's. It opens C6, which starts with
+ * Today (step 2b.7). */
 export function TodayCard({ today }: { today: TodayOut }) {
-  const planHref = `/plan/?id=${today.plan_id}`;
+  const planHref = `/cook/plan/?id=${today.plan_id}`;
   if (today.state !== "today" || !today.day) {
     return (
       <section className={`card ${styles.card}`} aria-label="Today">
@@ -24,13 +25,13 @@ export function TodayCard({ today }: { today: TodayOut }) {
   }
   return (
     <section className={`card ${styles.card}`} aria-label="Today">
-      <Link href={`/day/?plan=${today.plan_id}&date=${today.day}`} className={styles.link}>
+      <Link href={`/cook/plan/?id=${today.plan_id}&date=${today.day}`} className={styles.link}>
         <h2 className={styles.heading}>Today</h2>
         <ul className="list">
           {today.meals.map((meal) => {
             const icon = dishIcon(meal.dish_category);
             return (
-              <li key={`${meal.slot}-${meal.cook_batch_id}`} className={styles.meal}>
+              <li key={`${meal.slot}-${meal.recipe_version_id}`} className={styles.meal}>
                 <Emoji symbol={icon.emoji} label={icon.label} className={styles.icon} />
                 <span>
                   <span className={styles.slot}>{slotLabel(meal.slot)}</span>

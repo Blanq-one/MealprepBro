@@ -49,23 +49,33 @@ export function alwaysHaveLine(names: readonly string[]): string {
   return more > 0 ? `Always have: ${shown} and ${more} more` : `Always have: ${shown}`;
 }
 
+/** What C3 edits in either draft (a meal now or meal prep): pantry items turned off, and items added. */
+export type HaveDraft = Pick<MealNowDraft, "off" | "extras">;
+
 /** C3 What do you have? Pantry toggles (on by default; off = not for this search), Always have in one line,
  * typed and quick add (Have it / Could buy, with the add flow's versions, forms and amounts), and last time's
- * extras as chips. */
-export function HaveStep({
+ * extras as chips. Meal now: "Find recipes"; meal prep: "Next" (to C3b). */
+export function HaveStep<D extends HaveDraft>({
   draft,
   onChange,
   online,
   last,
   onBack,
   onFind,
+  primaryLabel = "Find recipes",
+  progress = { step: 2, total: 2 },
+  sends = true,
 }: {
-  draft: MealNowDraft;
-  onChange: (draft: MealNowDraft) => void;
+  draft: D;
+  onChange: (draft: D) => void;
   online: boolean;
   last: LastSearch | null;
   onBack: () => void;
   onFind: () => void;
+  primaryLabel?: string;
+  progress?: { step: number; total: number };
+  /** The button sends the search (meal now), so it needs a connection; meal prep's goes on to C3b. */
+  sends?: boolean;
 }) {
   const lots = useApi<InventoryLot[]>("/api/v1/inventory");
   const always = useApi<AlwaysHaveOption[]>("/api/v1/settings/always-have");
@@ -92,12 +102,12 @@ export function HaveStep({
     <QuestionScreen
       title="What do you have?"
       why="I'll use these first. 'Could buy' items are things you're happy to pick up."
-      progress={{ step: 2, total: 2 }}
+      progress={progress}
       onBack={onBack}
-      primaryLabel="Find recipes"
+      primaryLabel={primaryLabel}
       onPrimary={onFind}
-      primaryDisabled={!online}
-      footerNote={!online ? "Needs a connection" : undefined}
+      primaryDisabled={!online && sends}
+      footerNote={!online && sends ? "Needs a connection" : undefined}
     >
       {note && (
         <p className="notice" role="status">

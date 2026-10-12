@@ -26,6 +26,7 @@ import {
   SLOT_KCAL,
   SPLIT_SCALE,
   WEEKDAYS,
+  WEEKNIGHT_MINUTES,
   withPorkMeals,
 } from "@/lib/settings/fields";
 
@@ -306,6 +307,50 @@ export function CookMinutesControl({ settings, onChange }: Props) {
         className="btn btn-link btn-block"
         onClick={() => {
           setAll((cookDays[0] as CookDay).cook_minutes);
+          setPerDay(false);
+        }}
+      >
+        Same every day
+      </button>
+    </>
+  );
+}
+
+/** The weeknight time for finishing prepped meals (V7): every day, cook day or not; "Different each day" opens
+ * one stepper per day. */
+export function WeeknightControl({ settings, onChange }: Props) {
+  const schedule = settings.cook_schedule;
+  const values = new Set(schedule.map((d) => d.weeknight_minutes ?? 30));
+  const [perDay, setPerDay] = useState(values.size > 1);
+  const setAll = (minutes: number) => onChange({ cook_schedule: schedule.map((d) => ({ ...d, weeknight_minutes: minutes })) });
+  if (!perDay) {
+    return (
+      <>
+        <Stepper label="Minutes, start to finish" value={schedule[0]?.weeknight_minutes ?? 30} unit="min a day" {...WEEKNIGHT_MINUTES} onChange={setAll} />
+        <button type="button" className="btn btn-link btn-block" onClick={() => setPerDay(true)}>
+          Different each day
+        </button>
+      </>
+    );
+  }
+  return (
+    <>
+      {schedule.map((day) => (
+        <Stepper
+          key={day.weekday}
+          size="compact"
+          label={WEEKDAYS.find((w) => w.key === day.weekday)?.long ?? day.weekday}
+          value={day.weeknight_minutes ?? 30}
+          unit="min"
+          {...WEEKNIGHT_MINUTES}
+          onChange={(minutes) => onChange({ cook_schedule: schedule.map((d) => (d.weekday === day.weekday ? { ...d, weeknight_minutes: minutes } : d)) })}
+        />
+      ))}
+      <button
+        type="button"
+        className="btn btn-link btn-block"
+        onClick={() => {
+          setAll(schedule[0]?.weeknight_minutes ?? 30);
           setPerDay(false);
         }}
       >

@@ -425,6 +425,50 @@ def load_assembly(
     return compose(parts, add_ons, add_on_calc, stores, version_id=version.id, own_title=version.title)
 
 
+STATE_WORDS = {PrepState.MARINATED: "marinated", PrepState.PARTLY_COOKED: "partly cooked"}
+
+
+@dataclass(frozen=True)
+class PlannedPart:
+    """One prep batch's share of a planned meal, as the plan view tells it (step 2b.7)."""
+
+    item: ItemPortion
+    portions: Decimal  # per person
+    from_freezer: bool = False
+    stop_stage: int | None = None  # the batch stops after this stage; None = its last (a dish)
+
+
+def planned_item(part: PlannedPart) -> MealItem:
+    """The part as its eating day sees it: reheated, served cold, made fresh, or finished (the stages after
+    its stop stage, as one appliance step)."""
+    item = part.item
+    last = len(item.states)
+    stop = part.stop_stage if part.stop_stage is not None else last
+    finish = item.finish_step(stop) if stop < last else None
+    return MealItem(
+        item.label,
+        part.portions,
+        state_label=STATE_WORDS.get(item.states[stop - 1], "") if finish is not None else "",
+        from_freezer=part.from_freezer,
+        fresh=item.fresh and finish is None,
+        cold=item.served_cold,
+        finish=finish,
+    )
+
+
+def planned_instruction(session: Session, assembly_version_id: int, parts: Sequence[PlannedPart]) -> str:
+    """A planned meal's eating-day instruction: its parts as they come that day (from the fridge or the
+    freezer, finished, fresh) and its assembly's add-ons."""
+    add_ons = _add_ons(session, assembly_version_id)
+    flat = _flatbread(add_ons)
+    return meal_instruction(
+        [planned_item(p) for p in parts],
+        [_amount_text(a) for a in add_ons if a is not flat],
+        flatbread=_amount_text(flat) if flat is not None else None,
+        wrap=not any(p.item.brings is Brings.DISH for p in parts),
+    )
+
+
 def one_item_assembly(item: ItemPortion, stores: Sequence[Store]) -> Assembly:
     """Any dish (or prep item) as a meal on its own: one portion, as it keeps after its last stage."""
     part = AssemblyPart(item, Decimal(1), Decimal(1), Decimal(1), Decimal(1))

@@ -74,14 +74,25 @@ def test_a_whole_week_of_lunch_and_dinner_on_one_big_cook_day(api: Any, seeded_d
     assert notes is not None
     counts = {
         kind: sum(1 for i in notes["items"] if i["kind"] == kind)
-        for kind in ("freeze", "freeze_portions", "spoil")
+        for kind in ("freeze", "freeze_portions", "spoil", "about")
     }
     expected = []
     if counts["freeze"] + counts["freeze_portions"]:
         expected.append(f"{counts['freeze'] + counts['freeze_portions']} to freeze")
     if counts["spoil"]:
         expected.append(f"{counts['spoil']} may spoil")
+    if counts["about"]:  # the plan's own notes (recipes left out), behind the same row (2b.7, F23)
+        expected.append("About this plan")
     assert notes["display"] == " · ".join(expected)
+    # the batch view (F23): each batch says where its portions go, the freezer ones counted
+    for b in plan["batches"]:
+        meals = [m for d in plan["days"] for m in d["meals"] if m["cook_batch_id"] == b["id"]]
+        assert [u["label"] for u in b["uses"]] == [
+            f"{date.fromisoformat(m['eat_on']):%a} {m['slot'].replace('protein_dessert', 'dessert')}"
+            for m in meals
+        ]
+        if b["freezer_portions"]:
+            assert b["uses_display"].endswith(f"({b['freezer_portions']} to the freezer)")
     if plan["batches"]:  # the cook day's timeline (step 2b.9), from 0:00 to Done
         assert today["timeline"][0]["at_display"] == "0:00" and today["timeline"][-1]["text"] == "Done"
         assert today["time_display"].startswith("about ")

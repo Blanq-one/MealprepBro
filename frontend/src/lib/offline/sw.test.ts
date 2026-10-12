@@ -55,6 +55,7 @@ describe("service worker routing", () => {
     expect(sw.SHELL_PAGES).toEqual(
       expect.arrayContaining([
         "/cook/",
+        "/cook/plan/",
         "/welcome/",
         "/plan/",
         "/plan/new/",

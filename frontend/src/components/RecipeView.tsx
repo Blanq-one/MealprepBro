@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 import type { RecipeVersion, Step } from "@/lib/api/types";
@@ -49,6 +50,93 @@ function sections(steps: Step[]): [string, Step[]][] {
 
 function sectionLabel(section: string): string {
   return SECTION_LABELS[section] ?? section.replace(/_/g, " ");
+}
+
+function StepList({ steps, keyPrefix }: { steps: Step[]; keyPrefix: string }) {
+  return (
+    <>
+      {sections(steps).map(([section, group], i) => (
+        <section key={`${keyPrefix}-${section}-${i}`} className="card" aria-label={sectionLabel(section)}>
+          <h2>{sectionLabel(section)}</h2>
+          <ol className={styles.steps}>
+            {group.map((step, j) => (
+              <li key={`${section}-${i}-${j}`}>
+                <p>{step.text}</p>
+                {(step.appliance_temp_f || step.duration_minutes) && (
+                  <p className="small muted">
+                    {step.appliance_temp_f ? `${step.appliance_temp_f}°F` : ""}
+                    {step.appliance_temp_f && step.duration_minutes ? " · " : ""}
+                    {step.duration_minutes ? `${step.duration_minutes} min` : ""}
+                  </p>
+                )}
+                {step.safety_note && (
+                  <p className="notice notice-safety" data-testid="safety-note">
+                    <strong>Food safety:</strong> {step.safety_note}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ol>
+        </section>
+      ))}
+    </>
+  );
+}
+
+/** A prep item's steps by stage (FLOW_SPEC §19.10), each stage with how it keeps when prep stops there. */
+function PrepStages({ recipe }: { recipe: RecipeVersion }) {
+  const prep = recipe.prep;
+  if (!prep) return <StepList steps={recipe.steps} keyPrefix="steps" />;
+  return (
+    <>
+      {prep.stages.map((stage) => (
+        <div key={stage.n} className={styles.stage}>
+          <h2 className={styles.stageTitle}>
+            Stage {stage.n} · {stage.state_display}
+          </h2>
+          <p className="small">{stage.storage.note}</p>
+          <StepList steps={recipe.steps.filter((s) => (s.stage ?? prep.stages.length) === stage.n)} keyPrefix={`stage-${stage.n}`} />
+        </div>
+      ))}
+      <details className="small muted">
+        <summary>Storage sources</summary>
+        <ul>
+          {[...new Set(prep.stages.flatMap((s) => s.storage.sources))].map((source) => (
+            <li key={source}>{source}</li>
+          ))}
+        </ul>
+      </details>
+    </>
+  );
+}
+
+/** An assembly (FLOW_SPEC §19.10): its items, each opening its own page, and the eating-day instruction. */
+function AssemblyItems({ recipe }: { recipe: RecipeVersion }) {
+  const assembly = recipe.assembly;
+  if (!assembly) return null;
+  return (
+    <>
+      <section className="card" aria-labelledby="items-h">
+        <h2 id="items-h">In this meal</h2>
+        <ul className={`list ${styles.lines}`}>
+          {assembly.items.map((item) => (
+            <li key={item.recipe_id}>
+              <Link href={`/recipe/?version=${item.version_id}`}>
+                <span className={styles.amount}>{item.portions_display}</span> {item.title}
+              </Link>
+              <span className={styles.detail}>
+                {item.kcal} kcal · {item.protein_g} g protein
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+      <section className="card" aria-labelledby="instruction-h">
+        <h2 id="instruction-h">On the day</h2>
+        <p>{assembly.instruction}</p>
+      </section>
+    </>
+  );
 }
 
 /** A recipe as the cook reads it: large type, sections in order, the app's safety lines highlighted. */
@@ -116,8 +204,11 @@ export function RecipeView({
 
       {children}
 
+      {recipe.kind === "assembly" && <AssemblyItems recipe={recipe} />}
+
+      {(recipe.kind !== "assembly" || shown.length > 0) && (
       <section className="card" aria-labelledby="ingredients-h">
-        <h2 id="ingredients-h">Ingredients</h2>
+        <h2 id="ingredients-h">{recipe.kind === "assembly" ? "Add-ons, per portion" : "Ingredients"}</h2>
         <ul className={`list ${styles.lines}`}>
           {shown.map((line) => (
             <li key={line.key}>
@@ -135,32 +226,10 @@ export function RecipeView({
         </ul>
         {recipe.per_container && <p className="small muted">{recipe.per_container}</p>}
       </section>
+      )}
 
       {stepsSlot}
-      {!stepsSlot && sections(recipe.steps).map(([section, steps], i) => (
-        <section key={`${section}-${i}`} className="card" aria-label={sectionLabel(section)}>
-          <h2>{sectionLabel(section)}</h2>
-          <ol className={styles.steps}>
-            {steps.map((step, j) => (
-              <li key={`${section}-${i}-${j}`}>
-                <p>{step.text}</p>
-                {(step.appliance_temp_f || step.duration_minutes) && (
-                  <p className="small muted">
-                    {step.appliance_temp_f ? `${step.appliance_temp_f}°F` : ""}
-                    {step.appliance_temp_f && step.duration_minutes ? " · " : ""}
-                    {step.duration_minutes ? `${step.duration_minutes} min` : ""}
-                  </p>
-                )}
-                {step.safety_note && (
-                  <p className="notice notice-safety" data-testid="safety-note">
-                    <strong>Food safety:</strong> {step.safety_note}
-                  </p>
-                )}
-              </li>
-            ))}
-          </ol>
-        </section>
-      ))}
+      {!stepsSlot && (recipe.kind === "prep_item" ? <PrepStages recipe={recipe} /> : <StepList steps={recipe.steps} keyPrefix="steps" />)}
 
       <section className="card" aria-labelledby="nutrition-h">
         <h2 id="nutrition-h">Per portion</h2>

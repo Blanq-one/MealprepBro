@@ -143,17 +143,32 @@ class GenerationRunOut(BaseModel):
     finished_at: datetime | None
 
 
+class MealComponentOut(BaseModel):
+    """One prep batch's share of an assembled meal (step 2b.7, read from 2b.10's tables; filled from
+    2b.11)."""
+
+    cook_batch_id: int
+    recipe_version_id: int
+    title: str  # the item's title: "Spiced seared chicken thighs"
+    label: str  # "spiced chicken"
+    portions: Decimal  # per person
+    portions_display: str  # "1 portion", "½ portion"
+    storage: Literal["fresh", "fridge", "freezer"]
+    source_display: str  # "From the fridge, cooked Sun 11"
+    finish_task_id: int | None = None
+
+
 class MealOut(BaseModel):
     eat_on: date
     slot: MealSlot
-    recipe_version_id: int
+    recipe_version_id: int  # an assembled meal: its assembly
     recipe_id: int
     title: str
     is_draft: bool
     kcal: int
     protein_g: Decimal
     from_freezer: bool
-    cook_batch_id: int
+    cook_batch_id: int | None  # None for an assembled meal: its portions come from `components`
     note: str | None = None
     # Phase 2b
     dish_category: str  # the app shows its icon
@@ -163,6 +178,38 @@ class MealOut(BaseModel):
     # cooked Mon 12" / "From the freezer, cooked Mon 12 · thaw Fri 16 night"
     storage: Literal["fresh", "fridge", "freezer"] = "fresh"
     source_display: str | None = None
+    # step 2b.7: a dish meal (one batch) or an assembled meal (portions of several prep batches, FLOW_SPEC
+    # §19), with its eating-day instruction ("Reheat 1 portion curry and 1 portion rice to 165°F.")
+    kind: Literal["dish", "assembly"] = "dish"
+    components: list[MealComponentOut] = Field(default_factory=list)
+    instruction: str | None = None
+    plan_meal_id: int | None = None  # the plan's meal row (Not for me records where you tapped it)
+
+
+class BatchUseOut(BaseModel):
+    """A meal one batch's portions go to (the batch view, "cook once, eat many", F23)."""
+
+    eat_on: date
+    slot: MealSlot
+    from_freezer: bool
+    label: str  # "Mon lunch"
+
+
+class FinishTaskOut(BaseModel):
+    """Eating-day work (FLOW_SPEC §19.10): what's left of a prep batch, a reheat or an assembly, at the top of
+    its day. Templated by code from the item's tasks; read from 2b.10's table (filled from 2b.11)."""
+
+    id: int
+    cook_batch_id: int
+    kind: Literal["stage", "reheat", "assemble"]
+    text: (
+        str  # "Roast the marinated tandoori chicken (2 portions): 425°F for 25 min, until it reaches 165°F."
+    )
+    time_display: str  # "25 min, 5 hands-on"
+    hands_on_minutes: int
+    hands_off_minutes: int
+    equipment: str | None = None
+    status: str = "planned"
 
 
 class TimelineLineOut(BaseModel):
@@ -202,6 +249,8 @@ class DayOut(BaseModel):
     # to finish · 35 min hands-on"
     timeline: list[TimelineLineOut] = Field(default_factory=list)
     time_display: str | None = None
+    # step 2b.7: the day's finish tasks (smart prep), listed before its meals
+    finish_tasks: list[FinishTaskOut] = Field(default_factory=list)
 
 
 class BatchOut(BaseModel):
@@ -226,16 +275,26 @@ class BatchOut(BaseModel):
     portions_display: str = ""
     freezer_friendly: bool = False
     freeze_note: str | None = None
+    # step 2b.7, the batch view (F23): where its portions go, "Mon lunch, Tue dinner, Sat dinner (1 to the
+    # freezer)"; a prep batch's kind and stop state ("marinate only"), read from 2b.10's columns
+    uses: list[BatchUseOut] = Field(default_factory=list)
+    uses_display: str = ""
+    kind: Literal["dish", "prep_item"] = "dish"
+    stop_state: str | None = None
+    stop_display: str | None = None
+    fridge_until: date | None = None
 
 
 class PrepNoteOut(BaseModel):
-    kind: Literal["freeze", "freeze_portions", "spoil"]  # raw food on shopping day | cooked portions | waste
+    # raw food on shopping day | cooked portions | waste | the plan's own notes ("Left out …") and warnings
+    kind: Literal["freeze", "freeze_portions", "spoil", "about"]
     text: str
     day: date | None = None
 
 
 class PrepNotesOut(BaseModel):
-    """The plan view's one Prep notes row (H4): "3 to freeze · 4 may spoil", with its items for the sheet."""
+    """The plan view's one Prep notes row (H4, F23): "3 to freeze · 4 may spoil · About this plan", with its
+    items for the sheet. Nothing about freezing, spoiling or recipes left out shows above the days."""
 
     display: str
     items: list[PrepNoteOut]
@@ -321,7 +380,7 @@ class PlanSummaryOut(BaseModel):
     notes: list[str]
     generation_run_id: int | None
     # step 2b.5
-    prep_notes: PrepNotesOut | None = None  # None = nothing to freeze or that may spoil (no row)
+    prep_notes: PrepNotesOut | None = None  # None = nothing to freeze, that may spoil or to note (no row)
     header: str | None = None  # a meal-prep plan: "5 lunches · Wed 14 – Sun 18 · High protein · Simple"
     household_size: int = 1
     # the time guard: False = the best plan a solve found before its time limit (the notes say so)
@@ -467,6 +526,8 @@ class BatchDetailOut(BaseModel):
     recipe: RecipeVersionOut
     # step 2b.4 (J6), while the batch is planned: what it uses of what you have (what Mark cooked takes)
     pantry_notes: list["PantryNoteOut"] = Field(default_factory=list)
+    # step 2b.7: a prep batch's line, "In this plan: marinate on Sun 11, roast on Wed 14 and Thu 15."
+    in_plan: str | None = None
 
 
 class PantryNoteOut(BaseModel):

@@ -24,6 +24,7 @@ import {
   PEOPLE,
   PROTEIN_G,
   SLOT_KCAL,
+  WEEKNIGHT_MINUTES,
 } from "@/lib/settings/fields";
 
 import { AlwaysHaveEditor } from "./AlwaysHaveEditor";
@@ -47,8 +48,10 @@ import {
   ProteinControl,
   SplitThresholdControl,
   StoresControl,
+  WeeknightControl,
 } from "./Controls";
 import { CapsControl, DailyCapsControl, PreferencesEditor } from "./DietEditors";
+import { HiddenRecipesEditor } from "./HiddenRecipes";
 import { usePreview } from "./usePreview";
 
 type Editor = {
@@ -128,6 +131,12 @@ export const EDITORS: Record<string, Editor> = {
     why: "Simple keeps hands-on time short; fancy allows more steps.",
     fields: ["cook_schedule"],
   },
+  weeknight_minutes: {
+    title: "Weeknight time",
+    why: "On any day, the time you have to finish a prepped meal: roast a marinated item, reheat, fill a wrap. Reheats always fit.",
+    fields: ["cook_schedule"],
+    invalid: (s) => every(s.cook_schedule.every((d) => inRange(d.weeknight_minutes ?? 30, WEEKNIGHT_MINUTES.min, WEEKNIGHT_MINUTES.max)), "Fix the minutes for each day."),
+  },
   equipment: {
     title: "What's in your kitchen?",
     why: "I'll only suggest recipes you can make with these.",
@@ -169,8 +178,8 @@ export const EDITORS: Record<string, Editor> = {
   },
 };
 
-/** Editors that save each change at once (ingredient decisions) or have their own screen. */
-export const SPECIAL_EDITORS = ["held_items", "preferences", "always_have"] as const;
+/** Editors that save each change at once (ingredient decisions, hidden recipes) or have their own screen. */
+export const SPECIAL_EDITORS = ["held_items", "preferences", "always_have", "hidden_recipes"] as const;
 
 export function isEditor(field: string | null): boolean {
   return field !== null && (field in EDITORS || (SPECIAL_EDITORS as readonly string[]).includes(field));
@@ -205,6 +214,8 @@ function control(field: string, s: UserSettings, onChange: Change, extra: { pend
       return <CookMinutesControl settings={s} onChange={onChange} />;
     case "moods":
       return <MoodControl settings={s} onChange={onChange} />;
+    case "weeknight_minutes":
+      return <WeeknightControl settings={s} onChange={onChange} />;
     case "equipment":
       return <EquipmentControl settings={s} onChange={onChange} />;
     case "leftover_fridge_days":
@@ -299,6 +310,7 @@ export function SettingsEditor({ field, onDone, online }: { field: string; onDon
   if (field === "held_items") return <HeldItemsEditor onDone={onDone} online={online} />;
   if (field === "preferences") return <PreferencesEditor onDone={onDone} online={online} />;
   if (field === "always_have") return <AlwaysHaveEditor onDone={onDone} online={online} />;
+  if (field === "hidden_recipes") return <HiddenRecipesEditor onDone={onDone} online={online} />;
   if (!editor) return <ErrorState error={new Error("There's no such setting.")} title="Not a setting" />;
   if (!draft) {
     if (loaded.error && !loaded.data) return <ErrorState error={loaded.error} onRetry={() => void loaded.reload()} />;

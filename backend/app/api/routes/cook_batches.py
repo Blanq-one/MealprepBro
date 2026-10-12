@@ -1,10 +1,12 @@
 from decimal import ROUND_HALF_UP, Decimal
 
 from fastapi import APIRouter
+from sqlalchemy import select
 
 from app.api.deps import CurrentUser, DbSession
 from app.api.presenters import inventory_lots_out
 from app.api.routes.recipes import version_out
+from app.db.models import PlanFinishTask, RecipeVersion
 from app.domain.enums import MealSlot
 from app.planning.rounded import meal_key
 from app.schemas.plans import (
@@ -17,6 +19,7 @@ from app.schemas.plans import (
     PantryNoteOut,
 )
 from app.services import cooking as service
+from app.services import plan_view
 from app.services.dishes import dish_categories
 from app.services.plans import amount_display, batch_nutrition, money
 
@@ -33,6 +36,12 @@ def get_batch(batch_id: int, session: DbSession, user: CurrentUser) -> BatchDeta
     meal_cents: dict[str, int] = view.plan.totals.get("costs", {}).get("meal_cents", {})
     notes = service.batch_pantry_notes(session, user.id, b, view.plan) if b.status == "planned" else {}
     names = {row.ingredient_id: name for row, name, *_ in view.lines}
+    # a prep batch feeds assembled meals (step 2b.7): each is shown by its assembly's name
+    assemblies = {
+        m.assembly_version_id: session.get(RecipeVersion, m.assembly_version_id)
+        for m in view.meals
+        if m.assembly_version_id is not None
+    }
     return BatchDetailOut(
         id=b.id,
         plan_id=view.plan.id,
@@ -48,7 +57,13 @@ def get_batch(batch_id: int, session: DbSession, user: CurrentUser) -> BatchDeta
                 slot=MealSlot(m.slot),
                 recipe_version_id=v.version.id,
                 recipe_id=v.recipe.id,
-                title=v.version.title,
+                title=(
+                    assembly.title
+                    if m.assembly_version_id is not None
+                    and (assembly := assemblies.get(m.assembly_version_id))
+                    else v.version.title
+                ),
+                kind="assembly" if m.assembly_version_id is not None else "dish",
                 is_draft=v.version.is_draft,
                 kcal=m.planned_kcal,
                 protein_g=(protein or Decimal(0)).quantize(Decimal("0.1"), ROUND_HALF_UP),
@@ -79,6 +94,20 @@ def get_batch(batch_id: int, session: DbSession, user: CurrentUser) -> BatchDeta
         pantry_notes=[
             PantryNoteOut(ingredient_id=i, name=names.get(i, "?"), note=text) for i, text in notes.items()
         ],
+        in_plan=plan_view.in_plan_line(
+            b.stop_state,
+            b.cook_on,
+            [
+                (t.day, t.equipment)
+                for t in session.scalars(
+                    select(PlanFinishTask).where(
+                        PlanFinishTask.cook_batch_id == b.id, PlanFinishTask.kind == "stage"
+                    )
+                )
+            ],
+        )
+        if b.stop_state
+        else None,
     )
 
 

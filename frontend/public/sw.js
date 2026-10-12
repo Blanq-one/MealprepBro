@@ -7,7 +7,7 @@
  *   with `x-mealbro-cache: hit` so the screen can say it is showing the offline copy.
  * - Anything that isn't a GET is never cached (the page's own offline queue handles check-offs).
  */
-const VERSION = "v3"; // v3 (step 2b.4): the meal-now screens, Saved lists and cooking mode
+const VERSION = "v4"; // v4 (step 2b.7): the meal-prep questions and the new plan view; the old plan screens redirect
 const SHELL_CACHE = `mealbro-shell-${VERSION}`;
 const STATIC_CACHE = `mealbro-static-${VERSION}`;
 const API_CACHE = `mealbro-api-${VERSION}`;
@@ -19,6 +19,7 @@ const SHELL_PAGES = [
   "/cook/saved/",
   "/cook/buy/",
   "/cook/cooking/",
+  "/cook/plan/",
   "/welcome/",
   "/plan/",
   "/plan/new/",

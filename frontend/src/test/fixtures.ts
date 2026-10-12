@@ -198,6 +198,9 @@ export function plan(overrides: Partial<PlanSummary> = {}): PlanSummary {
             cost_display: "$2.10",
             storage: "fresh",
             source_display: "Cooked today",
+            kind: "dish",
+            components: [],
+            instruction: null,
           },
         ],
         cook_note: "Cook: Chicken over rice (4 portions)",
@@ -208,6 +211,7 @@ export function plan(overrides: Partial<PlanSummary> = {}): PlanSummary {
         thaw_notes: [],
         timeline: [],
         time_display: null,
+        finish_tasks: [],
       },
       {
         day: "2026-10-13",
@@ -228,6 +232,7 @@ export function plan(overrides: Partial<PlanSummary> = {}): PlanSummary {
         thaw_notes: [],
         timeline: [],
         time_display: null,
+        finish_tasks: [],
       },
     ],
     batches: [],
@@ -440,6 +445,7 @@ export function recipe(overrides: Partial<RecipeVersion> = {}): RecipeVersion {
     kind: "dish",
     prep: null,
     assembly: null,
+    is_hidden: false,
     ...overrides,
   };
 }
@@ -649,6 +655,99 @@ export function batchDetail(overrides: Partial<BatchDetail> = {}): BatchDetail {
     freeze_notes: [],
     recipe: recipe(),
     pantry_notes: [{ ingredient_id: 1, name: "chicken thigh, boneless skinless", note: "uses 6 oz, about a quarter of your pack · 1.6 lb left after" }],
+    in_plan: null,
+    ...overrides,
+  };
+}
+
+// ---------------- step 2b.7: the meal-prep plan view ----------------
+type MealFixture = PlanSummary["days"][number]["meals"][number];
+type DayFixture = PlanSummary["days"][number];
+type BatchFixture = PlanSummary["batches"][number];
+
+export function meal(overrides: Partial<MealFixture> = {}): MealFixture {
+  return {
+    eat_on: "2026-10-12",
+    slot: "lunch",
+    recipe_version_id: 3,
+    recipe_id: 3,
+    title: "Chicken over rice",
+    is_draft: false,
+    kcal: 560,
+    protein_g: "42.0",
+    from_freezer: false,
+    cook_batch_id: 11,
+    note: null,
+    dish_category: "bowl",
+    cost_cents: 210,
+    cost_display: "$2.10",
+    storage: "fresh",
+    source_display: "Cooked today",
+    kind: "dish",
+    components: [],
+    instruction: null,
+    plan_meal_id: 101,
+    ...overrides,
+  };
+}
+
+export function day(overrides: Partial<DayFixture> = {}): DayFixture {
+  return {
+    day: "2026-10-12",
+    is_cook_day: true,
+    kcal: 1790,
+    kcal_target: 1800,
+    protein_g: "118.0",
+    hands_on_minutes: 35,
+    elapsed_minutes: 55,
+    chill_minutes: 0,
+    cook_minutes_available: 90,
+    meals: [meal()],
+    cook_note: "Cook: Chicken over rice (4 portions)",
+    cost_cents: 840,
+    cost_display: "$8.40",
+    freeze_steps: [],
+    freeze_today: [],
+    thaw_notes: [],
+    timeline: [],
+    time_display: null,
+    finish_tasks: [],
+    ...overrides,
+  };
+}
+
+export function batch(overrides: Partial<BatchFixture> = {}): BatchFixture {
+  return {
+    id: 11,
+    recipe_version_id: 3,
+    title: "Chicken over rice",
+    cook_on: "2026-10-12",
+    portions: 4,
+    portions_to_freeze: 0,
+    portion_size: "normal",
+    portion_multiplier: "1.000",
+    scale_factor: "1.0000",
+    planned_minutes: 35,
+    status: "planned",
+    dish_category: "bowl",
+    cost_cents: 840,
+    cost_display: "$8.40",
+    fridge_portions: 3,
+    freezer_portions: 1,
+    portions_display: "4 portions (3 fridge, 1 freezer)",
+    freezer_friendly: true,
+    freeze_note: null,
+    uses: [
+      { eat_on: "2026-10-12", slot: "lunch", from_freezer: false, label: "Mon lunch" },
+      { eat_on: "2026-10-13", slot: "dinner", from_freezer: false, label: "Tue dinner" },
+      { eat_on: "2026-10-14", slot: "lunch", from_freezer: false, label: "Wed lunch" },
+      { eat_on: "2026-10-17", slot: "dinner", from_freezer: true, label: "Sat dinner" },
+    ],
+    uses_display: "Mon lunch, Tue dinner, Wed lunch, Sat dinner (1 to the freezer)",
+    kind: "dish",
+    stop_state: null,
+    stop_display: null,
+    fridge_until: null,
     ...overrides,
   };
 }
