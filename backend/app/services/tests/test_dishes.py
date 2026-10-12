@@ -3,7 +3,7 @@ match the pure classifier's expectations (domain/tests/test_dish_category.py).""
 
 from sqlalchemy import select
 
-from app.db.models import Recipe
+from app.db.models import Recipe, RecipeVersion
 from app.domain.dish_category import DishCategory as C
 from app.services.dishes import dish_categories
 
@@ -60,7 +60,11 @@ EXPECTED = {
 
 
 def test_every_stored_seed_recipe_gets_its_expected_category(seeded_db):
-    recipes = list(seeded_db.scalars(select(Recipe).where(Recipe.origin == "seed")))
+    recipes = [
+        r
+        for r in seeded_db.scalars(select(Recipe).where(Recipe.origin == "seed"))
+        if seeded_db.get(RecipeVersion, r.default_version_id).kind == "dish"  # not 2b.10's items and meals
+    ]
     categories = dish_categories(seeded_db, [r.default_version_id for r in recipes])
     got = {r.title: categories[r.default_version_id] for r in recipes}
     assert got == EXPECTED

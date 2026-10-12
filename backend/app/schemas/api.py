@@ -174,3 +174,4 @@ class SeedRecipeOut(_Out):
     incomplete_reasons: list[str]
     per_serving: NutritionOut
     costs: list[StoreCostOut]
+    kind: str = "dish"  # dish | prep_item (step 2b.10)

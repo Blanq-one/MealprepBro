@@ -1,6 +1,7 @@
 """Idempotent seed loader: nutrients, stores, ingredients (nutrition from the USDA cache or your labels),
-named units, aliases, accepted substitutions, products and estimated prices, default settings and the
-draft seed recipe library. Run after `usda-import`. The caller commits."""
+named units, aliases, accepted substitutions, products and estimated prices, default settings, the draft seed
+recipe library, and (step 2b.10) the draft prep items split from it and the draft assemblies of them. Run
+after `usda-import`. The caller commits."""
 
 import hashlib
 import json
@@ -15,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models import (
     AppUser,
+    AssemblyComponent,
     Ingredient,
     IngredientAlias,
     IngredientNutrient,
@@ -34,8 +36,9 @@ from app.db.models import (
     UsdaFoodPortion,
     UserSettingsRow,
 )
-from app.domain.enums import NutritionSource, RecipeOrigin
+from app.domain.enums import NutritionSource, RecipeKind, RecipeMood, RecipeOrigin
 from app.domain.exclusions import HELD_TAG, PORK_COMPONENT_TAG
+from app.domain.food_safety import LEFTOVER_FRIDGE_DAYS_DEFAULT
 from app.domain.food_state import line_state_error
 from app.domain.frequency_caps import CapTarget
 from app.domain.nutrition import energy_from_usda, label_per_100g
@@ -48,7 +51,19 @@ from app.domain.units import (
     normalize_unit,
     to_base,
 )
-from app.schemas.seed import LabelRef, PortionRef, SeedAmount, SeedIngredient, SeedNutrient, SeedRecipe
+from app.planning.assemblies import AssemblyAddOn, AssemblyPart, assembly_title, default_item
+from app.schemas.seed import (
+    LabelRef,
+    PortionRef,
+    SeedAmount,
+    SeedAssembly,
+    SeedIngredient,
+    SeedNutrient,
+    SeedPrepItem,
+    SeedPrepStep,
+    SeedRecipe,
+    SeedRecipeIngredient,
+)
 from app.seed.files import DATA_DIR, SeedFiles, load_seed_files, normalize_name
 from app.services.ingredient_data import IngredientData, load_by_slug
 
@@ -512,36 +527,61 @@ def content_hash(recipe: SeedRecipe) -> str:
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
+def _check_lines(
+    file_name: str, lines: list[SeedRecipeIngredient], data: Mapping[str, IngredientData]
+) -> None:
+    for line in lines:
+        if line.ingredient not in data:
+            raise SeedError(f"{file_name}: unknown ingredient '{line.ingredient}'")
+        if forbidden := data[line.ingredient].tagged.diet_tags & SEED_FORBIDDEN_TAGS:
+            raise SeedError(
+                f"{file_name}: '{line.ingredient}' is tagged {sorted(forbidden)}; "
+                "seed recipes may not use beef, held items or pork components"
+            )
+        ingredient = data[line.ingredient]
+        if problem := line_state_error(ingredient.name, line.state, ingredient.mapping_state):
+            raise SeedError(f"{file_name}: {problem}")
+
+
+def _family(session: Session, user: AppUser, name: str | None) -> RecipeFamily | None:
+    if name is None:
+        return None
+    family = session.scalars(
+        select(RecipeFamily).where(RecipeFamily.user_id == user.id, RecipeFamily.name == name)
+    ).first()
+    if family is None:
+        family = RecipeFamily(user_id=user.id, name=name)
+        session.add(family)
+        session.flush()
+    return family
+
+
+def _seed_recipe(session: Session, user: AppUser, title: str, kind: RecipeKind) -> Recipe | None:
+    """The seed recipe of this title and kind, from an earlier load."""
+    return session.scalars(
+        select(Recipe)
+        .join(RecipeVersion, RecipeVersion.id == Recipe.default_version_id)
+        .where(
+            Recipe.user_id == user.id,
+            Recipe.title == title,
+            Recipe.origin == RecipeOrigin.SEED.value,
+            RecipeVersion.kind == kind.value,
+        )
+    ).first()
+
+
 def _recipes(session: Session, files: SeedFiles, user: AppUser, report: SeedReport) -> int:
+    """The seed dishes, then the prep items split from them (step 2b.10)."""
     data = load_by_slug(session)
     created = 0
-    for file_name, seed in files.recipes:
-        for line in seed.ingredients:
-            if line.ingredient not in data:
-                raise SeedError(f"{file_name}: unknown ingredient '{line.ingredient}'")
-            if forbidden := data[line.ingredient].tagged.diet_tags & SEED_FORBIDDEN_TAGS:
-                raise SeedError(
-                    f"{file_name}: '{line.ingredient}' is tagged {sorted(forbidden)}; "
-                    "seed recipes may not use beef, held items or pork components"
-                )
-            ingredient = data[line.ingredient]
-            if problem := line_state_error(ingredient.name, line.state, ingredient.mapping_state):
-                raise SeedError(f"{file_name}: {problem}")
-        family = session.scalars(
-            select(RecipeFamily).where(RecipeFamily.user_id == user.id, RecipeFamily.name == seed.family)
-        ).first()
-        if family is None:
-            family = RecipeFamily(user_id=user.id, name=seed.family)
-            session.add(family)
-            session.flush()
+    seeds: list[tuple[str, SeedRecipe]] = [*files.recipes, *files.prep_items]
+    for file_name, seed in seeds:
+        _check_lines(file_name, seed.ingredients, data)
+        family = _family(session, user, seed.family)
+        assert family is not None
         digest = content_hash(seed)
-        recipe = session.scalars(
-            select(Recipe).where(
-                Recipe.user_id == user.id,
-                Recipe.title == seed.title,
-                Recipe.origin == RecipeOrigin.SEED.value,
-            )
-        ).first()
+        kind = RecipeKind.PREP_ITEM if isinstance(seed, SeedPrepItem) else RecipeKind.DISH
+        recipe = _seed_recipe(session, user, seed.title, kind)
         if recipe is not None:
             if _revise_seed(session, recipe, seed, digest, data, file_name=file_name, report=report):
                 report.counts["recipes_revised"] = report.counts.get("recipes_revised", 0) + 1
@@ -632,9 +672,46 @@ def _add_seed_version(
         freeze_note=seed.freeze_note,
         content_hash=digest,
     )
+    if isinstance(seed, SeedPrepItem):
+        version.kind = RecipeKind.PREP_ITEM.value
+        version.stages = [{"n": n, "state": st.state.value} for n, st in enumerate(seed.stages, start=1)]
+        version.pairs_with = [style.value for style in seed.pairs_with]
+        version.label = seed.label
     session.add(version)
     session.flush()
-    for position, line in enumerate(seed.ingredients, start=1):
+    _add_lines(session, version, seed.ingredients, data)
+    for position, step in enumerate(seed.steps, start=1):
+        session.add(
+            RecipeStep(
+                recipe_version_id=version.id,
+                position=position,
+                section=step.section.value,
+                text=step.text,
+                duration_minutes=step.duration_minutes,
+                appliance_temp_f=step.appliance_temp_f,
+                doneness_check_ingredient_id=data[step.doneness_check_for].id
+                if step.doneness_check_for
+                else None,
+                component=step.component,
+                equipment=step.equipment.value if step.equipment else None,
+                hands_on_minutes=step.hands_on_minutes,
+                hands_off_minutes=step.hands_off_minutes,
+                stage=step.stage if isinstance(step, SeedPrepStep) else None,
+            )
+        )
+    session.flush()
+    recipe.default_version_id = version.id
+    session.flush()
+    return version
+
+
+def _add_lines(
+    session: Session,
+    version: RecipeVersion,
+    lines: list[SeedRecipeIngredient],
+    data: Mapping[str, IngredientData],
+) -> None:
+    for position, line in enumerate(lines, start=1):
         ingredient = data[line.ingredient]
         amount = parse_quantity(line.quantity)
         base = to_base(amount, line.unit, ingredient.units)
@@ -653,22 +730,152 @@ def _add_seed_version(
                 is_optional=line.optional,
             )
         )
-    for position, step in enumerate(seed.steps, start=1):
+    session.flush()
+
+
+ASSEMBLY_MINUTES = 5  # an assembly's own work on the eating day: reheat and put it together
+
+
+def assembly_hash(seed: SeedAssembly) -> str:
+    payload = json.dumps(seed.model_dump(mode="json", exclude={"draft_note"}), sort_keys=True)
+    return hashlib.sha256(payload.encode()).hexdigest()
+
+
+def _assemblies(session: Session, files: SeedFiles, user: AppUser, report: SeedReport) -> int:
+    """The draft assemblies (step 2b.10, FLOW_SPEC §19.6): each item by its seed title (a prep item or a
+    dish), add-ons per portion; an untitled one is named by code from its items when it is saved."""
+    data = load_by_slug(session)
+    created = 0
+    for file_name, seed in files.assemblies:
+        _check_lines(file_name, seed.add_ons, data)
+        parts = []
+        for entry in seed.items:
+            recipe = _seed_recipe(session, user, entry.item, RecipeKind.PREP_ITEM) or _seed_recipe(
+                session, user, entry.item, RecipeKind.DISH
+            )
+            if recipe is None:
+                raise SeedError(f"{file_name}: no seed prep item or dish called '{entry.item}'")
+            item = default_item(
+                session, user.id, recipe.id, leftover_fridge_days=LEFTOVER_FRIDGE_DAYS_DEFAULT
+            )
+            step = Decimal(entry.step)
+            parts.append(AssemblyPart(item, entry.portions, entry.min_portions, entry.max_portions, step))
+        add_ons = []
+        for line in seed.add_ons:
+            ingredient = data[line.ingredient]
+            amount = parse_quantity(line.quantity)
+            base = to_base(amount, line.unit, ingredient.units)
+            unit = normalize_unit(line.unit, ingredient.units.named_units)
+            add_ons.append(
+                AssemblyAddOn(ingredient, base.amount, base.unit.value, amount, unit, line.preparation)
+            )
+        title = seed.title or assembly_title(parts, add_ons)
+        digest = assembly_hash(seed)
+        recipe = _seed_recipe(session, user, title, RecipeKind.ASSEMBLY)
+        if recipe is not None:
+            current = session.get(RecipeVersion, recipe.default_version_id)
+            if current is not None and current.content_hash == digest:
+                continue
+            if current is not None and current.created_by != "system":
+                report.warnings.append(
+                    f"{file_name}: seed file changed, but your own version is the default, so the new draft "
+                    "wasn't added"
+                )
+                continue
+            number = 1 + max(
+                session.scalars(
+                    select(RecipeVersion.version_number).where(RecipeVersion.recipe_id == recipe.id)
+                ),
+                default=0,
+            )
+            _add_assembly_version(
+                session,
+                recipe,
+                seed=seed,
+                title=title,
+                parts=parts,
+                digest=digest,
+                data=data,
+                version_number=number,
+                parent=current,
+            )
+            report.counts["assemblies_revised"] = report.counts.get("assemblies_revised", 0) + 1
+            continue
+        family = _family(session, user, seed.family)
+        recipe = Recipe(
+            user_id=user.id,
+            family_id=family.id if family else None,
+            title=title,
+            origin=RecipeOrigin.SEED.value,
+        )
+        session.add(recipe)
+        session.flush()
+        _add_assembly_version(
+            session,
+            recipe,
+            seed=seed,
+            title=title,
+            parts=parts,
+            digest=digest,
+            data=data,
+            version_number=1,
+            parent=None,
+        )
+        created += 1
+    session.flush()
+    return created
+
+
+def _add_assembly_version(
+    session: Session,
+    recipe: Recipe,
+    *,
+    seed: SeedAssembly,
+    title: str,
+    parts: list[AssemblyPart],
+    digest: str,
+    data: Mapping[str, IngredientData],
+    version_number: int,
+    parent: RecipeVersion | None,
+) -> RecipeVersion:
+    moods = list(RecipeMood)
+    mood = max((p.item.mood for p in parts), key=moods.index)
+    version = RecipeVersion(
+        recipe_id=recipe.id,
+        version_number=version_number,
+        parent_version_id=parent.id if parent is not None else None,
+        created_by="system",
+        is_draft=True,
+        change_summary=f"Seed draft. {seed.draft_note}"
+        if parent is None
+        else f"Seed draft, revised. {seed.draft_note}",
+        title=title,
+        description="A meal from your prep: " + ", ".join(p.item.title for p in parts) + ".",
+        meal_slots=[s.value for s in seed.meal_slots],
+        mood=mood.value,
+        cuisine=None,
+        flavor_tags=[],
+        base_servings=1,
+        active_minutes=ASSEMBLY_MINUTES,
+        total_minutes=ASSEMBLY_MINUTES,
+        equipment=[],
+        freezer_friendly=False,
+        content_hash=digest,
+        kind=RecipeKind.ASSEMBLY.value,
+    )
+    session.add(version)
+    session.flush()
+    _add_lines(session, version, seed.add_ons, data)
+    for position, part in enumerate(parts, start=1):
         session.add(
-            RecipeStep(
-                recipe_version_id=version.id,
+            AssemblyComponent(
+                assembly_version_id=version.id,
                 position=position,
-                section=step.section.value,
-                text=step.text,
-                duration_minutes=step.duration_minutes,
-                appliance_temp_f=step.appliance_temp_f,
-                doneness_check_ingredient_id=data[step.doneness_check_for].id
-                if step.doneness_check_for
-                else None,
-                component=step.component,
-                equipment=step.equipment.value if step.equipment else None,
-                hands_on_minutes=step.hands_on_minutes,
-                hands_off_minutes=step.hands_off_minutes,
+                component_recipe_id=part.item.recipe_id,
+                portions=part.portions,
+                min_portions=part.min_portions,
+                max_portions=part.max_portions,
+                step=part.step,
             )
         )
     session.flush()
@@ -690,5 +897,6 @@ def seed_all(session: Session, data_dir: Path = DATA_DIR) -> SeedReport:
     )
     _settings(session, files, user=user, stores=stores, ingredients=ingredients, report=report)
     report.counts["recipes_created"] = _recipes(session, files, user, report)
+    report.counts["assemblies_created"] = _assemblies(session, files, user, report)
     report.counts["stores"] = len(stores)
     return report

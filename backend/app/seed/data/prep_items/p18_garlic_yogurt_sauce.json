@@ -1,0 +1,85 @@
+{
+ "family": "Chicken over rice",
+ "title": "Garlic yogurt sauce",
+ "description": "Thick yogurt stirred with lemon, garlic and salt.",
+ "meal_slots": [
+  "lunch",
+  "dinner"
+ ],
+ "mood": "simple",
+ "cuisine": "Mediterranean",
+ "flavor_tags": [],
+ "base_servings": 4,
+ "active_minutes": 4,
+ "total_minutes": 5,
+ "equipment": [],
+ "freezer_friendly": false,
+ "draft_note": "Split from 1a (Chicken over rice with garlic yogurt sauce): the sauce. Draft quantities: adjust them in the app.",
+ "split_from": "1a",
+ "label": "garlic yogurt sauce",
+ "pairs_with": [
+  "mediterranean",
+  "indian"
+ ],
+ "stages": [
+  {
+   "state": "raw"
+  }
+ ],
+ "ingredients": [
+  {
+   "ingredient": "greek-yogurt-nonfat",
+   "quantity": "200",
+   "unit": "g",
+   "role": "sauce",
+   "component": "sauce"
+  },
+  {
+   "ingredient": "lemon-juice",
+   "quantity": "1 1/2",
+   "unit": "tbsp",
+   "role": "sauce",
+   "component": "sauce"
+  },
+  {
+   "ingredient": "garlic",
+   "quantity": "2",
+   "unit": "clove",
+   "preparation": "grated",
+   "role": "seasoning",
+   "component": "sauce"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1/4",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "sauce"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Grate the garlic.",
+   "component": "sauce",
+   "hands_on_minutes": 1,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "no_cook",
+   "text": "Stir the yogurt with the lemon juice, garlic and salt.",
+   "component": "sauce",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "portioning",
+   "text": "Divide the sauce among 4 small containers.",
+   "hands_on_minutes": 1,
+   "hands_off_minutes": 0,
+   "stage": 1
+  }
+ ]
+}

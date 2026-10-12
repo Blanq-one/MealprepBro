@@ -15,6 +15,8 @@ from app.domain.enums import (
     InstructionSection,
     MealSlot,
     NutritionSource,
+    PairStyle,
+    PrepState,
     PriceBasis,
     PriceSource,
     RecipeMood,
@@ -337,6 +339,89 @@ class SeedRecipe(_Strict):
                 f"the steps' hands-on minutes add up to {hands_on}, more than {SEED_HANDS_ON_TOLERANCE} from "
                 f"active_minutes ({self.active_minutes}); revise one of them"
             )
+        return self
+
+
+# ---------------- smart prep (step 2b.10, FLOW_SPEC §19.6) ----------------
+STATE_ORDER = list(PrepState)
+
+
+class SeedPrepStage(_Strict):
+    state: PrepState
+
+
+class SeedPrepStep(SeedRecipeStep):
+    stage: int = Field(ge=1, le=3)  # the stage the step belongs to
+
+
+class SeedPrepItem(SeedRecipe):
+    """A draft prep item split from a seed dish along its ingredient components: its steps grouped into stages
+    (prep can stop after any stage its storage allows), a short label for meal names, the styles it pairs
+    with. Its family is the seed's family and its draft note names the seed."""
+
+    split_from: str = Field(pattern=r"^\d+[a-z]$")  # the seed it came from: "1a"
+    label: str = Field(min_length=3, max_length=30)
+    pairs_with: list[PairStyle] = Field(min_length=1, max_length=3)
+    stages: list[SeedPrepStage] = Field(min_length=1, max_length=3)
+    steps: list[SeedPrepStep] = Field(min_length=3, max_length=30)  # type: ignore[assignment]
+
+    @model_validator(mode="after")
+    def _stages(self) -> Self:
+        order = [STATE_ORDER.index(s.state) for s in self.stages]
+        if order != sorted(set(order)):
+            raise ValueError("stages go in order, each a later state: raw, marinated, partly cooked, cooked")
+        last = len(self.stages)
+        stages = [step.stage for step in self.steps]
+        if any(n > last for n in stages):
+            raise ValueError(f"a step names stage {max(stages)}, but the item has {last}")
+        if stages != sorted(stages):
+            raise ValueError("steps go stage by stage")
+        if missing := sorted(set(range(1, last + 1)) - set(stages)):
+            raise ValueError(f"stage {missing[0]} has no steps")
+        for step in self.steps:
+            if step.section in (InstructionSection.PORTIONING, *OFF_DAY_SECTIONS) and step.stage != last:
+                raise ValueError(f"{step.section} steps belong to the last stage")
+        if self.split_from not in self.draft_note:
+            raise ValueError(f"the draft note names the seed it came from ({self.split_from})")
+        return self
+
+
+class SeedAssemblyItem(_Strict):
+    item: str  # a seed prep item's or dish's title
+    portions: Decimal = Field(gt=0, le=4)  # usual portions per person
+    min_portions: Decimal = Field(gt=0, le=4)
+    max_portions: Decimal = Field(gt=0, le=4)
+    step: Literal["0.5", "1"]
+
+    @model_validator(mode="after")
+    def _range(self) -> Self:
+        step = Decimal(self.step)
+        if not self.min_portions <= self.portions <= self.max_portions:
+            raise ValueError(f"{self.item}: portions go from min_portions to max_portions")
+        if any(v % step for v in (self.portions, self.min_portions, self.max_portions)):
+            raise ValueError(f"{self.item}: portions are whole steps of {self.step}")
+        return self
+
+
+class SeedAssembly(_Strict):
+    """A draft assembly: a meal built from prep items plus fresh add-ons (per portion). Code names it when it
+    has no title, and composes its eating-day instruction."""
+
+    title: str | None = Field(default=None, min_length=3, max_length=80)
+    family: str | None = None
+    meal_slots: list[MealSlot] = Field(min_length=1, max_length=3)
+    items: list[SeedAssemblyItem] = Field(min_length=1, max_length=3)
+    add_ons: list[SeedRecipeIngredient] = Field(default_factory=list, max_length=4)
+    draft_note: str
+
+    @model_validator(mode="after")
+    def _unique(self) -> Self:
+        names = [i.item for i in self.items]
+        if len(set(names)) != len(names):
+            raise ValueError("an item listed twice")
+        slugs = [a.ingredient for a in self.add_ons]
+        if len(set(slugs)) != len(slugs):
+            raise ValueError("duplicate add-ons")
         return self
 
 

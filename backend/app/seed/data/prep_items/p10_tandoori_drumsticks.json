@@ -1,0 +1,159 @@
+{
+ "family": "Bone-in chicken",
+ "title": "Tandoori drumsticks",
+ "description": "Drumsticks in a spiced yogurt marinade, roasted until charred.",
+ "meal_slots": [
+  "dinner",
+  "lunch"
+ ],
+ "mood": "medium",
+ "cuisine": "Indian",
+ "flavor_tags": [],
+ "base_servings": 4,
+ "active_minutes": 17,
+ "total_minutes": 115,
+ "equipment": [
+  "oven"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Split from 8d (Tandoori-style drumsticks with rice and raita): the drumsticks. Draft quantities: adjust them in the app.",
+ "split_from": "8d",
+ "label": "tandoori drumsticks",
+ "pairs_with": [
+  "indian"
+ ],
+ "stages": [
+  {
+   "state": "marinated"
+  },
+  {
+   "state": "cooked"
+  }
+ ],
+ "ingredients": [
+  {
+   "ingredient": "chicken-drumstick",
+   "quantity": "1400",
+   "unit": "g",
+   "preparation": "about 8 drumsticks, skin slashed",
+   "role": "protein",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "yogurt-plain-whole",
+   "quantity": "200",
+   "unit": "g",
+   "role": "sauce",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "lemon-juice",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "sauce",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "garlic",
+   "quantity": "5",
+   "unit": "clove",
+   "preparation": "grated",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "ginger",
+   "quantity": "15",
+   "unit": "g",
+   "preparation": "grated",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "paprika",
+   "quantity": "2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "chili-powder",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "garam-masala",
+   "quantity": "2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "cumin-ground",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1 1/4",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "vegetable-oil",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "fat"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Slash the drumsticks to the bone in 2 or 3 places. Grate the garlic and ginger.",
+   "component": "chicken",
+   "hands_on_minutes": 8,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "marinate",
+   "text": "Mix the whole-milk yogurt, lemon juice, garlic, ginger, paprika, chili powder, garam masala, cumin, oil and salt. Coat the drumsticks and marinate at least 1 hour.",
+   "duration_minutes": 60,
+   "component": "chicken",
+   "hands_on_minutes": 4,
+   "hands_off_minutes": 60,
+   "stage": 1
+  },
+  {
+   "section": "oven",
+   "text": "Roast on a rack over a lined sheet at 425F for 35 to 40 minutes, turning once, until charred and cooked through to the bone.",
+   "duration_minutes": 40,
+   "appliance_temp_f": 425,
+   "doneness_check_for": "chicken-drumstick",
+   "component": "chicken",
+   "equipment": "oven",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 37,
+   "stage": 2
+  },
+  {
+   "section": "portioning",
+   "text": "Divide the drumsticks among 4 containers.",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 0,
+   "stage": 2
+  },
+  {
+   "section": "storage",
+   "text": "Cool the drumsticks, then refrigerate.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0,
+   "stage": 2
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat the drumsticks covered, turning once.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0,
+   "stage": 2
+  }
+ ]
+}

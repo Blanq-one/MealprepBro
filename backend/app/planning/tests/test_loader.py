@@ -35,8 +35,8 @@ SEED_RECIPES = 47  # 10, plus the 37 drafts of the step 2b.4 approval (M13)
 def test_every_seed_recipe_is_a_candidate_unless_this_weeks_cook_days_are_too_short(seeded_db):
     p = problem(seeded_db)
     week = {t.slot.value for t in p.constraints.slot_targets}
-    versions = seeded_db.scalars(select(RecipeVersion)).all()
-    assert len(versions) == SEED_RECIPES
+    versions = seeded_db.scalars(select(RecipeVersion).where(RecipeVersion.kind == "dish")).all()
+    assert len(versions) == SEED_RECIPES  # prep items and assemblies (step 2b.10) are smart prep's
     for_this_week = [v for v in versions if week & set(v.meal_slots)]  # snack-only recipes have no meal here
     assert len(p.candidates) + len(p.excluded) == len(for_this_week) < SEED_RECIPES
     assert all(c.is_draft and c.origin == "seed" for c in p.candidates)

@@ -8,8 +8,10 @@ from typing import Any
 
 from app.schemas.seed import (
     LabelInputsFile,
+    SeedAssembly,
     SeedIngredientFile,
     SeedNutrientFile,
+    SeedPrepItem,
     SeedProductFile,
     SeedRecipe,
     SeedStoreFile,
@@ -38,6 +40,9 @@ class SeedFiles:
     substitutions: SeedSubstitutionFile
     settings: UserSettings
     recipes: tuple[tuple[str, SeedRecipe], ...]  # (file name, recipe)
+    # step 2b.10: draft prep items split from the seeds, and draft assemblies of them (FLOW_SPEC §19.6)
+    prep_items: tuple[tuple[str, SeedPrepItem], ...] = ()
+    assemblies: tuple[tuple[str, SeedAssembly], ...] = ()
 
 
 def _read(path: Path) -> Any:
@@ -50,6 +55,14 @@ def load_seed_files(data_dir: Path = DATA_DIR) -> SeedFiles:
         (path.name, SeedRecipe.model_validate(_read(path)))
         for path in sorted((data_dir / "recipes").glob("*.json"))
     )
+    prep_items = tuple(
+        (path.name, SeedPrepItem.model_validate(_read(path)))
+        for path in sorted((data_dir / "prep_items").glob("*.json"))
+    )
+    assemblies = tuple(
+        (path.name, SeedAssembly.model_validate(_read(path)))
+        for path in sorted((data_dir / "assemblies").glob("*.json"))
+    )
     return SeedFiles(
         nutrients=SeedNutrientFile.model_validate(_read(data_dir / "nutrients.json")),
         stores=SeedStoreFile.model_validate(_read(data_dir / "stores.json")),
@@ -59,4 +72,6 @@ def load_seed_files(data_dir: Path = DATA_DIR) -> SeedFiles:
         substitutions=SeedSubstitutionFile.model_validate(_read(data_dir / "substitutions.json")),
         settings=UserSettings.model_validate(_read(data_dir / "settings_default.json")),
         recipes=recipes,
+        prep_items=prep_items,
+        assemblies=assemblies,
     )

@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from app.db.models import InventoryItem, Product, Recipe, RecipeIngredient, RecipeVersion
 from app.domain.cook_schedule import DishTiming, dish_alone
 from app.domain.cook_time import mood_allows
-from app.domain.enums import Equipment, MealSlot, PlanningMode, RecipeMood
+from app.domain.enums import Equipment, MealSlot, PlanningMode, RecipeKind, RecipeMood
 from app.domain.fridge_life import fridge_life
 from app.domain.nutrition import CORE_CODES
 from app.domain.purchase import Offer
@@ -36,7 +36,8 @@ ACTIVE_ORIGINS = ("seed", "llm", "user")
 
 
 def candidate_versions(session: Session, user_id: int) -> list[tuple[Recipe, RecipeVersion]]:
-    """The default (latest) version of every live recipe: seed drafts, saved LLM recipes, your versions."""
+    """The default (latest) version of every live dish: seed drafts, saved LLM recipes, your versions. Prep
+    items and assemblies (step 2b.10) are smart prep's, from 2b.11."""
     rows = session.execute(
         select(Recipe, RecipeVersion)
         .join(RecipeVersion, RecipeVersion.id == Recipe.default_version_id)
@@ -45,6 +46,7 @@ def candidate_versions(session: Session, user_id: int) -> list[tuple[Recipe, Rec
             Recipe.archived_at.is_(None),
             Recipe.origin.in_(ACTIVE_ORIGINS),
             RecipeVersion.status == "active",
+            RecipeVersion.kind == RecipeKind.DISH.value,
         )
         .order_by(RecipeVersion.id)
     ).all()

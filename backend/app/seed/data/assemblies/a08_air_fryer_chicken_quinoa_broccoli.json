@@ -1,0 +1,32 @@
+{
+ "family": "Chicken over rice",
+ "meal_slots": [
+  "lunch",
+  "dinner"
+ ],
+ "items": [
+  {
+   "item": "Air-fryer chicken breast",
+   "portions": "1",
+   "min_portions": "1",
+   "max_portions": "2",
+   "step": "1"
+  },
+  {
+   "item": "Quinoa",
+   "portions": "1",
+   "min_portions": "0.5",
+   "max_portions": "2",
+   "step": "0.5"
+  },
+  {
+   "item": "Air-fryer broccoli",
+   "portions": "1",
+   "min_portions": "0.5",
+   "max_portions": "1.5",
+   "step": "0.5"
+  }
+ ],
+ "add_ons": [],
+ "draft_note": "Draft assembly: adjust its portions in the app."
+}

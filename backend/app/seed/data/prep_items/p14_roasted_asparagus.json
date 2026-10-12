@@ -1,0 +1,97 @@
+{
+ "family": "Bone-in chicken",
+ "title": "Roasted asparagus",
+ "description": "Asparagus roasted with olive oil and salt until tender.",
+ "meal_slots": [
+  "lunch",
+  "dinner"
+ ],
+ "mood": "simple",
+ "cuisine": "Mediterranean",
+ "flavor_tags": [],
+ "base_servings": 4,
+ "active_minutes": 6,
+ "total_minutes": 25,
+ "equipment": [
+  "oven"
+ ],
+ "freezer_friendly": false,
+ "draft_note": "Split from 8l (Roast bone-in chicken breasts with quinoa and asparagus): the asparagus. Draft quantities: adjust them in the app.",
+ "split_from": "8l",
+ "label": "roasted asparagus",
+ "pairs_with": [
+  "mediterranean",
+  "any"
+ ],
+ "stages": [
+  {
+   "state": "cooked"
+  }
+ ],
+ "ingredients": [
+  {
+   "ingredient": "asparagus",
+   "quantity": "450",
+   "unit": "g",
+   "preparation": "woody ends trimmed",
+   "role": "vegetable",
+   "component": "asparagus"
+  },
+  {
+   "ingredient": "olive-oil",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "fat",
+   "component": "asparagus"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1/4",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "asparagus"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Heat the oven to 400F. Trim the woody ends of the asparagus.",
+   "component": "asparagus",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "oven",
+   "text": "Toss the asparagus with the oil and salt and roast at 400F for 12 minutes, until tender.",
+   "duration_minutes": 12,
+   "appliance_temp_f": 400,
+   "component": "asparagus",
+   "equipment": "oven",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 10,
+   "stage": 1
+  },
+  {
+   "section": "portioning",
+   "text": "Divide the asparagus among 4 containers.",
+   "hands_on_minutes": 1,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "storage",
+   "text": "Cool the asparagus, then refrigerate.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat the asparagus briefly, until hot.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0,
+   "stage": 1
+  }
+ ]
+}

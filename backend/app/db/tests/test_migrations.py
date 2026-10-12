@@ -47,6 +47,7 @@ TABLES_0001 = {
 }
 TABLES_0004 = {"plan_candidate", "login_attempt"}
 TABLES_0005 = {"recipe_favorite", "recipe_saved", "feedback_event", "cook_search"}
+TABLES_0009 = {"assembly_component", "plan_meal_component", "plan_finish_task"}
 LATER_PHASE_TABLES = {
     "prepared_portion",
     "preference_profile",
@@ -86,13 +87,13 @@ def test_upgrade_check_downgrade(scratch_db_url):
     command.upgrade(cfg, "head")
     tables = _tables(scratch_db_url)
     assert len(TABLES_0001) == 31
-    assert tables == TABLES_0001 | TABLES_0004 | TABLES_0005
+    assert tables == TABLES_0001 | TABLES_0004 | TABLES_0005 | TABLES_0009
     assert not tables & LATER_PHASE_TABLES
     command.check(cfg)  # raises if the models and the migration disagree
     command.downgrade(cfg, "base")
     assert _tables(scratch_db_url) == set()
     command.upgrade(cfg, "head")  # and back up again cleanly
-    assert _tables(scratch_db_url) == TABLES_0001 | TABLES_0004 | TABLES_0005
+    assert _tables(scratch_db_url) == TABLES_0001 | TABLES_0004 | TABLES_0005 | TABLES_0009
 
 
 def test_0004_adds_the_exposure_log_price_client_ref_and_login_attempts(scratch_db_url):

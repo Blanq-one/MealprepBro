@@ -1,0 +1,38 @@
+{
+ "family": "Wraps and tacos",
+ "meal_slots": [
+  "lunch",
+  "dinner"
+ ],
+ "items": [
+  {
+   "item": "Sheet-pan chicken and peppers",
+   "portions": "1",
+   "min_portions": "1",
+   "max_portions": "2",
+   "step": "1"
+  }
+ ],
+ "add_ons": [
+  {
+   "ingredient": "flour-tortilla-small",
+   "quantity": "2",
+   "unit": "count",
+   "role": "carb"
+  },
+  {
+   "ingredient": "salsa",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "sauce"
+  },
+  {
+   "ingredient": "romaine",
+   "quantity": "20",
+   "unit": "g",
+   "preparation": "shredded",
+   "role": "vegetable"
+  }
+ ],
+ "draft_note": "Draft assembly: adjust its portions in the app."
+}

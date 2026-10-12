@@ -1783,8 +1783,11 @@ chart's range, and your 3-day setting for cooked food.
 | fully cooked | meat or poultry (curry, roasted chicken) | your 3 days (3 to 4 days) | only if it freezes well | Leftovers: cooked meat or poultry; Soups and stews |
 | fully cooked | an egg dish | 3 days (3 to 4 days) | only if it freezes well | Casseroles with eggs |
 | fully cooked | hard-cooked eggs | 7 days (1 week) | no ("Do not freeze") | Hard-cooked eggs |
-| fully cooked | no meat, fish or eggs (plain rice, veg pulao, roasted vegetables, dal) | **no chart row** (V1); until then your 3 days, as every cooked recipe today | only if it freezes well | — |
-| raw, ready to eat | cut vegetables, salad, a yogurt sauce | **no chart row** (V1); until then made on the eating day as a 5-minute finish task | no | — |
+| fully cooked | fish; shellfish | your 3 days (3 to 4 days) | only if it freezes well | **FoodKeeper** 148 Cooked fish; 162 Cooked shellfish (built in 2b.10) |
+| fully cooked | no meat, fish or eggs (plain rice, veg pulao, roasted vegetables, dal) | your 3 days (3 to 4 days), as every cooked recipe today | only if it freezes well | **FoodKeeper** 174 Leftovers without meat, fish, poultry, or egg; plus 178 Cooked rice (4 to 6 days), 177 Cooked pasta (3 to 5) or 426 Quinoa, cooked (6 to 7) when it's only that grain (V1, built in 2b.10) |
+| partly cooked | no meat, fish or eggs (par-boiled potatoes) | your 3 days | only if it freezes well | **FoodKeeper** 174, as cooked vegetables (2b.10) |
+| raw or marinated | eggs beaten into a mixture | 2 days (2 to 4 days) | yes | Raw egg whites and yolks (2b.10) |
+| raw, ready to eat | cut vegetables, salad, a yogurt sauce | made on the eating day as a 5-minute finish task: **FoodKeeper has no row either** (checked against every Product row, 2026-10-11) | no | — |
 | as bought | whole produce, tortillas | the ingredient's own shelf life (seed data, D38) | — | — |
 
 - **The strictest line wins:** a curry with shrimp takes the shorter of its rows.
@@ -1797,6 +1800,11 @@ chart's range, and your 3-day setting for cooked food.
   eating day when it's a finish task), and "reheat to 165°F" on every reheat.
 - Raw ingredients bought on shopping day keep today's rule: what isn't prepped within its window is frozen on
   shopping day.
+
+- **As built (2b.10):** `domain/prep_storage.py`, with the FoodKeeper rows in `domain/foodkeeper.py` (each cited by
+  its Product ID, checked against `docs/sources/foodkeeper.json` by a test). A dish used as a prep item keeps as
+  every dish does today (your leftover days, frozen when it freezes well). A raw item whose protein has no raw row
+  (canned tuna in a salad) is made on the day too.
 
 ### 19.5 Assemblies: names and short instructions
 
@@ -1825,6 +1833,20 @@ tasks (§20.1), safety lines injected. The LLM writes none of this text.
 
 Amounts are portions of each item ("1 portion curry", "½ portion rice"); cups only where a reviewed cooked-volume
 factor exists (V3).
+
+**As built (2b.10)**, in `domain/assembly_text.py`:
+- What an item brings is weighed in grams by its lines' roles (seasoning, fat, garnish and water left out):
+  protein lines at least 25% bring protein, and with vegetables and sauce at least 40% it is a whole dish; a
+  sauce is at least 35% sauce or dairy; a base at least 50% carbohydrate lines.
+- Two shapes the table didn't have: a base that isn't a grain (roasted root vegetables) goes "with", not "over";
+  a dish with a flatbread is "Chicken curry with flour tortillas", not a wrap.
+- Every reheat says "to 165°F"; a dish with no cooking at all (overnight oats) says "Serve 1 portion … cold".
+- No item has a reviewed cooked-volume factor yet, so every amount is in portions.
+
+### 19.5a As built: the seed drafts (2b.10)
+
+20 draft prep items and 12 draft assemblies, listed with their stages, storage and numbers in
+`docs/review/prep_items.md`. The item and assembly names are the ones in that file.
 
 ### 19.6 Seed recipes → prep items
 

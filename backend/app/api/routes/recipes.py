@@ -1,3 +1,4 @@
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Query, Response
@@ -9,17 +10,25 @@ from app.api.presenters import costs_out, nutrition_out
 from app.cook import search as search_service
 from app.cook.saved import saved_cards
 from app.cook.stream import steps_events
-from app.domain.enums import PortionSize, RecipeOrigin
+from app.domain.assembly_text import portions_text
+from app.domain.enums import PortionSize, RecipeKind, RecipeOrigin
+from app.domain.prep_storage import PrepStorage
+from app.planning.assemblies import Assembly, ItemPortion
 from app.schemas.api import SeedRecipeOut
 from app.schemas.cards import SearchContextOut
 from app.schemas.cook import StepsStreamEvent
 from app.schemas.recipes import (
+    AssemblyItemOut,
+    AssemblyOut,
+    PrepItemOut,
+    PrepStageOut,
     RecipeOut,
     RecipeVersionOut,
     RecipeVersionSummaryOut,
     RenderedLineOut,
     RenderedStepOut,
     SavedRecipeOut,
+    StorageOut,
 )
 from app.services import favorites
 from app.services.dishes import dish_categories
@@ -54,9 +63,67 @@ def list_seed_recipes(session: DbSession, user: CurrentUser) -> list[SeedRecipeO
                 incomplete_reasons=list(calc.incomplete_reasons),
                 per_serving=nutrition_out(session, calc.per_portion, with_labels=True),
                 costs=costs_out(calc.costs),
+                kind=view.version.kind,
             )
         )
     return out
+
+
+STATE_DISPLAY = {"raw": "Raw", "marinated": "Marinated", "partly_cooked": "Partly cooked", "cooked": "Cooked"}
+
+
+def storage_out(storage: PrepStorage) -> StorageOut:
+    return StorageOut(
+        stored=storage.stored,
+        made_on_the_day=storage.made_on_the_day,
+        fridge_days=storage.fridge_days,
+        freezer=storage.freezer,
+        note=storage.note,
+        sources=[f"{s.citation}: {s.food} ({s.refrigerator}; {s.freezer})" for s in storage.sources],
+    )
+
+
+def prep_out(item: ItemPortion, pairs_with: list[str]) -> PrepItemOut:
+    return PrepItemOut(
+        label=item.label,
+        brings=item.brings.value,
+        pairs_with=pairs_with,
+        stages=[
+            PrepStageOut(
+                n=n,
+                state=state.value,
+                state_display=STATE_DISPLAY[state.value],
+                storage=storage_out(storage),
+            )
+            for n, (state, storage) in enumerate(zip(item.states, item.storage, strict=True), start=1)
+        ],
+    )
+
+
+def assembly_out(assembly: Assembly) -> AssemblyOut:
+    items = []
+    for part in assembly.parts:
+        per = part.item.per_portion.amounts
+        kcal = part.portions * per.get("energy_kcal", Decimal(0))
+        protein = part.portions * per.get("protein_g", Decimal(0))
+        items.append(
+            AssemblyItemOut(
+                recipe_id=part.item.recipe_id,
+                version_id=part.item.version_id,
+                kind=part.item.kind.value,
+                title=part.item.title,
+                label=part.item.label,
+                brings=part.item.brings.value,
+                portions=part.portions,
+                portions_display=portions_text(part.portions),
+                min_portions=part.min_portions,
+                max_portions=part.max_portions,
+                step=part.step,
+                kcal=int(kcal.quantize(Decimal(1), ROUND_HALF_UP)),
+                protein_g=protein.quantize(Decimal("0.1"), ROUND_HALF_UP),
+            )
+        )
+    return AssemblyOut(name=assembly.name, items=items, instruction=assembly.instruction)
 
 
 def version_out(
@@ -105,10 +172,13 @@ def version_out(
                 appliance_temp_f=s.appliance_temp_f,
                 safety_note=s.safety_note,
                 added_by_app=s.added_by_app,
+                stage=s.stage,
             )
             for s in rendered.steps
         ]
-        if v.steps_status is None  # a new idea shows no steps (not even the app's lines) until written
+        # a new idea shows no steps (not even the app's lines) until written; an assembly has none, only its
+        # instruction (step 2b.10)
+        if v.steps_status is None and v.kind != RecipeKind.ASSEMBLY.value
         else [],
         per_container=rendered.per_container,
         labels=list(rendered.labels),
@@ -123,6 +193,9 @@ def version_out(
         is_saved=r.id in marks.saved,
         steps_ready=v.steps_status is None,
         search_context=search_context,
+        kind=v.kind,
+        prep=prep_out(view.item, list(v.pairs_with or [])) if view.item is not None else None,
+        assembly=assembly_out(view.assembly) if view.assembly is not None else None,
     )
 
 

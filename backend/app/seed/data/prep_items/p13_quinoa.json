@@ -1,0 +1,89 @@
+{
+ "family": "Bone-in chicken",
+ "title": "Quinoa",
+ "description": "Quinoa simmered in vegetable broth and fluffed.",
+ "meal_slots": [
+  "lunch",
+  "dinner"
+ ],
+ "mood": "simple",
+ "cuisine": "Mediterranean",
+ "flavor_tags": [],
+ "base_servings": 4,
+ "active_minutes": 7,
+ "total_minutes": 25,
+ "equipment": [
+  "stovetop"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Split from 8l (Roast bone-in chicken breasts with quinoa and asparagus): the quinoa. Draft quantities: adjust them in the app.",
+ "split_from": "8l",
+ "label": "quinoa",
+ "pairs_with": [
+  "mediterranean",
+  "any"
+ ],
+ "stages": [
+  {
+   "state": "cooked"
+  }
+ ],
+ "ingredients": [
+  {
+   "ingredient": "quinoa",
+   "quantity": "250",
+   "unit": "g",
+   "preparation": "rinsed",
+   "role": "carb",
+   "component": "quinoa"
+  },
+  {
+   "ingredient": "vegetable-broth",
+   "quantity": "500",
+   "unit": "ml",
+   "role": "other",
+   "component": "quinoa"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Rinse the quinoa in a fine sieve.",
+   "component": "quinoa",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "stovetop",
+   "text": "Simmer the quinoa in the broth, covered, 15 minutes; rest 5 minutes and fluff.",
+   "duration_minutes": 20,
+   "component": "quinoa",
+   "equipment": "stovetop",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 17,
+   "stage": 1
+  },
+  {
+   "section": "portioning",
+   "text": "Divide the quinoa among 4 containers.",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "storage",
+   "text": "Cool the quinoa, then refrigerate.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat the quinoa covered with a splash of water.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0,
+   "stage": 1
+  }
+ ]
+}

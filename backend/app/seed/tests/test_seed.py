@@ -254,7 +254,10 @@ def test_price_rite_chicken_estimate_below_stop_and_shop(seeded_db):
 
 def test_seed_recipes(seeded_db):
     versions = seeded_db.scalars(select(RecipeVersion)).all()
-    assert len(versions) == 47  # 10, then the 37 drafts of the step 2b.4 approval (M13)
+    dishes = [v for v in versions if v.kind == "dish"]
+    assert len(dishes) == 47  # 10, then the 37 drafts of the step 2b.4 approval (M13)
+    # step 2b.10: the 20 prep items split from them and 12 assemblies (seed/tests/test_prep_items.py)
+    assert sorted(v.kind for v in versions if v.kind != "dish") == ["assembly"] * 12 + ["prep_item"] * 20
     assert all(v.is_draft and v.version_number == 1 and v.created_by == "system" for v in versions)
     families = seeded_db.scalars(select(RecipeFamily.name)).all()
     assert sorted(families) == sorted(
@@ -291,7 +294,7 @@ def test_seed_recipes_use_no_beef_held_or_pork_component(seeded_db):
 
 
 def test_seed_steps(seeded_db):
-    for version in seeded_db.scalars(select(RecipeVersion)):
+    for version in seeded_db.scalars(select(RecipeVersion).where(RecipeVersion.kind != "assembly")):
         steps = seeded_db.scalars(select(RecipeStep).where(RecipeStep.recipe_version_id == version.id)).all()
         sections = {s.section for s in steps}
         assert {"prep", "portioning"} <= sections, version.title
@@ -303,7 +306,9 @@ def test_seed_steps(seeded_db):
     checks = seeded_db.scalars(
         select(RecipeStep).where(RecipeStep.doneness_check_ingredient_id.is_not(None))
     ).all()
-    assert len(checks) == 36  # every chicken, egg and fish dish names what to check (7 before M13)
+    dishes = [s for s in checks if seeded_db.get(RecipeVersion, s.recipe_version_id).kind == "dish"]
+    assert len(dishes) == 36  # every chicken, egg and fish dish names what to check (7 before M13)
+    assert len(checks) - len(dishes) == 9  # and every prep item that cooks chicken (step 2b.10)
 
 
 def test_seed_quantities_in_base_units(seeded_db):

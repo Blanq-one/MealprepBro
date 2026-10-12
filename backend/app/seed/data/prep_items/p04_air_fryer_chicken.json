@@ -1,0 +1,130 @@
+{
+ "family": "Chicken over rice",
+ "title": "Air-fryer chicken breast",
+ "description": "Chicken breast pieces with garlic and smoked paprika, air fried until golden.",
+ "meal_slots": [
+  "lunch",
+  "dinner"
+ ],
+ "mood": "simple",
+ "cuisine": "American",
+ "flavor_tags": [],
+ "base_servings": 4,
+ "active_minutes": 10,
+ "total_minutes": 30,
+ "equipment": [
+  "air_fryer"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Split from 1b (Air-fryer chicken over rice with broccoli): the chicken. Draft quantities: adjust them in the app.",
+ "split_from": "1b",
+ "label": "air-fryer chicken",
+ "pairs_with": [
+  "american",
+  "mexican",
+  "any"
+ ],
+ "stages": [
+  {
+   "state": "marinated"
+  },
+  {
+   "state": "cooked"
+  }
+ ],
+ "ingredients": [
+  {
+   "ingredient": "chicken-breast-boneless-skinless",
+   "quantity": "680",
+   "unit": "g",
+   "preparation": "cut into even 1-inch-thick pieces",
+   "role": "protein",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "olive-oil",
+   "quantity": "1/2",
+   "unit": "tbsp",
+   "role": "fat",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "garlic-powder",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "smoked-paprika",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "cumin-ground",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "3/4",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "black-pepper",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "chicken"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Cut the chicken into even 1-inch-thick pieces. Toss with the oil, garlic powder, smoked paprika, cumin, salt and pepper.",
+   "component": "chicken",
+   "hands_on_minutes": 6,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "air_fryer",
+   "text": "Air fry the chicken in a single layer at 400F for 18 minutes, flipping at 9, until cooked through.",
+   "duration_minutes": 18,
+   "appliance_temp_f": 400,
+   "doneness_check_for": "chicken-breast-boneless-skinless",
+   "component": "chicken",
+   "equipment": "air_fryer",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 16,
+   "stage": 2
+  },
+  {
+   "section": "portioning",
+   "text": "Divide the chicken among 4 containers.",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 0,
+   "stage": 2
+  },
+  {
+   "section": "storage",
+   "text": "Cool the chicken, then refrigerate.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0,
+   "stage": 2
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat the chicken covered, stirring halfway.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0,
+   "stage": 2
+  }
+ ]
+}

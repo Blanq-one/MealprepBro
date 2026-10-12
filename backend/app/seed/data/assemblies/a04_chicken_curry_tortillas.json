@@ -1,0 +1,25 @@
+{
+ "family": "Chicken gravy with flour tortillas used as chapati",
+ "meal_slots": [
+  "lunch",
+  "dinner"
+ ],
+ "items": [
+  {
+   "item": "Chicken curry",
+   "portions": "1",
+   "min_portions": "1",
+   "max_portions": "2",
+   "step": "1"
+  }
+ ],
+ "add_ons": [
+  {
+   "ingredient": "flour-tortilla-small",
+   "quantity": "2",
+   "unit": "count",
+   "role": "carb"
+  }
+ ],
+ "draft_note": "Draft assembly: adjust its portions in the app."
+}

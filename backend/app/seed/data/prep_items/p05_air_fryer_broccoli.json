@@ -1,0 +1,96 @@
+{
+ "family": "Chicken over rice",
+ "title": "Air-fryer broccoli",
+ "description": "Broccoli florets air fried with a little oil and salt until browned at the edges.",
+ "meal_slots": [
+  "lunch",
+  "dinner"
+ ],
+ "mood": "simple",
+ "cuisine": "American",
+ "flavor_tags": [],
+ "base_servings": 4,
+ "active_minutes": 6,
+ "total_minutes": 15,
+ "equipment": [
+  "air_fryer"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Split from 1b (Air-fryer chicken over rice with broccoli): the broccoli. Draft quantities: adjust them in the app.",
+ "split_from": "1b",
+ "label": "roasted broccoli",
+ "pairs_with": [
+  "any"
+ ],
+ "stages": [
+  {
+   "state": "cooked"
+  }
+ ],
+ "ingredients": [
+  {
+   "ingredient": "broccoli",
+   "quantity": "400",
+   "unit": "g",
+   "preparation": "cut into florets",
+   "role": "vegetable",
+   "component": "broccoli"
+  },
+  {
+   "ingredient": "olive-oil",
+   "quantity": "1/2",
+   "unit": "tbsp",
+   "role": "fat",
+   "component": "broccoli"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1/4",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "broccoli"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Cut the broccoli into even florets.",
+   "component": "broccoli",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "air_fryer",
+   "text": "Toss the broccoli with the oil and salt. Air fry at 400F for 8 to 10 minutes, shaking once, until tender and browned at the edges.",
+   "duration_minutes": 10,
+   "appliance_temp_f": 400,
+   "component": "broccoli",
+   "equipment": "air_fryer",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 8,
+   "stage": 1
+  },
+  {
+   "section": "portioning",
+   "text": "Divide the broccoli among 4 containers.",
+   "hands_on_minutes": 1,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "storage",
+   "text": "Cool the broccoli, then refrigerate.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat the broccoli covered, until hot.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0,
+   "stage": 1
+  }
+ ]
+}

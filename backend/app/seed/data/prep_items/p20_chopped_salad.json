@@ -1,0 +1,100 @@
+{
+ "family": "Chicken over rice",
+ "title": "Chopped salad",
+ "description": "Romaine, tomato and cucumber with lemon and olive oil.",
+ "meal_slots": [
+  "lunch",
+  "dinner"
+ ],
+ "mood": "simple",
+ "cuisine": "Mediterranean",
+ "flavor_tags": [],
+ "base_servings": 4,
+ "active_minutes": 7,
+ "total_minutes": 10,
+ "equipment": [],
+ "freezer_friendly": false,
+ "draft_note": "Split from 1a (Chicken over rice with garlic yogurt sauce): the salad. Draft quantities: adjust them in the app.",
+ "split_from": "1a",
+ "label": "chopped salad",
+ "pairs_with": [
+  "any"
+ ],
+ "stages": [
+  {
+   "state": "raw"
+  }
+ ],
+ "ingredients": [
+  {
+   "ingredient": "romaine",
+   "quantity": "150",
+   "unit": "g",
+   "preparation": "chopped",
+   "role": "vegetable",
+   "component": "salad"
+  },
+  {
+   "ingredient": "tomato",
+   "quantity": "2",
+   "unit": "count",
+   "preparation": "medium, diced",
+   "role": "vegetable",
+   "component": "salad"
+  },
+  {
+   "ingredient": "cucumber",
+   "quantity": "1/2",
+   "unit": "count",
+   "preparation": "diced",
+   "role": "vegetable",
+   "component": "salad"
+  },
+  {
+   "ingredient": "lemon-juice",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "sauce",
+   "component": "salad"
+  },
+  {
+   "ingredient": "olive-oil",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "fat",
+   "component": "salad"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1/4",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "salad"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Chop the romaine and dice the tomatoes and cucumber.",
+   "component": "salad",
+   "hands_on_minutes": 5,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "no_cook",
+   "text": "Toss with the lemon juice, oil and salt.",
+   "component": "salad",
+   "hands_on_minutes": 1,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "portioning",
+   "text": "Divide the salad among 4 containers.",
+   "hands_on_minutes": 1,
+   "hands_off_minutes": 0,
+   "stage": 1
+  }
+ ]
+}

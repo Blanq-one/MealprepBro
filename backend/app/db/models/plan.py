@@ -70,6 +70,11 @@ class PlanCookBatch(Base):
     planned_minutes: Mapped[int] = mapped_column(SmallInteger)
     status: Mapped[str] = mapped_column(Text, server_default="planned")
     created_at: Mapped[datetime] = created_at_column()
+    # Phase 2b (0009, step 2b.10, FLOW_SPEC §19.3): a prep batch stops after this stage, in this state; the
+    # last day a portion may come from the fridge (code, domain/prep_storage.py). NULL for dish batches
+    stop_stage: Mapped[int | None] = mapped_column(SmallInteger)
+    stop_state: Mapped[str | None] = mapped_column(Text)
+    fridge_until: Mapped[date | None] = mapped_column(Date)
 
 
 class PlanBatchIngredient(Base):
@@ -116,6 +121,49 @@ class PlanMeal(Base):
     override_reason: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = created_at_column()
     updated_at: Mapped[datetime] = updated_at_column()
+    # Phase 2b (0009, step 2b.10): the assembly this meal is (its portions are plan_meal_component rows);
+    # NULL = a dish meal, one batch as before
+    assembly_version_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("recipe_version.id"))
+
+
+class PlanFinishTask(Base):
+    """Eating-day work (FLOW_SPEC §19.2): the stages left of a prep batch, a reheat or an assembly. It counts
+    as that day's hands-on time; Done deducts the day's add-ons. Created in step 2b.10; filled from 2b.11."""
+
+    __tablename__ = "plan_finish_task"
+    __table_args__ = (
+        CheckConstraint("portions > 0", name="portions_positive"),
+        CheckConstraint("hands_on_minutes >= 0 AND hands_off_minutes >= 0", name="minutes_not_negative"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    meal_plan_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("meal_plan.id", ondelete="CASCADE"))
+    day: Mapped[date] = mapped_column(Date)
+    cook_batch_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("plan_cook_batch.id", ondelete="CASCADE")
+    )
+    kind: Mapped[str] = mapped_column(Text)  # stage | reheat | assemble
+    portions: Mapped[Decimal] = mapped_column(Numeric(4, 1))
+    hands_on_minutes: Mapped[int] = mapped_column(SmallInteger)
+    hands_off_minutes: Mapped[int] = mapped_column(SmallInteger)
+    equipment: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(Text, server_default="planned")
+
+
+class PlanMealComponent(Base):
+    """An assembled meal's portions, one row per prep batch it draws from (per person)."""
+
+    __tablename__ = "plan_meal_component"
+    __table_args__ = (CheckConstraint("portions > 0", name="portions_positive"),)
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    plan_meal_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("plan_meal.id", ondelete="CASCADE"))
+    cook_batch_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("plan_cook_batch.id", ondelete="CASCADE")
+    )
+    portions: Mapped[Decimal] = mapped_column(Numeric(4, 1))
+    from_freezer: Mapped[bool] = mapped_column(Boolean)
+    finish_task_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("plan_finish_task.id"))
 
 
 class GroceryList(Base):

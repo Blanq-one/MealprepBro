@@ -1,0 +1,159 @@
+{
+ "family": "Chicken rice bowls",
+ "title": "Chicken, broccoli and pepper stir-fry",
+ "description": "Thin-sliced chicken stir-fried with broccoli and peppers in a soy-honey sauce.",
+ "meal_slots": [
+  "lunch",
+  "dinner"
+ ],
+ "mood": "simple",
+ "cuisine": "Chinese",
+ "flavor_tags": [],
+ "base_servings": 4,
+ "active_minutes": 20,
+ "total_minutes": 20,
+ "equipment": [
+  "stovetop"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Split from 8j (Chicken, broccoli and pepper stir-fry): the stir-fry, without the rice. Draft quantities: adjust them in the app.",
+ "split_from": "8j",
+ "label": "chicken stir-fry",
+ "pairs_with": [
+  "east_asian"
+ ],
+ "stages": [
+  {
+   "state": "cooked"
+  }
+ ],
+ "ingredients": [
+  {
+   "ingredient": "chicken-breast-boneless-skinless",
+   "quantity": "680",
+   "unit": "g",
+   "preparation": "thinly sliced",
+   "role": "protein"
+  },
+  {
+   "ingredient": "broccoli",
+   "quantity": "300",
+   "unit": "g",
+   "preparation": "small florets",
+   "role": "vegetable"
+  },
+  {
+   "ingredient": "bell-pepper",
+   "quantity": "2",
+   "unit": "count",
+   "preparation": "sliced",
+   "role": "vegetable"
+  },
+  {
+   "ingredient": "garlic",
+   "quantity": "3",
+   "unit": "clove",
+   "preparation": "minced",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "ginger",
+   "quantity": "10",
+   "unit": "g",
+   "preparation": "grated",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "soy-sauce",
+   "quantity": "4",
+   "unit": "tbsp",
+   "role": "sauce",
+   "component": "sauce"
+  },
+  {
+   "ingredient": "honey",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "sauce",
+   "component": "sauce"
+  },
+  {
+   "ingredient": "cornstarch",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "other",
+   "component": "sauce"
+  },
+  {
+   "ingredient": "water",
+   "quantity": "60",
+   "unit": "ml",
+   "role": "other",
+   "component": "sauce"
+  },
+  {
+   "ingredient": "vegetable-oil",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "fat"
+  },
+  {
+   "ingredient": "sesame-seeds",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "garnish",
+   "optional": true
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Slice the chicken thinly. Cut the broccoli and peppers. Whisk the soy sauce, honey, cornstarch and water.",
+   "hands_on_minutes": 7,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "stovetop",
+   "text": "Heat half the oil in a wok over high heat. Stir-fry the chicken until browned and cooked through, 5 to 6 minutes; set aside.",
+   "duration_minutes": 6,
+   "doneness_check_for": "chicken-breast-boneless-skinless",
+   "component": "stir-fry",
+   "equipment": "stovetop",
+   "hands_on_minutes": 6,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "stovetop",
+   "text": "Add the rest of the oil, the broccoli, peppers, garlic and ginger and stir-fry 4 minutes. Return the chicken, add the sauce and toss until glossy, 1 minute.",
+   "duration_minutes": 5,
+   "component": "stir-fry",
+   "equipment": "stovetop",
+   "hands_on_minutes": 5,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "portioning",
+   "text": "Divide the stir-fry among 4 containers; sprinkle with sesame seeds.",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "storage",
+   "text": "Cool, then refrigerate in the containers.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat covered, stirring halfway, until hot all the way through.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0,
+   "stage": 1
+  }
+ ]
+}

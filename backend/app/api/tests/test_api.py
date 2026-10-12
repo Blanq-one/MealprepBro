@@ -124,8 +124,11 @@ def test_calculation_validation_errors_are_problem_json(client, seeded_db):
 
 
 def test_seed_recipes_endpoint(client):
-    recipes = client.get("/api/v1/recipes/seed").json()
+    listed = client.get("/api/v1/recipes/seed").json()
+    recipes = [r for r in listed if r["kind"] == "dish"]
     assert len(recipes) == 47  # 9 Phase 0 drafts, the chia pudding (Phase 1), the 37 M13 drafts
+    # and the 20 prep items split from them (step 2b.10); assemblies' numbers are their items'
+    assert len([r for r in listed if r["kind"] == "prep_item"]) == 20 and len(listed) == 67
     assert all(r["is_draft"] for r in recipes)
     by_title = {r["title"]: r for r in recipes}
     assert all(r["status"] == "complete" and r["incomplete_reasons"] == [] for r in recipes)

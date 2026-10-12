@@ -13,7 +13,8 @@ were approved 2026-10-11, including D127 (X1–X9, §12.1)**: F25–F32 approved
 so new screens and a live link come sooner: **2b.9 → 2b.10 → 2b.7 → 2b.13 (deploy) → 2b.11 → 2b.12 → 2b.6 → 2b.8**.
 Step 2b.9 (cook-day schedule) was built the same day with D128–D142 (2b.9 outcome note, §9) and **approved the
 same day, including D135 (Y1–Y3, §12.1)**. At the approval a time guard was built first (D143–D147, 2b.9 approval
-note, §9; open question Y4, §12.2), then step 2b.10 (smart prep data model).
+note, §9; open question Y4, §12.2), then step 2b.10 (smart prep data model), built the same day with D148–D156
+(2b.10 outcome note, §9); it awaits your approval.
 **Source documents:** `CLAUDE.md` (build rules, wins on conflict), `docs/PRD.md` (product vision; "Primary user flow" at the top), `docs/FLOW_SPEC.md` (screens and backend work for Phase 2b).
 
 This plan covers Phases 0–6, plus Phase 2b. One phase per session; Phase 2b is split into build steps, one per session (§9). A phase or step is done only when its acceptance criteria are met, its tests pass, and the test output has been shown.
@@ -32,7 +33,7 @@ This plan covers Phases 0–6, plus Phase 2b. One phase per session; Phase 2b is
 | — | Pre-Phase 1 tasks | Done | 2026-10-08 | 2026-10-08 | Package-label data (tortillas, protein powder), USDA mapping review sheet (`docs/review/usda_mappings.md`), raw/dry/as-sold rule + check (§7.8), CLAUDE.md machine-boundaries rule. Round 2: FoodSafety.gov chart transcribed (53 rows, §7.2), top-25 mappings approved, tortilla renamed, Docker rule clarified, fresh-clone check made a per-phase step. |
 | 1 | Planning brain | Approved 2026-10-09; post-approval round done | 2026-10-08 | 2026-10-09 | First pass: 645 tests, fresh-clone check passed; D1–D13 and C1–C3 approved 2026-10-09. Fix-up round (C4–C8: budget per request with inventory/shop modes, cash vs food eaten, freeze-on-shopping-day and waste, 100 g protein floor, elapsed time): 705 tests pass (the opt-in live test skips), domain coverage 99%, ruff/mypy clean, fresh-clone check passed; deviations D14–D22 in the fix-up note. Approved 2026-10-09. Post-approval round (C9–C14: powder prices, stock-up items, shelf-life fix, regular chicken packs, two-week steady-state check, A3 hosting): 721 tests pass (the opt-in live test skips), domain coverage 99%; deviations D23–D28. |
 | 2 | Mobile PWA + cloud deploy (deploy prep only, K7) | Approved 2026-10-10 | 2026-10-09 | 2026-10-09 | Pre-work K2–K6 done; PWA, auth, shopping, Mark cooked, quick add, exposure log. 800 backend tests pass (2 opt-in skipped), 78 frontend tests; not deployed (your step, `docs/deploy.md`). Deviations D29–D43 in the Phase 2 outcome note (§9). |
-| 2b | Cook-first flow redesign | 2b.1 approved 2026-10-10 (D44–D53); 2b.2 approved 2026-10-10 (D54–D64, H1–H6); 2b.3a approved 2026-10-10 (D65–D76, J1–J6); 2b.4 approved 2026-10-10 (D77–D88, M1–M20); 2b.4 fixes approved 2026-10-10 (N1–N3); 2b.3b approved 2026-10-11 (D89–D101, P1–P8); pre-work P2–P7 done and approved 2026-10-11 (D102–D106, T1–T8); 2b.5 approved 2026-10-11 (D107–D126, U1); freeze note in the ideas pass done (D127, U2); designs for smart prep and parallel cooking approved 2026-10-11 (X1–X9; steps 2b.9–2b.13); 2b.9 approved 2026-10-11 (D128–D142, Y1–Y3); time guard built 2026-10-11 (D143–D147) | 2026-10-10 | | `docs/FLOW_SPEC.md`; PRD "Primary user flow"; 14 build steps, built in the order 2b.1, 2b.2, 2b.3a, **2b.4, 2b.3b**, 2b.5, then **2b.9, 2b.10, 2b.7, 2b.13 (deploy), 2b.11, 2b.12, 2b.6, 2b.8** (H3, X8; §9); changes F1–F21 approved (FLOW_SPEC §16); decisions E1–E17 (§12.1). Two-stage generation added the same day (E15, E17; built in 2b.3b). **2b.1 (backend foundations):** 898 backend tests pass (2 opt-in skipped), 78 frontend tests, ruff/mypy clean; deviations D44–D53 in the 2b.1 outcome note (§9). **2b.2 (look, shell, onboarding, Settings, Pantry):** 180 frontend tests (78 before), 899 backend tests pass (2 opt-in skipped), type checks clean, static export builds; AA contrast tested, 375 px not yet checked on a device; deviations D54–D64 in the 2b.2 outcome note (§9). Footer fix H2 done before 2b.3a. **2b.3a (ranking and cards, no LLM calls):** 964 backend tests pass (2 opt-in skipped), 187 frontend tests, ruff, mypy and type check clean; deviations D65–D76 in the 2b.3a outcome note (§9). **2b.4 (A meal now: screens, with J2–J6):** 993 backend tests pass (2 opt-in skipped), 236 frontend tests, ruff, mypy and type check clean, static export builds; migration `0006_pantry_presets`; deviations D77–D88 in the 2b.4 outcome note (§9). **2b.4 fixes (M2–M13, M15, M17, M20):** 1056 backend tests pass (2 opt-in skipped), 244 frontend tests, ruff, mypy and type check clean; no migration; 37 new draft seed recipes (47 in all); solver shortlist; fixes outcome note (§9). **2b.3b (ideas, steps, More ideas, background batch, rate-limit waits, live test, screens; with N2, ground vs whole cuts):** 1132 backend tests pass (2 opt-in skipped), 263 frontend tests, ruff, mypy and type check clean, static export builds; no migration, no new dependency; the live Groq test ran (FLOW_SPEC §15.1); deviations D89–D101 in the 2b.3b outcome note (§9). **2b.3b approval pre-work (P2–P7):** 1143 backend tests pass with `--run-slow` (3 opt-in skipped); the default run is parallel and skips 6 `slow` tests (100 s, was about 20 min); 265 frontend tests; ruff, mypy and type check clean; no migration; new dev dependency pytest-xdist (approved); `LLM_IDEAS_MODEL` (20b by default in compose); deviations D102–D106 in 2b.3b's approval note (§9). **2b.5 (meal prep engine, with T2–T4):** 1218 backend tests pass with `--run-slow` (3 opt-in skipped), 266 (265 before) frontend tests; ruff, mypy and type check clean; migration `0007_recipe_freeze_note`; no new dependency; deviations D107–D126 in the 2b.5 outcome note (§9). **2b.5 approval (U1–U5):** the ideas pass carries an optional freeze note under the seeds' rules (D127): 1218 backend tests pass in the default run (9 skipped: 6 slow, 3 opt-in), ruff and mypy clean, no migration; FLOW_SPEC §19–§21 and the proposed steps 2b.9–2b.12 (§9) are written for your review. **2b.9 (cook-day schedule):** 1353 backend tests pass in the default run (13 skipped: 8 slow, 2 perf, 3 opt-in), 1363 with `--run-slow` and the perf tests (3 opt-in skipped); 266 frontend tests; ruff, mypy and type check clean, static export builds; migration `0008_step_timing`; no new dependency; the live Groq test ran (8.3K tokens); deviations D128–D142 in the 2b.9 outcome note (§9). **Time guard (Y2):** 1361 backend tests pass in the default run (13 skipped), 266 frontend tests; ruff, mypy and type check clean; no migration, no new dependency; your dev seed week went from 245 s to 171 s with a plan marked not proven best; D143–D147 in the 2b.9 approval note (§9). |
+| 2b | Cook-first flow redesign | 2b.1 approved 2026-10-10 (D44–D53); 2b.2 approved 2026-10-10 (D54–D64, H1–H6); 2b.3a approved 2026-10-10 (D65–D76, J1–J6); 2b.4 approved 2026-10-10 (D77–D88, M1–M20); 2b.4 fixes approved 2026-10-10 (N1–N3); 2b.3b approved 2026-10-11 (D89–D101, P1–P8); pre-work P2–P7 done and approved 2026-10-11 (D102–D106, T1–T8); 2b.5 approved 2026-10-11 (D107–D126, U1); freeze note in the ideas pass done (D127, U2); designs for smart prep and parallel cooking approved 2026-10-11 (X1–X9; steps 2b.9–2b.13); 2b.9 approved 2026-10-11 (D128–D142, Y1–Y3); time guard built 2026-10-11 (D143–D147); 2b.10 built 2026-10-11 (D148–D156), awaiting your approval | 2026-10-10 | | `docs/FLOW_SPEC.md`; PRD "Primary user flow"; 14 build steps, built in the order 2b.1, 2b.2, 2b.3a, **2b.4, 2b.3b**, 2b.5, then **2b.9, 2b.10, 2b.7, 2b.13 (deploy), 2b.11, 2b.12, 2b.6, 2b.8** (H3, X8; §9); changes F1–F21 approved (FLOW_SPEC §16); decisions E1–E17 (§12.1). Two-stage generation added the same day (E15, E17; built in 2b.3b). **2b.1 (backend foundations):** 898 backend tests pass (2 opt-in skipped), 78 frontend tests, ruff/mypy clean; deviations D44–D53 in the 2b.1 outcome note (§9). **2b.2 (look, shell, onboarding, Settings, Pantry):** 180 frontend tests (78 before), 899 backend tests pass (2 opt-in skipped), type checks clean, static export builds; AA contrast tested, 375 px not yet checked on a device; deviations D54–D64 in the 2b.2 outcome note (§9). Footer fix H2 done before 2b.3a. **2b.3a (ranking and cards, no LLM calls):** 964 backend tests pass (2 opt-in skipped), 187 frontend tests, ruff, mypy and type check clean; deviations D65–D76 in the 2b.3a outcome note (§9). **2b.4 (A meal now: screens, with J2–J6):** 993 backend tests pass (2 opt-in skipped), 236 frontend tests, ruff, mypy and type check clean, static export builds; migration `0006_pantry_presets`; deviations D77–D88 in the 2b.4 outcome note (§9). **2b.4 fixes (M2–M13, M15, M17, M20):** 1056 backend tests pass (2 opt-in skipped), 244 frontend tests, ruff, mypy and type check clean; no migration; 37 new draft seed recipes (47 in all); solver shortlist; fixes outcome note (§9). **2b.3b (ideas, steps, More ideas, background batch, rate-limit waits, live test, screens; with N2, ground vs whole cuts):** 1132 backend tests pass (2 opt-in skipped), 263 frontend tests, ruff, mypy and type check clean, static export builds; no migration, no new dependency; the live Groq test ran (FLOW_SPEC §15.1); deviations D89–D101 in the 2b.3b outcome note (§9). **2b.3b approval pre-work (P2–P7):** 1143 backend tests pass with `--run-slow` (3 opt-in skipped); the default run is parallel and skips 6 `slow` tests (100 s, was about 20 min); 265 frontend tests; ruff, mypy and type check clean; no migration; new dev dependency pytest-xdist (approved); `LLM_IDEAS_MODEL` (20b by default in compose); deviations D102–D106 in 2b.3b's approval note (§9). **2b.5 (meal prep engine, with T2–T4):** 1218 backend tests pass with `--run-slow` (3 opt-in skipped), 266 (265 before) frontend tests; ruff, mypy and type check clean; migration `0007_recipe_freeze_note`; no new dependency; deviations D107–D126 in the 2b.5 outcome note (§9). **2b.5 approval (U1–U5):** the ideas pass carries an optional freeze note under the seeds' rules (D127): 1218 backend tests pass in the default run (9 skipped: 6 slow, 3 opt-in), ruff and mypy clean, no migration; FLOW_SPEC §19–§21 and the proposed steps 2b.9–2b.12 (§9) are written for your review. **2b.9 (cook-day schedule):** 1353 backend tests pass in the default run (13 skipped: 8 slow, 2 perf, 3 opt-in), 1363 with `--run-slow` and the perf tests (3 opt-in skipped); 266 frontend tests; ruff, mypy and type check clean, static export builds; migration `0008_step_timing`; no new dependency; the live Groq test ran (8.3K tokens); deviations D128–D142 in the 2b.9 outcome note (§9). **Time guard (Y2):** 1361 backend tests pass in the default run (13 skipped), 266 frontend tests; ruff, mypy and type check clean; no migration, no new dependency; your dev seed week went from 245 s to 171 s with a plan marked not proven best; D143–D147 in the 2b.9 approval note (§9). **2b.10 (smart prep data model):** 1497 backend tests pass in the default run (13 skipped), 266 frontend tests; ruff, mypy and type check clean; migration `0009_smart_prep`; the FoodKeeper rows transcribed (V1); 20 draft prep items and 12 assemblies (`docs/review/prep_items.md`); deviations D148–D156 in the 2b.10 outcome note (§9). |
 | 3 | Feedback loop | Not started | | | Favorites moved to 2b. |
 | 4 | Daily overrides | Not started | | | |
 | 5 | Grocery intelligence | Not started | | | |
@@ -117,6 +118,7 @@ Mealbro/
 │       │   ├── prep_order.py          # P2b (2b.5): a cook day's prep order (retired in 2b.9)
 │       │   ├── cook_schedule.py       # P2b (2b.9): tasks, batch growth, the cook-day schedule, the timeline
 │       │   ├── prep_storage.py · assembly_text.py   # P2b (2b.10): storage per prep item and state; meal names
+│       │   ├── foodkeeper.py          # P2b (2b.10): the USDA FoodKeeper rows the chart lacks, cited per row
 │       │   ├── preferences.py         # P3
 │       │   ├── price_stats.py         # P5
 │       │   └── tests/
@@ -132,7 +134,8 @@ Mealbro/
 │       │   │   ├── label_inputs.json  # values you fill from labels (protein powder, tortillas)
 │       │   │   ├── substitutions.json # accepted pairs, e.g. chapati → flour tortilla
 │       │   │   ├── settings_default.json   # cook schedule, exclusions, stores, calorie defaults
-│       │   │   └── recipes/           # draft seed recipes (§13), one JSON file per recipe
+│       │   │   ├── recipes/           # draft seed recipes (§13), one JSON file per recipe
+│       │   │   └── prep_items/ · assemblies/   # P2b (2b.10): draft prep items and assemblies (FLOW_SPEC §19.6)
 │       │   ├── loader.py
 │       │   └── tests/
 │       ├── llm/                       # P1: the ONLY package that knows about Groq
@@ -143,6 +146,7 @@ Mealbro/
 │       │   ├── constraint_builder.py · resolver.py · recipe_validator.py · candidates.py
 │       │   ├── rendering.py · post_solve.py · plan_validator.py · grocery_list.py · orchestrator.py
 │       │   ├── ideas.py · steps.py        # P2b (2b.3b): the ideas pass and steps on first open
+│       │   ├── assemblies.py              # P2b (2b.10): item portions, assemblies' numbers, names, one-item
 │       │   ├── timing.py                  # P2b (2b.9): each recipe's tasks for the cook-day schedule
 │       │   ├── solver/ (model.py · objective.py · absorption.py · diagnostics.py · supply.py (2b.11))
 │       │   ├── smart/                 # P2b (2b.11): the smart prep model, rounding, checks, persistence
@@ -777,6 +781,8 @@ plan_meal_component  (id, plan_meal_id FK, cook_batch_id FK, portions numeric(4,
                       finish_task_id NULL FK)
 plan_finish_task     (id, meal_plan_id FK, day, cook_batch_id FK, kind, portions, hands_on_minutes,
                       hands_off_minutes, equipment NULL, status)
+-- as built (2b.10): CHECKs min_portions <= portions <= max_portions, step IN (0.5, 1), portions > 0 and
+-- minutes >= 0; finish tasks and meal components cascade with their plan and batch
 
 -- 0010_feedback_loop (Phase 3; planned as 0003, then 0008) ---------------------------
 prepared_portion                                -- cooked leftovers / frozen meal-prep portions
@@ -3077,6 +3083,70 @@ this week reliably inside 180 s needs a change to how the cut re-solves and shor
 
 **Tests.** `domain/tests/test_prep_storage.py`, `domain/tests/test_assembly_text.py`,
 `seed/tests/test_prep_items.py`, a migration test.
+
+**2b.10 outcome (built 2026-10-11, awaiting your approval).** Every deliverable and acceptance criterion is met,
+with tests. 1497 backend tests pass in the default run (13 skipped: 8 slow, 2 perf, 3 opt-in) in about 2 min 25 s;
+266 frontend tests; ruff, mypy and the type check are clean (the fresh-clone check runs the slow tests and the
+static export). Migration `0009_smart_prep`; no new dependency.
+
+What was built:
+- **Migration `0009_smart_prep`** as designed (FLOW_SPEC §19.3), with CHECKs: an assembly component's portions
+  inside its range and its step 0.5 or 1; positive portions and minutes on finish tasks and meal components.
+  Every recipe saved before it is a dish (`db/tests/test_smart_prep_migration.py`).
+- **Storage per item and state** (`domain/prep_storage.py`), with the FoodKeeper rows (`domain/foodkeeper.py`):
+  `foodkeeper.json` was in `docs/sources/`, so the rows were transcribed (V1, X2), each cited by its Product ID
+  and checked against the file by a test: 174 leftovers without meat, fish, poultry or egg; 178 cooked rice; 177
+  cooked pasta; 426 cooked quinoa; and two gaps the chart also had, 148 cooked fish and 162 cooked shellfish.
+  **FoodKeeper has no row for cut fresh vegetables, green salads or homemade sauces** (every Product row
+  checked: only commercial cut fruit, mayonnaise deli salads and bottled sauces), so those stay made on the
+  eating day. Partly cooked meat, poultry, fish or eggs is never stored (V2, X3).
+- **Seed drafts:** 20 prep items split from 12 seeds, with stages and §20's timing on every step, and 12
+  assemblies (two wraps, a burrito bowl, curries, rice bowls); every dish is also a one-item assembly, computed.
+  The full list, with stages, storage and numbers by code: `docs/review/prep_items.md` (for your review, like
+  M13's drafts).
+- **Names and instructions** (`domain/assembly_text.py`): what an item brings, a composed name per shape of
+  meal, and the eating-day templates (reheat to 165°F, from the freezer, a finish stage with its appliance
+  setting and safe temperature, add-ons, fresh items, cold dishes).
+- **Numbers** (`planning/assemblies.py`): each item's portion and each assembly by code; an assembly's are its
+  items' portions plus its add-ons, to the kcal and the cent (tested for all 12).
+- **Recipe page** (`GET /recipe-versions/{id}`, E17 extended): `kind`; a prep item's `prep` (label, what it brings,
+  pairing styles, each stage with its storage and sources) and each step's `stage`; an assembly's `assembly`
+  (name, items with portions and numbers, each opening its own page, instruction), its add-ons as its lines and
+  its numbers as the page's `per_portion` and `costs`.
+
+Decisions and deviations:
+- **D148. Storage details the table left open:** eggs beaten into a raw mixture keep like the chart's raw egg
+  whites and yolks (2 days, freeze); partly cooked items without meat, fish or eggs keep like cooked vegetables
+  (FoodKeeper 174); a raw item whose protein has no raw row (canned tuna in a salad) is made on the day; only an
+  item that is nothing but hard-cooked eggs gets their week. "Meat, poultry, fish or eggs" is a line with a safety
+  category, or a protein-role line tagged as such: a broth or a fish sauce doesn't count.
+- **D149. Cooked windows don't change:** with FoodKeeper every cooked item is your 3 days (each row's upper end
+  at least 4); the rows add citations and the fish and shellfish rows. A grain row (rice, pasta, quinoa) applies
+  only when the item is only that grain.
+- **D150. A dish used as a prep item keeps as every dish does today** (your leftover days, its freezes-well
+  flag), not by the line rows, so dish plans' windows are unchanged. A dish with no cooking at all (overnight
+  oats, puddings) is "Serve 1 portion … cold", never reheated.
+- **D151. What an item brings,** by grams per role (seasoning, fat, garnish and water left out): protein lines at
+  least 25% bring protein, and with vegetables and sauce at least 40% it is a whole dish; at least 35% sauce or
+  dairy is a sauce; at least 50% carbohydrate lines a base. Used only for names now.
+- **D152. Names:** two shapes the table didn't have: a base that isn't a grain goes "with" ("Roast chicken
+  breast with roasted root vegetables"), and a dish with a flatbread is "Chicken curry with flour tortillas"
+  ("Warm 2 flour tortillas to eat with it"), not a wrap. An untitled seed assembly is named by code when it's
+  saved (its title), and found again by that title on a re-seed, so renaming an item's label makes a new draft.
+- **D153. Assembly money:** each item's portions times its cost per portion, rounded once per item, then the
+  add-ons' cost; per store, as today. Nutrition adds up exactly and is rounded once.
+- **D154. An assembly version:** base servings 1, 5 active and total minutes (its own eating-day work), no
+  equipment, not frozen, its hardest item's mood, a description listing its items, no steps (its page shows the
+  instruction).
+- **D155. Everything that worked on dishes still sees only dishes:** the planner's candidates, meal now's
+  substitute roles and ideas vocabulary, the Saved cards and the USDA mapping review's calorie shares.
+  `GET /recipes/seed` lists dishes and prep items (with `kind`). A ♥ or 🔖 on an item or an assembly is saved,
+  but shows in Saved only once 2b.7 and 2b.11 give them cards.
+- **D156. Draft judgment calls** (in the review file): roasted asparagus doesn't freeze well; the tandoori item
+  keeps the chicken's share of the seed's cumin and salt; the chopped salad adds half a cucumber; items keep
+  their seed's base servings; proteins and dishes in whole portions, bases and sides in halves (V3).
+
+**Dev database.** Migrated to 0009 and re-seeded: 20 prep items and 12 assemblies added, no dish revised.
 
 ##### 2b.11 Smart prep: solver and plan (backend)
 

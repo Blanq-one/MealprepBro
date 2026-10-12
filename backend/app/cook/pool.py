@@ -30,7 +30,7 @@ from app.db.models import (
     RecipeVersion,
 )
 from app.domain.chicken_cuts import CutForm
-from app.domain.enums import Equipment, RecipeMood
+from app.domain.enums import Equipment, RecipeKind, RecipeMood
 from app.domain.exclusions import ExclusionStatus
 from app.domain.frequency_caps import ResolvedCap
 from app.domain.meat_forms import MeatForm
@@ -117,12 +117,16 @@ def _stock(plans: Mapping[int, IngredientPlan], query: MealNowQuery) -> dict[int
 
 
 def library_roles(session: Session, user_id: int) -> dict[int, frozenset[str]]:
-    """The roles each ingredient plays in your live recipes (a substitute must play the missing line's)."""
+    """The roles each ingredient plays in your live dishes (a substitute must play the missing line's)."""
     rows = session.execute(
         select(RecipeIngredient.ingredient_id, RecipeIngredient.role)
         .join(RecipeVersion, RecipeVersion.id == RecipeIngredient.recipe_version_id)
         .join(Recipe, Recipe.default_version_id == RecipeVersion.id)
-        .where(Recipe.user_id == user_id, Recipe.archived_at.is_(None))
+        .where(
+            Recipe.user_id == user_id,
+            Recipe.archived_at.is_(None),
+            RecipeVersion.kind == RecipeKind.DISH.value,
+        )
         .distinct()
     ).tuples()
     roles: dict[int, set[str]] = defaultdict(set)

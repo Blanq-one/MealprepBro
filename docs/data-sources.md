@@ -55,6 +55,23 @@ Package-label values override the USDA mapping. Per-serving values are converted
   Values are never taken from secondary sources.
 - Your fixed values: cooked leftovers 3 days in the fridge (the chart allows 3 to 4); reheat to 165 °F
   (CLAUDE.md; the chart has no reheating guidance).
+- **Second source, for smart prep (step 2b.10, BUILD_PLAN X2): the USDA FSIS FoodKeeper data.** You saved it as
+  [`docs/sources/foodkeeper.json`](sources/foodkeeper.json) (English; workbook `FMA-Data-v128.xlsx`, data version
+  128, the current version, modified 09-06-2018). The rows the chart doesn't have are transcribed in
+  `backend/app/domain/foodkeeper.py`, each cited by its Product ID, worded as printed:
+  - 174 Leftovers without meat, fish, poultry, or egg (cooked vegetables, rice, potatoes): 3 to 4 days, freezer
+    1 to 2 months;
+  - 178 Cooked rice: 4 to 6 days, 6 months; 177 Cooked pasta: 3 to 5 days, 1 to 2 months; 426 Quinoa, cooked:
+    6 to 7 days, 6 to 12 months;
+  - 148 Cooked fish: 3 to 4 days, 1 to 2 months; 162 Cooked shellfish: 3 to 4 days, 1 to 3 months (from the
+    date of purchase).
+  - A test reads the file and checks every transcribed row against it.
+  - **Not in FoodKeeper** (every Product row checked): cut fresh vegetables (only commercial cut fruit), green
+    salads (only mayonnaise deli salads, the same as the chart's "Salads" row) and homemade sauces such as
+    yogurt sauces or raita (only commercial bottled or jarred sauces and dips). Those prep items stay made on
+    the eating day as a 5-minute finish task (V1).
+  - Cooked windows still use your leftover setting (3 days), never past a row's upper end; FoodKeeper doesn't
+    lengthen any window the app plans today.
 
 ## Prices (`backend/app/seed/data/products_prices.json`)
 

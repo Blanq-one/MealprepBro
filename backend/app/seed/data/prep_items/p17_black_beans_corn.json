@@ -1,0 +1,123 @@
+{
+ "family": "Chicken rice bowls",
+ "title": "Black beans and corn",
+ "description": "Black beans and corn warmed with cumin, chili and lime.",
+ "meal_slots": [
+  "lunch",
+  "dinner"
+ ],
+ "mood": "simple",
+ "cuisine": "Tex-Mex",
+ "flavor_tags": [],
+ "base_servings": 4,
+ "active_minutes": 7,
+ "total_minutes": 10,
+ "equipment": [
+  "stovetop"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Split from 7c (Chicken and black bean burrito bowls): the beans and corn. Draft quantities: adjust them in the app.",
+ "split_from": "7c",
+ "label": "black beans and corn",
+ "pairs_with": [
+  "mexican"
+ ],
+ "stages": [
+  {
+   "state": "cooked"
+  }
+ ],
+ "ingredients": [
+  {
+   "ingredient": "black-beans-canned",
+   "quantity": "480",
+   "unit": "g",
+   "preparation": "drained and rinsed",
+   "role": "protein",
+   "component": "beans"
+  },
+  {
+   "ingredient": "corn-frozen",
+   "quantity": "200",
+   "unit": "g",
+   "role": "vegetable",
+   "component": "beans"
+  },
+  {
+   "ingredient": "vegetable-oil",
+   "quantity": "1/2",
+   "unit": "tbsp",
+   "role": "fat",
+   "component": "beans"
+  },
+  {
+   "ingredient": "cumin-ground",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "beans"
+  },
+  {
+   "ingredient": "chili-powder",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "beans"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "beans"
+  },
+  {
+   "ingredient": "lime-juice",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "sauce",
+   "component": "beans"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Drain and rinse the beans.",
+   "component": "beans",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "stovetop",
+   "text": "Warm the oil in a skillet. Add the beans, corn, cumin, chili powder and salt and cook, stirring, 4 to 5 minutes, until hot. Stir in the lime juice.",
+   "duration_minutes": 5,
+   "component": "beans",
+   "equipment": "stovetop",
+   "hands_on_minutes": 4,
+   "hands_off_minutes": 1,
+   "stage": 1
+  },
+  {
+   "section": "portioning",
+   "text": "Divide the beans and corn among 4 containers.",
+   "hands_on_minutes": 1,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "storage",
+   "text": "Cool, then refrigerate in the containers.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat covered, stirring halfway, until hot all the way through.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0,
+   "stage": 1
+  }
+ ]
+}

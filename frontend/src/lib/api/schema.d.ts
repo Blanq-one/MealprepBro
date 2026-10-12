@@ -1053,6 +1053,48 @@ export interface components {
             /** Name */
             name: string;
         };
+        /** AssemblyItemOut */
+        AssemblyItemOut: {
+            /** Brings */
+            brings: string;
+            /** Kcal */
+            kcal: number;
+            /** Kind */
+            kind: string;
+            /** Label */
+            label: string;
+            /** Max Portions */
+            max_portions: string;
+            /** Min Portions */
+            min_portions: string;
+            /** Portions */
+            portions: string;
+            /** Portions Display */
+            portions_display: string;
+            /** Protein G */
+            protein_g: string;
+            /** Recipe Id */
+            recipe_id: number;
+            /** Step */
+            step: string;
+            /** Title */
+            title: string;
+            /** Version Id */
+            version_id: number;
+        };
+        /**
+         * AssemblyOut
+         * @description An assembly's page (step 2b.10, FLOW_SPEC §19.10): its items, add-ons and eating-day instruction; the
+         *     page's numbers (per_portion, costs) are its items' portions plus its add-ons, by code.
+         */
+        AssemblyOut: {
+            /** Instruction */
+            instruction: string;
+            /** Items */
+            items: components["schemas"]["AssemblyItemOut"][];
+            /** Name */
+            name: string;
+        };
         /**
          * BatchDetailOut
          * @description One cook batch: the recipe at the batch's practical quantities (what you measure).
@@ -2882,6 +2924,20 @@ export interface components {
              */
             start: ("today" | "tomorrow") | string;
         };
+        /**
+         * PrepItemOut
+         * @description A prep item's page (step 2b.10, FLOW_SPEC §19.10): its stages and how it keeps after each.
+         */
+        PrepItemOut: {
+            /** Brings */
+            brings: string;
+            /** Label */
+            label: string;
+            /** Pairs With */
+            pairs_with: string[];
+            /** Stages */
+            stages: components["schemas"]["PrepStageOut"][];
+        };
         /** PrepNoteOut */
         PrepNoteOut: {
             /** Day */
@@ -2903,6 +2959,16 @@ export interface components {
             display: string;
             /** Items */
             items: components["schemas"]["PrepNoteOut"][];
+        };
+        /** PrepStageOut */
+        PrepStageOut: {
+            /** N */
+            n: number;
+            /** State */
+            state: string;
+            /** State Display */
+            state_display: string;
+            storage: components["schemas"]["StorageOut"];
         };
         /**
          * PresetOut
@@ -3204,6 +3270,7 @@ export interface components {
         RecipeVersionOut: {
             /** Active Minutes */
             active_minutes: number;
+            assembly?: components["schemas"]["AssemblyOut"] | null;
             /** Badge */
             badge: string | null;
             /** Base Servings */
@@ -3239,6 +3306,11 @@ export interface components {
             is_favorite: boolean;
             /** Is Saved */
             is_saved: boolean;
+            /**
+             * Kind
+             * @default dish
+             */
+            kind: string;
             /** Labels */
             labels: string[];
             /** Lines */
@@ -3256,6 +3328,7 @@ export interface components {
             portion_size: string;
             /** Portions */
             portions: number;
+            prep?: components["schemas"]["PrepItemOut"] | null;
             /** Recipe Id */
             recipe_id: number;
             search_context?: components["schemas"]["SearchContextOut"] | null;
@@ -3327,6 +3400,8 @@ export interface components {
             safety_note: string | null;
             /** Section */
             section: string;
+            /** Stage */
+            stage?: number | null;
             /** Text */
             text: string;
         };
@@ -3432,6 +3507,11 @@ export interface components {
             incomplete_reasons: string[];
             /** Is Draft */
             is_draft: boolean;
+            /**
+             * Kind
+             * @default dish
+             */
+            kind: string;
             /** Meal Slots */
             meal_slots: string[];
             /** Mood */
@@ -3527,6 +3607,24 @@ export interface components {
          * @enum {string}
          */
         StorageLocation: "pantry" | "fridge" | "freezer";
+        /**
+         * StorageOut
+         * @description How a prep item keeps after a stage (code, domain/prep_storage.py; FLOW_SPEC §19.4).
+         */
+        StorageOut: {
+            /** Freezer */
+            freezer: boolean;
+            /** Fridge Days */
+            fridge_days: number;
+            /** Made On The Day */
+            made_on_the_day: boolean;
+            /** Note */
+            note: string;
+            /** Sources */
+            sources: string[];
+            /** Stored */
+            stored: boolean;
+        };
         /** StoreCostOut */
         StoreCostOut: {
             /** Complete */

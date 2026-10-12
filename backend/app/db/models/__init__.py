@@ -18,14 +18,24 @@ from app.db.models.plan import (
     MealPlan,
     PlanBatchIngredient,
     PlanCookBatch,
+    PlanFinishTask,
     PlanMeal,
+    PlanMealComponent,
 )
-from app.db.models.recipe import Recipe, RecipeFamily, RecipeIngredient, RecipeStep, RecipeVersion
+from app.db.models.recipe import (
+    AssemblyComponent,
+    Recipe,
+    RecipeFamily,
+    RecipeIngredient,
+    RecipeStep,
+    RecipeVersion,
+)
 from app.db.models.store import PriceObservation, Product, Store
 from app.db.models.user import AppUser, IngredientPreference, UserSettingsRow
 
 __all__ = [
     "AppUser",
+    "AssemblyComponent",
     "CookSearch",
     "FeedbackEvent",
     "GenerationRun",
@@ -46,7 +56,9 @@ __all__ = [
     "PlanBatchIngredient",
     "PlanCandidate",
     "PlanCookBatch",
+    "PlanFinishTask",
     "PlanMeal",
+    "PlanMealComponent",
     "PriceObservation",
     "Product",
     "Recipe",

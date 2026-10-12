@@ -1,0 +1,128 @@
+{
+ "family": "Bone-in chicken",
+ "title": "Roasted root vegetables",
+ "description": "Carrots, potatoes and onions roasted with thyme until browned and tender.",
+ "meal_slots": [
+  "lunch",
+  "dinner"
+ ],
+ "mood": "simple",
+ "cuisine": "European",
+ "flavor_tags": [],
+ "base_servings": 6,
+ "active_minutes": 16,
+ "total_minutes": 60,
+ "equipment": [
+  "oven"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Split from 8i (Whole roast chicken with root vegetables): the vegetables. Draft quantities: adjust them in the app.",
+ "split_from": "8i",
+ "label": "roasted root vegetables",
+ "pairs_with": [
+  "american",
+  "mediterranean",
+  "any"
+ ],
+ "stages": [
+  {
+   "state": "cooked"
+  }
+ ],
+ "ingredients": [
+  {
+   "ingredient": "carrot",
+   "quantity": "4",
+   "unit": "count",
+   "preparation": "cut into large chunks",
+   "role": "vegetable",
+   "component": "vegetables"
+  },
+  {
+   "ingredient": "potato-russet",
+   "quantity": "4",
+   "unit": "count",
+   "preparation": "cut into large chunks",
+   "role": "carb",
+   "component": "vegetables"
+  },
+  {
+   "ingredient": "onion-yellow",
+   "quantity": "2",
+   "unit": "count",
+   "preparation": "cut into wedges",
+   "role": "vegetable",
+   "component": "vegetables"
+  },
+  {
+   "ingredient": "olive-oil",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "fat",
+   "component": "vegetables"
+  },
+  {
+   "ingredient": "thyme-dried",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "vegetables"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "vegetables"
+  },
+  {
+   "ingredient": "black-pepper",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "vegetables"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Heat the oven to 425F. Cut the carrots and potatoes into large chunks and the onions into wedges.",
+   "component": "vegetables",
+   "hands_on_minutes": 10,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "oven",
+   "text": "Toss the vegetables with the oil, thyme, salt and pepper and roast on a large sheet pan at 425F for 40 to 45 minutes, turning once, until browned and tender.",
+   "duration_minutes": 43,
+   "appliance_temp_f": 425,
+   "component": "vegetables",
+   "equipment": "oven",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 40,
+   "stage": 1
+  },
+  {
+   "section": "portioning",
+   "text": "Divide the vegetables among 6 containers.",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "storage",
+   "text": "Cool the vegetables, then refrigerate.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat the vegetables covered, until hot all the way through.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0,
+   "stage": 1
+  }
+ ]
+}

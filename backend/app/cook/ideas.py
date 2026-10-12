@@ -28,7 +28,7 @@ from app.cook.answers import MealNowQuery
 from app.cook.pool import Pool, store_ids
 from app.db.models import PriceObservation, Product, Recipe, RecipeIngredient, RecipeVersion
 from app.domain.cook_time import MOOD_MAX_ACTIVE_MINUTES
-from app.domain.enums import Equipment
+from app.domain.enums import Equipment, RecipeKind
 from app.domain.exclusions import ExclusionStatus
 from app.llm.client import LLMClient
 from app.llm.errors import (
@@ -129,7 +129,11 @@ def common_ingredients(
         select(RecipeIngredient.ingredient_id, func.count())
         .join(RecipeVersion, RecipeVersion.id == RecipeIngredient.recipe_version_id)
         .join(Recipe, Recipe.default_version_id == RecipeVersion.id)
-        .where(Recipe.user_id == user_id, Recipe.archived_at.is_(None))
+        .where(
+            Recipe.user_id == user_id,
+            Recipe.archived_at.is_(None),
+            RecipeVersion.kind == RecipeKind.DISH.value,
+        )
         .group_by(RecipeIngredient.ingredient_id)
     ).tuples()
     ranked = sorted(

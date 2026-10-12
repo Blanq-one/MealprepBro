@@ -11,6 +11,7 @@ from app.cook import answers as answers_mod
 from app.cook.cards import badges, coverage_lines, numbers, portions_display
 from app.cook.pool import load_pool
 from app.db.models import AppUser, Recipe, RecipeFavorite, RecipeSaved, RecipeVersion
+from app.domain.enums import RecipeKind
 from app.schemas.cook import CookAnswers
 from app.schemas.recipes import SavedRecipeOut
 from app.services import favorites
@@ -33,7 +34,12 @@ def saved_rows(
             select(table.created_at, Recipe, RecipeVersion)
             .join(Recipe, Recipe.id == table.recipe_id)
             .join(RecipeVersion, RecipeVersion.id == Recipe.default_version_id)
-            .where(table.user_id == user_id, Recipe.archived_at.is_(None))
+            # dishes: a saved prep item or assembly (step 2b.10) gets its own card with smart prep's screens
+            .where(
+                table.user_id == user_id,
+                Recipe.archived_at.is_(None),
+                RecipeVersion.kind == RecipeKind.DISH.value,
+            )
             .order_by(table.created_at.desc(), Recipe.id.desc())
         ).tuples()
     ]

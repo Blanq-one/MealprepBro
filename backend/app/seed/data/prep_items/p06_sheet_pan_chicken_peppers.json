@@ -1,0 +1,161 @@
+{
+ "family": "Chicken over rice",
+ "title": "Sheet-pan chicken and peppers",
+ "description": "Spiced chicken thighs roasted with peppers and red onion on one pan.",
+ "meal_slots": [
+  "lunch",
+  "dinner"
+ ],
+ "mood": "medium",
+ "cuisine": "Mediterranean",
+ "flavor_tags": [],
+ "base_servings": 4,
+ "active_minutes": 18,
+ "total_minutes": 45,
+ "equipment": [
+  "oven"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Split from 1c (Sheet-pan chicken and peppers over rice): the chicken, peppers and onion. Draft quantities: adjust them in the app.",
+ "split_from": "1c",
+ "label": "roasted chicken and peppers",
+ "pairs_with": [
+  "mexican",
+  "mediterranean",
+  "any"
+ ],
+ "stages": [
+  {
+   "state": "marinated"
+  },
+  {
+   "state": "cooked"
+  }
+ ],
+ "ingredients": [
+  {
+   "ingredient": "chicken-thigh-boneless-skinless",
+   "quantity": "680",
+   "unit": "g",
+   "preparation": "cut into 1½-inch pieces",
+   "role": "protein",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "bell-pepper",
+   "quantity": "2",
+   "unit": "count",
+   "preparation": "sliced into strips",
+   "role": "vegetable",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "onion-red",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "cut into wedges",
+   "role": "vegetable",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "olive-oil",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "fat",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "paprika",
+   "quantity": "2",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "cumin-ground",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "garlic-powder",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "oregano",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "black-pepper",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "chicken"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Cut the chicken into 1½-inch pieces, slice the peppers into strips and cut the onion into wedges.",
+   "component": "chicken",
+   "hands_on_minutes": 10,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "prep",
+   "text": "Toss the chicken, peppers and onion with the oil, paprika, cumin, garlic powder, oregano, salt and pepper, and spread them on a sheet pan.",
+   "component": "chicken",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "oven",
+   "text": "Heat the oven to 425°F. Roast the chicken and vegetables on a large sheet pan at 425°F for about 25 minutes, stirring once, until the chicken is cooked through and the peppers are charred at the edges.",
+   "duration_minutes": 25,
+   "appliance_temp_f": 425,
+   "doneness_check_for": "chicken-thigh-boneless-skinless",
+   "component": "chicken",
+   "equipment": "oven",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 24,
+   "stage": 2
+  },
+  {
+   "section": "portioning",
+   "text": "Divide the chicken and vegetables among 4 containers.",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0,
+   "stage": 2
+  },
+  {
+   "section": "storage",
+   "text": "Cool, then refrigerate in the containers.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0,
+   "stage": 2
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat covered, stirring halfway, until hot all the way through.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0,
+   "stage": 2
+  }
+ ]
+}

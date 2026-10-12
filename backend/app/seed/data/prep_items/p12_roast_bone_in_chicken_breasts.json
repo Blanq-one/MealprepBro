@@ -1,0 +1,136 @@
+{
+ "family": "Bone-in chicken",
+ "title": "Roast bone-in chicken breasts",
+ "description": "Bone-in chicken breasts rubbed with lemon, garlic and oregano, roasted until golden.",
+ "meal_slots": [
+  "dinner",
+  "lunch"
+ ],
+ "mood": "medium",
+ "cuisine": "Mediterranean",
+ "flavor_tags": [],
+ "base_servings": 4,
+ "active_minutes": 14,
+ "total_minutes": 55,
+ "equipment": [
+  "oven"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Split from 8l (Roast bone-in chicken breasts with quinoa and asparagus): the chicken. Draft quantities: adjust them in the app.",
+ "split_from": "8l",
+ "label": "roast chicken breast",
+ "pairs_with": [
+  "mediterranean",
+  "american"
+ ],
+ "stages": [
+  {
+   "state": "marinated"
+  },
+  {
+   "state": "cooked"
+  }
+ ],
+ "ingredients": [
+  {
+   "ingredient": "chicken-breast-bone-in-skin-on",
+   "quantity": "1200",
+   "unit": "g",
+   "role": "protein",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "olive-oil",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "fat",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "lemon-juice",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "sauce",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "garlic",
+   "quantity": "4",
+   "unit": "clove",
+   "preparation": "minced",
+   "role": "seasoning",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "oregano",
+   "quantity": "2",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "paprika",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1 1/4",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "black-pepper",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "chicken"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Rub the chicken with the oil, lemon juice, garlic, oregano, paprika, salt and pepper.",
+   "component": "chicken",
+   "hands_on_minutes": 8,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "oven",
+   "text": "Roast the chicken skin side up at 400F for 35 to 40 minutes, until golden and cooked through to the bone.",
+   "duration_minutes": 40,
+   "appliance_temp_f": 400,
+   "doneness_check_for": "chicken-breast-bone-in-skin-on",
+   "component": "chicken",
+   "equipment": "oven",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 38,
+   "stage": 2
+  },
+  {
+   "section": "portioning",
+   "text": "Slice the chicken off the bone and divide it among 4 containers.",
+   "hands_on_minutes": 4,
+   "hands_off_minutes": 0,
+   "stage": 2
+  },
+  {
+   "section": "storage",
+   "text": "Cool the chicken, then refrigerate.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0,
+   "stage": 2
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat the chicken covered, until hot all the way through.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0,
+   "stage": 2
+  }
+ ]
+}

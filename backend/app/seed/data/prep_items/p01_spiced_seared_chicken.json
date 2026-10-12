@@ -1,0 +1,175 @@
+{
+ "family": "Chicken over rice",
+ "title": "Spiced seared chicken thighs",
+ "description": "Chicken thighs marinated in lemon, garlic and warm spices, then seared until browned.",
+ "meal_slots": [
+  "lunch",
+  "dinner"
+ ],
+ "mood": "medium",
+ "cuisine": "Mediterranean",
+ "flavor_tags": [],
+ "base_servings": 4,
+ "active_minutes": 21,
+ "total_minutes": 45,
+ "equipment": [
+  "stovetop"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Split from 1a (Chicken over rice with garlic yogurt sauce): the chicken. Draft quantities: adjust them in the app.",
+ "split_from": "1a",
+ "label": "spiced chicken",
+ "pairs_with": [
+  "mediterranean",
+  "any"
+ ],
+ "stages": [
+  {
+   "state": "marinated"
+  },
+  {
+   "state": "cooked"
+  }
+ ],
+ "ingredients": [
+  {
+   "ingredient": "chicken-thigh-boneless-skinless",
+   "quantity": "680",
+   "unit": "g",
+   "preparation": "cut into large pieces",
+   "role": "protein",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "olive-oil",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "fat",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "lemon-juice",
+   "quantity": "1 1/2",
+   "unit": "tbsp",
+   "role": "sauce",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "garlic",
+   "quantity": "3",
+   "unit": "clove",
+   "preparation": "minced",
+   "role": "seasoning",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "cumin-ground",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "coriander-ground",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "paprika",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "turmeric",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "oregano",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "black-pepper",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "chicken"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Cut the chicken thighs into large pieces. Mince the garlic.",
+   "component": "chicken",
+   "hands_on_minutes": 6,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "marinate",
+   "text": "Toss the chicken with the olive oil, lemon juice, garlic, cumin, coriander, paprika, turmeric, oregano, salt and pepper. Marinate at least 15 minutes, or overnight in the fridge.",
+   "duration_minutes": 15,
+   "component": "chicken",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 15,
+   "stage": 1
+  },
+  {
+   "section": "stovetop",
+   "text": "Heat a large skillet over medium-high heat. Sear the chicken in batches, 5 to 6 minutes per side, until browned and cooked through.",
+   "duration_minutes": 12,
+   "doneness_check_for": "chicken-thigh-boneless-skinless",
+   "component": "chicken",
+   "equipment": "stovetop",
+   "hands_on_minutes": 8,
+   "hands_off_minutes": 4,
+   "stage": 2
+  },
+  {
+   "section": "stovetop",
+   "text": "Rest the chicken 5 minutes, then slice it.",
+   "duration_minutes": 5,
+   "component": "chicken",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 5,
+   "stage": 2
+  },
+  {
+   "section": "portioning",
+   "text": "Divide the chicken among 4 containers.",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 0,
+   "stage": 2
+  },
+  {
+   "section": "storage",
+   "text": "Cool the chicken, then refrigerate.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0,
+   "stage": 2
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat the chicken covered, stirring halfway.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0,
+   "stage": 2
+  }
+ ]
+}

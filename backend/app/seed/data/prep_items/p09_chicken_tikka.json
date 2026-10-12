@@ -1,0 +1,167 @@
+{
+ "family": "Chicken rice bowls",
+ "title": "Chicken tikka",
+ "description": "Chicken thighs marinated in spiced yogurt and lemon, air fried until charred at the edges.",
+ "meal_slots": [
+  "lunch",
+  "dinner"
+ ],
+ "mood": "medium",
+ "cuisine": "Indian",
+ "flavor_tags": [],
+ "base_servings": 4,
+ "active_minutes": 15,
+ "total_minutes": 60,
+ "equipment": [
+  "air_fryer"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Split from 7a (Chicken tikka rice bowls): the chicken. Draft quantities: adjust them in the app.",
+ "split_from": "7a",
+ "label": "chicken tikka",
+ "pairs_with": [
+  "indian"
+ ],
+ "stages": [
+  {
+   "state": "marinated"
+  },
+  {
+   "state": "cooked"
+  }
+ ],
+ "ingredients": [
+  {
+   "ingredient": "chicken-thigh-boneless-skinless",
+   "quantity": "680",
+   "unit": "g",
+   "preparation": "cut into large chunks",
+   "role": "protein",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "greek-yogurt-nonfat",
+   "quantity": "150",
+   "unit": "g",
+   "role": "sauce",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "lemon-juice",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "sauce",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "garlic",
+   "quantity": "4",
+   "unit": "clove",
+   "preparation": "grated",
+   "role": "seasoning",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "ginger",
+   "quantity": "15",
+   "unit": "g",
+   "preparation": "grated",
+   "role": "seasoning",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "garam-masala",
+   "quantity": "2",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "paprika",
+   "quantity": "2",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "cumin-ground",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "chili-powder",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "chicken"
+  },
+  {
+   "ingredient": "vegetable-oil",
+   "quantity": "1",
+   "unit": "tbsp",
+   "role": "fat",
+   "component": "chicken"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Cut the chicken into large chunks. Grate the garlic and ginger.",
+   "component": "chicken",
+   "hands_on_minutes": 8,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "marinate",
+   "text": "Mix the yogurt, lemon juice, garlic, ginger, spices, oil and salt; coat the chicken well. Marinate at least 30 minutes, or overnight in the fridge.",
+   "duration_minutes": 30,
+   "component": "chicken",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 30,
+   "stage": 1
+  },
+  {
+   "section": "air_fryer",
+   "text": "Air fry the chicken in one layer at 400F for 14 to 16 minutes, turning once, until charred at the edges and cooked through.",
+   "duration_minutes": 16,
+   "appliance_temp_f": 400,
+   "doneness_check_for": "chicken-thigh-boneless-skinless",
+   "component": "chicken",
+   "equipment": "air_fryer",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 14,
+   "stage": 2
+  },
+  {
+   "section": "portioning",
+   "text": "Divide the chicken among 4 containers.",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 0,
+   "stage": 2
+  },
+  {
+   "section": "storage",
+   "text": "Cool the chicken, then refrigerate.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0,
+   "stage": 2
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat the chicken covered, stirring halfway.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0,
+   "stage": 2
+  }
+ ]
+}

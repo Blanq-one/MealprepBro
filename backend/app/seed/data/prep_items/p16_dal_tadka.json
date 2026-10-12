@@ -1,0 +1,178 @@
+{
+ "family": "Dal and rice",
+ "title": "Dal tadka",
+ "description": "Red lentils simmered with turmeric and tomato, finished with a cumin, garlic and ginger tadka.",
+ "meal_slots": [
+  "lunch",
+  "dinner"
+ ],
+ "mood": "simple",
+ "cuisine": "Indian",
+ "flavor_tags": [],
+ "base_servings": 4,
+ "active_minutes": 20,
+ "total_minutes": 35,
+ "equipment": [
+  "stovetop"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Split from 7f (Dal tadka with rice): the dal and tadka, without the rice. Draft quantities: adjust them in the app.",
+ "split_from": "7f",
+ "label": "dal",
+ "pairs_with": [
+  "indian"
+ ],
+ "stages": [
+  {
+   "state": "cooked"
+  }
+ ],
+ "ingredients": [
+  {
+   "ingredient": "lentils-red",
+   "quantity": "250",
+   "unit": "g",
+   "preparation": "rinsed",
+   "role": "protein",
+   "component": "dal"
+  },
+  {
+   "ingredient": "water",
+   "quantity": "1000",
+   "unit": "ml",
+   "role": "other",
+   "component": "dal"
+  },
+  {
+   "ingredient": "turmeric",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "dal"
+  },
+  {
+   "ingredient": "tomato",
+   "quantity": "2",
+   "unit": "count",
+   "preparation": "chopped",
+   "role": "vegetable",
+   "component": "dal"
+  },
+  {
+   "ingredient": "onion-yellow",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "finely chopped",
+   "role": "vegetable",
+   "component": "tadka"
+  },
+  {
+   "ingredient": "garlic",
+   "quantity": "4",
+   "unit": "clove",
+   "preparation": "sliced",
+   "role": "seasoning",
+   "component": "tadka"
+  },
+  {
+   "ingredient": "ginger",
+   "quantity": "10",
+   "unit": "g",
+   "preparation": "grated",
+   "role": "seasoning",
+   "component": "tadka"
+  },
+  {
+   "ingredient": "ghee",
+   "quantity": "2",
+   "unit": "tbsp",
+   "role": "fat",
+   "component": "tadka"
+  },
+  {
+   "ingredient": "cumin-seeds",
+   "quantity": "1",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "tadka"
+  },
+  {
+   "ingredient": "chili-powder",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "tadka"
+  },
+  {
+   "ingredient": "garam-masala",
+   "quantity": "1/2",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1 1/4",
+   "unit": "tsp",
+   "role": "seasoning"
+  },
+  {
+   "ingredient": "cilantro",
+   "quantity": "10",
+   "unit": "g",
+   "preparation": "chopped",
+   "role": "garnish",
+   "optional": true
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Rinse the lentils. Chop the onion and tomatoes, slice the garlic and grate the ginger.",
+   "component": "dal",
+   "hands_on_minutes": 6,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "stovetop",
+   "text": "Simmer the lentils with the water, turmeric and tomatoes, partly covered, stirring now and then, until soft and creamy, about 25 minutes. Stir in the salt.",
+   "duration_minutes": 25,
+   "component": "dal",
+   "equipment": "stovetop",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 22,
+   "stage": 1
+  },
+  {
+   "section": "stovetop",
+   "text": "For the tadka, heat the ghee in a small pan. Add the cumin seeds until they crackle, then the onion until golden, then the garlic, ginger and chili powder for 1 minute. Pour it over the dal with the garam masala.",
+   "duration_minutes": 10,
+   "component": "tadka",
+   "equipment": "stovetop",
+   "hands_on_minutes": 9,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "portioning",
+   "text": "Divide the dal among 4 containers; top with cilantro.",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "storage",
+   "text": "Cool the dal, then refrigerate.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat the dal covered, stirring halfway, with a splash of water if it has thickened.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0,
+   "stage": 1
+  }
+ ]
+}

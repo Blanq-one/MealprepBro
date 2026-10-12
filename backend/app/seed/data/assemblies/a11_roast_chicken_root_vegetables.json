@@ -1,0 +1,25 @@
+{
+ "family": "Bone-in chicken",
+ "meal_slots": [
+  "dinner",
+  "lunch"
+ ],
+ "items": [
+  {
+   "item": "Roast bone-in chicken breasts",
+   "portions": "1",
+   "min_portions": "1",
+   "max_portions": "2",
+   "step": "1"
+  },
+  {
+   "item": "Roasted root vegetables",
+   "portions": "1",
+   "min_portions": "0.5",
+   "max_portions": "1.5",
+   "step": "0.5"
+  }
+ ],
+ "add_ons": [],
+ "draft_note": "Draft assembly: adjust its portions in the app."
+}

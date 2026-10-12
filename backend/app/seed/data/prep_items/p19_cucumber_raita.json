@@ -1,0 +1,92 @@
+{
+ "family": "Bone-in chicken",
+ "title": "Cucumber raita",
+ "description": "Yogurt with grated cucumber, mint and a pinch of cumin.",
+ "meal_slots": [
+  "lunch",
+  "dinner"
+ ],
+ "mood": "simple",
+ "cuisine": "Indian",
+ "flavor_tags": [],
+ "base_servings": 4,
+ "active_minutes": 6,
+ "total_minutes": 10,
+ "equipment": [],
+ "freezer_friendly": false,
+ "draft_note": "Split from 8d (Tandoori-style drumsticks with rice and raita): the raita. Draft quantities: adjust them in the app.",
+ "split_from": "8d",
+ "label": "raita",
+ "pairs_with": [
+  "indian"
+ ],
+ "stages": [
+  {
+   "state": "raw"
+  }
+ ],
+ "ingredients": [
+  {
+   "ingredient": "greek-yogurt-nonfat",
+   "quantity": "200",
+   "unit": "g",
+   "role": "sauce",
+   "component": "raita"
+  },
+  {
+   "ingredient": "cucumber",
+   "quantity": "1",
+   "unit": "count",
+   "preparation": "grated and squeezed",
+   "role": "vegetable",
+   "component": "raita"
+  },
+  {
+   "ingredient": "mint",
+   "quantity": "5",
+   "unit": "g",
+   "preparation": "chopped",
+   "role": "garnish",
+   "component": "raita"
+  },
+  {
+   "ingredient": "cumin-ground",
+   "quantity": "1/4",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "raita"
+  },
+  {
+   "ingredient": "salt",
+   "quantity": "1/4",
+   "unit": "tsp",
+   "role": "seasoning",
+   "component": "raita"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Grate the cucumber and squeeze out the liquid. Chop the mint.",
+   "component": "raita",
+   "hands_on_minutes": 3,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "no_cook",
+   "text": "Stir the yogurt with the cucumber, mint, cumin and salt.",
+   "component": "raita",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "portioning",
+   "text": "Divide the raita among 4 small containers.",
+   "hands_on_minutes": 1,
+   "hands_off_minutes": 0,
+   "stage": 1
+  }
+ ]
+}

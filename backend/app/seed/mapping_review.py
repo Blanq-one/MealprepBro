@@ -14,8 +14,8 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db.models import Ingredient, IngredientAlias, Product, Recipe, RecipeIngredient
-from app.domain.enums import NutritionSource, RecipeOrigin
+from app.db.models import Ingredient, IngredientAlias, Product, Recipe, RecipeIngredient, RecipeVersion
+from app.domain.enums import NutritionSource, RecipeKind, RecipeOrigin
 from app.domain.food_state import FoodState, line_state_error
 from app.domain.nutrition import CORE_CODES
 from app.domain.units import grams_of
@@ -89,12 +89,18 @@ class MappingRow:
 
 
 def seed_calories(session: Session, data: dict[int, IngredientData]) -> dict[int, Decimal]:
-    """kcal each ingredient contributes across every seed recipe (base servings, optional lines excluded)."""
+    """kcal each ingredient contributes across every seed dish (base servings, optional lines excluded; the
+    prep items split from them would count their lines twice)."""
     totals: dict[int, Decimal] = defaultdict(Decimal)
     rows = session.execute(
         select(RecipeIngredient.ingredient_id, RecipeIngredient.quantity, RecipeIngredient.unit)
         .join(Recipe, Recipe.default_version_id == RecipeIngredient.recipe_version_id)
-        .where(Recipe.origin == RecipeOrigin.SEED.value, RecipeIngredient.is_optional.is_(False))
+        .join(RecipeVersion, RecipeVersion.id == RecipeIngredient.recipe_version_id)
+        .where(
+            Recipe.origin == RecipeOrigin.SEED.value,
+            RecipeIngredient.is_optional.is_(False),
+            RecipeVersion.kind == RecipeKind.DISH.value,
+        )
     )
     for ingredient_id, quantity, unit in rows:
         d = data[ingredient_id]

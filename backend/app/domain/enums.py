@@ -145,3 +145,36 @@ class PriceBasis(StrEnum):
     PER_PACKAGE = "per_package"
     PER_WEIGHT = "per_weight"
     PER_COUNT = "per_count"
+
+
+# ---- Phase 2b, step 2b.10: smart prep (FLOW_SPEC §19.2-§19.3) ----
+class RecipeKind(StrEnum):
+    DISH = "dish"  # a whole dish, as every recipe before 2b.10
+    PREP_ITEM = "prep_item"  # made in bulk and stored, in stages
+    ASSEMBLY = "assembly"  # a meal built from prep items plus fresh add-ons
+
+
+class PrepState(StrEnum):
+    """What a prep item is after a stage, in the order prep goes."""
+
+    RAW = "raw"
+    MARINATED = "marinated"
+    PARTLY_COOKED = "partly_cooked"
+    COOKED = "cooked"
+
+
+class PairStyle(StrEnum):
+    """Style tags for suggesting combinations of prep items."""
+
+    INDIAN = "indian"
+    MEXICAN = "mexican"
+    MEDITERRANEAN = "mediterranean"
+    EAST_ASIAN = "east_asian"
+    AMERICAN = "american"
+    ANY = "any"
+
+
+class FinishTaskKind(StrEnum):
+    STAGE = "stage"  # the stages left (roast the marinated chicken)
+    REHEAT = "reheat"
+    ASSEMBLE = "assemble"

@@ -12,6 +12,7 @@ from sqlalchemy import (
     Identity,
     Index,
     Integer,
+    Numeric,
     SmallInteger,
     Text,
     UniqueConstraint,
@@ -99,6 +100,36 @@ class RecipeVersion(Base):
     # hands-off minutes, appliance temperature); its active and total minutes are computed from it. NULL = not
     # an idea, or an idea saved before 2b.9
     tasks: Mapped[list[dict[str, Any]] | None] = mapped_column(JSONB)
+    # Phase 2b (0009, step 2b.10, FLOW_SPEC §19.3): dish | prep_item | assembly. A prep item's stages
+    # ([{"n": 1, "state": "marinated"}, {"n": 2, "state": "cooked"}]), the styles it pairs with and its short
+    # label for meal names ("roasted chicken"); NULL for dishes and assemblies
+    kind: Mapped[str] = mapped_column(Text, server_default="dish")
+    stages: Mapped[list[dict[str, Any]] | None] = mapped_column(JSONB)
+    pairs_with: Mapped[list[str] | None] = mapped_column(ARRAY(Text))
+    label: Mapped[str | None] = mapped_column(Text)
+
+
+class AssemblyComponent(Base):
+    """One prep item (or dish) of an assembly, by lineage: a plan uses the recipe's default version when it's
+    built, so your edited curry is used next time. Portions are per person; the assembly's add-ons are its own
+    recipe_ingredient rows, per portion (base_servings 1). Step 2b.10, FLOW_SPEC §19.3."""
+
+    __tablename__ = "assembly_component"
+    __table_args__ = (
+        CheckConstraint("min_portions > 0 AND min_portions <= portions", name="min_portions"),
+        CheckConstraint("portions <= max_portions", name="max_portions"),
+        CheckConstraint("step IN (0.5, 1)", name="step"),
+    )
+
+    assembly_version_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("recipe_version.id", ondelete="CASCADE"), primary_key=True
+    )
+    position: Mapped[int] = mapped_column(SmallInteger, primary_key=True)
+    component_recipe_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("recipe.id"))
+    portions: Mapped[Decimal] = mapped_column(Numeric(3, 1))
+    min_portions: Mapped[Decimal] = mapped_column(Numeric(3, 1))
+    max_portions: Mapped[Decimal] = mapped_column(Numeric(3, 1))
+    step: Mapped[Decimal] = mapped_column(Numeric(2, 1))
 
 
 class RecipeIngredient(Base):
@@ -155,3 +186,5 @@ class RecipeStep(Base):
     equipment: Mapped[str | None] = mapped_column(Text)
     hands_on_minutes: Mapped[int | None] = mapped_column(SmallInteger)
     hands_off_minutes: Mapped[int | None] = mapped_column(SmallInteger)
+    # Phase 2b (0009, step 2b.10): a prep item's stage this step belongs to (1 = the first); NULL for dishes
+    stage: Mapped[int | None] = mapped_column(SmallInteger)

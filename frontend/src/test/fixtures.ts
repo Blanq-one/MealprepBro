@@ -437,6 +437,9 @@ export function recipe(overrides: Partial<RecipeVersion> = {}): RecipeVersion {
     is_saved: false,
     steps_ready: true,
     search_context: null,
+    kind: "dish",
+    prep: null,
+    assembly: null,
     ...overrides,
   };
 }

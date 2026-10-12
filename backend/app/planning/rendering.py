@@ -56,6 +56,7 @@ class StepInput:
     duration_minutes: int | None = None
     appliance_temp_f: int | None = None
     doneness_check_ingredient_id: int | None = None
+    stage: int | None = None  # a prep item's stage (step 2b.10)
 
 
 @dataclass(frozen=True)
@@ -85,6 +86,9 @@ class RenderInput:
     per_portion: Mapping[str, Decimal]  # computed by code from the (scaled, rounded) lines
     daily_values: Mapping[str, Decimal]  # nutrient code -> FDA daily value
     heme_iron_mg: Decimal | None = None
+    # a prep item's storage after its last stage, from domain/prep_storage.py (step 2b.10): its own window and
+    # freezer rule in place of the cooked-leftover text
+    storage_text: str | None = None
 
 
 @dataclass(frozen=True)
@@ -95,6 +99,7 @@ class RenderedStep:
     appliance_temp_f: int | None = None
     safety_note: str | None = None
     added_by_app: bool = False
+    stage: int | None = None
 
 
 @dataclass(frozen=True)
@@ -147,7 +152,9 @@ def render(data: RenderInput) -> RenderedRecipe:
             note = _doneness_for(by_id[step.doneness_check_ingredient_id])
             has_doneness = has_doneness or note is not None
         steps.append(
-            RenderedStep(step.section, step.text, step.duration_minutes, step.appliance_temp_f, note)
+            RenderedStep(
+                step.section, step.text, step.duration_minutes, step.appliance_temp_f, note, stage=step.stage
+            )
         )
     requirement = doneness_requirement(_safety_lines(data.lines))
     if requirement is not None and not has_doneness:
@@ -166,24 +173,31 @@ def render(data: RenderInput) -> RenderedRecipe:
                 f"Check the {strictest.name} for doneness before portioning.",
                 safety_note=doneness_text(strictest.name, requirement),
                 added_by_app=True,
+                stage=steps[last_cooking].stage if steps else None,
             ),
         )
-    storage = fridge_storage_text(data.leftover_fridge_days)
-    if data.freezer_friendly:
+    storage = data.storage_text or fridge_storage_text(data.leftover_fridge_days)
+    if data.freezer_friendly and data.storage_text is None:
         storage += " " + freezer_storage_text()
+    last_stage = max((s.stage for s in steps if s.stage is not None), default=None)
     if not any(s.section == InstructionSection.STORAGE for s in steps):
-        steps.append(RenderedStep(InstructionSection.STORAGE.value, storage, added_by_app=True))
+        steps.append(
+            RenderedStep(InstructionSection.STORAGE.value, storage, added_by_app=True, stage=last_stage)
+        )
     else:
         last = max(i for i, s in enumerate(steps) if s.section == InstructionSection.STORAGE)
-        steps.insert(last + 1, RenderedStep(InstructionSection.STORAGE.value, storage, added_by_app=True))
-    reheating = [i for i, s in enumerate(steps) if s.section == InstructionSection.REHEATING]
-    if reheating:
         steps.insert(
-            reheating[-1] + 1,
-            RenderedStep(InstructionSection.REHEATING.value, reheat_text(), added_by_app=True),
+            last + 1,
+            RenderedStep(InstructionSection.STORAGE.value, storage, added_by_app=True, stage=last_stage),
         )
+    reheating = [i for i, s in enumerate(steps) if s.section == InstructionSection.REHEATING]
+    reheat = RenderedStep(
+        InstructionSection.REHEATING.value, reheat_text(), added_by_app=True, stage=last_stage
+    )
+    if reheating:
+        steps.insert(reheating[-1] + 1, reheat)
     elif any(s.section in COOKING_SECTIONS for s in steps):
-        steps.append(RenderedStep(InstructionSection.REHEATING.value, reheat_text(), added_by_app=True))
+        steps.append(reheat)
     steps.sort(key=lambda s: _section_rank(s.section))
     grams = sum((ln.grams for ln in data.lines if not ln.optional), Decimal(0))
     per_container = (grams / Decimal(data.portions) / 10).quantize(Decimal(1), ROUND_HALF_UP) * 10

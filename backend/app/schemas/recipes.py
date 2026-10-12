@@ -1,6 +1,7 @@
 """API models for recipes and rendered recipe versions (Phase 1)."""
 
 from datetime import datetime
+from decimal import Decimal
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -26,6 +27,59 @@ class RenderedStepOut(BaseModel):
     appliance_temp_f: int | None
     safety_note: str | None
     added_by_app: bool
+    stage: int | None = None  # a prep item's stage (step 2b.10); None for a dish
+
+
+class StorageOut(BaseModel):
+    """How a prep item keeps after a stage (code, domain/prep_storage.py; FLOW_SPEC §19.4)."""
+
+    stored: bool  # prep can stop here
+    made_on_the_day: bool  # no storage row: made fresh on the eating day
+    fridge_days: int
+    freezer: bool
+    note: str  # "Keeps 3 days in the fridge (your setting, FoodSafety.gov ...: 3 to 4 days)."
+    sources: list[str]  # "FoodSafety.gov Cold Food Storage Chart: Fresh poultry, ... (1 to 2 days; 9 months)"
+
+
+class PrepStageOut(BaseModel):
+    n: int
+    state: str  # raw | marinated | partly_cooked | cooked
+    state_display: str  # "Marinated"
+    storage: StorageOut
+
+
+class PrepItemOut(BaseModel):
+    """A prep item's page (step 2b.10, FLOW_SPEC §19.10): its stages and how it keeps after each."""
+
+    label: str  # "spiced chicken", for meal names
+    brings: str  # protein | base | vegetables | sauce | dish
+    pairs_with: list[str]
+    stages: list[PrepStageOut]
+
+
+class AssemblyItemOut(BaseModel):
+    recipe_id: int
+    version_id: int  # its default version: each item opens its own page
+    kind: str
+    title: str
+    label: str
+    brings: str
+    portions: Decimal  # per person
+    portions_display: str  # "1 portion", "½ portion"
+    min_portions: Decimal
+    max_portions: Decimal
+    step: Decimal
+    kcal: int  # for these portions
+    protein_g: Decimal
+
+
+class AssemblyOut(BaseModel):
+    """An assembly's page (step 2b.10, FLOW_SPEC §19.10): its items, add-ons and eating-day instruction; the
+    page's numbers (per_portion, costs) are its items' portions plus its add-ons, by code."""
+
+    name: str
+    items: list[AssemblyItemOut]
+    instruction: str
 
 
 class RecipeVersionOut(BaseModel):
@@ -69,6 +123,11 @@ class RecipeVersionOut(BaseModel):
     steps_ready: bool = True  # False for an idea whose steps are written on first open (step 2b.3b)
     # with ?search=<id>: that search's coverage and substitute lines for this recipe (step 2b.3a)
     search_context: SearchContextOut | None = None
+    # step 2b.10: dish | prep_item | assembly; a prep item's stages, an assembly's items (its lines are its
+    # add-ons, per portion)
+    kind: str = "dish"
+    prep: PrepItemOut | None = None
+    assembly: AssemblyOut | None = None
 
 
 class RecipeVersionSummaryOut(BaseModel):

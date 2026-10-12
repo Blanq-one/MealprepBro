@@ -1,0 +1,89 @@
+{
+ "family": "Chicken over rice",
+ "title": "Broth rice",
+ "description": "Long-grain rice simmered in chicken broth, fluffy and savory.",
+ "meal_slots": [
+  "lunch",
+  "dinner"
+ ],
+ "mood": "simple",
+ "cuisine": "Mediterranean",
+ "flavor_tags": [],
+ "base_servings": 4,
+ "active_minutes": 6,
+ "total_minutes": 30,
+ "equipment": [
+  "stovetop"
+ ],
+ "freezer_friendly": true,
+ "draft_note": "Split from 1a (Chicken over rice with garlic yogurt sauce): the rice. Draft quantities: adjust them in the app.",
+ "split_from": "1a",
+ "label": "broth rice",
+ "pairs_with": [
+  "mediterranean",
+  "any"
+ ],
+ "stages": [
+  {
+   "state": "cooked"
+  }
+ ],
+ "ingredients": [
+  {
+   "ingredient": "rice-long-grain-white",
+   "quantity": "300",
+   "unit": "g",
+   "preparation": "rinsed",
+   "role": "carb",
+   "component": "rice"
+  },
+  {
+   "ingredient": "chicken-broth-low-sodium",
+   "quantity": "540",
+   "unit": "ml",
+   "role": "other",
+   "component": "rice"
+  }
+ ],
+ "steps": [
+  {
+   "section": "prep",
+   "text": "Rinse the rice until the water runs clear.",
+   "component": "rice",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "rice",
+   "text": "Bring the broth to a boil, add the rinsed rice, cover and simmer on low 15 minutes. Rest off the heat 10 minutes, then fluff with a fork.",
+   "duration_minutes": 25,
+   "component": "rice",
+   "equipment": "stovetop",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 23,
+   "stage": 1
+  },
+  {
+   "section": "portioning",
+   "text": "Fluff the rice and divide it among 4 containers.",
+   "hands_on_minutes": 2,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "storage",
+   "text": "Spread the rice to cool quickly, then refrigerate.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0,
+   "stage": 1
+  },
+  {
+   "section": "reheating",
+   "text": "Reheat the rice covered with a splash of water, stirring halfway.",
+   "hands_on_minutes": 0,
+   "hands_off_minutes": 0,
+   "stage": 1
+  }
+ ]
+}
