@@ -135,9 +135,9 @@ def test_a_tight_budget_with_no_time_left_falls_back_to_the_cheapest_plan(monkey
     real = solve_module.run_solver
     calls = []
 
-    def first_times_out(m, *args):
+    def first_times_out(m, *args, **kwargs):
         calls.append(m)
-        return pulp.LpSolutionNoSolutionFound if len(calls) == 1 else real(m, *args)
+        return pulp.LpSolutionNoSolutionFound if len(calls) == 1 else real(m, *args, **kwargs)
 
     monkeypatch.setattr(solve_module, "run_solver", first_times_out)
     p = powder_week(budget_cents=5000)

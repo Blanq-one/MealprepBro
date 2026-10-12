@@ -2764,6 +2764,11 @@ export interface components {
             protein_g_week: string;
             /** Protein Target G Per Day */
             protein_target_g_per_day: number;
+            /**
+             * Proven Best
+             * @default true
+             */
+            proven_best: boolean;
             /** Purchase Limit Cents */
             purchase_limit_cents: number | null;
             /** Secondary Focus */

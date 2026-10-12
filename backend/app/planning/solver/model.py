@@ -58,7 +58,7 @@ from app.domain.frequency_caps import week_monday
 from app.domain.scaling import MAX_SCALE_FACTOR
 from app.domain.units import ConversionError, convert
 from app.planning.problem import CandidateRecipe, PlanningProblem, size_multiplier
-from app.planning.solver.backend import solve_milp
+from app.planning.solver.backend import SolveKind, solve_milp
 from app.planning.solver.objective import nutrient_score, weights_for
 from app.schemas.constraints import VARIETY_CAPPED_SLOTS
 
@@ -110,6 +110,12 @@ class SolvedMeal:
     slot: MealSlot
     batch_index: int
     from_freezer: bool = False
+
+
+def proven_best(solver_status: str) -> bool:
+    """A plan whose solve reached its gap. `feasible`: the best plan a solve found before its time limit;
+    `cheapest`: the budget fallback, best on cost only. (`single` plans are ranked, not solved.)"""
+    return solver_status not in ("feasible", "cheapest")
 
 
 @dataclass(frozen=True)
@@ -904,8 +910,10 @@ def build_model(
     )
 
 
-def run_solver(model: _Model, time_limit_s: int, gap_rel: float, gap_abs: float = 1.0) -> int:
-    return solve_milp(model.prob, time_limit_s=time_limit_s, gap_rel=gap_rel, gap_abs=gap_abs)
+def run_solver(
+    model: _Model, time_limit_s: float, gap_rel: float, gap_abs: float = 1.0, *, kind: SolveKind = "week"
+) -> int:
+    return solve_milp(model.prob, time_limit_s=time_limit_s, gap_rel=gap_rel, gap_abs=gap_abs, kind=kind)
 
 
 def _value(var: Any) -> float:

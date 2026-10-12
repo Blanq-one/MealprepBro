@@ -84,8 +84,9 @@ class Settings(BaseSettings):
 
     # Solver (Phase 1)
     # The gaps usually stop the solver first (deterministic); a week that hits the limit returns its best plan
-    # so far, marked "feasible" rather than "optimal". 30 s since Phase 2b (E7): the seed week needs about
-    # 20-28 s to reach its gap (D43), and the 180 s plan budget cuts it further when time runs short.
+    # so far, marked "feasible" rather than "optimal" (shown as not proven best). 30 s since Phase 2b (E7):
+    # the seed week needs about 20-28 s to reach its gap (D43), and the time guard cuts every solve to what is
+    # left of the 180 s plan budget (solver/backend.py).
     solver_time_limit_seconds: int = Field(default=30, ge=1, le=600)
     solver_gap_rel: float = Field(default=0.005, ge=0, le=0.2)
     solver_gap_abs: float = Field(default=1.0, ge=0, le=20)  # objective points (~$2 of groceries)

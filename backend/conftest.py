@@ -30,7 +30,7 @@ from app.auth.dependencies import require_session
 from app.auth.sessions import Session as SignedInSession
 from app.config import BACKEND_DIR, get_settings
 from app.db.session import get_session
-from app.llm.pacing import reset_rate_states
+from app.llm.pacing import SystemClock, reset_rate_states
 from app.main import create_app
 from app.seed.loader import seed_all
 from app.testing.databases import ensure_database, per_worker, worker_id
@@ -45,8 +45,16 @@ DB_FIXTURES = {"db", "db_engine", "seeded", "seeded_db", "client"}
 # never on the clock. A solve that still reaches this limit fails its test.
 TEST_SOLVER_TIME_LIMIT_S = 300
 _real_lp_solve = pulp.LpProblem.solve
+_real_monotonic = SystemClock.monotonic
 _solve_cache: dict[str, tuple[int, int, dict[str, float | None]]] = {}
 _solve_mode = {"cache": True, "real_limits": False}
+# For the same reason a request's time budget (the time guard) never counts the solver's own seconds in tests:
+# the system clock stands still while a MILP runs, so a slow test machine can't run a plan out of time.
+_inside_solves = {"seconds": 0.0}
+
+
+def _test_monotonic(self: SystemClock) -> float:
+    return _real_monotonic(self) - _inside_solves["seconds"]
 
 
 class SolverHitWallClockError(AssertionError):
@@ -80,7 +88,9 @@ def _deterministic_solve(self: pulp.LpProblem, solver: Any = None, **kwargs: Any
             var.varValue = values.get(var.name)
         self.status, self.sol_status = status, sol_status
         return status
+    started = _real_monotonic(SystemClock())
     status = int(_real_lp_solve(self, solver, **kwargs))
+    _inside_solves["seconds"] += _real_monotonic(SystemClock()) - started
     model = getattr(self, "solverModel", None)
     stopped = model.getModelStatus() if model is not None and hasattr(model, "getModelStatus") else None
     if stopped == highspy.HighsModelStatus.kTimeLimit:
@@ -97,17 +107,21 @@ def _deterministic_solve(self: pulp.LpProblem, solver: Any = None, **kwargs: Any
 def deterministic_solver() -> Iterator[None]:
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(pulp.LpProblem, "solve", _deterministic_solve)
+        mp.setattr(SystemClock, "monotonic", _test_monotonic)
         yield
 
 
 @pytest.fixture(autouse=True)
 def _solver_test_mode(request: pytest.FixtureRequest) -> Iterator[None]:
-    """`solve_cache_off`: always solve. `perf` (opt-in, RUN_PERF_TESTS=1): the production time limits, since
-    a performance test measures the wall clock on purpose."""
+    """`solve_cache_off`: always solve. `perf` (opt-in, RUN_PERF_TESTS=1) and `wall_clock`: the production
+    time limits and the real clock, since those tests measure the wall clock on purpose."""
     saved = dict(_solve_mode)
     _solve_mode["cache"] = "solve_cache_off" not in request.keywords
-    _solve_mode["real_limits"] = "perf" in request.keywords
-    yield
+    _solve_mode["real_limits"] = "perf" in request.keywords or "wall_clock" in request.keywords
+    with pytest.MonkeyPatch.context() as mp:
+        if _solve_mode["real_limits"]:
+            mp.setattr(SystemClock, "monotonic", _real_monotonic)
+        yield
     _solve_mode.update(saved)
 
 

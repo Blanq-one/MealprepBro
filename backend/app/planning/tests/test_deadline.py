@@ -1,20 +1,29 @@
 """A planning run finishes inside its request (Phase 2 pre-work, serverless hosting).
 
 The fake LLM client moves the fake clock forward, standing in for slow calls and rate-limit waits, so these
-tests never depend on the wall clock."""
+tests never depend on the wall clock; the time guard's tests (every solve's limit cut to what's left of the
+request) make each solve take its whole limit on the fake clock. The one exception is marked `wall_clock`: a
+real week under the production limits with a deliberately tiny budget."""
 
 import json
+import time
 from datetime import date
 
+import pulp
+import pytest
 from sqlalchemy import select
 
 from app.db.models import GenerationRun, Recipe, RecipeVersion
 from app.domain.enums import MealSlot
 from app.llm.client import LLMRequest, LLMResponse
 from app.llm.fake import FakeLLMClient, fixture_response, fixture_text, response
-from app.planning import orchestrator as orch
+from app.llm.pacing import Deadline, SystemClock
 from app.planning.orchestrator import Orchestrator
-from app.schemas.plans import DayOverride, PlanRequest
+from app.planning.post_solve import NOT_PROVEN_NOTE
+from app.planning.solver import backend
+from app.planning.solver import solve as solve_mod
+from app.schemas.plans import DayOverride, PlanRequest, RunSolveRecord
+from app.services.plans import plan_summary
 from app.services.settings import current_user
 from app.testing.llm import FakeClock, make_settings
 
@@ -105,25 +114,140 @@ def test_too_little_time_left_to_solve_fails_clearly(seeded_db):
     assert "too little to fit the week" in out.error["detail"]
 
 
+def spy_limits(monkeypatch, left: list[float] | None = None) -> list[tuple[str, float | None]]:
+    """Every solve's (kind, time limit) as the time guard hands it to the solver; `left` gets the seconds
+    left of the request at each one."""
+    limits: list[tuple[str, float | None]] = []
+    real = backend.SolveBudget.limit_for
+
+    def spy(self, wanted, kind):
+        seconds_left = self.deadline.remaining()
+        limit = real(self, wanted, kind)  # raises when no solve can start
+        limits.append((kind, limit))
+        if left is not None:
+            left.append(seconds_left)
+        return limit
+
+    monkeypatch.setattr(backend.SolveBudget, "limit_for", spy)
+    return limits
+
+
 def test_the_solver_time_limit_never_outlasts_the_budget(seeded_db, monkeypatch):
-    limits: list[int] = []
-    real = orch.solve
-
-    def spy(problem, **kwargs):
-        limits.append(kwargs["time_limit_s"])
-        return real(problem, **kwargs)
-
-    monkeypatch.setattr(orch, "solve", spy)
+    limits = spy_limits(monkeypatch)
     out = run(seeded_db, None, FakeClock(), PlanRequest(week_start=WEEK, days=DAYS, allow_llm=False))
-    # plenty of time: SOLVER_TIME_LIMIT_SECONDS (default 30 since Phase 2b, E7)
-    assert out.status == "succeeded" and set(limits) == {30}
+    # plenty of time: SOLVER_TIME_LIMIT_SECONDS (default 30 since Phase 2b, E7); snapping keeps its own 5 s
+    assert out.status == "succeeded"
+    assert {limit for kind, limit in limits if kind == "week"} == {30}
+    assert ("snap", 5) in limits
     limits.clear()
     clock = FakeClock()
     out = run(
         seeded_db,
-        FakeLLMClient([slow(clock, 190, fixture_response("drinks_batch.json"))]),
+        FakeLLMClient([slow(clock, 170, fixture_response("drinks_batch.json"))]),
         clock,
         plan_time_budget_seconds=200,
     )
-    # 10 s left: cut to what's left, minus a 2 s margin (a cut re-solve, step 2b.9, gets the same)
-    assert limits and set(limits) == {8}
+    # 30 s left: every weekly solve (a cut re-solve too, step 2b.9) gets what's left after the 10 s kept for
+    # rounding, checking and saving
+    assert out.status == "succeeded", out.error
+    assert {limit for kind, limit in limits if kind == "week"} == {20}
+
+
+@pytest.mark.parametrize("budget_s", [12, 25, 40, 60, 90])
+def test_slow_solves_never_run_past_the_budget(seeded_db, monkeypatch, budget_s):
+    """Every solve takes its whole time limit (as on a slow machine, where nothing reaches its gap): the run
+    still ends inside its budget, with a checked plan or a clear "ran out of time", never a hang."""
+    clock = FakeClock()
+    real_solve = pulp.LpProblem.solve  # the test suite's own deterministic solve (conftest.py)
+
+    def slow_solve(self, solver=None, **kwargs):
+        took = solver.timeLimit
+        status = real_solve(self, solver, **kwargs)
+        clock.now += took
+        return status
+
+    monkeypatch.setattr(pulp.LpProblem, "solve", slow_solve)
+    left: list[float] = []
+    limits = spy_limits(monkeypatch, left)
+    user = current_user(seeded_db)
+    started = clock.now
+    o = Orchestrator(
+        seeded_db,
+        user.id,
+        llm_client=None,
+        settings=make_settings(),
+        clock=clock,
+        deadline=Deadline.after(clock, budget_s),
+    )
+    out = o.run(PlanRequest(week_start=WEEK, days=DAYS, allow_llm=False))
+    assert clock.now - started <= budget_s
+    for (kind, limit), seconds_left in zip(limits, left, strict=True):
+        if limit is not None:  # None: a polishing solve skipped
+            reserve = 0 if kind in backend.POLISH_KINDS else backend.FINISH_RESERVE_SECONDS
+            assert 0 < limit <= seconds_left - reserve
+    record = RunSolveRecord.model_validate(seeded_db.get(GenerationRun, out.run_id).progress["solve"])
+    if out.status == "succeeded":
+        assert out.report is not None and out.report.ok and not record.ran_out_of_time
+    else:
+        assert out.status == "failed" and out.error["code"] == "deadline" and out.error["status"] == 503
+        assert "ran out of time" in out.error["title"] and record.ran_out_of_time
+        assert record.proven_best is None
+    if budget_s < backend.FINISH_RESERVE_SECONDS + backend.MIN_SOLVE_SECONDS:
+        assert out.status == "failed" and record.solves == 0  # no solve could start
+
+
+def test_a_plan_found_before_the_time_limit_is_marked_not_proven_best(seeded_db, monkeypatch):
+    """A weekly solve stopped by its time limit keeps the best plan it found (status `feasible`): the plan
+    says so in its notes, the summary flags it and the run record keeps it."""
+    real = solve_mod.run_solver
+
+    def stopped_on_time(model, *args, **kwargs):
+        status = real(model, *args, **kwargs)
+        return pulp.LpSolutionIntegerFeasible if status == pulp.LpSolutionOptimal else status
+
+    monkeypatch.setattr(solve_mod, "run_solver", stopped_on_time)
+    out = run(seeded_db, None, FakeClock(), PlanRequest(week_start=WEEK, days=DAYS, allow_llm=False))
+    assert out.status == "succeeded", out.error
+    assert out.plan.solver_status == "feasible"
+    assert NOT_PROVEN_NOTE in out.notes
+    summary = plan_summary(seeded_db, current_user(seeded_db).id, out.plan_id)
+    assert summary.proven_best is False and NOT_PROVEN_NOTE in summary.notes
+    record = RunSolveRecord.model_validate(seeded_db.get(GenerationRun, out.run_id).progress["solve"])
+    assert record.proven_best is False and record.week_solves >= 1
+
+
+def test_the_run_record_keeps_solve_time_and_re_solves(seeded_db):
+    out = run(seeded_db, None, FakeClock(), PlanRequest(week_start=WEEK, days=DAYS, allow_llm=False))
+    assert out.status == "succeeded", out.error
+    record = RunSolveRecord.model_validate(seeded_db.get(GenerationRun, out.run_id).progress["solve"])
+    assert record.proven_best is True and not record.ran_out_of_time
+    assert record.week_solves >= 1 and record.resolves == record.week_solves - 1
+    assert record.solves >= record.week_solves and record.seconds >= record.week_seconds >= 0
+    assert record.rounding_resolves <= record.resolves
+    assert summary_flag(seeded_db, out.plan_id) is True
+
+
+def summary_flag(session, plan_id: int) -> bool:
+    return plan_summary(session, current_user(session).id, plan_id).proven_best
+
+
+@pytest.mark.wall_clock
+def test_a_tiny_real_time_budget_returns_a_plan_or_runs_out_of_time_cleanly(seeded_db):
+    """The production limits and the real clock: a full week with a deliberately tiny budget ends inside it,
+    with a checked plan (marked when a solve stopped on its limit) or "ran out of time"."""
+    budget_s = 20
+    user = current_user(seeded_db)
+    clock = SystemClock()
+    started = time.monotonic()
+    out = Orchestrator(
+        seeded_db, user.id, llm_client=None, clock=clock, deadline=Deadline.after(clock, budget_s)
+    ).run(PlanRequest(week_start=WEEK, days=7, allow_llm=False))
+    took = time.monotonic() - started
+    assert took <= budget_s + 5  # the model building and saving around the solves, on a busy test machine
+    record = RunSolveRecord.model_validate(seeded_db.get(GenerationRun, out.run_id).progress["solve"])
+    if out.status == "succeeded":
+        assert out.report is not None and out.report.ok
+        assert (NOT_PROVEN_NOTE in out.notes) is (record.proven_best is False)
+    else:
+        assert out.status == "failed" and out.error["code"] == "deadline", out.error
+        assert record.ran_out_of_time

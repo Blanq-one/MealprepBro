@@ -11,8 +11,9 @@ ideas pass got its optional freeze note (D127), and two designs were written for
 with four proposed steps before 2b.6 (2b.9–2b.12, §9) and open questions V1–V17 (FLOW_SPEC §21.3). **Both designs
 were approved 2026-10-11, including D127 (X1–X9, §12.1)**: F25–F32 approved, V1–V17 answered, and a new build order
 so new screens and a live link come sooner: **2b.9 → 2b.10 → 2b.7 → 2b.13 (deploy) → 2b.11 → 2b.12 → 2b.6 → 2b.8**.
-Step 2b.9 (cook-day schedule) was built the same day with D128–D142 (2b.9 outcome note, §9) and awaits your
-approval.
+Step 2b.9 (cook-day schedule) was built the same day with D128–D142 (2b.9 outcome note, §9) and **approved the
+same day, including D135 (Y1–Y3, §12.1)**. At the approval a time guard was built first (D143–D147, 2b.9 approval
+note, §9; open question Y4, §12.2), then step 2b.10 (smart prep data model).
 **Source documents:** `CLAUDE.md` (build rules, wins on conflict), `docs/PRD.md` (product vision; "Primary user flow" at the top), `docs/FLOW_SPEC.md` (screens and backend work for Phase 2b).
 
 This plan covers Phases 0–6, plus Phase 2b. One phase per session; Phase 2b is split into build steps, one per session (§9). A phase or step is done only when its acceptance criteria are met, its tests pass, and the test output has been shown.
@@ -31,7 +32,7 @@ This plan covers Phases 0–6, plus Phase 2b. One phase per session; Phase 2b is
 | — | Pre-Phase 1 tasks | Done | 2026-10-08 | 2026-10-08 | Package-label data (tortillas, protein powder), USDA mapping review sheet (`docs/review/usda_mappings.md`), raw/dry/as-sold rule + check (§7.8), CLAUDE.md machine-boundaries rule. Round 2: FoodSafety.gov chart transcribed (53 rows, §7.2), top-25 mappings approved, tortilla renamed, Docker rule clarified, fresh-clone check made a per-phase step. |
 | 1 | Planning brain | Approved 2026-10-09; post-approval round done | 2026-10-08 | 2026-10-09 | First pass: 645 tests, fresh-clone check passed; D1–D13 and C1–C3 approved 2026-10-09. Fix-up round (C4–C8: budget per request with inventory/shop modes, cash vs food eaten, freeze-on-shopping-day and waste, 100 g protein floor, elapsed time): 705 tests pass (the opt-in live test skips), domain coverage 99%, ruff/mypy clean, fresh-clone check passed; deviations D14–D22 in the fix-up note. Approved 2026-10-09. Post-approval round (C9–C14: powder prices, stock-up items, shelf-life fix, regular chicken packs, two-week steady-state check, A3 hosting): 721 tests pass (the opt-in live test skips), domain coverage 99%; deviations D23–D28. |
 | 2 | Mobile PWA + cloud deploy (deploy prep only, K7) | Approved 2026-10-10 | 2026-10-09 | 2026-10-09 | Pre-work K2–K6 done; PWA, auth, shopping, Mark cooked, quick add, exposure log. 800 backend tests pass (2 opt-in skipped), 78 frontend tests; not deployed (your step, `docs/deploy.md`). Deviations D29–D43 in the Phase 2 outcome note (§9). |
-| 2b | Cook-first flow redesign | 2b.1 approved 2026-10-10 (D44–D53); 2b.2 approved 2026-10-10 (D54–D64, H1–H6); 2b.3a approved 2026-10-10 (D65–D76, J1–J6); 2b.4 approved 2026-10-10 (D77–D88, M1–M20); 2b.4 fixes approved 2026-10-10 (N1–N3); 2b.3b approved 2026-10-11 (D89–D101, P1–P8); pre-work P2–P7 done and approved 2026-10-11 (D102–D106, T1–T8); 2b.5 approved 2026-10-11 (D107–D126, U1); freeze note in the ideas pass done (D127, U2); designs for smart prep and parallel cooking approved 2026-10-11 (X1–X9; steps 2b.9–2b.13); 2b.9 built 2026-10-11 (D128–D142), awaiting your approval | 2026-10-10 | | `docs/FLOW_SPEC.md`; PRD "Primary user flow"; 14 build steps, built in the order 2b.1, 2b.2, 2b.3a, **2b.4, 2b.3b**, 2b.5, then **2b.9, 2b.10, 2b.7, 2b.13 (deploy), 2b.11, 2b.12, 2b.6, 2b.8** (H3, X8; §9); changes F1–F21 approved (FLOW_SPEC §16); decisions E1–E17 (§12.1). Two-stage generation added the same day (E15, E17; built in 2b.3b). **2b.1 (backend foundations):** 898 backend tests pass (2 opt-in skipped), 78 frontend tests, ruff/mypy clean; deviations D44–D53 in the 2b.1 outcome note (§9). **2b.2 (look, shell, onboarding, Settings, Pantry):** 180 frontend tests (78 before), 899 backend tests pass (2 opt-in skipped), type checks clean, static export builds; AA contrast tested, 375 px not yet checked on a device; deviations D54–D64 in the 2b.2 outcome note (§9). Footer fix H2 done before 2b.3a. **2b.3a (ranking and cards, no LLM calls):** 964 backend tests pass (2 opt-in skipped), 187 frontend tests, ruff, mypy and type check clean; deviations D65–D76 in the 2b.3a outcome note (§9). **2b.4 (A meal now: screens, with J2–J6):** 993 backend tests pass (2 opt-in skipped), 236 frontend tests, ruff, mypy and type check clean, static export builds; migration `0006_pantry_presets`; deviations D77–D88 in the 2b.4 outcome note (§9). **2b.4 fixes (M2–M13, M15, M17, M20):** 1056 backend tests pass (2 opt-in skipped), 244 frontend tests, ruff, mypy and type check clean; no migration; 37 new draft seed recipes (47 in all); solver shortlist; fixes outcome note (§9). **2b.3b (ideas, steps, More ideas, background batch, rate-limit waits, live test, screens; with N2, ground vs whole cuts):** 1132 backend tests pass (2 opt-in skipped), 263 frontend tests, ruff, mypy and type check clean, static export builds; no migration, no new dependency; the live Groq test ran (FLOW_SPEC §15.1); deviations D89–D101 in the 2b.3b outcome note (§9). **2b.3b approval pre-work (P2–P7):** 1143 backend tests pass with `--run-slow` (3 opt-in skipped); the default run is parallel and skips 6 `slow` tests (100 s, was about 20 min); 265 frontend tests; ruff, mypy and type check clean; no migration; new dev dependency pytest-xdist (approved); `LLM_IDEAS_MODEL` (20b by default in compose); deviations D102–D106 in 2b.3b's approval note (§9). **2b.5 (meal prep engine, with T2–T4):** 1218 backend tests pass with `--run-slow` (3 opt-in skipped), 266 (265 before) frontend tests; ruff, mypy and type check clean; migration `0007_recipe_freeze_note`; no new dependency; deviations D107–D126 in the 2b.5 outcome note (§9). **2b.5 approval (U1–U5):** the ideas pass carries an optional freeze note under the seeds' rules (D127): 1218 backend tests pass in the default run (9 skipped: 6 slow, 3 opt-in), ruff and mypy clean, no migration; FLOW_SPEC §19–§21 and the proposed steps 2b.9–2b.12 (§9) are written for your review. **2b.9 (cook-day schedule):** 1353 backend tests pass in the default run (13 skipped: 8 slow, 2 perf, 3 opt-in), 1363 with `--run-slow` and the perf tests (3 opt-in skipped); 266 frontend tests; ruff, mypy and type check clean, static export builds; migration `0008_step_timing`; no new dependency; the live Groq test ran (8.3K tokens); deviations D128–D142 in the 2b.9 outcome note (§9). |
+| 2b | Cook-first flow redesign | 2b.1 approved 2026-10-10 (D44–D53); 2b.2 approved 2026-10-10 (D54–D64, H1–H6); 2b.3a approved 2026-10-10 (D65–D76, J1–J6); 2b.4 approved 2026-10-10 (D77–D88, M1–M20); 2b.4 fixes approved 2026-10-10 (N1–N3); 2b.3b approved 2026-10-11 (D89–D101, P1–P8); pre-work P2–P7 done and approved 2026-10-11 (D102–D106, T1–T8); 2b.5 approved 2026-10-11 (D107–D126, U1); freeze note in the ideas pass done (D127, U2); designs for smart prep and parallel cooking approved 2026-10-11 (X1–X9; steps 2b.9–2b.13); 2b.9 approved 2026-10-11 (D128–D142, Y1–Y3); time guard built 2026-10-11 (D143–D147) | 2026-10-10 | | `docs/FLOW_SPEC.md`; PRD "Primary user flow"; 14 build steps, built in the order 2b.1, 2b.2, 2b.3a, **2b.4, 2b.3b**, 2b.5, then **2b.9, 2b.10, 2b.7, 2b.13 (deploy), 2b.11, 2b.12, 2b.6, 2b.8** (H3, X8; §9); changes F1–F21 approved (FLOW_SPEC §16); decisions E1–E17 (§12.1). Two-stage generation added the same day (E15, E17; built in 2b.3b). **2b.1 (backend foundations):** 898 backend tests pass (2 opt-in skipped), 78 frontend tests, ruff/mypy clean; deviations D44–D53 in the 2b.1 outcome note (§9). **2b.2 (look, shell, onboarding, Settings, Pantry):** 180 frontend tests (78 before), 899 backend tests pass (2 opt-in skipped), type checks clean, static export builds; AA contrast tested, 375 px not yet checked on a device; deviations D54–D64 in the 2b.2 outcome note (§9). Footer fix H2 done before 2b.3a. **2b.3a (ranking and cards, no LLM calls):** 964 backend tests pass (2 opt-in skipped), 187 frontend tests, ruff, mypy and type check clean; deviations D65–D76 in the 2b.3a outcome note (§9). **2b.4 (A meal now: screens, with J2–J6):** 993 backend tests pass (2 opt-in skipped), 236 frontend tests, ruff, mypy and type check clean, static export builds; migration `0006_pantry_presets`; deviations D77–D88 in the 2b.4 outcome note (§9). **2b.4 fixes (M2–M13, M15, M17, M20):** 1056 backend tests pass (2 opt-in skipped), 244 frontend tests, ruff, mypy and type check clean; no migration; 37 new draft seed recipes (47 in all); solver shortlist; fixes outcome note (§9). **2b.3b (ideas, steps, More ideas, background batch, rate-limit waits, live test, screens; with N2, ground vs whole cuts):** 1132 backend tests pass (2 opt-in skipped), 263 frontend tests, ruff, mypy and type check clean, static export builds; no migration, no new dependency; the live Groq test ran (FLOW_SPEC §15.1); deviations D89–D101 in the 2b.3b outcome note (§9). **2b.3b approval pre-work (P2–P7):** 1143 backend tests pass with `--run-slow` (3 opt-in skipped); the default run is parallel and skips 6 `slow` tests (100 s, was about 20 min); 265 frontend tests; ruff, mypy and type check clean; no migration; new dev dependency pytest-xdist (approved); `LLM_IDEAS_MODEL` (20b by default in compose); deviations D102–D106 in 2b.3b's approval note (§9). **2b.5 (meal prep engine, with T2–T4):** 1218 backend tests pass with `--run-slow` (3 opt-in skipped), 266 (265 before) frontend tests; ruff, mypy and type check clean; migration `0007_recipe_freeze_note`; no new dependency; deviations D107–D126 in the 2b.5 outcome note (§9). **2b.5 approval (U1–U5):** the ideas pass carries an optional freeze note under the seeds' rules (D127): 1218 backend tests pass in the default run (9 skipped: 6 slow, 3 opt-in), ruff and mypy clean, no migration; FLOW_SPEC §19–§21 and the proposed steps 2b.9–2b.12 (§9) are written for your review. **2b.9 (cook-day schedule):** 1353 backend tests pass in the default run (13 skipped: 8 slow, 2 perf, 3 opt-in), 1363 with `--run-slow` and the perf tests (3 opt-in skipped); 266 frontend tests; ruff, mypy and type check clean, static export builds; migration `0008_step_timing`; no new dependency; the live Groq test ran (8.3K tokens); deviations D128–D142 in the 2b.9 outcome note (§9). **Time guard (Y2):** 1361 backend tests pass in the default run (13 skipped), 266 frontend tests; ruff, mypy and type check clean; no migration, no new dependency; your dev seed week went from 245 s to 171 s with a plan marked not proven best; D143–D147 in the 2b.9 approval note (§9). |
 | 3 | Feedback loop | Not started | | | Favorites moved to 2b. |
 | 4 | Daily overrides | Not started | | | |
 | 5 | Grocery intelligence | Not started | | | |
@@ -1316,7 +1317,7 @@ How the filter decides:
 - **Layers:** `domain/` tests are pure and fast. `services/`, `usda/`, `seed/` and `planning/` tests use the `db-test` Postgres (tmpfs; migrations run once per session; each test in a rolled-back transaction). `api/` tests use TestClient.
 - **LLM:** automated tests use `FakeLLMClient` fixtures, in both `strict` and `best_effort` modes. Real Groq runs only in `pytest -m live_llm` and the CLI.
 - **Architecture tests:** `domain/` imports nothing from `db`/`api`/`llm`/`sqlalchemy`/`fastapi`. `groq` is imported only in `app/llm/client.py`. No model-name literals in `app/`. Every `*_cents` column is `Integer`. No `stream`/`tools` with structured outputs. `PlanValidator` accepts only `RoundedPlan`.
-- **No wall-clock dependence (Phase 2, K6):** in tests every MILP runs with no wall-clock cut (`conftest.py` replaces its time limit with 300 s and fails a test whose solve still stops on the clock). Single-threaded HiGHS with gap stops is deterministic, so an identical model reuses the answer within a session (tests marked `solve_cache_off` always solve). Orchestration tests that re-solve use 3-day weeks; the timed 30-candidate test is opt-in (`perf` marker, `RUN_PERF_TESTS=1`).
+- **No wall-clock dependence (Phase 2, K6):** in tests every MILP runs with no wall-clock cut (`conftest.py` replaces its time limit with 300 s and fails a test whose solve still stops on the clock). Single-threaded HiGHS with gap stops is deterministic, so an identical model reuses the answer within a session (tests marked `solve_cache_off` always solve). Orchestration tests that re-solve use 3-day weeks; the timed 30-candidate test is opt-in (`perf` marker, `RUN_PERF_TESTS=1`). The system clock stands still while a MILP runs, so a request's time budget never counts the solver's own seconds in tests (D146); the time guard's one real-clock test is marked `wall_clock`.
 - **End of phase:** full `pytest` (and `vitest` from Phase 2) output pasted in the summary, plus the fresh-clone Docker test check (`scripts/fresh_clone_check.sh`), run after committing even when dependencies didn't change.
 
 ### 7.6 LLM budget facts (checked 2026-10-08)
@@ -1340,7 +1341,7 @@ How the filter decides:
 
 ### 7.7 API and config conventions
 
-- REST under `/api/v1`. Errors are `application/problem+json`. Long operations finish inside the request and stream `application/x-ndjson` progress (heartbeat every 5 s) ending in one result line (Phase 2, K2); every LLM call, rate-limit wait and solve fits `PLAN_TIME_BUDGET_SECONDS` (180 s). Phase 2b's `/cook/meal-now`, `/cook/meal-prep`, swap and `/grocery/advice` use the same pattern; meal now also streams intermediate `results` lines. This is HTTP response streaming only: LLM calls never stream (CLAUDE.md rule 6).
+- REST under `/api/v1`. Errors are `application/problem+json`. Long operations finish inside the request and stream `application/x-ndjson` progress (heartbeat every 5 s) ending in one result line (Phase 2, K2); every LLM call, rate-limit wait and solve fits `PLAN_TIME_BUDGET_SECONDS` (180 s): each solve's time limit is cut to what's left of the request (the time guard, D143), a solve stopped by it returns its best plan marked `proven_best: false`, and the run record keeps the solves' time (`progress["solve"]`). Phase 2b's `/cook/meal-now`, `/cook/meal-prep`, swap and `/grocery/advice` use the same pattern; meal now also streams intermediate `results` lines. This is HTTP response streaming only: LLM calls never stream (CLAUDE.md rule 6).
 - Environment-only config; `.env.example` updated in every phase.
 
 ### 7.8 Raw / dry / as-sold rule (added before Phase 1)
@@ -3008,6 +3009,44 @@ Decisions and deviations:
 
 **Dev database.** Migrate to 0008 and re-seed (47 seed revisions); your cook days double (45 → 90).
 
+**2b.9 approval (2026-10-11, Y1–Y3): the time guard, built first, in its own commit.**
+
+Measured first, on your dev settings (7 cook days of 90 minutes, 4 meals a day, no LLM): a seed week took
+**245 s**. All 8 weekly solves stopped on their 30 s limit, none reaching its gap: 3 on the narrow shortlist, whose
+schedules kept running over, then 5 on the wider one. The 180 s budget was checked only before each shortlist try,
+so nothing stopped the run. Each solve found its last plan after 7–25 s and spent the rest trying to prove it.
+HiGHS settings (less strong branching, more heuristics) found the same plans at the same times, so none changed.
+
+- **D143. Every solve fits the request.** Each solve's time limit comes from the request's budget
+  (`planning/solver/backend.py`, `SolveBudget`): its own limit, cut to what's left after 10 s kept for rounding,
+  checking and saving.
+  - A solve starts only with at least 5 s; polishing solves (snapping, absorption) may use the reserve and are
+    skipped when it's gone.
+  - It covers the weekly solves, cut re-solves, wider shortlists, the cheapest-plan fallback, the money floor,
+    the explanations (top-up and budget), snapping and absorption, and 2b.11's solves to come.
+  - The orchestrator sets the budget for its run (a context variable), so no time parameter is threaded through
+    each solve.
+- **D144. The best plan so far, marked.** A solve stopped by its limit keeps the best plan it found (`feasible`).
+  - Its notes say "This is the best plan found in the time this request had; a better one may exist, so it isn't
+    proven the best", and the plan summary has `proven_best: false` (for 2b.7's screens).
+  - When too little time is left for the next solve, the run ends as "Planning ran out of time" (503, code
+    `deadline`), saying what it was doing.
+  - A plan that ran over a cook day or failed validation is never returned.
+- **D145. The run record.** `generation_run.progress["solve"]` (`RunSolveRecord`, version 1):
+  - seconds in the solver, solves, weekly solves and their seconds, re-solves (weekly solves after the first),
+    rounding re-solves, solves stopped on time, shortened and skipped, proven best, ran out of time;
+  - plus one log line per run (Vercel's function log).
+  - It is JSON in the existing progress column rather than new columns, so no migration (0009 stays smart prep).
+- **D146. Tests.** The suite's system clock stands still while a MILP runs (`conftest.py`), so no test can run out
+  of time on a slow machine (K6). The one real-clock test is marked `wall_clock`.
+- **D147. A fix found on the way.** The money floor treated an LP stopped by its time limit as solved; only a
+  finished LP is a floor now.
+
+**Result on your settings:** 171 s and a checked plan marked "not proven best" (the 6th solve, cut to 17 s, found a
+plan whose schedule fit). That was luck: on Vercel's slower CPU the same week can end in "ran out of time". Planning
+this week reliably inside 180 s needs a change to how the cut re-solves and shortlist tiers spend their time
+(question Y4, §12.2).
+
 ##### 2b.10 Smart prep: data, storage and seed prep items (backend)
 
 *Reads FLOW_SPEC §19.2–§19.6.*
@@ -3725,7 +3764,28 @@ your instruction; real design decisions stop and wait):
 | X8 | Build order | New screens and a live link sooner: **2b.9** cook-day schedule → **2b.10** smart prep data model (including meals that draw from several prep batches) → **2b.7** the new plan screens, built to show both single-recipe meals and assemblies (batch view, sources per meal, Prep notes row, cook-day timeline) → **2b.13** a deploy step (Vercel + Neon per `docs/deploy.md`, with the pre-deploy list, PD1 first) → **2b.11** smart prep solver → **2b.12** smart prep ideas → **2b.6** swap (with Not for me) → **2b.8** What should I buy?. Consequences (mine, in §9 "How the steps run"): 2b.7 takes the read side of 2b.11's plan view data; the swap screens and Not for me move to 2b.6; the fifth tile shows "coming soon" until 2b.11. |
 | X9 | Next | Step 2b.9 per this plan. |
 
+**Step 2b.9 approval (2026-10-11).** You approved 2b.9, then:
+
+| # | Topic | Decision |
+|---|---|---|
+| Y1 | 2b.9 | Approved, including D128–D142 and D135 (pairs kept apart before the first solve). |
+| Y2 | Time guard (first) | Every plan request (meal prep, plan a week, the top-up and budget explanations) finishes inside its time budget (Vercel's slower single CPU, 180 s) and returns the best plan found so far, clearly marked as not proven best, instead of timing out. Solve time and re-solves per run are logged in the run record. A test: a request with a deliberately tiny time budget returns a valid plan or a clear "ran out of time", never a hang. Built as D143–D147 (2b.9 approval note, §9). |
+| Y3 | Next | Step 2b.10 per this plan, with the FoodKeeper rows from `docs/sources/foodkeeper.json` (or the 3-day rule and same-day fresh items if it's missing). |
+
 ### 12.2 Remaining questions (from applying your answers)
+
+- **Y4. Planning a big week inside 180 s (from the time guard, 2026-10-11).** With your settings (7 cook days, 4
+  meals a day) a seed week needs 8 weekly solves at their full 30 s, 245 s in all; the guard now stops it at 180 s,
+  where it may or may not have a plan that fits (171 s with one locally). The waste: solves on the narrow shortlist
+  whose plans keep running over a cook day, each followed by a whole re-solve. Options (not built; your call):
+  - **a. Repair before re-solving (my recommendation):** when a cook day runs over, re-solve only that day's
+    batches with everything else fixed (seconds, not 30 s), keeping the whole re-solve for when time allows;
+  - **b. Shorter cut rounds:** give the cut re-solves 10–12 s each (their plans arrive by then on the narrow
+    shortlist) and keep 30 s for the first solve;
+  - **c. Start big weeks on the wider shortlist:** it found far better plans here (objective about −10 against
+    −0.1) but needs 15–25 s for its first plan, which a slower CPU may not reach in 30 s;
+  - **d. Tighter linear time limits in the model,** so fewer plans run over at all (a design change to 2b.9's
+    limits).
 
 - **Phase 2b questions:** all answered (FLOW_SPEC §18). None open.
 

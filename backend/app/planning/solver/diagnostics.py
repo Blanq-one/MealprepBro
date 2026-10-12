@@ -304,13 +304,13 @@ def explain(problem: PlanningProblem, *, time_limit_s: int = 20) -> tuple[Diagno
             problem, constraints=c.model_copy(update={"purchase_limit_cents": OPEN_LIMIT_CENTS})
         )
         cheapest = build_model(unlimited, cheapest=True)
-        status = run_solver(cheapest, time_limit_s, MONEY_GAP_REL, MONEY_GAP_ABS_DOLLARS)
+        status = run_solver(cheapest, time_limit_s, MONEY_GAP_REL, MONEY_GAP_ABS_DOLLARS, kind="explain")
         if status in (pulp.LpSolutionOptimal, pulp.LpSolutionIntegerFeasible):
             needed = round(float(pulp.value(cheapest.limited_cost) or 0))
             if needed > c.purchase_limit_cents:
                 return (_money_diagnostic(problem, cheapest, needed), *_left_out(problem))
     model = build_model(problem, elastic=True)
-    status = run_solver(model, time_limit_s, 0.0, EXPLAIN_GAP_ABS)
+    status = run_solver(model, time_limit_s, 0.0, EXPLAIN_GAP_ABS, kind="explain")
     if status not in (pulp.LpSolutionOptimal, pulp.LpSolutionIntegerFeasible):
         return (
             Diagnostic(

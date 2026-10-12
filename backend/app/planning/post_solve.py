@@ -40,6 +40,11 @@ _PROTEIN = Decimal("0.1")
 
 SNAP_STEP = Decimal("0.005")
 BIAS_SAMPLE_PORTIONS = (2, 3, 4, 5)
+# the time guard: a solve stopped by its time limit keeps the best plan it found
+NOT_PROVEN_NOTE = (
+    "This is the best plan found in the time this request had; a better one may exist, so it isn't proven "
+    "the best"
+)
 
 
 @dataclass(frozen=True)
@@ -225,6 +230,8 @@ def build_rounded_plan(
     solution = replace(solution, batches=snapped)
     batches = [round_batch(problem, b) for b in solution.batches]
     notes = exclusion_notes(problem)
+    if solution.status == "feasible":
+        notes.append(NOT_PROVEN_NOTE)
     if solution.status == "cheapest":
         notes.append(
             "Your budget is tight: the solver ran out of time looking for the best plan within it, so this "

@@ -237,6 +237,7 @@ export function plan(overrides: Partial<PlanSummary> = {}): PlanSummary {
     prep_notes: null,
     header: null,
     household_size: 1,
+    proven_best: true,
     ...overrides,
   };
 }

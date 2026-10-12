@@ -82,7 +82,8 @@ def money_floor(problem: PlanningProblem, *, time_limit_s: int) -> float | None:
     model = build_model(open_limit, cheapest=True)
     model.prob.sense = pulp.LpMinimize
     model.prob.setObjective(model.limited_cost)
-    if solve_relaxation(model.prob, time_limit_s=time_limit_s) != pulp.LpStatusOptimal:
+    # optimal only: an LP stopped by its time limit gives no floor
+    if solve_relaxation(model.prob, time_limit_s=time_limit_s) != pulp.LpSolutionOptimal:
         return None
     return float(pulp.value(model.limited_cost) or 0)
 
@@ -223,7 +224,8 @@ def _solve_once(
         # A tight budget can leave the solver no time to find any plan, even when one exists. The cheapest
         # plan that meets every limit is found much faster; use it rather than report "no plan".
         cheapest = build_model(problem, cheapest=True, allowed_store_ids=allowed_store_ids)
-        status = run_solver(cheapest, time_limit_s, CHEAPEST_GAP_REL, CHEAPEST_GAP_ABS_CENTS / 100)
+        gap_abs = CHEAPEST_GAP_ABS_CENTS / 100
+        status = run_solver(cheapest, time_limit_s, CHEAPEST_GAP_REL, gap_abs, kind="cheapest")
         if status in (pulp.LpSolutionOptimal, pulp.LpSolutionIntegerFeasible):
             return extract(problem, cheapest, status, status="cheapest")
     if not explain:

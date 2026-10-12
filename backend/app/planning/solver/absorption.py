@@ -168,7 +168,7 @@ def _select(
     if c.calorie_mode is CalorieMode.WEEKLY:
         week = sum(base_day.values()) + pulp.lpSum(d for deltas in day_delta.values() for d in deltas)
         prob += week <= c.weekly_kcal_target
-    status = solve_milp(prob, time_limit_s=10, gap_rel=0.0, gap_abs=0.0)
+    status = solve_milp(prob, time_limit_s=10, gap_rel=0.0, gap_abs=0.0, kind="absorb")
     if status not in (pulp.LpSolutionOptimal, pulp.LpSolutionIntegerFeasible):
         return []
     return [cand for i, cand in enumerate(candidates) if (pulp.value(pick[i]) or 0) > 0.5]

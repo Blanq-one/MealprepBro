@@ -40,6 +40,7 @@ from app.planning.persistence import SINGLE, PlanNotFoundError, accept_plan
 from app.planning.problem import IngredientPlan
 from app.planning.recipe_math import nutrition_of
 from app.planning.rounded import FreezeInstruction, meal_key
+from app.planning.solver.model import proven_best
 from app.planning.timing import day_schedules, dish_batch, load_timings
 from app.schemas.plans import (
     BatchOut,
@@ -538,6 +539,7 @@ def plan_summary(session: Session, user_id: int, plan_id: int) -> PlanSummaryOut
         prep_notes=PrepNotesOut(display=display, items=notes_items) if display else None,
         header=(search.results or {}).get("header") if search is not None else None,
         household_size=household,
+        proven_best=proven_best(plan.solver_status),
     )
 
 

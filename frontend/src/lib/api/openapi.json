@@ -5218,6 +5218,11 @@
       "title": "Protein Target G Per Day",
       "type": "integer"
      },
+     "proven_best": {
+      "default": true,
+      "title": "Proven Best",
+      "type": "boolean"
+     },
      "purchase_limit_cents": {
       "anyOf": [
        {

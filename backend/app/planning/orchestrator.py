@@ -15,9 +15,12 @@ persisted (validated recipes from earlier, completed calls stay saved for reuse,
 
 A run finishes inside one request (Phase 2: serverless hosting stops a function at 300 s). Every LLM call,
 rate-limit wait and solve is checked against the request's time budget (PLAN_TIME_BUDGET_SECONDS). When the
-budget runs out during recipe generation, the run keeps the recipes made so far and plans with them; when it
-runs out before a solve, the run fails with a clear "out of time" error. A succeeded run also writes the
-candidate-exposure log (plan_candidate), one row per recipe offered to the solver or filtered out.
+budget runs out during recipe generation, the run keeps the recipes made so far and plans with them. Every
+solve's time limit is cut to what's left of the budget (the time guard, solver/backend.py), so a solve stopped
+by it returns the best plan it found, marked as not proven best; when too little is left to start the next
+solve, the run fails with a clear "ran out of time" error. The run record keeps what the solves took
+(`progress["solve"]`). A succeeded run also writes the candidate-exposure log (plan_candidate), one row per
+recipe offered to the solver or filtered out.
 """
 
 import logging
@@ -50,14 +53,16 @@ from app.planning.reference import load_reference
 from app.planning.rounded import RoundedPlan
 from app.planning.shortlist import FULL_SOLVE_MAX, SHORTLIST_PER_SLOT, SHORTLIST_WIDER, shortlist
 from app.planning.snap import stepiest_batch
+from app.planning.solver.backend import SolveBudget, SolveDeadlineError, SolveStats, solve_budget
 from app.planning.solver.model import (
     Diagnostic,
     EmptyCandidatePoolError,
     SolverInfeasible,
     SolverSolution,
+    proven_best,
 )
 from app.planning.solver.solve import explain_infeasible, solve
-from app.schemas.plans import PlanRequest
+from app.schemas.plans import PlanRequest, RunSolveRecord
 
 log = logging.getLogger(__name__)
 
@@ -83,8 +88,6 @@ AMOUNT_MARGIN = {
     "ml": Decimal(1),
     "count": Decimal("0.1"),
 }  # below a daily cap after rounding
-MIN_SOLVE_SECONDS = 5.0  # a solve starts only with at least this much of the time budget left
-SOLVE_MARGIN_SECONDS = 2.0
 OUT_OF_TIME_NOTE = (
     "Recipe generation stopped early: this request ran out of time ({reason}). The recipes made so far are "
     "saved, so planning again carries on from there."
@@ -94,11 +97,12 @@ WAIT_NOTE = (
     "recipes you have. Plan again in a minute for new ones."
 )
 
+OUT_OF_TIME_DETAIL = (
+    "No plan that fits was found within this request's {budget} s: {left} s are left, too little to fit "
+    "the week{doing}. Planning fewer days or meals at once is faster; the recipes made so far are saved."
+)
+
 ProgressListener = Callable[[dict[str, Any]], None]
-
-
-class PlanDeadlineError(RuntimeError):
-    """Too little of the request's time budget is left to solve."""
 
 
 @dataclass
@@ -165,6 +169,24 @@ def problem_json(
             for d in diagnostics
         ],
     }
+
+
+def solve_record(stats: SolveStats, outcome: PlanOutcome, rounding_resolves: int) -> RunSolveRecord:
+    """The run record's account of its solves (the time guard)."""
+    plan = outcome.plan if outcome.status == "succeeded" else None
+    return RunSolveRecord(
+        seconds=round(stats.seconds, 2),
+        solves=stats.solves,
+        week_solves=stats.week_solves,
+        week_seconds=round(stats.week_seconds, 2),
+        resolves=max(stats.week_solves - 1, 0),
+        rounding_resolves=rounding_resolves,
+        stopped_on_time=stats.stopped_on_time,
+        shortened=stats.shortened,
+        skipped=stats.skipped,
+        proven_best=proven_best(plan.solver_status) if plan is not None else None,
+        ran_out_of_time=(outcome.error or {}).get("code") == "deadline",
+    )
 
 
 def tightening_from(
@@ -274,6 +296,9 @@ class Orchestrator:
         self.on_progress = on_progress
         self.notes: list[str] = []
         self.retry_after_s: int | None = None
+        self.budget: SolveBudget | None = None
+        self.rounding_resolves = 0  # re-solves after the validator found rounding past a limit
+        self.doing = ""  # what the run was doing when its time ran out
 
     def _progress(self, run: GenerationRun, stage: str, **extra: Any) -> None:
         run.progress = {"stage": stage, **extra}
@@ -292,6 +317,21 @@ class Orchestrator:
         outcome.retry_after_s = outcome.retry_after_s or self.retry_after_s
         if outcome.notes:
             run.progress = {**(run.progress or {}), "notes": outcome.notes}
+        if self.budget is not None:
+            record = solve_record(self.budget.stats, outcome, self.rounding_resolves)
+            run.progress = {**(run.progress or {}), "solve": record.model_dump(mode="json")}
+            log.info(
+                "planning run %s %s: %d solves (%d weekly, %d re-solves) in %.1f s, %d stopped on time, "
+                "proven best: %s",
+                run.id,
+                outcome.status,
+                record.solves,
+                record.week_solves,
+                record.resolves,
+                record.seconds,
+                record.stopped_on_time,
+                record.proven_best,
+            )
         self.session.flush()
         return outcome
 
@@ -302,18 +342,23 @@ class Orchestrator:
             self.session.flush()
         if self.deadline is None:
             self.deadline = Deadline.after(self.clock, self.settings.plan_time_budget_seconds)
+        self.budget = SolveBudget(self.deadline)
         run.status = "running"
         run.started_at = datetime.now(UTC)
         self._progress(run, "constraints")
         try:
-            return self._run(request, run)
-        except PlanDeadlineError as exc:
+            with solve_budget(self.budget):
+                return self._run(request, run)
+        except SolveDeadlineError as exc:
+            detail = OUT_OF_TIME_DETAIL.format(
+                budget=self.settings.plan_time_budget_seconds, left=round(exc.remaining_s), doing=self.doing
+            )
             return self._finish(
                 run,
                 PlanOutcome(
                     "failed",
                     run.id,
-                    error=problem_json("Planning ran out of time", str(exc), status=503, code="deadline"),
+                    error=problem_json("Planning ran out of time", detail, status=503, code="deadline"),
                 ),
             )
         except ConstraintError as exc:
@@ -357,14 +402,9 @@ class Orchestrator:
         return self.deadline.remaining() if self.deadline is not None else float("inf")
 
     def _time_limit(self) -> int:
-        """The solver's time limit: the configured one, cut to what's left of the request's budget."""
-        left = self._remaining()
-        if left < MIN_SOLVE_SECONDS:
-            raise PlanDeadlineError(
-                f"only {left:.0f} s of this request's {self.settings.plan_time_budget_seconds} s time "
-                "budget is left, too little to fit the week; try again (recipes made so far are saved)"
-            )
-        return max(1, min(self.settings.solver_time_limit_seconds, int(left - SOLVE_MARGIN_SECONDS)))
+        """Each solve's own time limit; the time guard (solver/backend.py) cuts it to what's left of the
+        request."""
+        return self.settings.solver_time_limit_seconds
 
     def _solve(self, problem: PlanningProblem) -> SolverSolution | SolverInfeasible:
         """Solve the shortlist (the best candidates per meal, planning/shortlist.py), then a wider one when
@@ -568,10 +608,12 @@ class Orchestrator:
                     ),
                 )
             resolves += 1
+            self.rounding_resolves = resolves
             problem = problem.with_tightening(
                 tightening_from(report, problem, result, plan, leave_out_stiffest=resolves > 1)
             )
             self._progress(run, "re-solving", resolves=resolves)
+            self.doing = " after rounding pushed the plan past a limit"
             resolved = self._solve(problem)
             if isinstance(resolved, SolverInfeasible):
                 detail = sentences(e.message for e in report.errors)

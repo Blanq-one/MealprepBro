@@ -146,7 +146,7 @@ def snap_batches(problem: PlanningProblem, solution: SolverSolution) -> tuple[So
             cost = eaten[b] * abs(opt.kcal - planned) + TIE_BREAK * k
             objective.append(cost * pick[(b, k)])
     prob += pulp.lpSum(objective)
-    status = solve_milp(prob, time_limit_s=SNAP_TIME_LIMIT_S, gap_rel=0.0, gap_abs=0.0)
+    status = solve_milp(prob, time_limit_s=SNAP_TIME_LIMIT_S, gap_rel=0.0, gap_abs=0.0, kind="snap")
     if status not in (pulp.LpSolutionOptimal, pulp.LpSolutionIntegerFeasible):
         return None
     out = []

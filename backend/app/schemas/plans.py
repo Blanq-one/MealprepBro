@@ -107,6 +107,27 @@ class ProblemOut(BaseModel):
     diagnostics: list[dict[str, Any]] = Field(default_factory=list)
 
 
+class RunSolveRecord(BaseModel):
+    """What a planning run's solves took, kept in its run record (`generation_run.progress["solve"]`; the
+    time guard, before step 2b.10)."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    schema_version: Literal[1] = 1
+    seconds: float  # inside the solver, every solve together
+    solves: int  # every MILP and LP: weekly solves, the cheapest-plan fallback, money floor, explanations,
+    # snapping and absorption
+    week_solves: int  # the weekly MILP: the first solve and every re-solve
+    week_seconds: float
+    resolves: int  # weekly solves after the first: schedule cuts, wider shortlists, rounding fixes
+    rounding_resolves: int  # of those, the ones after the validator found rounding past a limit
+    stopped_on_time: int  # solves stopped by their time limit
+    shortened: int  # solves given less than their own limit, to fit the request
+    skipped: int  # polishing solves left out for lack of time
+    proven_best: bool | None  # the plan's own solve reached its gap; None = no plan
+    ran_out_of_time: bool
+
+
 class GenerationRunOut(BaseModel):
     id: int
     purpose: str
@@ -301,6 +322,8 @@ class PlanSummaryOut(BaseModel):
     prep_notes: PrepNotesOut | None = None  # None = nothing to freeze or that may spoil (no row)
     header: str | None = None  # a meal-prep plan: "5 lunches · Wed 14 – Sun 18 · High protein · Simple"
     household_size: int = 1
+    # the time guard: False = the best plan a solve found before its time limit (the notes say so)
+    proven_best: bool = True
 
 
 class PlanListItemOut(BaseModel):
