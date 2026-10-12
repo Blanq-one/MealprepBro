@@ -7,13 +7,17 @@ from datetime import timedelta
 from decimal import Decimal
 
 from app.domain.cook_schedule import DishTiming, Task
-from app.domain.enums import MealSlot
+from app.domain.enums import MealSlot, RecipeMood
+from app.llm.pacing import Deadline
 from app.planning.plan_validator import validate_plan
-from app.planning.post_solve import build_rounded_plan
+from app.planning.post_solve import NOT_PROVEN_NOTE, REPAIRED_NOTE, build_rounded_plan
 from app.planning.problem import CandidateRecipe, PlanningProblem
+from app.planning.solver import solve as solve_mod
+from app.planning.solver.backend import SolveBudget, SolveStats, solve_budget
 from app.planning.solver.model import SolvedBatch, SolvedMeal, SolverInfeasible, SolverSolution
-from app.planning.solver.solve import pair_cuts, solve
+from app.planning.solver.solve import overrun_days, pair_cuts, solve
 from app.testing import factories as f
+from app.testing.llm import FakeClock
 
 L = MealSlot.LUNCH
 
@@ -143,3 +147,90 @@ def test_a_set_of_three_that_runs_over_is_cut_and_the_week_solved_again():
     plan = build_rounded_plan(p, s)
     assert plan.totals.elapsed_minutes[f.MONDAY] <= 60
     assert validate_plan(plan, f.reference(p)).ok
+
+
+# Y4: a day that runs over is repaired with the rest of the week fixed. Lunch Mon-Fri, cooking Monday (medium)
+# and Wednesday (simple). The three marinated dishes are medium, so only Monday can cook them, and the solver
+# wants all three there (68 minutes on a 60-minute day); the simple salads go to Wednesday.
+WEDNESDAY = f.MONDAY + timedelta(days=2)
+
+
+def two_cook_days() -> PlanningProblem:
+    ing = {
+        1: f.food(1, "chicken", 200, protein=30, offers=[f.offer(1, cents_per_unit="1")]),
+        2: f.food(2, "greens", 50, protein=2, offers=[f.offer(2, cents_per_unit="1")]),
+    }
+    recipes = [
+        replace_timing(
+            f.recipe(20 + n, f"Dish {n}", [L], [f.line(1, 1000)], ing, base=4, mood=RecipeMood.MEDIUM),
+            marinated(f"d{n}"),
+        )
+        for n in range(3)
+    ]
+    recipes += [
+        replace_timing(f.recipe(30 + n, f"Salad {n}", [L], [f.line(2, 4000)], ing, base=4), SALAD)
+        for n in range(3)
+    ]
+    c = f.constraints(days=5, slots={L: 500}, cook_weekdays=(0, 2), cook_minutes=60, max_portions=1)
+    days = tuple(
+        d.model_copy(update={"mood": RecipeMood.SIMPLE}) if d.day == WEDNESDAY else d for d in c.days
+    )
+    return f.problem(c.model_copy(update={"days": days}), recipes, ing)
+
+
+def test_a_cut_also_covers_the_same_set_with_another_batch_that_still_runs_over():
+    """Y4: with a fourth marinated dish, cutting {0, 1, 2} also cuts every three of the four dishes (each runs
+    over the same way), but never a set with the salad, which fits beside any two."""
+    p = three_lunches()
+    dish3 = replace_timing(
+        f.recipe(23, "Dish 3", [L], [f.line(1, 1000)], p.ingredients, base=4), marinated("d3")
+    )
+    p = replace(p, candidates=(*p.candidates, dish3))
+    size = p.constraints.default_portion_size
+    on_monday = SolverSolution(
+        "optimal",
+        0.0,
+        tuple(SolvedBatch(20 + n, f.MONDAY, size, Decimal(1), 1) for n in range(3)),
+        tuple(SolvedMeal(f.MONDAY + timedelta(days=n), L, n) for n in range(3)),
+        {},
+        frozenset({f.PRIMARY}),
+        0,
+    )
+    (over,) = overrun_days(p, on_monday)
+    assert over.cut == frozenset((20 + n, f.MONDAY, "normal") for n in range(3))
+    threes = {frozenset((20 + n, f.MONDAY, "normal") for n in range(4) if n != skip) for skip in range(4)}
+    assert over.cuts == threes  # Monday is the only cook day
+
+
+def counted_solve(p: PlanningProblem) -> tuple[SolverSolution | SolverInfeasible, SolveStats]:
+    with solve_budget(SolveBudget(Deadline.after(FakeClock(), 10_000))) as budget:
+        return solve(p, time_limit_s=30), budget.stats
+
+
+def test_a_day_that_runs_over_is_repaired_with_the_rest_of_the_week_fixed():
+    p = two_cook_days()
+    s, stats = counted_solve(p)
+    assert isinstance(s, SolverSolution), s
+    assert stats.week_solves == 1 and stats.repairs == 1  # one whole solve, then only Monday again
+    assert s.status == "repaired"  # best for Monday only, so not proven best
+    # the set is cut on Wednesday too, a cook day with no more minutes (D134)
+    assert s.schedule_cuts == {
+        frozenset((20 + n, day, "normal") for n in range(3)) for day in (f.MONDAY, WEDNESDAY)
+    }
+    monday = {b.version_id for b in s.batches if b.cook_on == f.MONDAY}
+    assert len(monday & {20, 21, 22}) == 2 and monday & {30, 31, 32}  # a salad takes one dish's place
+    plan = build_rounded_plan(p, s)
+    assert plan.totals.elapsed_minutes[f.MONDAY] <= 60
+    assert REPAIRED_NOTE in plan.notes and NOT_PROVEN_NOTE not in plan.notes
+    assert validate_plan(plan, f.reference(p)).ok
+
+
+def test_when_the_repair_finds_no_plan_the_whole_week_is_solved_again(monkeypatch):
+    monkeypatch.setattr(solve_mod, "_solve_days", lambda *args, **kwargs: None)
+    p = two_cook_days()
+    s, stats = counted_solve(p)
+    assert isinstance(s, SolverSolution), s
+    # the cut re-solves, as before Y4 (here two: the first put two dishes and two salads on Monday)
+    assert stats.week_solves >= 2 and stats.repairs == 0
+    assert s.status == "optimal"
+    assert build_rounded_plan(p, s).totals.elapsed_minutes[f.MONDAY] <= 60

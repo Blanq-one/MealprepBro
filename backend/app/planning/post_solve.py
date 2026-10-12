@@ -45,6 +45,11 @@ NOT_PROVEN_NOTE = (
     "This is the best plan found in the time this request had; a better one may exist, so it isn't proven "
     "the best"
 )
+# Y4: a cook day that ran over its time was re-solved with the rest of the week kept
+REPAIRED_NOTE = (
+    "A cook day ran over its time, so its cooking was re-planned with the rest of the week kept as it was; a "
+    "better plan may exist, so it isn't proven the best"
+)
 
 
 @dataclass(frozen=True)
@@ -232,6 +237,8 @@ def build_rounded_plan(
     notes = exclusion_notes(problem)
     if solution.status == "feasible":
         notes.append(NOT_PROVEN_NOTE)
+    if solution.status == "repaired":
+        notes.append(REPAIRED_NOTE)
     if solution.status == "cheapest":
         notes.append(
             "Your budget is tight: the solver ran out of time looking for the best plan within it, so this "

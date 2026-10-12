@@ -7,16 +7,19 @@ the planner tries every eligible recipe before it says no plan fits.
 P4: a time or mood blocker is said once, in plain words, with the fix the app can offer.
 """
 
+import time
 from datetime import date, timedelta
 from decimal import Decimal
 
 import pytest
 from sqlalchemy import select
 
-from app.db.models import Ingredient
+from app.config import get_settings
+from app.db.models import GenerationRun, Ingredient
 from app.domain.enums import PlanningMode, StorageLocation
+from app.llm.pacing import SystemClock
 from app.planning.orchestrator import Orchestrator
-from app.schemas.plans import DayOverride, PlanRequest
+from app.schemas.plans import DayOverride, PlanRequest, RunSolveRecord
 from app.services.inventory import LotInput, add_lot
 from app.services.settings import current_user, patch_settings
 from app.testing.llm import FakeClock, make_settings
@@ -70,11 +73,11 @@ PANTRY = [
 ]
 
 
-@pytest.mark.slow  # a full week with cut re-solves, about 3-4 minutes: --run-slow (step 2b.9)
-def test_seven_cook_days_a_protein_dessert_and_a_stocked_pantry_plan_again(seeded_db):
-    user = current_user(seeded_db)
+def use_dev_settings(session) -> None:
+    """Your dev database's settings and pantry: seven 90-minute cook days, 4 meals a day."""
+    user = current_user(session)
     patch_settings(
-        seeded_db,
+        session,
         user.id,
         {
             "cook_schedule": EVERY_DAY,
@@ -98,12 +101,50 @@ def test_seven_cook_days_a_protein_dessert_and_a_stocked_pantry_plan_again(seede
         },
     )
     for slug, quantity, unit, location in PANTRY:
-        ingredient = seeded_db.scalars(select(Ingredient.id).where(Ingredient.slug == slug)).one()
-        add_lot(seeded_db, user.id, LotInput(ingredient, Decimal(quantity), unit, StorageLocation(location)))
+        ingredient = session.scalars(select(Ingredient.id).where(Ingredient.slug == slug)).one()
+        add_lot(session, user.id, LotInput(ingredient, Decimal(quantity), unit, StorageLocation(location)))
+
+
+@pytest.mark.slow  # a full week with cut re-solves, about 3-4 minutes: --run-slow (step 2b.9)
+def test_seven_cook_days_a_protein_dessert_and_a_stocked_pantry_plan_again(seeded_db):
+    use_dev_settings(seeded_db)
     out = plan(seeded_db, mode=PlanningMode.SHOP)
     assert out.status == "succeeded", out.error
     assert any(b.cook_on == WEEK for b in out.plan.batches)
     assert out.plan.totals.elapsed_minutes[WEEK] <= 90  # Monday's schedule, start to finish
+
+
+WELL_INSIDE_S = 90  # half of the 180 s budget
+
+
+@pytest.mark.perf  # the real clock and the production limits: RUN_PERF_TESTS=1
+def test_a_big_week_on_your_settings_plans_well_inside_the_time_budget(seeded_db):
+    """Y4: seven cook days and 4 meals a day (your dev settings), planned with the production limits and the
+    real clock, finish well inside the 180 s budget, and the time guard never has to cut a solve short. Before
+    the day repairs this took 171-245 s."""
+    use_dev_settings(seeded_db)
+    user = current_user(seeded_db)
+    settings = get_settings()
+    clock = SystemClock()
+    started = time.monotonic()
+    out = Orchestrator(seeded_db, user.id, llm_client=None, settings=settings, clock=clock).run(
+        PlanRequest(week_start=WEEK, allow_llm=False, mode=PlanningMode.SHOP)
+    )
+    took = time.monotonic() - started
+    record = RunSolveRecord.model_validate(seeded_db.get(GenerationRun, out.run_id).progress["solve"])
+    budget_s = settings.plan_time_budget_seconds
+    print(
+        f"\nbig week: {took:.1f} s of the {budget_s} s budget; {record.solves} solves, "
+        f"{record.week_solves} weekly ({record.week_seconds:.1f} s), {record.repairs} day repairs "
+        f"({record.repair_seconds:.1f} s), {record.rounding_resolves} rounding re-solves, "
+        f"{record.stopped_on_time} stopped on their own limit, proven best: {record.proven_best}"
+    )
+    assert out.status == "succeeded", out.error
+    assert out.report is not None and out.report.ok
+    assert all(minutes <= 90 for minutes in out.plan.totals.elapsed_minutes.values())
+    # the time guard never cut in: no solve shortened or skipped, never out of time
+    assert record.shortened == 0 and record.skipped == 0 and not record.ran_out_of_time
+    assert took <= WELL_INSIDE_S
 
 
 def test_a_time_or_mood_blocker_is_said_once_in_plain_words_with_its_fix(seeded_db):

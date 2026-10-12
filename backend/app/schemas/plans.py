@@ -113,14 +113,16 @@ class RunSolveRecord(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    schema_version: Literal[1] = 1
+    schema_version: Literal[1, 2] = 2  # 2: the day repairs (Y4); a version 1 record has none
     seconds: float  # inside the solver, every solve together
-    solves: int  # every MILP and LP: weekly solves, the cheapest-plan fallback, money floor, explanations,
-    # snapping and absorption
+    solves: int  # every MILP and LP: weekly solves, day repairs, the cheapest-plan fallback, money floor,
+    # explanations, snapping and absorption
     week_solves: int  # the weekly MILP: the first solve and every re-solve
     week_seconds: float
     resolves: int  # weekly solves after the first: schedule cuts, wider shortlists, rounding fixes
     rounding_resolves: int  # of those, the ones after the validator found rounding past a limit
+    repairs: int = 0  # cook days that ran over, re-solved with the rest of the week fixed (Y4)
+    repair_seconds: float = 0.0
     stopped_on_time: int  # solves stopped by their time limit
     shortened: int  # solves given less than their own limit, to fit the request
     skipped: int  # polishing solves left out for lack of time

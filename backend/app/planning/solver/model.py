@@ -114,13 +114,16 @@ class SolvedMeal:
 
 def proven_best(solver_status: str) -> bool:
     """A plan whose solve reached its gap. `feasible`: the best plan a solve found before its time limit;
-    `cheapest`: the budget fallback, best on cost only. (`single` plans are ranked, not solved.)"""
-    return solver_status not in ("feasible", "cheapest")
+    `cheapest`: the budget fallback, best on cost only; `repaired`: a cook day that ran over was re-solved
+    with the rest of the week fixed (Y4), best for that day only. (`single` plans are ranked, not solved.)"""
+    return solver_status not in ("feasible", "cheapest", "repaired")
 
 
 @dataclass(frozen=True)
 class SolverSolution:
-    status: str  # optimal | feasible | cheapest (the budget fallback: cheapest plan that fits every limit)
+    # optimal | feasible | cheapest (the budget fallback: cheapest plan that fits every limit) | repaired (a
+    # cook day re-solved with the rest of the week fixed)
+    status: str
     objective: float
     batches: tuple[SolvedBatch, ...]
     meals: tuple[SolvedMeal, ...]

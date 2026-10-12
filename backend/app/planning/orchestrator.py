@@ -181,6 +181,8 @@ def solve_record(stats: SolveStats, outcome: PlanOutcome, rounding_resolves: int
         week_seconds=round(stats.week_seconds, 2),
         resolves=max(stats.week_solves - 1, 0),
         rounding_resolves=rounding_resolves,
+        repairs=stats.repairs,
+        repair_seconds=round(stats.repair_seconds, 2),
         stopped_on_time=stats.stopped_on_time,
         shortened=stats.shortened,
         skipped=stats.skipped,
@@ -321,13 +323,14 @@ class Orchestrator:
             record = solve_record(self.budget.stats, outcome, self.rounding_resolves)
             run.progress = {**(run.progress or {}), "solve": record.model_dump(mode="json")}
             log.info(
-                "planning run %s %s: %d solves (%d weekly, %d re-solves) in %.1f s, %d stopped on time, "
-                "proven best: %s",
+                "planning run %s %s: %d solves (%d weekly, %d re-solves, %d day repairs) in %.1f s, %d "
+                "stopped on time, proven best: %s",
                 run.id,
                 outcome.status,
                 record.solves,
                 record.week_solves,
                 record.resolves,
+                record.repairs,
                 record.seconds,
                 record.stopped_on_time,
                 record.proven_best,

@@ -30,9 +30,10 @@ MIN_SOLVE_SECONDS = 5.0  # a solve starts only with at least this much of the re
 FINISH_RESERVE_SECONDS = 10.0  # kept back from every solve for rounding, checking and saving the plan
 POLISH_MARGIN_SECONDS = 1.0  # a polishing solve stops this long before the request's end
 
-# week: the weekly MILP (each try, cut round, wider shortlist and re-solve); cheapest: the cheapest plan that
-# fits a purchase limit; floor: the money floor's LP; explain: why no plan fits; snap, absorb: polishing
-SolveKind = Literal["week", "cheapest", "floor", "explain", "snap", "absorb"]
+# week: the weekly MILP (each try, cut round, wider shortlist and re-solve); repair: a cook day that ran over,
+# re-solved with the rest of the week fixed (Y4); cheapest: the cheapest plan that fits a purchase limit;
+# floor: the money floor's LP; explain: why no plan fits; snap, absorb: polishing
+SolveKind = Literal["week", "repair", "cheapest", "floor", "explain", "snap", "absorb"]
 POLISH_KINDS: frozenset[SolveKind] = frozenset({"snap", "absorb"})
 
 
@@ -52,6 +53,8 @@ class SolveStats:
     seconds: float = 0.0  # inside the solver
     week_solves: int = 0  # weekly MILPs: the first, then every re-solve
     week_seconds: float = 0.0
+    repairs: int = 0  # cook days re-solved with the rest of the week fixed
+    repair_seconds: float = 0.0
     stopped_on_time: int = 0  # stopped by their time limit: what they found isn't proven best
     shortened: int = 0  # given less than their own limit, to fit the request
     skipped: int = 0  # polishing solves left out: no time was left
@@ -62,6 +65,9 @@ class SolveStats:
         if kind == "week":
             self.week_solves += 1
             self.week_seconds += seconds
+        elif kind == "repair":
+            self.repairs += 1
+            self.repair_seconds += seconds
         self.stopped_on_time += stopped_on_time
         self.shortened += shortened
 
