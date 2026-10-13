@@ -46,3 +46,26 @@ class HiddenPayload(BaseModel):
 
 
 HIDDEN_PAYLOAD_VERSION = 1
+
+
+class SwappedPayload(BaseModel):
+    """One meal swapped (step 2b.6). The row's recipe_id and recipe_version_id are the recipe swapped in,
+    its plan_meal_id the new meal; the payload says what it replaced, in which plan, which options were
+    offered (in the order shown) and what else changed. `undone`: Undo brought the old plan back."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    from_plan_id: int
+    to_plan_id: int
+    eat_on: str
+    slot: str
+    from_version_id: int
+    to_version_id: int
+    offered_version_ids: list[int]
+    swapped_away_version_ids: list[int]
+    also_changed: list[str]
+    after_shopping: bool
+    undone: bool = False
+
+
+SWAPPED_PAYLOAD_VERSION = 1

@@ -546,5 +546,96 @@ class BatchLineOut(BaseModel):
     portion_note: str | None = None  # "1 scoop per portion · 4 scoops for the batch of 4" (A1)
 
 
+# ---------------- swap (step 2b.6, E5, AA4) ----------------
+class SwapOptionsIn(_Strict):
+    exclude_version_ids: list[int] = Field(default_factory=list, max_length=50)  # already swapped away
+    allow_llm: bool = False  # True only after "Write a new one": one ideas call
+    allow_buying: bool = False  # after Done shopping: options may buy what they need
+
+
+class SwapIn(_Strict):
+    version_id: int  # the option you tapped
+    allow_buying: bool = False
+    offered_version_ids: list[int] = Field(
+        default_factory=list, max_length=20
+    )  # the sheet's options, in order
+    exclude_version_ids: list[int] = Field(default_factory=list, max_length=50)  # swapped away before
+
+
+class SwapMealOut(BaseModel):
+    """The meal being swapped, at the top of the sheet."""
+
+    plan_meal_id: int
+    eat_on: date
+    slot: MealSlot
+    version_id: int
+    title: str
+    kcal: int
+    protein_g: Decimal
+    label: str  # "Wed 14 lunch"
+
+
+class SwapOptionOut(BaseModel):
+    """One alternative for the meal; every number is code-computed (its rounded batch, the solver's
+    groceries)."""
+
+    version_id: int
+    recipe_id: int
+    title: str
+    dish_category: str
+    kcal: int
+    protein_g: Decimal
+    numbers: list[str]  # "520 kcal", "38 g protein", "about $2.10 a portion"
+    cost_delta_cents: int  # groceries, against keeping the meal
+    cost_delta_display: str  # "+$1.20 groceries", "No extra groceries", "$0.80 less groceries"
+    source_display: (
+        str  # "From Mon 12's Chicken curry", "Cook it Wed 14", "… · from the freezer, thaw Fri night"
+    )
+    also_changed: list[str]  # "Mon 12's Chicken over rice: 4 → 3 portions"
+    buys: list[str] = Field(default_factory=list)  # after shopping, with buying allowed: what it would buy
+    is_new: bool = False  # written just now (Write a new one)
+    steps_ready: bool = True  # False: an idea whose steps are written when you first open it
+    is_draft: bool = False
+
+
+class SwapStreamEvent(BaseModel):
+    """One line of POST /plans/{id}/meals/{meal_id}/swap-options (NDJSON): the options for one meal. With
+    allow_llm a rate-limit wait is a `progress` line with `wait_s` (the countdown), never an error."""
+
+    event: Literal["started", "progress", "heartbeat", "result"]
+    plan_id: int
+    meal_id: int
+    run_id: int | None = None
+    elapsed_s: float
+    stage: str | None = None
+    message: str | None = None
+    wait_s: int | None = None
+    status: Literal["succeeded", "none_fit", "waiting", "failed"] | None = None  # result only
+    current: SwapMealOut | None = None
+    options: list[SwapOptionOut] = Field(default_factory=list)
+    no_fit: str | None = None  # "No other lunch fits Wednesday's calories and cook time"
+    after_shopping: bool = False  # options come from your pantry; buying needs allow_buying
+    can_write_new: bool = True  # Write a new one is offered (the LLM is set up and allowed today)
+    new_version_ids: list[int] = Field(default_factory=list)
+    retry_after_s: int | None = None  # status waiting: the call can go after this many seconds
+    notes: list[str] = Field(default_factory=list)
+    problem: ProblemOut | None = None
+    llm_call_count: int | None = None
+    total_tokens: int | None = None
+    pad: str | None = None
+
+
+class SwapOut(BaseModel):
+    """A swap's result: the new plan version (it supersedes the old one, which Undo brings back)."""
+
+    plan_id: int
+    undo_plan_id: int
+    plan: "PlanSummaryOut"
+    plan_meal_id: int  # the new meal row, to highlight
+    message: str  # "Swapped. Also changed: Mon 12's Chicken over rice: 4 → 3 portions."
+    also_changed: list[str]
+
+
 PlanStreamEvent.model_rebuild()
 BatchDetailOut.model_rebuild()
+SwapOut.model_rebuild()

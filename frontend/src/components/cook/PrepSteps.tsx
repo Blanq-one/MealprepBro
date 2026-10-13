@@ -83,6 +83,8 @@ const PRESETS = [
   { key: "usual_week", label: "My usual week", icon: "🗓️" },
   { key: "custom", label: "Something else", icon: "✏️" },
 ] as const;
+// AA2: these portions aren't eaten in this plan; they go straight to the freezer
+export const FREEZER_EXTRA_NOTE = "Extra portions go straight into the freezer for later weeks; they aren't part of this plan's meals.";
 
 export function AmountStep({ draft, settings, onChange, onBack, onNext, today = new Date() }: StepProps) {
   const { reasons, missing } = amountProblems(draft, settings);
@@ -124,7 +126,7 @@ export function AmountStep({ draft, settings, onChange, onBack, onNext, today = 
             <>
               <Stepper size="compact" label="Portions" value={draft.portions} min={1} max={MAX_PREP_DAYS} step={1} unit={draft.portions === 1 ? "portion" : "portions"} onChange={(portions) => onChange({ ...draft, portions })} />
               <TileGrid label="Meal" tiles={mealTiles(settings)} selected={draft.slot ? [draft.slot] : []} onToggle={(key) => onChange({ ...draft, slot: key as MealSlot })} />
-              <p className="small muted">One meal on that many days in a row. More than {MAX_PREP_DAYS}? Add the rest as portions to freeze.</p>
+              <p className="small muted">One meal on that many days in a row. More than {MAX_PREP_DAYS}? Cook the rest as extra for the freezer.</p>
             </>
           ) : (
             <>
@@ -144,7 +146,8 @@ export function AmountStep({ draft, settings, onChange, onBack, onNext, today = 
       )}
       <p className={styles.label}>Starting</p>
       <DayChips label="Starting" days={starts.slice(0, 7)} selected={[start]} today={today} onToggle={(day) => onChange({ ...draft, start: choiceFor(day, today), sessions: [], cookDay: null })} />
-      <Stepper size="compact" label="Extra portions to freeze" value={draft.extraToFreeze} min={0} max={MAX_EXTRA_FREEZE} step={1} unit="for later" onChange={(extraToFreeze) => onChange({ ...draft, extraToFreeze })} />
+      <Stepper size="compact" label="Cook extra for the freezer (future weeks)" value={draft.extraToFreeze} min={0} max={MAX_EXTRA_FREEZE} step={1} unit={draft.extraToFreeze === 1 ? "portion" : "portions"} onChange={(extraToFreeze) => onChange({ ...draft, extraToFreeze })} />
+      <p className="small muted">{FREEZER_EXTRA_NOTE}</p>
     </QuestionScreen>
   );
 }
@@ -192,7 +195,7 @@ export function CookStyleStep({ draft, settings, onChange, onBack, onNext, today
             <p className="small muted">Everything is cooked that day. Dishes cook side by side, so the day can take more than your usual minutes.</p>
           ) : (
             <p className="small muted">
-              One recipe for all {portions} portions{draft.extraToFreeze ? `, plus ${draft.extraToFreeze} to freeze` : ""}.
+              One recipe for all {portions} portions{draft.extraToFreeze ? `, plus ${draft.extraToFreeze} extra for the freezer` : ""}.
             </p>
           )}
         </>

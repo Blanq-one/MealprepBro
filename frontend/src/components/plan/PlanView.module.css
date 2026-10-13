@@ -173,7 +173,16 @@
 .mealRow {
   display: flex;
   align-items: flex-start;
+  gap: 4px;
   border-top: 1px solid var(--border);
+}
+
+/* the meal a swap just put in (C6: "then the new meal, highlighted") */
+.swapped {
+  margin: 0 -8px;
+  padding: 0 8px;
+  border-radius: var(--radius-tile);
+  background: var(--herb-soft);
 }
 
 .meal {

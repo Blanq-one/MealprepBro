@@ -63,8 +63,14 @@ def _exact_need(problem: PlanningProblem, batch: RoundedBatch, ingredient_id: in
 
 
 def absorption_pass(
-    problem: PlanningProblem, solution: SolverSolution, batches: list[RoundedBatch]
+    problem: PlanningProblem,
+    solution: SolverSolution,
+    batches: list[RoundedBatch],
+    *,
+    only: frozenset[int] | None = None,
 ) -> tuple[list[RoundedBatch], list[str]]:
+    """`only` (swap, step 2b.6): the batches that may be scaled up; a swap keeps every other batch's
+    multiplier. None = any batch."""
     c = problem.constraints
     grocery = build_grocery(c, batches, problem.ingredients)
     remainders: dict[int, Decimal] = {}
@@ -81,6 +87,8 @@ def absorption_pass(
         plan = problem.ingredients[ingredient_id]
         shelf = plan.shelf_life_days_fridge or DEFAULT_SHELF_DAYS
         for index, batch in enumerate(batches):
+            if only is not None and index not in only:
+                continue
             lines = [ln for ln in batch.lines if ln.ingredient_id == ingredient_id and not ln.optional]
             if not lines:
                 continue

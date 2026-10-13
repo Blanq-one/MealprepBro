@@ -1,0 +1,159 @@
+/* ⇄ Swap on a meal row: a 44 px target (C6) beside the row. */
+.swap {
+  flex: none;
+  align-self: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-tile);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-small);
+  cursor: pointer;
+}
+
+.swap:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* on a narrow phone the arrow says it */
+@media (max-width: 360px) {
+  .swapWord {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+}
+
+.now {
+  margin: 0 0 12px;
+  font-size: var(--text-small);
+  overflow-wrap: anywhere;
+}
+
+.working,
+.none {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0 16px;
+}
+
+.working p,
+.none p {
+  margin: 0;
+}
+
+.shopped {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 0 0 8px;
+}
+
+.shopped p {
+  margin: 0;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+/* one option: the whole card is the tap (48 px and up) */
+.option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-tile);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.option:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.icon {
+  flex: none;
+  font-size: 1.4rem;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.numbers,
+.source,
+.also {
+  color: var(--muted);
+  font-size: var(--text-small);
+}
+
+.cost {
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.busy {
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.toast {
+  position: sticky;
+  bottom: 72px;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 8px;
+  margin: 12px 0;
+  padding: 8px 14px;
+  border-radius: var(--radius-tile);
+  background: var(--herb-soft);
+  color: var(--herb-ink);
+  font-size: var(--text-small);
+}
+
+.toast p {
+  margin: 0;
+  flex: 1 1 200px;
+}
+
+.toastError {
+  color: var(--danger);
+}
+
+.toastActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}

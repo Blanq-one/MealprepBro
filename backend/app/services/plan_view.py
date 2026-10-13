@@ -155,6 +155,57 @@ def finish_time_display(hands_on: int, hands_off: int) -> str:
     return f"{minutes_text(hands_on + hands_off)}, {hands_on} hands-on"
 
 
+# ---------------- step 2b.6: swap ----------------
+def swap_cost_display(delta_cents: int, money: str) -> str:
+    """The groceries an option adds or saves against keeping the meal: '+$1.20 groceries', 'No extra
+    groceries', '$0.80 less groceries'. `money` is the amount's display ('$1.20')."""
+    if delta_cents > 0:
+        return f"+{money} groceries"
+    if delta_cents < 0:
+        return f"{money} less groceries"
+    return "No extra groceries"
+
+
+def swap_source(cook_on: date, eat_on: date, from_freezer: bool, *, new: bool, title: str) -> str:
+    """Where an option's meal comes from: 'Cook it Wed 14', 'From Mon 12's Chicken curry', with '· from the
+    freezer, thaw Fri 16 night' when it comes from the freezer."""
+    text = f"Cook it {short_day(cook_on)}" if new else f"From {short_day(cook_on)}'s {title}"
+    if eat_on == cook_on and new:
+        text = "Cook it that day"
+    if from_freezer:
+        thaw = date.fromordinal(eat_on.toordinal() - 1)
+        text += f" · from the freezer, thaw {short_day(thaw)} night"
+    return text
+
+
+def batch_change(cook_on: date, title: str, before: int, after: int, *, cooked: bool = False) -> str:
+    """One 'Also changed' line: 'Mon 12's Chicken over rice: 4 → 3 portions', 'Mon 12's Chicken over rice
+    isn't needed any more', 'New: cook Turkey chili on Wed 14 (1 portion)'; a cooked batch keeps its food:
+    'Extra portion of Curry: eat it another day or freeze it.'"""
+    if cooked:
+        n = before - after
+        it = "it" if n == 1 else "them"
+        return f"Extra portion{'s' if n != 1 else ''} of {title}: eat {it} another day or freeze {it}."
+    if before == 0:
+        return f"New: cook {title} on {short_day(cook_on)} ({after} portion{'s' if after != 1 else ''})"
+    if after == 0:
+        return f"{short_day(cook_on)}'s {title} isn't needed any more"
+    return f"{short_day(cook_on)}'s {title}: {before} → {after} portions"
+
+
+def swapped_message(also_changed: Sequence[str]) -> str:
+    """The toast: 'Swapped.' or 'Swapped. Also changed: Mon 12's Chicken over rice: 4 → 3 portions.'"""
+    if not also_changed:
+        return "Swapped."
+    parts = "; ".join(line.rstrip(".") for line in also_changed)
+    return f"Swapped. Also changed: {parts}."
+
+
+def no_fit_text(slot: MealSlot, eat_on: date) -> str:
+    """'No other lunch fits Wednesday's calories and cook time.'"""
+    return f"No other {SLOT_WORDS[slot]} fits {eat_on:%A}'s calories and cook time."
+
+
 def assembly_source(sources: Sequence[tuple[str, date, date, bool]]) -> tuple[str, str]:
     """(storage, the meal row's line) of an assembled meal from its components' (label, eat on, cook on, from
     the freezer): one line when they all come the same way, else each named ('From the fridge: chicken cooked

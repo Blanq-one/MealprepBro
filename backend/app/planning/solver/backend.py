@@ -32,8 +32,9 @@ POLISH_MARGIN_SECONDS = 1.0  # a polishing solve stops this long before the requ
 
 # week: the weekly MILP (each try, cut round, wider shortlist and re-solve); repair: a cook day that ran over,
 # re-solved with the rest of the week fixed (Y4); cheapest: the cheapest plan that fits a purchase limit;
-# floor: the money floor's LP; explain: why no plan fits; snap, absorb: polishing
-SolveKind = Literal["week", "repair", "cheapest", "floor", "explain", "snap", "absorb"]
+# floor: the money floor's LP; explain: why no plan fits; snap, absorb: polishing; swap: one meal re-solved
+# with the rest of the plan pinned (step 2b.6)
+SolveKind = Literal["week", "repair", "cheapest", "floor", "explain", "snap", "absorb", "swap"]
 POLISH_KINDS: frozenset[SolveKind] = frozenset({"snap", "absorb"})
 
 

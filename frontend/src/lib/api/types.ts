@@ -84,3 +84,10 @@ export type StepsStreamEvent = S["StepsStreamEvent"];
 export type MealComponent = S["MealComponentOut"];
 export type FinishTask = S["FinishTaskOut"];
 export type HiddenRecipe = S["HiddenRecipeOut"];
+// Step 2b.6: swap one meal (E5, AA4)
+export type SwapOption = S["SwapOptionOut"];
+export type SwapMeal = S["SwapMealOut"];
+export type SwapStreamEvent = S["SwapStreamEvent"];
+export type SwapOptionsBody = Partial<S["SwapOptionsIn"]>;
+export type SwapBody = S["SwapIn"];
+export type SwapResult = S["SwapOut"];

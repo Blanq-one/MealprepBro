@@ -122,6 +122,7 @@ def load_reference(
         constraints.always_have_ingredient_ids,
         lots_off_ids=constraints.lots_off_ingredient_ids,
         extra_lots=constraints.extra_lots,
+        lots_off_lot_ids=constraints.lots_off_lot_ids,
     )
     data = load_ingredients(session, ingredient_ids)
     status = diet_status(session, user_id)

@@ -18,10 +18,12 @@ deterministic; no LLM.
              are within 25°F. A task needs your hands for its hands-on minutes, at its start, and holds its
              appliance until its hands-off minutes end; waiting (marinating, resting, chilling) holds nothing.
              The oven preheats for 10 minutes before its first task, while you work
-  schedule   list scheduling: at each moment, start the ready tasks with the longest chain of work still
-             behind them (ties: more hands-off first, then dish order) whose hands and appliance are free. The
-             dish orders that change a tie are tried too (up to 6 dishes, 720 orders) and the shortest day is
-             kept; ties keep the first
+  schedule   list scheduling in a systematic kitchen order (AA7): all the chopping and marinating first
+             (prep that comes before any cooking, every dish's), then the cooking, longest chain of work
+             first, the rest while it runs, and portioning last. Within that, at each moment, start the ready
+             tasks with the longest chain of work still behind them (ties: more hands-off first, then dish
+             order) whose hands and appliance are free. The dish orders that change a tie are tried too (up to
+             6 dishes, 720 orders) and the shortest day is kept; ties keep the first
   result     the elapsed minutes (start to finish: your time in the kitchen; a dish's last wait in the fridge,
              like overnight oats setting, runs after you leave and doesn't count), the hands-on minutes, the
              longest fridge wait and the timeline
@@ -71,6 +73,10 @@ MAX_HANDS_ON = 60
 MAX_HANDS_OFF = 240
 MAX_WAIT = 720  # chilling or soaking, with no appliance
 MAX_ORDER_DISHES = 6
+# the kitchen order (AA7): prep before any cooking, then cooking, then portioning
+PREP, COOK, FINISH = 0, 1, 2
+PREP_SECTIONS = frozenset({"prep", "marinate"})
+FINISH_SECTIONS = frozenset({"portioning"})
 # estimates for steps without timing tags (V15)
 ESTIMATE_LOADING_MINUTES = 2  # oven, air fryer, rice, microwave and cooker steps: the rest is hands-off
 SECTION_APPLIANCE: Mapping[str, str] = {
@@ -408,6 +414,7 @@ class _Job:
     section: str
     fridge: bool = False
     tail: int = 0
+    phase: int = COOK  # PREP, COOK or FINISH: the kitchen order (AA7)
 
     @property
     def kitchen(self) -> int:
@@ -443,7 +450,13 @@ def _expand(dish: int, batch: DishBatch, offset: int) -> list[_Job]:
     has_successor = {p for ps in preds for p in ps}
     last_job: dict[int, int] = {}
     jobs: list[_Job] = []
+    phases: list[int] = []
     for i, t in enumerate(tasks):
+        # prep comes first only while nothing of the dish has cooked yet (shredding cooked chicken is cooking)
+        if t.equipment is None and t.section in PREP_SECTIONS and all(phases[p] == PREP for p in preds[i]):
+            phases.append(PREP)
+        else:
+            phases.append(FINISH if t.section in FINISH_SECTIONS else COOK)
         hands = grown_hands(t.hands_on, batch.portions, batch.base_servings)
         rounds, off = rounds_for(t, batch.portions, batch.base_servings)
         cap = capacity(t)
@@ -477,6 +490,7 @@ def _expand(dish: int, batch: DishBatch, offset: int) -> list[_Job]:
                     and t.equipment is None
                     and off > 0
                     and t.section in FRIDGE_SECTIONS,
+                    phase=phases[i],
                 )
             )
         last_job[i] = offset + len(jobs) - 1
@@ -506,6 +520,8 @@ class Placed:
     component: str | None
     section: str
     fridge: bool
+    phase: int = COOK  # the kitchen order (AA7): PREP, COOK or FINISH
+    ready: int = 0  # when everything before it was done
 
     @property
     def end(self) -> int:
@@ -544,6 +560,7 @@ class _Run:
     starts: list[int]
     elapsed: int
     tied: set[int] = field(default_factory=set)
+    ready: list[int] = field(default_factory=list)
 
 
 def _fits(
@@ -582,15 +599,16 @@ def _run(jobs: Sequence[_Job], rank: Sequence[int], oven_ready: int) -> _Run:
         for p in job.preds:
             succ[p].append(i)
     available = {i: 0 for i in range(n) if not jobs[i].preds}
+    ready_at = [0] * n
     running: dict[str, list[int]] = {}
     hands_free = 0
     t = 0
     tied: set[int] = set()
     left = n
 
-    def key(i: int) -> tuple[int, int, int, int]:
+    def key(i: int) -> tuple[int, int, int, int, int]:
         j = jobs[i]
-        return (-j.tail, -j.off, rank[j.dish], i)
+        return (j.phase, -j.tail, -j.off, rank[j.dish], i)
 
     def same_last(a: int, b: int) -> bool:
         """Two dishes' identical last tasks (portioning, say): either order gives the same day."""
@@ -602,7 +620,8 @@ def _run(jobs: Sequence[_Job], rank: Sequence[int], oven_ready: int) -> _Run:
         ready = sorted((i for i, at in available.items() if at <= t), key=key)
         for a, b in pairwise(ready):
             ja, jb = jobs[a], jobs[b]
-            if ja.dish != jb.dish and ja.tail == jb.tail and ja.off == jb.off and not same_last(a, b):
+            tie = ja.phase == jb.phase and ja.tail == jb.tail and ja.off == jb.off
+            if ja.dish != jb.dish and tie and not same_last(a, b):
                 tied.update((ja.dish, jb.dish))
         for i in ready:
             job = jobs[i]
@@ -621,7 +640,7 @@ def _run(jobs: Sequence[_Job], rank: Sequence[int], oven_ready: int) -> _Run:
             for s in succ[i]:
                 waiting[s] -= 1
                 if waiting[s] == 0:
-                    available[s] = max(finish[p] for p in jobs[s].preds)
+                    available[s] = ready_at[s] = max(finish[p] for p in jobs[s].preds)
         if not left:
             break
         upcoming = [at for at in available.values() if at > t]
@@ -634,7 +653,7 @@ def _run(jobs: Sequence[_Job], rank: Sequence[int], oven_ready: int) -> _Run:
             raise RuntimeError("cook schedule stalled")
         t = min(upcoming)
     elapsed = max((starts[i] + jobs[i].kitchen for i in range(n)), default=0)
-    return _Run(starts, elapsed, tied)
+    return _Run(starts, elapsed, tied, ready_at)
 
 
 def _lower_bound(jobs: Sequence[_Job]) -> int:
@@ -707,6 +726,8 @@ def schedule_day(dishes: Iterable[DishBatch]) -> DaySchedule:
             component=j.component,
             section=j.section,
             fridge=j.fridge,
+            phase=j.phase,
+            ready=best.ready[i],
         )
         for i, j in enumerate(jobs)
     )

@@ -54,12 +54,12 @@ def access_for(
     return LLMAccess(client_factory, settings or get_settings(), clock or SystemClock())
 
 
-def _events(
+def stream_events(
     session_factory: SessionFactory,
     user_id: int,
     work: Work,
     on_crash: OnCrash,
-    model: type[CookStreamEvent] | type[StepsStreamEvent],
+    model: type[BaseModel],
     *,
     ids: dict[str, int | None],
     heartbeat_s: float,
@@ -178,7 +178,7 @@ def meal_now_events(
             search_id, run_id = service.record_failure(session, user.id, answers, problem)
         return {"search_id": search_id, "run_id": run_id}
 
-    return _events(
+    return stream_events(
         session_factory,
         user_id,
         work,
@@ -230,7 +230,7 @@ def more_events(
     ) -> dict[str, Any]:
         return {"search_id": search_id, "run_id": known.get("run_id", 0)}
 
-    return _events(
+    return stream_events(
         session_factory,
         user_id,
         work,
@@ -322,7 +322,7 @@ def steps_events(
     ) -> dict[str, Any]:
         return {"version_id": version_id}
 
-    return _events(
+    return stream_events(
         session_factory,
         user_id,
         work,

@@ -8255,6 +8255,41 @@
     "title": "SummaryLineOut",
     "type": "object"
    },
+   "SwapIn": {
+    "additionalProperties": false,
+    "properties": {
+     "allow_buying": {
+      "default": false,
+      "title": "Allow Buying",
+      "type": "boolean"
+     },
+     "exclude_version_ids": {
+      "items": {
+       "type": "integer"
+      },
+      "maxItems": 50,
+      "title": "Exclude Version Ids",
+      "type": "array"
+     },
+     "offered_version_ids": {
+      "items": {
+       "type": "integer"
+      },
+      "maxItems": 20,
+      "title": "Offered Version Ids",
+      "type": "array"
+     },
+     "version_id": {
+      "title": "Version Id",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "version_id"
+    ],
+    "title": "SwapIn",
+    "type": "object"
+   },
    "SwapLineOut": {
     "description": "A missing line you can make with something you have (M11): never \"Missing\".",
     "properties": {
@@ -8281,6 +8316,415 @@
      "display"
     ],
     "title": "SwapLineOut",
+    "type": "object"
+   },
+   "SwapMealOut": {
+    "description": "The meal being swapped, at the top of the sheet.",
+    "properties": {
+     "eat_on": {
+      "format": "date",
+      "title": "Eat On",
+      "type": "string"
+     },
+     "kcal": {
+      "title": "Kcal",
+      "type": "integer"
+     },
+     "label": {
+      "title": "Label",
+      "type": "string"
+     },
+     "plan_meal_id": {
+      "title": "Plan Meal Id",
+      "type": "integer"
+     },
+     "protein_g": {
+      "title": "Protein G",
+      "type": "string"
+     },
+     "slot": {
+      "$ref": "#/components/schemas/MealSlot"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     },
+     "version_id": {
+      "title": "Version Id",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "plan_meal_id",
+     "eat_on",
+     "slot",
+     "version_id",
+     "title",
+     "kcal",
+     "protein_g",
+     "label"
+    ],
+    "title": "SwapMealOut",
+    "type": "object"
+   },
+   "SwapOptionOut": {
+    "description": "One alternative for the meal; every number is code-computed (its rounded batch, the solver's\ngroceries).",
+    "properties": {
+     "also_changed": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Also Changed",
+      "type": "array"
+     },
+     "buys": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Buys",
+      "type": "array"
+     },
+     "cost_delta_cents": {
+      "title": "Cost Delta Cents",
+      "type": "integer"
+     },
+     "cost_delta_display": {
+      "title": "Cost Delta Display",
+      "type": "string"
+     },
+     "dish_category": {
+      "title": "Dish Category",
+      "type": "string"
+     },
+     "is_draft": {
+      "default": false,
+      "title": "Is Draft",
+      "type": "boolean"
+     },
+     "is_new": {
+      "default": false,
+      "title": "Is New",
+      "type": "boolean"
+     },
+     "kcal": {
+      "title": "Kcal",
+      "type": "integer"
+     },
+     "numbers": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Numbers",
+      "type": "array"
+     },
+     "protein_g": {
+      "title": "Protein G",
+      "type": "string"
+     },
+     "recipe_id": {
+      "title": "Recipe Id",
+      "type": "integer"
+     },
+     "source_display": {
+      "title": "Source Display",
+      "type": "string"
+     },
+     "steps_ready": {
+      "default": true,
+      "title": "Steps Ready",
+      "type": "boolean"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     },
+     "version_id": {
+      "title": "Version Id",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "version_id",
+     "recipe_id",
+     "title",
+     "dish_category",
+     "kcal",
+     "protein_g",
+     "numbers",
+     "cost_delta_cents",
+     "cost_delta_display",
+     "source_display",
+     "also_changed"
+    ],
+    "title": "SwapOptionOut",
+    "type": "object"
+   },
+   "SwapOptionsIn": {
+    "additionalProperties": false,
+    "properties": {
+     "allow_buying": {
+      "default": false,
+      "title": "Allow Buying",
+      "type": "boolean"
+     },
+     "allow_llm": {
+      "default": false,
+      "title": "Allow Llm",
+      "type": "boolean"
+     },
+     "exclude_version_ids": {
+      "items": {
+       "type": "integer"
+      },
+      "maxItems": 50,
+      "title": "Exclude Version Ids",
+      "type": "array"
+     }
+    },
+    "title": "SwapOptionsIn",
+    "type": "object"
+   },
+   "SwapOut": {
+    "description": "A swap's result: the new plan version (it supersedes the old one, which Undo brings back).",
+    "properties": {
+     "also_changed": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Also Changed",
+      "type": "array"
+     },
+     "message": {
+      "title": "Message",
+      "type": "string"
+     },
+     "plan": {
+      "$ref": "#/components/schemas/PlanSummaryOut"
+     },
+     "plan_id": {
+      "title": "Plan Id",
+      "type": "integer"
+     },
+     "plan_meal_id": {
+      "title": "Plan Meal Id",
+      "type": "integer"
+     },
+     "undo_plan_id": {
+      "title": "Undo Plan Id",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "plan_id",
+     "undo_plan_id",
+     "plan",
+     "plan_meal_id",
+     "message",
+     "also_changed"
+    ],
+    "title": "SwapOut",
+    "type": "object"
+   },
+   "SwapStreamEvent": {
+    "description": "One line of POST /plans/{id}/meals/{meal_id}/swap-options (NDJSON): the options for one meal. With\nallow_llm a rate-limit wait is a `progress` line with `wait_s` (the countdown), never an error.",
+    "properties": {
+     "after_shopping": {
+      "default": false,
+      "title": "After Shopping",
+      "type": "boolean"
+     },
+     "can_write_new": {
+      "default": true,
+      "title": "Can Write New",
+      "type": "boolean"
+     },
+     "current": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/SwapMealOut"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "elapsed_s": {
+      "title": "Elapsed S",
+      "type": "number"
+     },
+     "event": {
+      "enum": [
+       "started",
+       "progress",
+       "heartbeat",
+       "result"
+      ],
+      "title": "Event",
+      "type": "string"
+     },
+     "llm_call_count": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Llm Call Count"
+     },
+     "meal_id": {
+      "title": "Meal Id",
+      "type": "integer"
+     },
+     "message": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Message"
+     },
+     "new_version_ids": {
+      "items": {
+       "type": "integer"
+      },
+      "title": "New Version Ids",
+      "type": "array"
+     },
+     "no_fit": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "No Fit"
+     },
+     "notes": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Notes",
+      "type": "array"
+     },
+     "options": {
+      "items": {
+       "$ref": "#/components/schemas/SwapOptionOut"
+      },
+      "title": "Options",
+      "type": "array"
+     },
+     "pad": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Pad"
+     },
+     "plan_id": {
+      "title": "Plan Id",
+      "type": "integer"
+     },
+     "problem": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/ProblemOut"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "retry_after_s": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Retry After S"
+     },
+     "run_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Run Id"
+     },
+     "stage": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Stage"
+     },
+     "status": {
+      "anyOf": [
+       {
+        "enum": [
+         "succeeded",
+         "none_fit",
+         "waiting",
+         "failed"
+        ],
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Status"
+     },
+     "total_tokens": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Total Tokens"
+     },
+     "wait_s": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Wait S"
+     }
+    },
+    "required": [
+     "event",
+     "plan_id",
+     "meal_id",
+     "elapsed_s"
+    ],
+    "title": "SwapStreamEvent",
     "type": "object"
    },
    "TimelineLineOut": {
@@ -10524,6 +10968,174 @@
      }
     },
     "summary": "Grocery List",
+    "tags": [
+     "plans"
+    ]
+   }
+  },
+  "/api/v1/plans/{plan_id}/meals/{meal_id}/swap": {
+   "post": {
+    "description": "Replace just this meal with the option you tapped. The plan is saved as a new version that\nsupersedes this one (same status, grocery check-offs carried over); `undo_plan_id` is the version Undo\nbrings back.",
+    "operationId": "swap_meal_api_v1_plans__plan_id__meals__meal_id__swap_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "plan_id",
+      "required": true,
+      "schema": {
+       "title": "Plan Id",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "path",
+      "name": "meal_id",
+      "required": true,
+      "schema": {
+       "title": "Meal Id",
+       "type": "integer"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SwapIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SwapOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Swap Meal",
+    "tags": [
+     "plans"
+    ]
+   }
+  },
+  "/api/v1/plans/{plan_id}/meals/{meal_id}/swap-options": {
+   "post": {
+    "description": "Swap's sheet (E5, step 2b.6): 3-5 other meals that fit this slot, day, fridge or freezer and time\nrules, with what each adds to the groceries, as a stream of JSON lines (`SwapStreamEvent`). Recipes in\n`exclude_version_ids` (already swapped away) are left out; `allow_llm` (\"Write a new one\") makes one ideas\ncall first, a rate-limit wait shown as `wait_s`; after Done shopping, options use your pantry unless\n`allow_buying`.",
+    "operationId": "swap_options_api_v1_plans__plan_id__meals__meal_id__swap_options_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "plan_id",
+      "required": true,
+      "schema": {
+       "title": "Plan Id",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "path",
+      "name": "meal_id",
+      "required": true,
+      "schema": {
+       "title": "Meal Id",
+       "type": "integer"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SwapOptionsIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SwapStreamEvent"
+        }
+       },
+       "application/x-ndjson": {}
+      },
+      "description": "NDJSON event lines"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Swap Options",
+    "tags": [
+     "plans"
+    ]
+   }
+  },
+  "/api/v1/plans/{plan_id}/swap/undo": {
+   "post": {
+    "description": "Undo a swap: the version before it comes back exactly as it was (409 once you've cooked or shopped\nsince).",
+    "operationId": "undo_swap_api_v1_plans__plan_id__swap_undo_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "plan_id",
+      "required": true,
+      "schema": {
+       "title": "Plan Id",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PlanSummaryOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Undo Swap",
     "tags": [
      "plans"
     ]

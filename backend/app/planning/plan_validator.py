@@ -191,9 +191,13 @@ def _render_check(batch: RoundedBatch, recipe: RefRecipe, ref: ReferenceData) ->
     )
 
 
-def validate_plan(plan: RoundedPlan, ref: ReferenceData, *, scope: Scope = "week") -> ValidationReport:
+def validate_plan(
+    plan: RoundedPlan, ref: ReferenceData, *, scope: Scope = "week", kept: frozenset[int] = frozenset()
+) -> ValidationReport:
     """`scope` "single" (a one-meal plan, Phase 2b): one meal isn't a day, so the day and week calorie limits
-    and the protein target are skipped; every other check runs."""
+    and the protein target are skipped; every other check runs. `kept` (swap, step 2b.6): batches a swap kept
+    as they were; a food you stopped eating since doesn't fail them (plans already made keep their meals),
+    every other check still runs."""
     if not isinstance(plan, RoundedPlan):
         raise TypeError(f"the plan validator only accepts a RoundedPlan, not {type(plan).__name__}")
     c = plan.constraints
@@ -431,7 +435,10 @@ def validate_plan(plan: RoundedPlan, ref: ReferenceData, *, scope: Scope = "week
             errors.append(Issue("SLOT_NOT_PLANNED", f"{key_day} {key_slot.value} is not a planned slot"))
     people = c.household_size  # a meal is this many portions
     for index, batch in enumerate(plan.batches):
-        if eaten_by_batch[index] * people + batch.portions_to_freeze != batch.portions:
+        accounted = eaten_by_batch[index] * people + batch.portions_to_freeze
+        if index in kept and accounted < batch.portions:
+            continue  # a cooked batch a swap freed a meal from keeps its food: the spare portion stays yours
+        if accounted != batch.portions:
             eaten = eaten_by_batch[index] * people
             errors.append(
                 Issue(
@@ -539,7 +546,9 @@ def validate_plan(plan: RoundedPlan, ref: ReferenceData, *, scope: Scope = "week
         errors.append(Issue("TOTALS_MISMATCH", "stored day protein totals don't match the recomputed ones"))
 
     # ---- diet rules on the final meals ----
-    for batch in plan.batches:
+    for index, batch in enumerate(plan.batches):
+        if index in kept:
+            continue
         for ln in batch.lines:
             if (
                 ln.ingredient_id in ref.excluded_ingredient_ids

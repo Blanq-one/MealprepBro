@@ -9,18 +9,20 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { MealMore } from "@/components/cook/NotForMe";
+import { SwapButton } from "@/components/plan/Swap";
 import { GroceryChecklist } from "@/components/GroceryChecklist";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Emoji } from "@/components/ui/Emoji";
 import { Segmented } from "@/components/ui/Segmented";
 import { ErrorState, NeedsConnection, Skeleton } from "@/components/ui/States";
 import { api, ApiError, describeError } from "@/lib/api/client";
-import type { Batch, Day, GroceryList, Meal, PlanSummary } from "@/lib/api/types";
+import type { Batch, Day, GroceryList, Meal, PlanSummary, SwapResult } from "@/lib/api/types";
 import { dayLabel, parseDay, todayIso, toIso } from "@/lib/format/dates";
 import { dishIcon } from "@/lib/format/icons";
 import { grouped, minutesLabel, slotLabel } from "@/lib/format/labels";
 import { useApi } from "@/lib/hooks/useApi";
 import { orderDays, type PlanTab, readPlanTab, savePlanTab } from "@/lib/plan/days";
+import { mealKey, type SwappedAway } from "@/lib/plan/swap";
 
 import styles from "./PlanView.module.css";
 
@@ -39,10 +41,17 @@ export function mealHref(meal: Meal): string {
   return meal.kind === "assembly" || meal.cook_batch_id === null || meal.cook_batch_id === undefined ? `/recipe/?version=${meal.recipe_version_id}` : `/recipe/?batch=${meal.cook_batch_id}`;
 }
 
-export function MealRow({ meal, online }: { meal: Meal; online: boolean }) {
+/** What a plan view needs for Swap (step 2b.6): the recipes swapped away per meal, the swapped-in meal to
+ * highlight, and what to do with a swap's result. */
+export type SwapProps = { away: SwappedAway; highlight: number | null; onSwapped: (result: SwapResult, meal: Meal) => void };
+
+export function MealRow({ meal, online, planId, swap }: { meal: Meal; online: boolean; planId?: number; swap?: SwapProps | null }) {
   const icon = dishIcon(meal.dish_category);
+  const highlighted = swap?.highlight !== null && swap?.highlight !== undefined && swap.highlight === meal.plan_meal_id;
+  const [swapOpen, setSwapOpen] = useState(false);
+  const swappable = swap && planId !== undefined && meal.kind !== "assembly" && meal.plan_meal_id ? swap : null;
   return (
-    <li className={styles.mealRow}>
+    <li className={highlighted ? `${styles.mealRow} ${styles.swapped}` : styles.mealRow}>
       <Link href={mealHref(meal)} className={styles.meal}>
         <Emoji symbol={icon.emoji} label={icon.label} className={styles.mealIcon} />
         <span className={styles.mealText}>
@@ -61,7 +70,10 @@ export function MealRow({ meal, online }: { meal: Meal; online: boolean }) {
           {meal.instruction && <span className={styles.instruction}>{meal.instruction}</span>}
         </span>
       </Link>
-      <MealMore recipeId={meal.recipe_id} title={meal.title} online={online} planMealId={meal.plan_meal_id} />
+      {swappable && planId !== undefined && (
+        <SwapButton planId={planId} meal={meal} away={swappable.away[mealKey(meal.eat_on, meal.slot)] ?? []} online={online} open={swapOpen} onOpenChange={setSwapOpen} onSwapped={swappable.onSwapped} />
+      )}
+      <MealMore recipeId={meal.recipe_id} title={meal.title} online={online} planMealId={meal.plan_meal_id} onSwap={swappable ? () => setSwapOpen(true) : undefined} />
     </li>
   );
 }
@@ -116,8 +128,14 @@ function Timeline({ day, planId }: { day: Day; planId: number }) {
   );
 }
 
-export function DayCard({ day, plan, today, online }: { day: Day; plan: PlanSummary; today: string; online: boolean }) {
+/** Swap works on a draft or current plan's meals from today on (a past meal stays as it was). */
+export function canSwap(plan: PlanSummary, day: string, today: string): boolean {
+  return (plan.status === "draft" || plan.status === "active") && plan.kind !== "single" && day >= today;
+}
+
+export function DayCard({ day, plan, today, online, swap = null }: { day: Day; plan: PlanSummary; today: string; online: boolean; swap?: SwapProps | null }) {
   const batches = plan.batches.filter((b) => b.cook_on === day.day);
+  const swapping = swap && canSwap(plan, day.day, today) ? swap : null;
   return (
     <section className={`card ${styles.day}`} id={`day-${day.day}`} aria-label={dayHeading(day.day, today)}>
       <header className={styles.dayHead}>
@@ -166,7 +184,7 @@ export function DayCard({ day, plan, today, online }: { day: Day; plan: PlanSumm
       )}
       <ul className={`list ${styles.meals}`} aria-label="Meals">
         {day.meals.map((meal) => (
-          <MealRow key={`${meal.slot}-${meal.recipe_version_id}`} meal={meal} online={online} />
+          <MealRow key={`${meal.slot}-${meal.recipe_version_id}`} meal={meal} online={online} planId={plan.id} swap={swapping} />
         ))}
       </ul>
     </section>
@@ -283,7 +301,7 @@ function ShoppingList({ planId }: { planId: number }) {
 }
 
 /** The whole C6 screen for a plan. `today` is your date ("YYYY-MM-DD"). */
-export function PlanView({ plan, online, today = todayIso(), onAccepted }: { plan: PlanSummary; online: boolean; today?: string; onAccepted: (plan: PlanSummary) => void }) {
+export function PlanView({ plan, online, today = todayIso(), onAccepted, swap = null }: { plan: PlanSummary; online: boolean; today?: string; onAccepted: (plan: PlanSummary) => void; swap?: SwapProps | null }) {
   const [tab, setTab] = useState<PlanTab>("recipes");
   useEffect(() => setTab(readPlanTab()), []);
   const { upcoming, earlier } = orderDays(plan.days, today);
@@ -318,7 +336,7 @@ export function PlanView({ plan, online, today = todayIso(), onAccepted }: { pla
       ) : (
         <div className={styles.days}>
           {upcoming.map((day) => (
-            <DayCard key={day.day} day={day} plan={plan} today={today} online={online} />
+            <DayCard key={day.day} day={day} plan={plan} today={today} online={online} swap={swap} />
           ))}
           {earlier.length > 0 && (
             <details className={styles.earlier} open={upcoming.length === 0}>

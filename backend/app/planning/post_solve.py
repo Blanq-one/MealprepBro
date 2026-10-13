@@ -10,7 +10,7 @@
 """
 
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
@@ -225,15 +225,42 @@ def exclusion_notes(problem: PlanningProblem) -> list[str]:
     return [f"Left out {e.title}: {'; '.join(e.reasons)}" for e in problem.excluded]
 
 
+@dataclass(frozen=True)
+class KeptRounding:
+    """A batch a swap keeps exactly as it is (step 2b.6): its stored scale, and the line that took a whole
+    package, so it rounds to the same quantities."""
+
+    scale_factor: Decimal
+    absorbed: tuple[int, Decimal] | None = None
+
+
 def build_rounded_plan(
-    problem: PlanningProblem, solution: SolverSolution, *, absorb: bool = True
+    problem: PlanningProblem,
+    solution: SolverSolution,
+    *,
+    absorb: bool = True,
+    kept: Mapping[int, KeptRounding] | None = None,
+    keep_nudge: frozenset[int] = frozenset(),
 ) -> RoundedPlan:
-    snapped = snap_batches(problem, solution)
+    """`kept` and `keep_nudge` (swap, step 2b.6), by batch index: batches kept exactly as stored, and batches
+    whose portions change but whose multiplier stays. Only the other batches are snapped and absorbed."""
+    kept = kept or {}
+
+    def rounded(i: int, b: SolvedBatch) -> RoundedBatch:
+        if i in kept:
+            return round_batch(problem, b, factor=kept[i].scale_factor, absorbed=kept[i].absorbed)
+        return round_batch(problem, b)
+
+    fixed = {i: rounded(i, b) for i, b in enumerate(solution.batches) if i in kept}
+    snapped = snap_batches(problem, solution, fixed=fixed, keep_nudge=keep_nudge)
     jointly = snapped is not None or len(problem.nudges()) < 2
     if snapped is None:  # no combination fits the limits: snap each batch on its own; the validator decides
-        snapped = tuple(snap_nudge(problem, b) for b in solution.batches)
+        snapped = tuple(
+            b if i in kept or i in keep_nudge else snap_nudge(problem, b)
+            for i, b in enumerate(solution.batches)
+        )
     solution = replace(solution, batches=snapped)
-    batches = [round_batch(problem, b) for b in solution.batches]
+    batches = [fixed[i] if i in fixed else rounded(i, b) for i, b in enumerate(solution.batches)]
     notes = exclusion_notes(problem)
     if solution.status == "feasible":
         notes.append(NOT_PROVEN_NOTE)
@@ -245,7 +272,10 @@ def build_rounded_plan(
             "is the cheapest plan that meets all your limits"
         )
     if absorb:
-        batches, absorbed_notes = absorption_pass(problem, solution, batches)
+        free = frozenset(range(len(batches))) - set(kept) - keep_nudge
+        batches, absorbed_notes = absorption_pass(
+            problem, solution, batches, only=free if kept or keep_nudge else None
+        )
         notes.extend(absorbed_notes)
     meals = meals_from(solution, batches)
     grocery = build_grocery(problem.constraints, batches, problem.ingredients)

@@ -10,7 +10,8 @@ fridge, like overnight oats setting, counts toward ready but not toward the kitc
 Checks (tested in `seed/tests/test_step_timing.py`): the tagged hands-on total is within 5 minutes of
 the stated active minutes; the schedule's ready time is within 5 minutes of the stated total. Eleven
 seeds' stated totals were off by more than 5 minutes and now use their schedule's time, rounded to 5
-(marked *was*).
+(marked *was*). Since step 2b.6 (AA7) every schedule chops and marinates first, then cooks, then portions:
+five seeds' own times grew by 3–7 minutes, and the burrito bowls' total went from 30 to 35.
 
 ## Summary
 
@@ -39,14 +40,14 @@ seeds' stated totals were off by more than 5 minutes and now use their schedule'
 | 6f_turkey_sweet_potato_hash Turkey and sweet potato breakfast hash | 25 | 25 | 35 | 31 min | 31 min |
 | 6g_egg_kathi_rolls_green_chutney Egg kathi rolls with green chutney | 30 | 29 | 30 | 31 min | 31 min |
 | 7a_chicken_tikka_rice_bowls Chicken tikka rice bowls | 25 | 22 | 60 | 1 h 2 min | 1 h 2 min |
-| 7b_yogurt_chicken_salad_wraps Yogurt chicken salad wraps | 20 | 17 | 35 | 31 min | 31 min |
-| 7c_chicken_black_bean_burrito_bowls Chicken and black bean burrito bowls | 25 | 23 | 30 (*was* 40) | 29 min | 29 min |
+| 7b_yogurt_chicken_salad_wraps Yogurt chicken salad wraps | 20 | 17 | 35 | 37 min | 37 min |
+| 7c_chicken_black_bean_burrito_bowls Chicken and black bean burrito bowls | 25 | 23 | 35 (*was* 40, then 30) | 36 min | 36 min |
 | 7d_tuna_chickpea_salad_bowls Tuna and chickpea salad bowls | 15 | 15 | 15 | 15 min | 15 min |
-| 7e_egg_fried_rice_peas_carrots Egg fried rice with peas and carrots | 20 | 23 | 50 | 46 min | 46 min |
+| 7e_egg_fried_rice_peas_carrots Egg fried rice with peas and carrots | 20 | 23 | 50 | 52 min | 52 min |
 | 7f_dal_tadka_with_rice Dal tadka with rice | 20 | 23 | 35 (*was* 45) | 36 min | 36 min |
 | 7g_chicken_shawarma_pitas Chicken shawarma pitas with garlic yogurt | 30 | 27 | 75 | 1 h 14 min | 1 h 14 min |
 | 7h_ground_turkey_tacos Ground turkey tacos | 20 | 21 | 25 | 25 min | 25 min |
-| 8a_butter_chicken_with_rice Butter chicken with rice | 40 | 36 | 55 (*was* 75) | 57 min | 57 min |
+| 8a_butter_chicken_with_rice Butter chicken with rice | 40 | 36 | 55 (*was* 75) | 60 min | 60 min |
 | 8b_chicken_korma_with_tortillas Chicken korma with tortillas | 40 | 37 | 55 (*was* 65) | 54 min | 54 min |
 | 8c_chicken_chana_masala_with_rice Chicken chana masala with rice | 30 | 31 | 50 (*was* 55) | 49 min | 49 min |
 | 8d_tandoori_drumsticks_rice_raita Tandoori-style drumsticks with rice and raita | 25 | 26 | 115 (*was* 90) | 1 h 57 min | 1 h 57 min |
@@ -60,7 +61,7 @@ seeds' stated totals were off by more than 5 minutes and now use their schedule'
 | 8l_bone_in_chicken_breast_quinoa_asparagus Roast bone-in chicken breasts with quinoa and asparagus | 20 | 20 | 55 | 56 min | 56 min |
 | 9a_masala_roasted_chickpeas Masala roasted chickpeas | 10 | 11 | 45 | 49 min | 49 min |
 | 9b_yogurt_cucumber_dip_pita Garlic yogurt cucumber dip with pita | 10 | 10 | 10 | 10 min | 10 min |
-| 9c_egg_chaat Spiced egg chaat | 10 | 11 | 25 | 23 min | 23 min |
+| 9c_egg_chaat Spiced egg chaat | 10 | 11 | 25 | 26 min | 26 min |
 | 9d_air_fryer_chicken_tikka_bites Air-fryer chicken tikka bites | 15 | 14 | 50 | 54 min | 54 min |
 | 9e_chili_lime_edamame Chili-lime edamame | 5 | 5 | 10 | 9 min | 9 min |
 

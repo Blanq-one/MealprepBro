@@ -648,6 +648,73 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/plans/{plan_id}/meals/{meal_id}/swap": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Swap Meal
+         * @description Replace just this meal with the option you tapped. The plan is saved as a new version that
+         *     supersedes this one (same status, grocery check-offs carried over); `undo_plan_id` is the version Undo
+         *     brings back.
+         */
+        post: operations["swap_meal_api_v1_plans__plan_id__meals__meal_id__swap_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plans/{plan_id}/meals/{meal_id}/swap-options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Swap Options
+         * @description Swap's sheet (E5, step 2b.6): 3-5 other meals that fit this slot, day, fridge or freezer and time
+         *     rules, with what each adds to the groceries, as a stream of JSON lines (`SwapStreamEvent`). Recipes in
+         *     `exclude_version_ids` (already swapped away) are left out; `allow_llm` ("Write a new one") makes one ideas
+         *     call first, a rate-limit wait shown as `wait_s`; after Done shopping, options use your pantry unless
+         *     `allow_buying`.
+         */
+        post: operations["swap_options_api_v1_plans__plan_id__meals__meal_id__swap_options_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plans/{plan_id}/swap/undo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Undo Swap
+         * @description Undo a swap: the version before it comes back exactly as it was (409 once you've cooked or shopped
+         *     since).
+         */
+        post: operations["undo_swap_api_v1_plans__plan_id__swap_undo_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/prices": {
         parameters: {
             query?: never;
@@ -3876,6 +3943,20 @@ export interface components {
             /** Value */
             value: string;
         };
+        /** SwapIn */
+        SwapIn: {
+            /**
+             * Allow Buying
+             * @default false
+             */
+            allow_buying: boolean;
+            /** Exclude Version Ids */
+            exclude_version_ids?: number[];
+            /** Offered Version Ids */
+            offered_version_ids?: number[];
+            /** Version Id */
+            version_id: number;
+        };
         /**
          * SwapLineOut
          * @description A missing line you can make with something you have (M11): never "Missing".
@@ -3888,6 +3969,164 @@ export interface components {
             /** Name */
             name: string;
             substitute: components["schemas"]["SubstituteOut"];
+        };
+        /**
+         * SwapMealOut
+         * @description The meal being swapped, at the top of the sheet.
+         */
+        SwapMealOut: {
+            /**
+             * Eat On
+             * Format: date
+             */
+            eat_on: string;
+            /** Kcal */
+            kcal: number;
+            /** Label */
+            label: string;
+            /** Plan Meal Id */
+            plan_meal_id: number;
+            /** Protein G */
+            protein_g: string;
+            slot: components["schemas"]["MealSlot"];
+            /** Title */
+            title: string;
+            /** Version Id */
+            version_id: number;
+        };
+        /**
+         * SwapOptionOut
+         * @description One alternative for the meal; every number is code-computed (its rounded batch, the solver's
+         *     groceries).
+         */
+        SwapOptionOut: {
+            /** Also Changed */
+            also_changed: string[];
+            /** Buys */
+            buys?: string[];
+            /** Cost Delta Cents */
+            cost_delta_cents: number;
+            /** Cost Delta Display */
+            cost_delta_display: string;
+            /** Dish Category */
+            dish_category: string;
+            /**
+             * Is Draft
+             * @default false
+             */
+            is_draft: boolean;
+            /**
+             * Is New
+             * @default false
+             */
+            is_new: boolean;
+            /** Kcal */
+            kcal: number;
+            /** Numbers */
+            numbers: string[];
+            /** Protein G */
+            protein_g: string;
+            /** Recipe Id */
+            recipe_id: number;
+            /** Source Display */
+            source_display: string;
+            /**
+             * Steps Ready
+             * @default true
+             */
+            steps_ready: boolean;
+            /** Title */
+            title: string;
+            /** Version Id */
+            version_id: number;
+        };
+        /** SwapOptionsIn */
+        SwapOptionsIn: {
+            /**
+             * Allow Buying
+             * @default false
+             */
+            allow_buying: boolean;
+            /**
+             * Allow Llm
+             * @default false
+             */
+            allow_llm: boolean;
+            /** Exclude Version Ids */
+            exclude_version_ids?: number[];
+        };
+        /**
+         * SwapOut
+         * @description A swap's result: the new plan version (it supersedes the old one, which Undo brings back).
+         */
+        SwapOut: {
+            /** Also Changed */
+            also_changed: string[];
+            /** Message */
+            message: string;
+            plan: components["schemas"]["PlanSummaryOut"];
+            /** Plan Id */
+            plan_id: number;
+            /** Plan Meal Id */
+            plan_meal_id: number;
+            /** Undo Plan Id */
+            undo_plan_id: number;
+        };
+        /**
+         * SwapStreamEvent
+         * @description One line of POST /plans/{id}/meals/{meal_id}/swap-options (NDJSON): the options for one meal. With
+         *     allow_llm a rate-limit wait is a `progress` line with `wait_s` (the countdown), never an error.
+         */
+        SwapStreamEvent: {
+            /**
+             * After Shopping
+             * @default false
+             */
+            after_shopping: boolean;
+            /**
+             * Can Write New
+             * @default true
+             */
+            can_write_new: boolean;
+            current?: components["schemas"]["SwapMealOut"] | null;
+            /** Elapsed S */
+            elapsed_s: number;
+            /**
+             * Event
+             * @enum {string}
+             */
+            event: "started" | "progress" | "heartbeat" | "result";
+            /** Llm Call Count */
+            llm_call_count?: number | null;
+            /** Meal Id */
+            meal_id: number;
+            /** Message */
+            message?: string | null;
+            /** New Version Ids */
+            new_version_ids?: number[];
+            /** No Fit */
+            no_fit?: string | null;
+            /** Notes */
+            notes?: string[];
+            /** Options */
+            options?: components["schemas"]["SwapOptionOut"][];
+            /** Pad */
+            pad?: string | null;
+            /** Plan Id */
+            plan_id: number;
+            problem?: components["schemas"]["ProblemOut"] | null;
+            /** Retry After S */
+            retry_after_s?: number | null;
+            /** Run Id */
+            run_id?: number | null;
+            /** Stage */
+            stage?: string | null;
+            /** Status */
+            status?: ("succeeded" | "none_fit" | "waiting" | "failed") | null;
+            /** Total Tokens */
+            total_tokens?: number | null;
+            /** Wait S */
+            wait_s?: number | null;
         };
         /**
          * TimelineLineOut
@@ -5236,6 +5475,110 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GroceryListOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    swap_meal_api_v1_plans__plan_id__meals__meal_id__swap_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: number;
+                meal_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SwapIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SwapOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    swap_options_api_v1_plans__plan_id__meals__meal_id__swap_options_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: number;
+                meal_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SwapOptionsIn"];
+            };
+        };
+        responses: {
+            /** @description NDJSON event lines */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SwapStreamEvent"];
+                    "application/x-ndjson": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    undo_swap_api_v1_plans__plan_id__swap_undo_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanSummaryOut"];
                 };
             };
             /** @description Validation Error */

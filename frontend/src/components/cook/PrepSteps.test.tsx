@@ -8,7 +8,7 @@ import { reducePrep, initialPrepState, prepStages } from "@/lib/cook/prepRun";
 import type { PlanStreamEvent } from "@/lib/api/types";
 import { userSettings } from "@/test/fixtures";
 
-import { AmountStep, CookStyleStep, ShopStep } from "./PrepSteps";
+import { AmountStep, CookStyleStep, FREEZER_EXTRA_NOTE, ShopStep } from "./PrepSteps";
 
 const TODAY = new Date(2026, 9, 12); // Mon Oct 12; cook days Mon, Wed, Thu, Sat, Sun at 90 min (the seed default)
 const settings = userSettings();
@@ -102,9 +102,17 @@ describe("C1 How much are you prepping?", () => {
     await userEvent.click(screen.getByRole("button", { name: "By days" }));
     await userEvent.click(within(screen.getByRole("group", { name: "Meals" })).getByRole("button", { name: /Breakfast/ }));
     await userEvent.click(within(screen.getByRole("group", { name: "Starting" })).getByRole("button", { name: "Tomorrow" }));
-    fireEvent.click(screen.getByRole("button", { name: "More extra portions to freeze" }));
+    fireEvent.click(screen.getByRole("button", { name: "More cook extra for the freezer (future weeks)" }));
     const answers = buildPrepAnswers({ ...latest, style: "mix" }, settings, TODAY);
     expect(answers.prep).toMatchObject({ shape: "days", day_count: 5, slots: ["breakfast"], start: "tomorrow", extra_to_freeze: 1 });
+  });
+
+  it("freezer extras (AA2): named for future weeks, explained as outside this plan, and 0 unless you add some", () => {
+    render(<Harness step="amount" initial={{ preset: "five_lunches" }} />);
+    expect(screen.getByText("Cook extra for the freezer (future weeks)")).toBeInTheDocument();
+    expect(screen.getByText(FREEZER_EXTRA_NOTE)).toBeInTheDocument();
+    expect(emptyPrepDraft().extraToFreeze).toBe(0);
+    expect(buildPrepAnswers({ ...latest, style: "mix" }, settings, TODAY).prep?.extra_to_freeze).toBe(0);
   });
 
   it("a meal with no calories set says so, with a link to set them", async () => {

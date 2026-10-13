@@ -81,6 +81,8 @@ SMALL_FRACTION_LEFT = 0.75
 # integer made a real week take ~56 s; a yes/no per offer for its first package took ~10-50 s.
 WHOLE_PACKAGE_MIN_CENTS = 500
 
+BatchKey = tuple[int, date, str]  # (recipe version, cook day, portion size): one batch option of the model
+
 
 class EmptyCandidatePoolError(ValueError):
     """No candidate recipe survived the hard filters (equipment, exclusions, nutrition, time)."""
@@ -197,6 +199,12 @@ class _Model:
     # per ingredient: (amount bought in its planning unit, cents spent on it)
     purchases: dict[int, tuple[Any, Any]] = field(default_factory=dict)
     limited_cost: Any = 0  # the cents the purchase limit applies to
+    # step 2b.6 (swap): batches whose nudge is fixed, by (recipe version, cook day, portion size)
+    fixed_nudges: Mapping[BatchKey, Decimal] = field(default_factory=dict)
+
+
+def batch_key(b: _Batch) -> BatchKey:
+    return (b.recipe.version_id, b.cook_on, b.size.value)
 
 
 def _f(value: Decimal | int | float) -> float:
@@ -337,10 +345,13 @@ def build_model(
     elastic: bool = False,
     cheapest: bool = False,
     allowed_store_ids: Iterable[int] | None = None,
+    fixed_nudges: Mapping[BatchKey, Decimal] | None = None,
 ) -> _Model:
     """The weekly MILP. elastic: every hard limit relaxed with penalized slack (diagnostics). cheapest:
     every limit hard, the objective just the cost (a fallback when a tight budget leaves no time to find
-    the best plan)."""
+    the best plan). fixed_nudges (swap, step 2b.6): batches that keep their multiplier exactly, so their
+    portions count at that nudge with no nudge variable."""
+    pinned_nudges = dict(fixed_nudges or {})
     c = problem.constraints
     w = weights_for(c.grocery_mode)
     keep_days = c.keep_horizon_days()
@@ -366,13 +377,16 @@ def build_model(
             frozen[b.index] = pulp.LpVariable(
                 f"fz_{b.index}", lowBound=0, upBound=MAX_FROZEN_EXTRAS, cat=pulp.LpInteger
             )
-        elif hi > lo:
+        elif hi > lo and batch_key(b) not in pinned_nudges:
             nudge[b.index] = pulp.LpVariable(f"m_{b.index}", lowBound=lo, upBound=hi)
 
     # scaled[(b, e, s)] = nudge_b × x_bes, linearized exactly (x is binary)
     scaled: dict[tuple[int, date, MealSlot], Any] = {}
     for key, var in x.items():
         bi = key[0]
+        if (kept := pinned_nudges.get(batch_key(batches[bi]))) is not None:
+            scaled[key] = _f(kept) * var
+            continue
         if bi not in nudge:
             scaled[key] = var
             continue
@@ -809,6 +823,7 @@ def build_model(
             day_protein,
             purchases_by_ingredient,
             limited_cost,
+            pinned_nudges,
         )
 
     if cheapest:  # the cost, and fewer batches to break ties
@@ -829,6 +844,7 @@ def build_model(
             day_protein,
             purchases_by_ingredient,
             limited_cost,
+            pinned_nudges,
         )
 
     primary_scores = {r.version_id: nutrient_score(r, c.nutrition_priority) for r in problem.candidates}
@@ -910,6 +926,7 @@ def build_model(
         day_protein,
         purchases_by_ingredient,
         limited_cost,
+        pinned_nudges,
     )
 
 
@@ -939,6 +956,7 @@ def extract(
             continue
         raw = Decimal(str(_value(model.nudge[b.index]))) if b.index in model.nudge else Decimal(1)
         nudge = raw.quantize(MULTIPLIER_STEP, rounding=ROUND_HALF_UP)
+        nudge = model.fixed_nudges.get(batch_key(b), nudge)  # a swap's kept batch: exactly as stored
         batch_index = len(batches)
         portions = c.household_size * len(eaten) + extras
         batches.append(SolvedBatch(b.recipe.version_id, b.cook_on, b.size, nudge, portions, extras))

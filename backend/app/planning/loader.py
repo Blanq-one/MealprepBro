@@ -138,12 +138,14 @@ def load_ingredient_plans(
     *,
     lots_off_ids: frozenset[int] = frozenset(),
     extra_lots: Sequence[ExtraLot] = (),
+    lots_off_lot_ids: frozenset[int] = frozenset(),
 ) -> dict[int, IngredientPlan]:
     """Ingredient data, offers at the given stores and active inventory lots, all in one planning unit per
     ingredient. Used by the problem loader and, separately, by the plan validator's own reload.
     `lots_off_ids`: pantry items turned off for this request; their lots are left out. `extra_lots`: "have
     it" items for this request only (step 2b.5), added as lots with negative ids (never in your pantry, so
-    Mark cooked never takes from them)."""
+    Mark cooked never takes from them). `lots_off_lot_ids`: the exact lots turned off, so a swap after
+    shopping leaves out the lots you had then and never what the plan bought (step 2b.6)."""
     ids = sorted(set(ingredient_ids))
     data = load_ingredients(session, ids)
     allowed = set(store_ids)
@@ -160,6 +162,7 @@ def load_ingredient_plans(
             .where(
                 InventoryItem.user_id == user_id,
                 InventoryItem.ingredient_id.in_(set(ids) - lots_off_ids),
+                InventoryItem.id.notin_(lots_off_lot_ids),
                 InventoryItem.status == "active",
                 InventoryItem.quantity > 0,
             )
@@ -228,8 +231,12 @@ def build_problem(
     user_id: int,
     constraints: PlanConstraints,
     pairs: list[tuple[Recipe, RecipeVersion]] | None = None,
+    *,
+    keep_version_ids: frozenset[int] = frozenset(),
 ) -> PlanningProblem:
-    """`pairs`: the recipe versions to offer (default: the default version of every live recipe)."""
+    """`pairs`: the recipe versions to offer (default: the default version of every live recipe).
+    `keep_version_ids` (swap, step 2b.6): versions already in the plan, kept whatever has changed since (a
+    food you stopped eating, a recipe you hid): the hard filters don't apply to them; their numbers do."""
     c = constraints
     week_slots = {s for d in c.days for s in d.slots}
     if pairs is None:
@@ -245,6 +252,7 @@ def build_problem(
         c.always_have_ingredient_ids,
         lots_off_ids=c.lots_off_ingredient_ids,
         extra_lots=c.extra_lots,
+        lots_off_lot_ids=c.lots_off_lot_ids,
     )
     data = load_ingredients(session, ingredient_ids)
     store_names = {s.id: s.name for s in active_stores(session) if s.id in c.store_ids}
@@ -324,6 +332,8 @@ def build_problem(
                 )
             reasons.append(why)
             codes.append("unpriced")
+        if version.id in keep_version_ids:
+            reasons = [r for r in reasons if r.startswith("incomplete nutrition")]
         need: dict[int, Decimal] = {}
         if not reasons:
             try:

@@ -10,6 +10,7 @@ per-batch snap, and the validator's re-solve loop takes over.
 """
 
 from collections import defaultdict
+from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
@@ -22,6 +23,7 @@ from app.domain.enums import CalorieMode
 from app.domain.nutrition import kcal_display
 from app.domain.scaling import ScalingError
 from app.planning.problem import PlanningProblem, size_multiplier
+from app.planning.rounded import RoundedBatch
 from app.planning.rounding import round_batch
 from app.planning.solver.backend import solve_milp
 from app.planning.solver.model import SolvedBatch, SolverSolution
@@ -86,14 +88,33 @@ def stepiest_batch(problem: PlanningProblem, solution: SolverSolution) -> int | 
     return worst[1] if worst is not None else None
 
 
-def snap_batches(problem: PlanningProblem, solution: SolverSolution) -> tuple[SolvedBatch, ...] | None:
+def _fixed_option(batch: RoundedBatch) -> _Option:
+    protein = batch.per_portion.get("protein_g", Decimal(0)).quantize(Decimal("0.1"), ROUND_HALF_UP)
+    return _Option(
+        batch.nudge, kcal_display(batch.per_portion.get("energy_kcal", Decimal(0))), int(protein * 10)
+    )
+
+
+def snap_batches(
+    problem: PlanningProblem,
+    solution: SolverSolution,
+    *,
+    fixed: Mapping[int, RoundedBatch] | None = None,
+    keep_nudge: frozenset[int] = frozenset(),
+) -> tuple[SolvedBatch, ...] | None:
+    """`fixed` (swap, step 2b.6): batches a swap keeps exactly, already rounded as stored; `keep_nudge`:
+    batches whose nudge stays (the ones a swap changes only in portions)."""
     c = problem.constraints
     grid = _grid(problem)
     if len(grid) < 2:
         return None
+    fixed = fixed or {}
     options: list[list[_Option]] = []
-    for batch in solution.batches:
-        choices = [batch.nudge] if batch.portions_to_freeze else grid
+    for b, batch in enumerate(solution.batches):
+        if b in fixed:
+            options.append([_fixed_option(fixed[b])])
+            continue
+        choices = [batch.nudge] if batch.portions_to_freeze or b in keep_nudge else grid
         opts = [o for n in choices if (o := _option(problem, batch, n)) is not None]
         if not opts:
             return None

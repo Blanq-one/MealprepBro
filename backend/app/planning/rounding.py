@@ -35,11 +35,16 @@ def round_batch(
     *,
     absorption: Decimal = Decimal(1),
     absorbed: tuple[int, Decimal] | None = None,  # (ingredient id, exact base quantity to use)
+    factor: Decimal | None = None,  # a swap's kept batch (2b.6): its stored scale, so it rounds as before
 ) -> RoundedBatch:
     recipe = problem.candidate(solved.version_id)
-    factor = batch_scale(
-        solved.portions, size_multiplier(solved.portion_size) * solved.nudge, absorption, recipe.base_servings
-    )
+    if factor is None:
+        factor = batch_scale(
+            solved.portions,
+            size_multiplier(solved.portion_size) * solved.nudge,
+            absorption,
+            recipe.base_servings,
+        )
     lines: list[RoundedLine] = []
     absorbed_done = False
     for line in recipe.lines:

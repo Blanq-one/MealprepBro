@@ -59,9 +59,10 @@ def test_three_dishes_on_three_appliances_finish_faster_together() -> None:
     alone = [dish_alone(d, 4, 4).elapsed for d in (OVEN_DISH, AIR_DISH, RICE_DISH)]
     assert alone == [41, 20, 26]  # the oven waits for its 10-minute preheat, which overlaps the prep
     s = schedule_day([batch("oven", OVEN_DISH), batch("air", AIR_DISH), batch("rice", RICE_DISH)])
-    assert s.elapsed == 41 < sum(alone)
-    # the longest chain, with the other dishes' hands-on work fitted into its waiting
-    assert s.elapsed == s.lower_bound
+    # the kitchen order (AA7): all the chopping first (14 min), then the oven (the longest cook), the rice
+    # and the fish while it runs: 45, against 87 one after another (41 if the oven went in before the fish
+    # was chopped)
+    assert s.elapsed == 45 < sum(alone)
     assert s.hands_on == 17
 
 
@@ -72,8 +73,9 @@ def test_hands_on_work_that_cant_overlap_adds_to_the_longest_chain() -> None:
         batch("c", DishTiming((Task("z", None, 5, 0), Task("z", "rice_cooker", 1, 25)))),
     ]
     s = schedule_day(prep_heavy)
-    # the oven dish first (the longest chain), then the rice, then the fish: 43, not 41 + 27
-    assert s.elapsed == 43
+    # every dish's prep first (25 min), then the oven dish (the longest chain), the fish and the rice while it
+    # runs: 56, not 41 + 27 + 31
+    assert s.elapsed == 56
     assert s.elapsed < sum(dish_alone(b.timing, 4, 4).elapsed for b in prep_heavy)
 
 
@@ -292,6 +294,96 @@ def test_untagged_steps_are_estimated_from_their_sections() -> None:
     chilled = timing_from_steps([], active_minutes=10, total_minutes=30)
     assert chilled.tasks == (Task(None, None, 10, 20, section="no_cook"),)
     assert dish_alone(chilled, 4, 4).elapsed == 10
+
+
+# ---------------- the kitchen order (AA7) ----------------
+def kitchen_order_problems(s) -> list[str]:
+    """What breaks the systematic kitchen order in a schedule: hands-on cooking or portioning started while
+    some prep (chopping, marinating) was ready and waiting, or portioning while some cooking was (and its
+    appliance was free)."""
+    out = []
+    hands = [p for p in s.placed if p.hands_on]
+
+    def free(equipment: str | None, at: int) -> bool:
+        """Whether a task on this appliance could have started then (the oven only when it's empty)."""
+        if equipment is None:
+            return True
+        if equipment == "oven" and s.preheat_at is not None and at < s.preheat_at + 10:
+            return False
+        busy = sum(1 for o in s.placed if o.equipment == equipment and o.start <= at < o.end)
+        return busy < (4 if equipment == "stovetop" else 1)
+
+    for p in hands:
+        for q in hands:
+            if q.phase < p.phase and q.ready <= p.start < q.start and free(q.equipment, p.start):
+                out.append(f"{p.section} at {p.start} before the {q.section} ready at {q.ready}")
+    return out
+
+
+def test_a_cook_day_runs_prep_first_then_the_longest_cook_then_the_rest_and_portions_last() -> None:
+    """AA7: chop and marinate everything first, start the longest-cooking item next, the rest while it cooks,
+    and finish by portioning."""
+    roast = DishTiming(
+        (
+            Task("chicken", None, 8, 0),  # chop
+            Task("chicken", "oven", 2, 40, 425, "oven"),
+            Task(None, None, 4, 0, section="portioning"),
+        )
+    )
+    kebab = DishTiming(
+        (
+            Task("lamb", None, 5, 0),  # chop
+            Task("lamb", None, 0, 30, section="marinate"),
+            Task("lamb", "air_fryer", 2, 15, 400, "air_fryer"),
+            Task(None, None, 3, 0, section="portioning"),
+        )
+    )
+    stew = DishTiming(
+        (
+            Task("beans", None, 6, 0),  # chop
+            Task("beans", "stovetop", 10, 20, section="stovetop"),
+            Task(None, None, 3, 0, section="portioning"),
+        )
+    )
+    s = schedule_day([batch("roast", roast), batch("kebab", kebab), batch("stew", stew)])
+    assert kitchen_order_problems(s) == []
+    lines = [line.text for line in timeline(s) if line.kind != "preheat"]
+    chops = [n for n, text in enumerate(lines) if text.startswith("Prep the")]
+    cooks = [n for n, text in enumerate(lines) if "oven" in text or "air fryer" in text or "stove" in text]
+    assert len(chops) == 3 and max(chops) < min(cooks)  # all the chopping first
+    assert lines.index("Marinate the lamb (30 min)") < min(cooks)  # the marinade starts with the prep
+    assert lines[min(cooks)].startswith("Chicken into the oven")  # the longest cook goes in first
+    portions = [n for n, text in enumerate(lines) if text.startswith("Portion out")]
+    assert lines[-1] == "Done" and portions[-1] == len(lines) - 2  # it ends by portioning
+    assert all(n > min(cooks) for n in portions)
+
+
+def test_every_cook_day_keeps_the_kitchen_order() -> None:
+    """The same order on 300 random cook days of 1-5 dishes (prep chains, marinades, appliances, shared
+    steps, big batches)."""
+    rng = random.Random(42)
+    appliances = ["oven", "air_fryer", "stovetop", "rice_cooker", None]
+    for _ in range(300):
+        dishes = []
+        for d in range(rng.randint(1, 5)):
+            tasks = []
+            if rng.random() < 0.5:
+                tasks.append(Task(None, None, rng.randint(2, 12), 0))  # shared prep
+            for part in range(rng.randint(1, 3)):
+                name = f"part{part}"
+                tasks.append(Task(name, None, rng.randint(1, 10), 0))
+                if rng.random() < 0.3:
+                    tasks.append(Task(name, None, 0, rng.randint(10, 60), section="marinate"))
+                equipment = rng.choice(appliances)
+                if equipment is not None:
+                    temp = 425 if equipment in ("oven", "air_fryer") else None
+                    tasks.append(
+                        Task(name, equipment, rng.randint(1, 8), rng.randint(5, 45), temp, equipment)
+                    )
+            tasks.append(Task(None, None, rng.randint(2, 6), 0, section="portioning"))
+            dishes.append(batch(f"d{d}", DishTiming(tuple(tasks)), portions=rng.choice([2, 4, 8])))
+        s = schedule_day(dishes)
+        assert kitchen_order_problems(s) == [], [d.timing for d in dishes]
 
 
 # ---------------- the solver's cut ----------------

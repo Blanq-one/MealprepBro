@@ -60,8 +60,9 @@ export function NotForMe({ recipeId, title, hidden = false, online, planMealId =
   );
 }
 
-/** A plan meal row's ⋯: a sheet with Not for me for that meal's recipe (or assembly). Swap joins it in 2b.6. */
-export function MealMore({ recipeId, title, online, planMealId }: { recipeId: number; title: string; online: boolean; planMealId?: number | null }) {
+/** A plan meal row's ⋯: a sheet with Swap this meal (step 2b.6, when the meal can be swapped) and Not for me for
+ * that meal's recipe (or assembly). */
+export function MealMore({ recipeId, title, online, planMealId, onSwap }: { recipeId: number; title: string; online: boolean; planMealId?: number | null; onSwap?: () => void }) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -69,6 +70,19 @@ export function MealMore({ recipeId, title, online, planMealId }: { recipeId: nu
         ⋯
       </button>
       <BottomSheet title={title} open={open} onClose={() => setOpen(false)}>
+        {onSwap && (
+          <button
+            type="button"
+            className="btn btn-block"
+            disabled={!online}
+            onClick={() => {
+              setOpen(false);
+              onSwap();
+            }}
+          >
+            ⇄ Swap this meal
+          </button>
+        )}
         <p className="small muted">Not for me hides it from every future suggestion and plan. This plan keeps it; show it again from Settings, Hidden recipes.</p>
         <NotForMe recipeId={recipeId} title={title} online={online} planMealId={planMealId} />
         <button type="button" className="btn btn-block" onClick={() => setOpen(false)}>

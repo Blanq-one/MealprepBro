@@ -86,7 +86,7 @@ def _batch(session: Session, user_id: int, batch_id: int) -> tuple[PlanCookBatch
     return batch, plan
 
 
-def _needs(
+def stock_needs(
     session: Session, batch: PlanCookBatch, untracked: frozenset[int] = frozenset()
 ) -> dict[int, tuple[Decimal, str]]:
     """The batch's practical quantities per ingredient, optional lines, staples and `untracked` (Always-have)
@@ -130,7 +130,7 @@ def mark_cooked(session: Session, user_id: int, batch_id: int, cooked_on: date |
     always_have = frozenset(plan.constraints.get("always_have_ingredient_ids", ()))
     # a one-meal plan: the lots you turned off for its search are never taken (lots bought later are fine)
     lots_off = frozenset(plan.constraints.get("lots_off_lot_ids", ()))
-    needs = _needs(session, batch, always_have)
+    needs = stock_needs(session, batch, always_have)
     data = load_ingredients(session, needs)
     rows = {i.id: i for i in session.scalars(select(Ingredient).where(Ingredient.id.in_(needs)))}
     for ingredient_id, (need, unit) in sorted(needs.items()):
@@ -205,7 +205,7 @@ def batch_pantry_notes(
     each note is exactly what it will subtract."""
     always_have = frozenset(plan.constraints.get("always_have_ingredient_ids", ()))
     lots_off = frozenset(plan.constraints.get("lots_off_lot_ids", ()))
-    needs = _needs(session, batch, always_have)
+    needs = stock_needs(session, batch, always_have)
     units = load_settings(session, user_id).units
     lines = [(i, quantity, unit) for i, (quantity, unit) in needs.items()]
     return pantry_notes(session, user_id, lines, skip_lot_ids=lots_off, units=units)

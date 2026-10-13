@@ -6,16 +6,18 @@ import { useEffect, useState } from "react";
 import { useOnline } from "@/components/AppShell";
 import { Page } from "@/components/Page";
 import { NoPlanFits } from "@/components/plan/NoPlanFits";
-import { PlanView } from "@/components/plan/PlanView";
+import { PlanView, type SwapProps } from "@/components/plan/PlanView";
+import { SwapToast } from "@/components/plan/Swap";
 import { SyncNote } from "@/components/Status";
 import { BuildingSteps } from "@/components/ui/BuildingSteps";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { api, ApiError } from "@/lib/api/client";
-import type { CookAnswers, GenerationRun, PlanListItem, PlanStreamEvent, PlanSummary, SettingsOut } from "@/lib/api/types";
+import type { CookAnswers, GenerationRun, Meal, PlanListItem, PlanStreamEvent, PlanSummary, SettingsOut, SwapResult } from "@/lib/api/types";
 import { loadPending, savePending } from "@/lib/cook/answers";
 import { prepDraftFromAnswers, prepFixes, savePrepDraft } from "@/lib/cook/prep";
 import { prepStages, startPrepRun, usePrepRun } from "@/lib/cook/prepRun";
 import { useApi } from "@/lib/hooks/useApi";
+import { mealKey, type SwappedAway, undoSwap, withSwappedAway } from "@/lib/plan/swap";
 
 const PREP_START = "/cook/ask/?mode=prep&step=amount&fresh=1";
 const EDIT = "/cook/ask/?mode=prep&step=amount";
@@ -87,6 +89,49 @@ function Building({ run }: { run: string }) {
   return <BuildingSteps stages={prepStages(s)} waitS={s.wait?.seconds ?? null} waitStartedAt={s.wait?.startedAt ?? null} elapsedS={s.elapsedS} onStop={() => router.push("/cook/")} />;
 }
 
+type Toast = { message: string; planId: number; undoPlanId: number };
+
+/** Swap (step 2b.6): the swapped-in meal highlighted, the toast with Undo, and the recipes swapped away per
+ * meal (never offered again for it). Each swap is a new version of the plan, so the address follows it. */
+function useSwaps(setPlan: (plan: PlanSummary) => void) {
+  const router = useRouter();
+  const [away, setAway] = useState<SwappedAway>({});
+  const [highlight, setHighlight] = useState<number | null>(null);
+  const [toast, setToast] = useState<Toast | null>(null);
+  const [undoing, setUndoing] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+
+  function onSwapped(result: SwapResult, meal: Meal) {
+    setAway((a) => withSwappedAway(a, mealKey(meal.eat_on, meal.slot), meal.recipe_version_id));
+    setHighlight(result.plan_meal_id);
+    setError(null);
+    setToast({ message: result.message, planId: result.plan_id, undoPlanId: result.undo_plan_id });
+    setPlan(result.plan);
+    router.replace(`/cook/plan/?id=${result.plan_id}`);
+  }
+
+  async function undo() {
+    if (!toast) return;
+    setUndoing(true);
+    setError(null);
+    try {
+      const restored = await undoSwap(toast.planId);
+      setToast(null);
+      setHighlight(null);
+      setPlan(restored);
+      router.replace(`/cook/plan/?id=${restored.id}`);
+    } catch (e) {
+      setError(e);
+    } finally {
+      setUndoing(false);
+    }
+  }
+
+  const swap: SwapProps = { away, highlight, onSwapped };
+  const banner = toast ? <SwapToast message={toast.message} undoing={undoing} error={error} onUndo={() => void undo()} onDismiss={() => setToast(null)} /> : null;
+  return { swap, banner };
+}
+
 /** One plan (`?id=`, or `?plan=` from an old day link with `date=`), or your current plan (no id). */
 function Plan({ id, scrollTo }: { id: string | null; scrollTo: string | null }) {
   const online = useOnline();
@@ -94,6 +139,7 @@ function Plan({ id, scrollTo }: { id: string | null; scrollTo: string | null }) 
   const current = list.data?.find((p) => p.is_current);
   const planId = id ?? (current ? String(current.id) : null);
   const plan = useApi<PlanSummary>(planId ? `/api/v1/plans/${planId}` : null);
+  const { swap, banner } = useSwaps((next) => plan.setData(next));
 
   useEffect(() => {
     if (plan.data && scrollTo) document.getElementById(`day-${scrollTo}`)?.scrollIntoView?.();
@@ -108,7 +154,8 @@ function Plan({ id, scrollTo }: { id: string | null; scrollTo: string | null }) 
   return (
     <>
       <SyncNote syncedAt={plan.syncedAt} fromCache={plan.fromCache} />
-      <PlanView plan={plan.data} online={online} onAccepted={(out) => plan.setData(out)} />
+      {banner}
+      <PlanView plan={plan.data} online={online} onAccepted={(out) => plan.setData(out)} swap={swap} />
     </>
   );
 }

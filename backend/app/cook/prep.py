@@ -318,5 +318,5 @@ def summary(answers: CookAnswers, plan: PrepPlan, names: dict[int, str], today: 
         label = "could buy" if extra.status == "could_buy" else "have it"
         parts.append(f"+ {names.get(extra.ingredient_id, 'an item')} ({label})")
     if extra_portions := prep.extra_to_freeze:
-        parts.append(f"+ {extra_portions} to freeze")
+        parts.append(f"+ {extra_portions} extra for the freezer")  # AA2: for future weeks, not this plan
     return " · ".join(parts)

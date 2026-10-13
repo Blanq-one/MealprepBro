@@ -160,7 +160,7 @@ def test_rounding_over_a_limit_is_re_solved_and_the_validator_sees_whole_eggs(se
     # the first solve ignores what rounding does, the joint snap is off, and the first plan is reported a
     # little over the week's ceiling, so the validator's re-solve has to run
     monkeypatch.setattr(orch, "rounding_fit", lambda problem, nutrient="energy_kcal": RoundingFit({}, {}))
-    monkeypatch.setattr(post_solve, "snap_batches", lambda problem, solution: None)
+    monkeypatch.setattr(post_solve, "snap_batches", lambda problem, solution, **kept: None)
     checked = []
 
     def first_over(plan, reference):
