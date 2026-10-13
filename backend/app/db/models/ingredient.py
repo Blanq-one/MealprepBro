@@ -48,6 +48,10 @@ class Ingredient(Base):
     assume_in_stock: Mapped[bool] = mapped_column(Boolean, server_default="false")
     # long-life, bought occasionally (protein powder, rice, oil, spices): outside a shop-mode budget
     stock_up: Mapped[bool] = mapped_column(Boolean, server_default="false")
+    # Phase 2b (0011, step 2b.6, AA6): cheap | better | fancy, NULL = any tier (seasonings, oils, condiments);
+    # and what it rests on: protein_per_dollar | named | estimate
+    price_tier: Mapped[str | None] = mapped_column(Text)
+    price_tier_basis: Mapped[str | None] = mapped_column(Text)
     nutrition_source: Mapped[str] = mapped_column(Text)
     fdc_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("usda_food.fdc_id"))
     nutrition_reviewed_at: Mapped[datetime | None]

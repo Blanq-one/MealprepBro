@@ -5,6 +5,7 @@
 // pre-filled from your last meal-prep answers or your settings. They only edit the draft.
 import Link from "next/link";
 
+import { TierCards } from "@/components/cook/TierCards";
 import { GoalTiles } from "@/components/ui/GoalTiles";
 import { QuestionScreen } from "@/components/ui/QuestionScreen";
 import { Segmented } from "@/components/ui/Segmented";
@@ -16,6 +17,7 @@ import { MOODS, QUICK_DEFAULT_MINUTES } from "@/lib/cook/answers";
 import {
   amountOf,
   amountProblems,
+  buildPrepAnswers,
   choiceFor,
   type CookStyle,
   dayChipLabel,
@@ -83,6 +85,8 @@ const PRESETS = [
   { key: "usual_week", label: "My usual week", icon: "🗓️" },
   { key: "custom", label: "Something else", icon: "✏️" },
 ] as const;
+// AA6: the tier cards are a quick estimate; the plan you build is solved in full
+export const TIER_NOTE = "Totals are estimates for this week; the plan you build works out the exact list.";
 // AA2: these portions aren't eaten in this plan; they go straight to the freezer
 export const FREEZER_EXTRA_NOTE = "Extra portions go straight into the freezer for later weeks; they aren't part of this plan's meals.";
 
@@ -259,8 +263,10 @@ export function PrepGoalsStep({ draft, settings, onChange, onBack, onNext }: Ste
 }
 
 // ---------------- C3b Shopping for this? ----------------
-export function ShopStep({ draft, onChange, onBack, onNext, online }: StepProps & { online: boolean }) {
+export function ShopStep({ draft, settings, onChange, onBack, onNext, online, today = new Date() }: StepProps & { online: boolean }) {
   const shopping = draft.shopping;
+  const tier = draft.priceTier;
+  const reasons = shopping === null ? ["Pick one"] : shopping === "make_a_list" && tier === null ? ["Pick a tier or set your own limit"] : undefined;
   return (
     <QuestionScreen
       title="Shopping for this?"
@@ -269,8 +275,8 @@ export function ShopStep({ draft, onChange, onBack, onNext, online }: StepProps 
       onBack={onBack}
       primaryLabel="Build my plan"
       onPrimary={onNext}
-      primaryDisabled={!online || shopping === null}
-      reasons={shopping === null ? ["Pick one"] : undefined}
+      primaryDisabled={!online || reasons !== undefined}
+      reasons={reasons}
       footerNote={!online ? "Needs a connection" : undefined}
     >
       <TileGrid
@@ -280,12 +286,23 @@ export function ShopStep({ draft, onChange, onBack, onNext, online }: StepProps 
           { key: "make_a_list", label: "Make me a shopping list", icon: "🛒" },
         ]}
         selected={shopping ? [shopping] : []}
-        onToggle={(key) => onChange({ ...draft, shopping: key as PrepDraft["shopping"], budgetCents: key === draft.shopping ? draft.budgetCents : null })}
+        onToggle={(key) => onChange({ ...draft, shopping: key as PrepDraft["shopping"], budgetCents: key === draft.shopping ? draft.budgetCents : null, priceTier: key === draft.shopping ? draft.priceTier : null })}
       />
       {shopping === "make_a_list" && (
         <>
-          <MoneySlider label="Budget for this trip" valueCents={draft.budgetCents} scale={BUDGET_SCALE} onChange={(budgetCents) => onChange({ ...draft, budgetCents })} />
-          <p className="small muted">Long-life items like rice and protein powder are listed separately and don&apos;t count toward this.</p>
+          <p className={styles.label}>How do you want to shop this week?</p>
+          <TierCards answers={buildPrepAnswers({ ...draft, priceTier: null }, settings, today)} selected={tier === "own" ? null : tier} online={online} onPick={(priceTier) => onChange({ ...draft, priceTier, budgetCents: null })} />
+          <p className="small muted">{TIER_NOTE}</p>
+          {tier === "own" ? (
+            <>
+              <MoneySlider label="Budget for this trip" valueCents={draft.budgetCents} scale={BUDGET_SCALE} onChange={(budgetCents) => onChange({ ...draft, budgetCents })} />
+              <p className="small muted">Long-life items like rice and protein powder are listed separately and don&apos;t count toward this.</p>
+            </>
+          ) : (
+            <button type="button" className="btn btn-link" onClick={() => onChange({ ...draft, priceTier: "own" })}>
+              Set my own limit
+            </button>
+          )}
         </>
       )}
       {shopping === "use_what_i_have" && <p className="small muted">I&apos;ll buy only your could-buy items. If that isn&apos;t enough, I&apos;ll say what a small top-up would buy.</p>}

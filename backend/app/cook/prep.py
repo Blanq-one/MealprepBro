@@ -25,6 +25,7 @@ from decimal import ROUND_HALF_UP, Decimal
 
 from app.cook.answers import GOAL_LABELS, LOW_CALORIE_SHARE, QUICK_DEFAULT_MINUTES, SLOT_LABELS
 from app.domain.enums import GroceryMode, MealSlot, NutritionPriority, PlanningMode
+from app.domain.price_tiers import LABELS as TIER_LABELS
 from app.schemas.constraints import ExtraLot, PortionRequest
 from app.schemas.cook import NUTRITION_GOALS, CookAnswers, GoalTile, PrepAmount
 from app.schemas.plans import DayOverride, PlanRequest
@@ -238,6 +239,7 @@ def resolve_prep(answers: CookAnswers, settings: UserSettings, today: date) -> P
     could_buy = [e.ingredient_id for e in answers.extras if e.status == "could_buy"]
     primary, secondary = _priorities(answers)
     use_what_i_have = answers.shopping == "use_what_i_have"
+    tier = answers.price_tier if not use_what_i_have else None  # step 2b.6 (AA6): a tier in place of a budget
     request = PlanRequest(
         week_start=start,
         days=days,
@@ -247,7 +249,7 @@ def resolve_prep(answers: CookAnswers, settings: UserSettings, today: date) -> P
         nutrition_priority=primary,
         secondary_priority=secondary,
         mode=PlanningMode.INVENTORY if use_what_i_have else PlanningMode.SHOP,
-        budget_cents=None if use_what_i_have else answers.budget_cents,
+        budget_cents=None if use_what_i_have or tier is not None else answers.budget_cents,
         topup_cents=answers.budget_cents if use_what_i_have else None,
         protein_target_g=protein_target(settings, slots),
         allow_llm=answers.allow_llm,
@@ -260,6 +262,7 @@ def resolve_prep(answers: CookAnswers, settings: UserSettings, today: date) -> P
         have_unlimited=have_unlimited,
         pantry_off=[t.ingredient_id for t in answers.pantry if not t.include],
         max_portions_per_recipe=MAX_DAYS if prep.cook_style == "same_dish" else None,
+        price_tier=tier,
     )
     return PrepPlan(
         request=request,
@@ -311,6 +314,8 @@ def summary(answers: CookAnswers, plan: PrepPlan, names: dict[int, str], today: 
     parts.append(style)
     if answers.shopping == "use_what_i_have":
         parts.append("use what I have")
+    elif answers.price_tier is not None:
+        parts.append(f"shopping, {TIER_LABELS[answers.price_tier]}")
     else:
         limit = f", ${answers.budget_cents / 100:,.0f} limit" if answers.budget_cents is not None else ""
         parts.append(f"shopping{limit}")

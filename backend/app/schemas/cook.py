@@ -10,6 +10,7 @@ from typing import Any, Literal, Self
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.domain.enums import MealSlot, PortionSize, RecipeMood
+from app.domain.price_tiers import PriceTier
 from app.schemas.cards import CostLineOut, MissingLineOut, SwapLineOut
 from app.schemas.plans import PlanSummaryOut, ProblemOut
 from app.schemas.recipes import RecipeVersionOut
@@ -93,6 +94,9 @@ class CookAnswers(_Strict):
     shopping: Literal["use_what_i_have", "make_a_list"] | None = None
     budget_cents: int | None = Field(default=None, ge=0)
     allow_llm: bool = True
+    # step 2b.6 (AA6): a shopping list's budget tier (Cheapest, A bit better, Fancy); a budget number is "Set
+    # my own limit" instead
+    price_tier: PriceTier | None = None
 
     @model_validator(mode="after")
     def _check(self) -> Self:
@@ -282,3 +286,16 @@ class CookHomeOut(BaseModel):
     # a saved card opens scaled to your household at your portion size (C0, step 2b.4)
     portions: int = 1
     portion_size: PortionSize = PortionSize.NORMAL
+
+
+class TierCardOut(BaseModel):
+    """One budget tier card for this week (step 2b.6, AA6): a quick estimate, so it says "about"."""
+
+    tier: PriceTier
+    label: str  # "Cheapest"
+    blurb: str  # what it buys
+    status: Literal["estimated", "none_fits"]
+    total_cents: int | None = None
+    total_display: str | None = None  # "about $54.20"
+    protein_per_day_display: str | None = None  # "about 132 g protein a day"
+    reason: str | None = None  # why none fits

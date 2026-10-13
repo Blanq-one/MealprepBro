@@ -23,6 +23,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "named",
    "units": [
     {
      "name": "thigh",
@@ -52,6 +54,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "named",
    "units": [
     {
      "name": "breast",
@@ -79,6 +83,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "protein_per_dollar",
    "nutrition_reviewed_on": "2026-10-10"
   },
   {
@@ -101,6 +107,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "named",
    "nutrition_reviewed_on": "2026-10-10"
   },
   {
@@ -121,7 +129,9 @@
    "safety_category": "poultry",
    "is_perishable": true,
    "typical_location": "fridge",
-   "assume_in_stock": false
+   "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate"
   },
   {
    "name": "chicken sausage",
@@ -144,6 +154,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "protein_per_dollar",
    "notes": "Often in pork casing: tagged pork_trace (allowed, no limit)."
   },
   {
@@ -166,6 +178,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "fancy",
+   "price_tier_basis": "named",
    "units": [
     {
      "name": "fillet",
@@ -193,6 +207,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "units": [
     {
      "name": "fillet",
@@ -220,6 +236,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "fancy",
+   "price_tier_basis": "estimate",
    "units": [
     {
      "name": "fillet",
@@ -248,6 +266,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "protein_per_dollar",
    "units": [
     {
      "name": "can",
@@ -274,7 +294,9 @@
    "safety_category": "fish_shellfish",
    "is_perishable": true,
    "typical_location": "fridge",
-   "assume_in_stock": false
+   "assume_in_stock": false,
+   "price_tier": "fancy",
+   "price_tier_basis": "named"
   },
   {
    "name": "egg, large",
@@ -298,6 +320,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "named",
    "count_rounding_step": "1",
    "count_unit_weight": {
     "usda_portion_id": 88374
@@ -337,6 +361,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "protein_per_dollar",
    "count_rounding_step": "1",
    "density": {
     "usda_portion_id": 90044,
@@ -366,6 +392,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "units": [
     {
      "name": "slice",
@@ -393,6 +421,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "units": [
     {
      "name": "slice",
@@ -420,6 +450,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "units": [
     {
      "name": "link",
@@ -446,6 +478,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "diet_review_note": "many brands are pork + beef; allow a pork-only product (it then counts toward the pork cap)",
    "notes": "USDA FDC 2759006 (beef and pork, Foundation 2026) has no energy/protein/fat values yet."
   },
@@ -469,6 +503,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "units": [
     {
      "name": "slice",
@@ -498,6 +534,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "units": [
     {
      "name": "chop",
@@ -522,7 +560,9 @@
    "safety_category": "whole_cut_meat",
    "is_perishable": true,
    "typical_location": "fridge",
-   "assume_in_stock": false
+   "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate"
   },
   {
    "name": "ground pork",
@@ -542,7 +582,9 @@
    "safety_category": "ground_meat",
    "is_perishable": true,
    "typical_location": "fridge",
-   "assume_in_stock": false
+   "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate"
   },
   {
    "name": "lard",
@@ -616,6 +658,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "density": {
     "usda_portion_id": 90622,
     "measure": "cup"
@@ -891,6 +935,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "units": [
     {
      "name": "slice",
@@ -924,6 +970,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "diet_review_note": "rennet may come from calves; allow if your cheese uses microbial or vegetable rennet"
   },
   {
@@ -947,6 +995,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "fancy",
+   "price_tier_basis": "estimate",
    "density": {
     "usda_portion_id": 88261,
     "measure": "cup"
@@ -973,6 +1023,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "units": [
     {
      "name": "cup_crumbled",
@@ -1001,6 +1053,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "density": {
     "usda_portion_id": 90042,
     "measure": "cup"
@@ -1028,6 +1082,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "density": {
     "usda_portion_id": 88320,
     "measure": "cup"
@@ -1053,6 +1109,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "density": {
     "usda_portion_id": 88314,
     "measure": "cup"
@@ -1078,6 +1136,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "density": {
     "usda_portion_id": 88325,
     "measure": "cup"
@@ -1105,6 +1165,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "named",
    "units": [
     {
      "name": "container",
@@ -1132,7 +1194,9 @@
    "safety_category": null,
    "is_perishable": true,
    "typical_location": "fridge",
-   "assume_in_stock": false
+   "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "named"
   },
   {
    "name": "yogurt, plain whole milk",
@@ -1156,6 +1220,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "density": {
     "usda_portion_id": 88365,
     "measure": "cup"
@@ -1280,6 +1346,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "density": {
     "usda_portion_id": 87434,
     "measure": "tbsp"
@@ -1306,6 +1374,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "named",
    "stock_up": true,
    "density": {
     "usda_portion_id": 83927,
@@ -1331,6 +1401,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "stock_up": true,
    "density": {
     "usda_portion_id": 85377,
@@ -1357,6 +1429,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "stock_up": true,
    "density": {
     "usda_portion_id": 93454,
@@ -1383,6 +1457,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "stock_up": true,
    "density": {
     "usda_portion_id": 83944,
@@ -1408,6 +1484,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "stock_up": true,
    "density": {
     "usda_portion_id": 83943,
@@ -1434,6 +1512,8 @@
    "is_perishable": true,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "count_rounding_step": "1",
    "count_unit_weight": {
     "usda_portion_id": 89459
@@ -1462,6 +1542,8 @@
    "is_perishable": true,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "named",
    "count_rounding_step": "1",
    "count_unit_weight": {
     "label": "flour-tortilla-small"
@@ -1491,6 +1573,8 @@
    "is_perishable": true,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "named",
    "count_rounding_step": "1",
    "count_unit_weight": {
     "usda_portion_id": 95472
@@ -1515,6 +1599,8 @@
    "is_perishable": true,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "count_rounding_step": "1",
    "count_unit_weight": {
     "usda_portion_id": 91108
@@ -1543,6 +1629,8 @@
    "is_perishable": true,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "count_rounding_step": "1",
    "count_unit_weight": {
     "usda_portion_id": 95146
@@ -1567,7 +1655,9 @@
    "safety_category": null,
    "is_perishable": false,
    "typical_location": "pantry",
-   "assume_in_stock": false
+   "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate"
   },
   {
    "name": "quinoa (dry)",
@@ -1586,6 +1676,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "stock_up": true,
    "density": {
     "usda_portion_id": 83924,
@@ -1609,6 +1701,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "stock_up": true,
    "density": {
     "usda_portion_id": 85371,
@@ -1657,6 +1751,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "units": [
     {
      "name": "can",
@@ -1682,6 +1778,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "density": {
     "usda_portion_id": 95816,
     "measure": "cup"
@@ -1705,6 +1803,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "units": [
     {
      "name": "can",
@@ -1730,6 +1830,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "named",
    "stock_up": true,
    "density": {
     "usda_portion_id": 90594,
@@ -1754,6 +1856,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "named",
    "stock_up": true,
    "density": {
     "usda_portion_id": 94081,
@@ -1780,7 +1884,9 @@
    "safety_category": null,
    "is_perishable": true,
    "typical_location": "fridge",
-   "assume_in_stock": false
+   "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate"
   },
   {
    "name": "edamame, frozen",
@@ -1801,6 +1907,8 @@
    "is_perishable": false,
    "typical_location": "freezer",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "protein_per_dollar",
    "density": {
     "usda_portion_id": 83051,
     "measure": "cup"
@@ -1824,6 +1932,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "protein_per_dollar",
    "stock_up": true,
    "density": {
     "usda_portion_id": 94049,
@@ -1853,6 +1963,8 @@
     "basis": "estimate for whole dry onions in a cool, dry, dark pantry; sources range from about 2 weeks (Virginia Dept. of Health storage chart) to about 6 weeks (Canadian public-health storage guide)"
    },
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "count_rounding_step": "0.5",
    "count_unit_weight": {
     "usda_portion_id": 85860
@@ -1894,6 +2006,8 @@
     "basis": "estimate for whole dry onions in a cool, dry, dark pantry; sources range from about 2 weeks (Virginia Dept. of Health storage chart) to about 6 weeks (Canadian public-health storage guide)"
    },
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "count_rounding_step": "0.5",
    "count_unit_weight": {
     "usda_portion_id": 234609
@@ -2007,6 +2121,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "count_rounding_step": "0.5",
    "count_unit_weight": {
     "usda_portion_id": 86686
@@ -2041,6 +2157,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "density": {
     "usda_portion_id": 85963,
     "measure": "cup"
@@ -2062,6 +2180,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "density": {
     "usda_portion_id": 86698,
     "measure": "tbsp"
@@ -2091,6 +2211,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "density": {
     "usda_portion_id": 85971,
     "measure": "cup"
@@ -2115,6 +2237,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "named",
    "units": [
     {
      "name": "cup",
@@ -2144,6 +2268,8 @@
    "is_perishable": false,
    "typical_location": "freezer",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "named",
    "units": [
     {
      "name": "cup",
@@ -2169,6 +2295,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "named",
    "units": [
     {
      "name": "cup",
@@ -2194,6 +2322,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "named",
    "units": [
     {
      "name": "head",
@@ -2225,6 +2355,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "named",
    "count_rounding_step": "0.5",
    "count_unit_weight": {
     "usda_portion_id": 86066
@@ -2254,6 +2386,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "named",
    "count_rounding_step": "0.5",
    "count_unit_weight": {
     "usda_portion_id": 86627
@@ -2275,6 +2409,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "count_rounding_step": "1",
    "count_unit_weight": {
     "usda_portion_id": 86559
@@ -2303,6 +2439,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "units": [
     {
      "name": "stalk",
@@ -2331,6 +2469,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "count_rounding_step": "0.5",
    "count_unit_weight": {
     "usda_portion_id": 83050
@@ -2353,6 +2493,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "named",
    "count_rounding_step": "0.5",
    "count_unit_weight": {
     "usda_portion_id": 84610
@@ -2375,6 +2517,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "named",
    "units": [
     {
      "name": "cup_sliced",
@@ -2403,6 +2547,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "count_rounding_step": "0.25",
    "count_unit_weight": {
     "usda_portion_id": 85795
@@ -2435,6 +2581,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "named",
    "units": [
     {
      "name": "cup",
@@ -2460,6 +2608,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "units": [
     {
      "name": "head",
@@ -2489,6 +2639,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "units": [
     {
      "name": "head",
@@ -2519,6 +2671,8 @@
     "basis": "estimate for russet potatoes in a cool, dark, dry place; sources range from 2-4 weeks (Virginia Dept. of Health storage chart) to months in a cold cellar"
    },
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "count_rounding_step": "0.5",
    "count_unit_weight": {
     "usda_portion_id": 85923
@@ -2546,6 +2700,8 @@
     "basis": "estimate for whole sweet potatoes in a cool, dark, dry place, set like russet potatoes (decision E8, 2026-10-10: a multi-week pantry life); no separate chart value was looked up"
    },
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "count_rounding_step": "0.5",
    "count_unit_weight": {
     "usda_portion_id": 83167
@@ -2569,6 +2725,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "named",
    "units": [
     {
      "name": "cup",
@@ -2595,6 +2753,8 @@
    "is_perishable": false,
    "typical_location": "freezer",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "named",
    "density": {
     "usda_portion_id": 85902,
     "measure": "cup"
@@ -2619,6 +2779,8 @@
    "is_perishable": false,
    "typical_location": "freezer",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "named",
    "density": {
     "usda_portion_id": 83030,
     "measure": "cup"
@@ -2739,6 +2901,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "named",
    "count_rounding_step": "0.5",
    "count_unit_weight": {
     "usda_portion_id": 84476
@@ -2761,6 +2925,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "named",
    "units": [
     {
      "name": "cup",
@@ -2784,6 +2950,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "fancy",
+   "price_tier_basis": "estimate",
    "units": [
     {
      "name": "spear",
@@ -2808,6 +2976,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "fancy",
+   "price_tier_basis": "estimate",
    "units": [
     {
      "name": "sprout",
@@ -2832,6 +3002,8 @@
    "is_perishable": true,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "count_rounding_step": "0.5",
    "count_unit_weight": {
     "usda_portion_id": 93515
@@ -2855,6 +3027,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "count_rounding_step": "1",
    "count_unit_weight": {
     "usda_portion_id": 89193
@@ -2877,6 +3051,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "count_rounding_step": "1",
    "count_unit_weight": {
     "usda_portion_id": 84230
@@ -2899,6 +3075,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "units": [
     {
      "name": "cup",
@@ -2923,6 +3101,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "fancy",
+   "price_tier_basis": "estimate",
    "units": [
     {
      "name": "cup",
@@ -2947,6 +3127,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "count_rounding_step": "0.5",
    "count_unit_weight": {
     "usda_portion_id": 85652
@@ -2969,6 +3151,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "units": [
     {
      "name": "cup",
@@ -3063,6 +3247,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "density": {
     "usda_portion_id": 82588,
     "measure": "cup"
@@ -3086,6 +3272,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "fancy",
+   "price_tier_basis": "estimate",
    "count_rounding_step": "1",
    "count_unit_weight": {
     "usda_portion_id": 82634
@@ -3108,6 +3296,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "count_rounding_step": "0.5",
    "count_unit_weight": {
     "usda_portion_id": 89226
@@ -3228,6 +3418,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "fancy",
+   "price_tier_basis": "protein_per_dollar",
    "units": [
     {
      "name": "cup",
@@ -3251,7 +3443,9 @@
    "safety_category": null,
    "is_perishable": false,
    "typical_location": "pantry",
-   "assume_in_stock": false
+   "assume_in_stock": false,
+   "price_tier": "fancy",
+   "price_tier_basis": "protein_per_dollar"
   },
   {
    "name": "peanuts",
@@ -3270,6 +3464,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "units": [
     {
      "name": "cup",
@@ -3294,6 +3490,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "fancy",
+   "price_tier_basis": "estimate",
    "units": [
     {
      "name": "cup_chopped",
@@ -3317,6 +3515,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "fancy",
+   "price_tier_basis": "protein_per_dollar",
    "stock_up": true,
    "nutrition_reviewed_on": "2026-10-08"
   },
@@ -3338,6 +3538,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "protein_per_dollar",
    "stock_up": true,
    "density": {
     "usda_portion_id": 84816,
@@ -3383,6 +3585,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "density": {
     "usda_portion_id": 86856,
     "measure": "cup"
@@ -3405,6 +3609,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "stock_up": true,
    "density": {
     "usda_portion_id": 86209,
@@ -4594,6 +4800,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "protein_per_dollar",
    "stock_up": true,
    "units": [
     {
@@ -4637,6 +4845,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "fdc_id": 172938,
    "aliases": [
     "pork pepperoni",
@@ -4658,6 +4868,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "fdc_id": 174593,
    "aliases": [
     "turkey pepperoni"
@@ -4678,6 +4890,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "fdc_id": 174593,
    "aliases": [
     "chicken pepperoni"
@@ -4720,6 +4934,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "fdc_id": 172938,
    "aliases": [
     "pork salami",
@@ -4741,6 +4957,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "fdc_id": 172937,
    "aliases": [
     "turkey salami"
@@ -4761,6 +4979,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "fdc_id": 172937,
    "aliases": [
     "chicken salami"
@@ -4833,6 +5053,8 @@
    "is_perishable": false,
    "typical_location": "freezer",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "named",
    "shelf_life": {
     "freezer_days": 240,
     "basis": "estimate: about 8 months frozen for best quality, like a typical bag's best-by (decision J5)"
@@ -4856,6 +5078,8 @@
    "is_perishable": false,
    "typical_location": "freezer",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "named",
    "shelf_life": {
     "freezer_days": 240,
     "basis": "estimate: about 8 months frozen for best quality, like a typical bag's best-by (decision J5)"
@@ -4880,6 +5104,8 @@
    "is_perishable": false,
    "typical_location": "freezer",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "named",
    "shelf_life": {
     "freezer_days": 240,
     "basis": "estimate: about 8 months frozen for best quality, like a typical bag's best-by (decision J5)"
@@ -4903,6 +5129,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "shelf_life": {
     "pantry_days": 730,
     "basis": "estimate: unopened canned vegetables keep about 2 years (decision J5)"
@@ -4926,6 +5154,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "shelf_life": {
     "pantry_days": 730,
     "basis": "estimate: unopened canned vegetables keep about 2 years (decision J5)"
@@ -4950,6 +5180,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "stock_up": true,
    "shelf_life": {
     "pantry_days": 365,
@@ -4975,6 +5207,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "stock_up": true,
    "shelf_life": {
     "pantry_days": 365,
@@ -4999,6 +5233,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "estimate",
    "stock_up": true,
    "shelf_life": {
     "pantry_days": 365,
@@ -5024,6 +5260,8 @@
    "is_perishable": false,
    "typical_location": "freezer",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "shelf_life": {
     "freezer_days": 240,
     "basis": "estimate: about 8 months frozen for best quality, like a typical bag's best-by (decision J5)"
@@ -5046,6 +5284,8 @@
    "is_perishable": false,
    "typical_location": "freezer",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "estimate",
    "shelf_life": {
     "freezer_days": 240,
     "basis": "estimate: about 8 months frozen for best quality, like a typical bag's best-by (decision J5)"
@@ -5080,6 +5320,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "protein_per_dollar",
    "refuse": {
     "pct": "27",
     "description": "bone",
@@ -5112,6 +5354,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "protein_per_dollar",
    "refuse": {
     "pct": "20",
     "description": "bone",
@@ -5141,6 +5385,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "protein_per_dollar",
    "refuse": {
     "pct": "33",
     "description": "bone and cartilage",
@@ -5171,6 +5417,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "better",
+   "price_tier_basis": "protein_per_dollar",
    "refuse": {
     "pct": "38",
     "description": "bone and connective tissue",
@@ -5201,6 +5449,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
+   "price_tier": "cheap",
+   "price_tier_basis": "protein_per_dollar",
    "refuse": {
     "pct": "32",
     "description": "bone",

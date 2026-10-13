@@ -192,6 +192,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/cook/meal-prep/tiers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Meal Prep Tiers
+         * @description The shopping step's three budget tier cards for these answers (step 2b.6, AA6): Cheapest, A bit better
+         *     and Fancy, each with an estimated total and protein per day from a quick solve (saved recipes, no LLM).
+         *     Tap one and POST /cook/meal-prep with its `price_tier` for the full plan.
+         */
+        post: operations["meal_prep_tiers_api_v1_cook_meal_prep_tiers_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/cook/meals": {
         parameters: {
             query?: never;
@@ -1592,6 +1614,7 @@ export interface components {
             /** People */
             people?: number | null;
             prep?: components["schemas"]["PrepAmount"] | null;
+            price_tier?: components["schemas"]["PriceTier"] | null;
             /**
              * Schema Version
              * @default 1
@@ -1631,6 +1654,7 @@ export interface components {
             /** People */
             people?: number | null;
             prep?: components["schemas"]["PrepAmount"] | null;
+            price_tier?: components["schemas"]["PriceTier"] | null;
             /**
              * Schema Version
              * @default 1
@@ -3078,6 +3102,8 @@ export interface components {
             pantry_off?: number[];
             /** Portion Requests */
             portion_requests?: components["schemas"]["PortionRequest"][];
+            /** @description cheapest | better | fancy */
+            price_tier?: components["schemas"]["PriceTier"] | null;
             /**
              * Protein Reward
              * @description High protein: reward up to 1.5 × the target
@@ -3450,6 +3476,12 @@ export interface components {
          * @enum {string}
          */
         PriceSource: "manual" | "in_store" | "receipt" | "estimate" | "api";
+        /**
+         * PriceTier
+         * @description A plan's tier (the cards in the shopping step).
+         * @enum {string}
+         */
+        PriceTier: "cheapest" | "better" | "fancy";
         /**
          * ProblemOut
          * @description application/problem+json shape, also embedded in failed runs.
@@ -4383,6 +4415,30 @@ export interface components {
             wait_s?: number | null;
         };
         /**
+         * TierCardOut
+         * @description One budget tier card for this week (step 2b.6, AA6): a quick estimate, so it says "about".
+         */
+        TierCardOut: {
+            /** Blurb */
+            blurb: string;
+            /** Label */
+            label: string;
+            /** Protein Per Day Display */
+            protein_per_day_display?: string | null;
+            /** Reason */
+            reason?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "estimated" | "none_fits";
+            tier: components["schemas"]["PriceTier"];
+            /** Total Cents */
+            total_cents?: number | null;
+            /** Total Display */
+            total_display?: string | null;
+        };
+        /**
          * TimelineLineOut
          * @description One line of a cook day's timeline (FLOW_SPEC §20.4), templated by code; times from the schedule.
          */
@@ -4940,6 +4996,39 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["PlanStreamEvent"];
                     "application/x-ndjson": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    meal_prep_tiers_api_v1_cook_meal_prep_tiers_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CookAnswers-Input"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TierCardOut"][];
                 };
             };
             /** @description Validation Error */

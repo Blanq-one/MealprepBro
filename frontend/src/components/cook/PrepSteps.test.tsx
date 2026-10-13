@@ -1,11 +1,12 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { buildPrepAnswers, emptyPrepDraft, type PrepDraft, prepDraftFromAnswers } from "@/lib/cook/prep";
 import { reducePrep, initialPrepState, prepStages } from "@/lib/cook/prepRun";
 import type { PlanStreamEvent } from "@/lib/api/types";
+import { mockApi } from "@/test/api";
 import { userSettings } from "@/test/fixtures";
 
 import { AmountStep, CookStyleStep, FREEZER_EXTRA_NOTE, ShopStep } from "./PrepSteps";
@@ -124,16 +125,43 @@ describe("C1 How much are you prepping?", () => {
   });
 });
 
-describe("C3b Shopping for this?", () => {
-  it("Build my plan waits for a pick; a shopping list takes a budget, Use what I have none", async () => {
+const CARDS = [
+  { tier: "cheapest", label: "Cheapest", blurb: "Cheap staples: chicken thighs, eggs, lentils, rice, frozen veg, tortillas", status: "estimated", total_cents: 3905, total_display: "about $39.05", protein_per_day_display: "about 130 g protein a day", reason: null },
+  { tier: "better", label: "A bit better", blurb: "Adds chicken breast, Greek yogurt, ground turkey and more fresh veg", status: "estimated", total_cents: 4512, total_display: "about $45.12", protein_per_day_display: "about 129 g protein a day", reason: null },
+  { tier: "fancy", label: "Fancy", blurb: "Adds salmon, shrimp and other premium picks, with more variety", status: "none_fits", total_cents: null, total_display: null, protein_per_day_display: null, reason: "No week fits your limits with the Fancy tier's groceries." },
+];
+
+describe("C3b Shopping for this? (AA6: budget tiers)", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("three tier cards for this week, each with its estimate; a tap picks the tier", async () => {
+    const calls = mockApi((c) => (c.path === "/api/v1/cook/meal-prep/tiers" ? { body: CARDS } : undefined));
     render(<Harness step="shop" initial={{ preset: "five_lunches", style: "mix" }} />);
     expect(screen.getByRole("button", { name: "Build my plan" })).toBeDisabled();
     await userEvent.click(screen.getByRole("button", { name: /Make me a shopping list/ }));
+    const cheapest = await screen.findByRole("button", { name: /Cheapest/ });
+    expect(cheapest).toHaveTextContent("about $39.05");
+    expect(cheapest).toHaveTextContent("about 130 g protein a day");
+    expect(screen.getByRole("button", { name: /Fancy/ })).toBeDisabled();
+    expect(screen.getByText("No week fits your limits with the Fancy tier's groceries.")).toBeInTheDocument();
+    expect(screen.getByText("Pick a tier or set your own limit")).toBeInTheDocument();
+    await userEvent.click(cheapest);
+    expect(cheapest).toHaveAttribute("aria-pressed", "true");
+    expect(buildPrepAnswers(latest, settings, TODAY)).toMatchObject({ shopping: "make_a_list", price_tier: "cheapest", budget_cents: null });
+    expect(screen.getByRole("button", { name: "Build my plan" })).toBeEnabled();
+    expect(calls[0]?.body).toMatchObject({ mode: "prep", shopping: "make_a_list", price_tier: null, budget_cents: null });
+  });
+
+  it("Set my own limit takes a budget number instead; Use what I have none", async () => {
+    mockApi((c) => (c.path === "/api/v1/cook/meal-prep/tiers" ? { body: CARDS } : undefined));
+    render(<Harness step="shop" initial={{ preset: "five_lunches", style: "mix" }} />);
+    await userEvent.click(screen.getByRole("button", { name: /Make me a shopping list/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Set my own limit" }));
     fireEvent.change(screen.getByRole("slider"), { target: { value: "4500" } });
-    expect(buildPrepAnswers(latest, settings, TODAY)).toMatchObject({ shopping: "make_a_list", budget_cents: 4500 });
+    expect(buildPrepAnswers(latest, settings, TODAY)).toMatchObject({ shopping: "make_a_list", budget_cents: 4500, price_tier: null });
     expect(screen.getByText(/listed separately/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: /Use what I have/ }));
-    expect(buildPrepAnswers(latest, settings, TODAY)).toMatchObject({ shopping: "use_what_i_have", budget_cents: null });
+    expect(buildPrepAnswers(latest, settings, TODAY)).toMatchObject({ shopping: "use_what_i_have", budget_cents: null, price_tier: null });
   });
 });
 

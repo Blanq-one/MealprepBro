@@ -26,6 +26,8 @@ from app.domain.food_safety import IngredientSafety, doneness_requirement
 from app.domain.frequency_caps import Meal, weekly_cap_violations
 from app.domain.frequency_caps import ResolvedCap as DomainCap
 from app.domain.nutrition import kcal_display
+from app.domain.price_tiers import LABELS as TIER_LABELS
+from app.domain.price_tiers import PriceTier
 from app.domain.quantities import format_fraction
 from app.domain.scaling import scale_line
 from app.domain.text_rules import check_text
@@ -634,11 +636,15 @@ def validate_plan(
         for item in plan.grocery.items:
             buys = (item.kind == "buy" and (item.bought or item.to_buy) > 0) or item.kind == "unpriced"
             if buys and not c.may_buy(item.ingredient_id):
+                why = (
+                    f"isn't in the {TIER_LABELS[PriceTier(c.price_tier)]} tier"
+                    if c.price_tier is not None
+                    else "isn't one of your could-buy items"
+                )
                 errors.append(
                     Issue(
                         "PURCHASE_NOT_ALLOWED",
-                        f"{item.name} isn't one of your could-buy items, but the plan would buy "
-                        f"{_qty(item.to_buy, item.unit)}",
+                        f"{item.name} {why}, but the plan would buy {_qty(item.to_buy, item.unit)}",
                         details={"ingredient_id": item.ingredient_id},
                     )
                 )

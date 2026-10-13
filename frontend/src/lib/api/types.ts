@@ -98,3 +98,6 @@ export type RecipeEditBody = S["RecipeEditIn"];
 export type RecipeEdit = S["RecipeEditOut"];
 export type PlanUpdate = S["PlanUpdateOut"];
 export type AddToList = S["AddToListOut"];
+// Step 2b.6: budget tier cards (AA6)
+export type TierCard = S["TierCardOut"];
+export type PriceTier = TierCard["tier"];

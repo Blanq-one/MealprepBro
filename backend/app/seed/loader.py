@@ -309,6 +309,8 @@ def _apply_ingredient(row: Ingredient, seed: SeedIngredient, files: SeedFiles, c
     row.is_perishable, row.typical_location = seed.is_perishable, seed.typical_location.value
     row.assume_in_stock, row.nutrition_source = seed.assume_in_stock, seed.nutrition_source.value
     row.stock_up = seed.stock_up
+    row.price_tier = seed.price_tier.value if seed.price_tier else None  # step 2b.6 (AA6)
+    row.price_tier_basis = seed.price_tier_basis.value if seed.price_tier_basis else None
     life = seed.shelf_life
     row.shelf_life_days_pantry = life.pantry_days if life else None
     row.shelf_life_days_fridge = life.fridge_days if life else None

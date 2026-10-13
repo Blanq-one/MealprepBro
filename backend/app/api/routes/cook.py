@@ -10,7 +10,16 @@ from app.cook.meal_prep import meal_prep_events, prepare
 from app.cook.prep import PrepAnswersError
 from app.cook.single_meal import cook_meal
 from app.cook.stream import meal_now_events, more_events
-from app.schemas.cook import CookAnswers, CookHomeOut, CookMealIn, CookMealOut, CookSearchOut, CookStreamEvent
+from app.cook.tiers import tier_cards
+from app.schemas.cook import (
+    CookAnswers,
+    CookHomeOut,
+    CookMealIn,
+    CookMealOut,
+    CookSearchOut,
+    CookStreamEvent,
+    TierCardOut,
+)
 from app.schemas.plans import PlanStreamEvent
 
 router = APIRouter(prefix="/api/v1/cook", tags=["cook"])
@@ -145,3 +154,26 @@ def cook_this(
     if not out.created:
         response.status_code = 200
     return out
+
+
+@router.post("/meal-prep/tiers", response_model=list[TierCardOut])
+def meal_prep_tiers(body: CookAnswers, session: DbSession, user: CurrentUser) -> list[TierCardOut]:
+    """The shopping step's three budget tier cards for these answers (step 2b.6, AA6): Cheapest, A bit better
+    and Fancy, each with an estimated total and protein per day from a quick solve (saved recipes, no LLM).
+    Tap one and POST /cook/meal-prep with its `price_tier` for the full plan."""
+    if body.mode != "prep":
+        raise ProblemError(422, "Not a meal-prep request", 'Send mode "prep" with its amount (prep).')
+    cards = tier_cards(session, user.id, body, today=search_service.local_now(user).date())
+    return [
+        TierCardOut(
+            tier=c.tier,
+            label=c.label,
+            blurb=c.blurb,
+            status=c.status,
+            total_cents=c.total_cents,
+            total_display=c.total_display,
+            protein_per_day_display=c.protein_per_day_display,
+            reason=c.reason,
+        )
+        for c in cards
+    ]

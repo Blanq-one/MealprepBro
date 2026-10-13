@@ -16,6 +16,8 @@ from app.domain.cook_time import mood_allows
 from app.domain.enums import Equipment, MealSlot, PlanningMode, RecipeKind, RecipeMood
 from app.domain.fridge_life import fridge_life
 from app.domain.nutrition import CORE_CODES
+from app.domain.price_tiers import LABELS as TIER_LABELS
+from app.domain.price_tiers import PriceTier
 from app.domain.purchase import Offer
 from app.domain.units import BASE_UNIT_FOR_KIND, ConversionError, UnitKind, convert
 from app.planning.problem import (
@@ -332,6 +334,20 @@ def build_problem(
                 )
             reasons.append(why)
             codes.append("unpriced")
+        if c.price_tier is not None:  # step 2b.6 (AA6): what the tier doesn't buy must be in your pantry
+            outside = sorted(
+                {
+                    plans[line.ingredient_id].name
+                    for line in counted
+                    if not plans[line.ingredient_id].unlimited
+                    and not c.may_buy(line.ingredient_id)
+                    and plans[line.ingredient_id].available <= 0
+                }
+            )
+            if outside:
+                label = TIER_LABELS[PriceTier(c.price_tier)]
+                reasons.append(f"needs {', '.join(outside)}, which the {label} tier doesn't buy")
+                codes.append("tier")
         if version.id in keep_version_ids:
             reasons = [r for r in reasons if r.startswith("incomplete nutrition")]
         need: dict[int, Decimal] = {}

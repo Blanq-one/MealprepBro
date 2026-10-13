@@ -7,6 +7,7 @@ from typing import Any, Literal, Self
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.domain.enums import CalorieMode, GroceryMode, MealSlot, NutritionPriority, PlanningMode, RecipeMood
+from app.domain.price_tiers import PriceTier
 from app.schemas.constraints import ExtraLot, PortionRequest
 from app.schemas.inventory import InventoryLotOut
 from app.schemas.recipes import RecipeVersionOut
@@ -58,6 +59,8 @@ class PlanRequest(_Strict):
     have_unlimited: list[int] = Field(default_factory=list, description="have it, no amount: enough")
     pantry_off: list[int] = Field(default_factory=list, description="pantry items not for this plan")
     max_portions_per_recipe: int | None = Field(default=None, ge=1, le=14, description="None = 5 (Q14)")
+    # step 2b.6 (AA6): a budget tier in place of a budget: what the plan may buy, and its variety
+    price_tier: PriceTier | None = Field(default=None, description="cheapest | better | fancy")
 
     @model_validator(mode="after")
     def _check(self) -> Self:

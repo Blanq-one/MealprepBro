@@ -25,6 +25,7 @@ from app.domain.enums import (
 from app.domain.exclusions import KNOWN_DIET_TAGS
 from app.domain.food_safety import SafetyCategory
 from app.domain.food_state import FoodState
+from app.domain.price_tiers import IngredientTier, TierBasis
 from app.domain.quantities import parse_quantity
 from app.domain.units import UnitKind
 
@@ -109,6 +110,9 @@ class SeedIngredient(_Strict):
     shelf_life: SeedShelfLife | None = None  # unset = unknown (raw protein uses the FoodSafety.gov chart)
     assume_in_stock: bool = False
     stock_up: bool = False  # long-life, bought occasionally; listed apart from regular groceries
+    # step 2b.6 (AA6): its budget tier (none = any tier: seasonings, oils, condiments) and what it rests on
+    price_tier: IngredientTier | None = None
+    price_tier_basis: TierBasis | None = None
     count_rounding_step: Decimal = Field(default=Decimal(1), gt=0)
     density: PortionRef | None = None
     count_unit_weight: PortionRef | LabelRef | None = None
@@ -134,6 +138,8 @@ class SeedIngredient(_Strict):
             raise ValueError(f"{self.slug}: count ingredients need a typical piece weight")
         if "possible_beef" in self.diet_tags and not self.diet_review_note:
             raise ValueError(f"{self.slug}: held (possible_beef) items need a review note")
+        if (self.price_tier is None) != (self.price_tier_basis is None):
+            raise ValueError(f"{self.slug}: a price tier needs its basis (and a basis its tier)")
         return self
 
 

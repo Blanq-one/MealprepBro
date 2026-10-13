@@ -433,7 +433,9 @@ open from cache. Error loading home: the choice cards still work; the other sect
   - **By portions:** a stepper (1–20) and a meal tile (one), for example 6 dinners.
   - **By days:** day chips for the next 14 days and meal tiles (several).
 - **Starting:** chips "Today", "Tomorrow", or a date.
-- **Extra portions to freeze:** stepper 0–20 (PRD §8, "make 10 and freeze half").
+- **Extra portions to freeze:** stepper 0–20 (PRD §8, "make 10 and freeze half"). *As built (2b.6, AA2):*
+  **"Cook extra for the freezer (future weeks)"**, with "Extra portions go straight into the freezer for later
+  weeks; they aren't part of this plan's meals." It starts at 0.
 - **Why line:** "I'll scale the recipes to exactly this and plan what goes in the fridge or freezer."
 - **Validation:** at least one meal. A meal with no calories set in Settings shows "Dessert has no calories set" and
   a link to that setting.
@@ -524,6 +526,15 @@ the list shows from cache; Continue is disabled.
   note "Long-life items like rice and protein powder are listed separately and don't count toward this."
 - **Why line:** "So I know whether to plan around a shop."
 - **Continue** says **Build my plan**.
+- *As built (2b.6, AA6, AA8):* **budget tiers replace the budget number** as the main control. Make me a
+  shopping list shows three cards for this week, **Cheapest**, **A bit better** and **Fancy**, each with "about
+  $39.05" and "about 130 g protein a day" from a quick solve (`POST /cook/meal-prep/tiers`: saved recipes, no
+  LLM, the shortlist, one short solve per tier); the tier you tap gets the full plan (`price_tier` in the
+  answers). A tier limits what the plan buys (Cheapest: cheap staples; A bit better adds chicken breast, ground
+  turkey and more fresh veg; Fancy adds salmon, shrimp and other premium picks); what you have, Always-have and
+  could-buy items work in every tier; variety is at most 5, 4 and 3 portions of one recipe a week. **Set my own
+  limit** opens the budget slider instead. Each ingredient's tier is in the seed data
+  (`docs/review/price_tiers.md`).
 
 ### C4 Building
 
@@ -626,6 +637,15 @@ The Building steps from 5.4.
   - An assembled meal's row lists its items ("1 portion chicken curry · ½ portion rice") and its instruction, and
     opens the assembly's page.
   - Each meal row has a ⋯ beside it, opening a sheet with **Not for me** (Swap joins it in 2b.6).
+- **As built (2b.6, AA4):** **⇄ Swap** on each dish meal from today on (and in its ⋯ sheet) opens a sheet with
+  the meal now and **3–5 alternatives** that fit the same slot, day, fridge or freezer and time rules, from the
+  pinned re-solve (`POST /plans/{id}/meals/{meal_id}/swap-options`, NDJSON), sorted by what each adds to the
+  groceries ("+$1.20 groceries", "No extra groceries") and then protein; each shows its kcal, protein, cost a
+  portion, where it comes from ("Cook it Wed 14", "From Mon 12's Chicken curry") and what else changes. One tap
+  saves a new version of the plan (`POST …/swap`), the meal highlighted and the toast with **Undo**. Write a new
+  one makes one ideas call (the countdown when it must wait); after Done shopping the options use your pantry
+  unless you tap **Allow buying**. A meal from a cooked batch frees that portion ("Extra portion of Curry: eat it
+  another day or freeze it"). Swapping a mix-and-match meal comes with smart prep (2b.11).
 
 | Tap | Does |
 |---|---|
@@ -699,6 +719,16 @@ The existing recipe view, with these additions:
 | Cooking mode | Large one-step-at-a-time view, back/next buttons, safety lines highlighted, the screen kept awake (browser Wake Lock), **Mark cooked** at the end |
 | Mark cooked | Existing endpoint: deducts inventory FIFO (open packages first), records open-package remainders, and shows what was taken and any shortfall |
 | ♥ / 🔖 | Toggle (E7, E8) |
+
+*As built (2b.6, AA5, AA8):* each ingredient line has a **⋯**: **Swap it** (substitutes from its culinary
+group or role, chicken exact by form, with the change per portion in kcal, protein and cost), **Leave it out**
+(garnishes, optional lines, seasonings and small aromatics only, with the drop per portion and a warning when
+protein or calories drop a lot), **I'm out of this** (swap it, or Add to shopping list) and **Never use this**
+(Foods I don't eat). An edit saves **your version** ("Your version: chicken breast instead of chicken thigh",
+the recipe's default from then on): code swaps the names in the steps, marks a left-out ingredient "(skipped:
+spinach)", flags the steps where the swap cooks differently, and offers **Rewrite steps for this change** (one
+LLM steps call, only on tap). From a plan meal, **Also update this week's plan** switches that batch to your
+version (cooked batches keep theirs), with Undo.
 
 **States.** Loading: skeleton. Not found: "This recipe isn't available anymore." Offline: cached recipe opens; Cook
 this and Mark cooked are disabled; an idea without steps shows "The steps need a connection." Mark cooked twice:
@@ -836,7 +866,7 @@ time.
 | Meals | Meals to plan · Calories per meal · Calorie mode (strict daily / weekly) and, **in weekly mode only**, "each day within ±150 kcal" (pending fix: hidden in strict mode) · Portion size |
 | Cooking | Cook days · Time per cook day · Weeknight time (finishing prepped meals, V7; 2b.7) · Mood per cook day · Kitchen equipment · Fridge days for leftovers |
 | Shopping | Stores and their order · Separate-store trip only if it saves at least $5 |
-| Diet | Beef (locked) · Held items · Frequency caps (pork ≤ 1 a week, any other caps) · Daily caps · Excluded and disliked ingredients · **Hidden recipes** (Not for me, F24; 2b.7) |
+| Diet | Beef (locked) · Held items · Frequency caps (pork ≤ 1 a week, any other caps) · Daily caps · **Foods I don't eat** (your never-use list with Allow again, beef first, and what you use less; 2b.6, AA5) · **Hidden recipes** (Not for me, F24; 2b.7) |
 | Kitchen staples | **Always have** (S2) |
 | Appearance | Light · Dark · Match my phone |
 | Account | Sign out |
@@ -2174,6 +2204,11 @@ Sunday · about 1 h start to finish · 35 min hands-on
 - Speed: a 6-dish day schedules in under 50 ms (opt-in timing test).
 
 ### 20.6 As built (step 2b.9)
+
+*Since step 2b.6 (AA7):* every schedule follows a **systematic kitchen order**: all the chopping and marinating
+first (a dish's prep before anything of it cooks, every dish's), then the cooking, longest chain first, the rest
+while it runs, and portioning last; within that, the rules below. On 450 seed cook days this kept half the days
+the same and made the rest 3.4 minutes longer on average (at most 32).
 
 Details the design left open, as decided while building (BUILD_PLAN 2b.9 outcome, D128–D142):
 - **The fridge isn't the kitchen.** A dish's last wait with no appliance, in a no-cook, assembly or portioning

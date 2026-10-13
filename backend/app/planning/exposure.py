@@ -25,6 +25,7 @@ FILTER_PRIORITY = (
     "held",
     "frequency_cap",
     "excluded",
+    "tier",
     "equipment",
     "time",
     "unpriced",

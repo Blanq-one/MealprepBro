@@ -37,6 +37,7 @@ class IngredientData:
     shelf_life_days_freezer: int | None = None
     typical_location: str | None = None
     stock_up: bool = False
+    price_tier: str | None = None  # step 2b.6 (AA6): cheap | better | fancy; None = any tier
 
     @property
     def cap_view(self) -> CapIngredient:
@@ -91,6 +92,7 @@ def _build(
         shelf_life_days_freezer=ingredient.shelf_life_days_freezer,
         typical_location=ingredient.typical_location,
         stock_up=ingredient.stock_up,
+        price_tier=ingredient.price_tier,
     )
 
 

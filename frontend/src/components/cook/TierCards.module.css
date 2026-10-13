@@ -1,0 +1,68 @@
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+/* one tier: the whole card is the tap (48 px and up) */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 12px 14px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-tile);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.card:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+
+.label {
+  font-weight: 700;
+}
+
+.total {
+  font-weight: 700;
+}
+
+.protein,
+.blurb {
+  color: var(--muted);
+  font-size: var(--text-small);
+}
+
+.working {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0 12px;
+}
+
+.working p {
+  margin: 0;
+}

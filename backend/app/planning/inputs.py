@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.cook.caps import week_use
 from app.db.models import AppUser, Ingredient, InventoryItem
 from app.domain.exclusions import Preference
+from app.domain.price_tiers import may_buy as may_buy_tier
 from app.domain.units import BASE_UNIT_FOR_KIND, ConversionError, UnitKind, convert
 from app.planning.constraint_builder import ConstraintError, DietInputs, build_constraints
 from app.schemas.constraints import CapWeekUse, PlanConstraints, ResolvedDailyCap
@@ -125,6 +126,13 @@ def constraints_for(
     end = request.week_start + timedelta(days=request.days - 1)
     used = week_use(session, user_id, diet.caps, start=request.week_start, end=end, today=today)
     have = set(request.have_unlimited) | {lot.ingredient_id for lot in request.extra_lots}
+    tier_ids: frozenset[int] = frozenset()
+    if request.price_tier is not None:  # step 2b.6 (AA6): what the tier may buy
+        tier_ids = frozenset(
+            i.id
+            for i in session.scalars(select(Ingredient).where(Ingredient.archived_at.is_(None)))
+            if may_buy_tier(request.price_tier, i.price_tier)
+        )
     return build_constraints(
         settings,
         request,
@@ -135,4 +143,5 @@ def constraints_for(
             CapWeekUse(week_start=monday, label=label, used=n) for (monday, label), n in sorted(used.items())
         ),
         lots_off_lot_ids=toggled_off_lots(session, user_id, set(request.pantry_off) - have),
+        tier_ingredient_ids=tier_ids,
     )

@@ -17,6 +17,8 @@ from decimal import ROUND_HALF_UP, Decimal
 
 from app.domain.cook_schedule import DaySchedule
 from app.domain.nutrition import kcal_display
+from app.domain.price_tiers import LABELS as TIER_LABELS
+from app.domain.price_tiers import PriceTier
 from app.domain.scaling import ScalingError
 from app.planning.costing import cost_summary
 from app.planning.grocery_list import build_grocery
@@ -222,7 +224,13 @@ def plan_totals(
 
 
 def exclusion_notes(problem: PlanningProblem) -> list[str]:
-    return [f"Left out {e.title}: {'; '.join(e.reasons)}" for e in problem.excluded]
+    """Why recipes were left out. A budget tier leaves many out for what it doesn't buy: one line says so."""
+    notes = [f"Left out {e.title}: {'; '.join(e.reasons)}" for e in problem.excluded if e.codes != ("tier",)]
+    if tiered := sum(1 for e in problem.excluded if e.codes == ("tier",)):
+        label = TIER_LABELS[PriceTier(problem.constraints.price_tier or "fancy")]
+        recipes = "recipe needs" if tiered == 1 else "recipes need"
+        notes.append(f"{tiered} {recipes} items the {label} tier doesn't buy, so this plan leaves them out")
+    return notes
 
 
 @dataclass(frozen=True)

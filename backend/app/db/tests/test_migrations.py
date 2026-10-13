@@ -109,6 +109,23 @@ def test_0010_adds_the_hidden_recipes_table_and_drops_it(scratch_db_url):
     assert "recipe_hidden" not in _tables(scratch_db_url)
 
 
+def test_0011_adds_the_price_tier_columns_and_drops_them(scratch_db_url):
+    """Step 2b.6 (budget tiers, AA6): two nullable columns on ingredient, added and dropped cleanly."""
+    cfg = alembic_config(scratch_db_url)
+    command.upgrade(cfg, "0011")
+    engine = create_engine(scratch_db_url)
+    try:
+        with engine.connect() as conn:
+            columns = {c["name"] for c in inspect(conn).get_columns("ingredient")}
+        assert {"price_tier", "price_tier_basis"} <= columns
+        command.downgrade(cfg, "0010")
+        with engine.connect() as conn:
+            columns = {c["name"] for c in inspect(conn).get_columns("ingredient")}
+        assert not {"price_tier", "price_tier_basis"} & columns
+    finally:
+        engine.dispose()
+
+
 def test_0004_adds_the_exposure_log_price_client_ref_and_login_attempts(scratch_db_url):
     cfg = alembic_config(scratch_db_url)
     command.upgrade(cfg, "0003")

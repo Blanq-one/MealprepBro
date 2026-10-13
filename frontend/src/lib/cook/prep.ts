@@ -2,7 +2,7 @@
 // then sent as CookAnswers to POST /cook/meal-prep. Nothing here computes a nutrition, amount or money number:
 // the server resolves the days, meals, cook days and limits (app/cook/prep.py). The days below are calendar
 // days for the chips, and the minutes come straight from your settings.
-import type { CookAnswers, CookDay, MealSlot, RecipeMood, UserSettings } from "@/lib/api/types";
+import type { CookAnswers, CookDay, MealSlot, PriceTier, RecipeMood, UserSettings } from "@/lib/api/types";
 import { parseDay, toIso } from "@/lib/format/dates";
 import type { GoalKey } from "@/lib/format/icons";
 
@@ -35,6 +35,8 @@ export type PrepDraft = {
   extras: DraftExtra[];
   shopping: "use_what_i_have" | "make_a_list" | null;
   budgetCents: number | null; // a shopping list's limit, or "Use what I have"'s top-up; null = none
+  /** A shopping list's budget tier (step 2b.6, AA6), or "own": Set my own limit (budgetCents). null = not picked. */
+  priceTier: PriceTier | "own" | null;
 };
 
 export const PREP_DRAFT_KEY = "mealbro.cook.prep";
@@ -66,6 +68,7 @@ export function emptyPrepDraft(): PrepDraft {
     extras: [],
     shopping: null,
     budgetCents: null,
+    priceTier: null,
   };
 }
 
@@ -209,9 +212,15 @@ export function buildPrepAnswers(draft: PrepDraft, settings: UserSettings | null
       sessions: style === "sessions" ? draft.sessions.filter((s) => s.minutes > 0 && days.has(s.day)) : [],
     },
     shopping: draft.shopping ?? "make_a_list",
-    budget_cents: draft.budgetCents,
+    budget_cents: tierOf(draft) ? null : draft.budgetCents,
+    price_tier: tierOf(draft),
     allow_llm: true,
   };
+}
+
+/** The tier a draft plans with: a shopping list's picked tier (none for Use what I have or your own limit). */
+export function tierOf(draft: PrepDraft): PriceTier | null {
+  return draft.shopping === "make_a_list" && draft.priceTier !== null && draft.priceTier !== "own" ? draft.priceTier : null;
 }
 
 /** A new meal prep starting from your last answers. Extras are never carried over (C3: they come back as
@@ -253,20 +262,21 @@ export function prepDraftFromAnswers(answers: Partial<CookAnswers> | null | unde
     extras: [],
     shopping: answers.shopping ?? "make_a_list",
     budgetCents: answers.budget_cents ?? null,
+    priceTier: answers.price_tier ?? ((answers.shopping ?? "make_a_list") === "make_a_list" ? "own" : null),
   };
 }
 
 // ---------------- "No plan fits": each fix is the same answers with one change (M17, P4) ----------------
 export function withTopUp(answers: CookAnswers, cents: number): CookAnswers {
-  return { ...answers, shopping: "use_what_i_have", budget_cents: cents };
+  return { ...answers, shopping: "use_what_i_have", budget_cents: cents, price_tier: null };
 }
 
 export function withShopping(answers: CookAnswers): CookAnswers {
-  return { ...answers, shopping: "make_a_list", budget_cents: null };
+  return { ...answers, shopping: "make_a_list", budget_cents: null, price_tier: null };
 }
 
 export function withBudget(answers: CookAnswers, cents: number): CookAnswers {
-  return { ...answers, shopping: "make_a_list", budget_cents: cents };
+  return { ...answers, shopping: "make_a_list", budget_cents: cents, price_tier: null };
 }
 
 export function withMood(answers: CookAnswers, mood: RecipeMood): CookAnswers {

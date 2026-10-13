@@ -13,6 +13,7 @@ from datetime import timedelta
 from app.domain.enums import PlanningMode
 from app.domain.exclusions import ExclusionStatus
 from app.domain.frequency_caps import ResolvedCap
+from app.domain.price_tiers import MAX_PORTIONS as TIER_MAX_PORTIONS
 from app.schemas.constraints import (
     CalorieTolerance,
     CapWeekUse,
@@ -51,11 +52,13 @@ def build_constraints(
     *,
     cap_week_use: Sequence[CapWeekUse] = (),
     lots_off_lot_ids: frozenset[int] = frozenset(),
+    tier_ingredient_ids: frozenset[int] = frozenset(),
 ) -> PlanConstraints:
     """`store_ids_by_name`: your grocery stores; `other_store_ids`: sources for items they don't carry
     (protein powder at "Other"), always appended after your store order. `cap_week_use`: what your other
     plans already count toward each cap per calendar week; `lots_off_lot_ids`: the lots of the pantry items
-    turned off for this request (Mark cooked never takes from them)."""
+    turned off for this request (Mark cooked never takes from them). `tier_ingredient_ids`: with a budget tier
+    (step 2b.6, AA6), the ingredients it may buy; your could-buy items are added."""
     allocations = {a.slot: a.kcal for a in settings.slot_allocations}
     for slot, kcal in request.slot_kcal.items():
         if kcal == 0:
@@ -133,6 +136,12 @@ def build_constraints(
     )
     if secondary == primary:
         secondary = None
+    allowed = could_buy if request.only_buy_could_buy else None
+    max_portions = request.max_portions_per_recipe or 5
+    if request.price_tier is not None:
+        allowed = (tier_ingredient_ids | could_buy) - excluded
+        if request.max_portions_per_recipe is None:
+            max_portions = TIER_MAX_PORTIONS[request.price_tier]
     try:
         return PlanConstraints(
             week_start=request.week_start,
@@ -169,11 +178,12 @@ def build_constraints(
             lots_off_ingredient_ids=frozenset(request.pantry_off) - have,
             lots_off_lot_ids=lots_off_lot_ids,
             household_size=request.household_size or settings.household_size,
-            max_portions_per_recipe=request.max_portions_per_recipe or 5,
+            max_portions_per_recipe=max_portions,
             region_code=settings.region_code,
             protein_reward=request.protein_reward,
-            allowed_purchase_ingredient_ids=could_buy if request.only_buy_could_buy else None,
+            allowed_purchase_ingredient_ids=allowed,
             preferred_ingredient_ids=frozenset() if request.only_buy_could_buy else could_buy,
+            price_tier=request.price_tier.value if request.price_tier is not None else None,
             extra_lots=tuple(request.extra_lots),
             cap_week_use=tuple(cap_week_use),
             daily_amount_caps=diet.daily_caps,

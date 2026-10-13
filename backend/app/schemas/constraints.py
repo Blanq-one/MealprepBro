@@ -172,6 +172,9 @@ class PlanConstraints(_Frozen):
     extra_lots: tuple[ExtraLot, ...] = ()  # "have it" items with an amount, for this request only
     cap_week_use: tuple[CapWeekUse, ...] = ()  # other plans' meals toward each cap, per calendar week
     daily_amount_caps: tuple[ResolvedDailyCap, ...] = ()  # e.g. protein powder: usually 1 scoop, at most 2
+    # ---- step 2b.6 (AA6) ----
+    # a budget tier: allowed_purchase_ingredient_ids holds what it may buy (its ingredients, your could-buys)
+    price_tier: str | None = None  # cheapest | better | fancy
 
     @model_validator(mode="after")
     def _consistency(self) -> Self:

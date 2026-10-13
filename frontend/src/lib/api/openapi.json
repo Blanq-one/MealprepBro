@@ -1061,6 +1061,16 @@
        }
       ]
      },
+     "price_tier": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/PriceTier"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
      "schema_version": {
       "const": 1,
       "default": 1,
@@ -1189,6 +1199,16 @@
       "anyOf": [
        {
         "$ref": "#/components/schemas/PrepAmount"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "price_tier": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/PriceTier"
        },
        {
         "type": "null"
@@ -5393,6 +5413,17 @@
       "title": "Portion Requests",
       "type": "array"
      },
+     "price_tier": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/PriceTier"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "cheapest | better | fancy"
+     },
      "protein_reward": {
       "default": false,
       "description": "High protein: reward up to 1.5 \u00d7 the target",
@@ -6438,6 +6469,16 @@
      "api"
     ],
     "title": "PriceSource",
+    "type": "string"
+   },
+   "PriceTier": {
+    "description": "A plan's tier (the cards in the shopping step).",
+    "enum": [
+     "cheapest",
+     "better",
+     "fancy"
+    ],
+    "title": "PriceTier",
     "type": "string"
    },
    "ProblemOut": {
@@ -9157,6 +9198,82 @@
     "title": "SwapStreamEvent",
     "type": "object"
    },
+   "TierCardOut": {
+    "description": "One budget tier card for this week (step 2b.6, AA6): a quick estimate, so it says \"about\".",
+    "properties": {
+     "blurb": {
+      "title": "Blurb",
+      "type": "string"
+     },
+     "label": {
+      "title": "Label",
+      "type": "string"
+     },
+     "protein_per_day_display": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Protein Per Day Display"
+     },
+     "reason": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Reason"
+     },
+     "status": {
+      "enum": [
+       "estimated",
+       "none_fits"
+      ],
+      "title": "Status",
+      "type": "string"
+     },
+     "tier": {
+      "$ref": "#/components/schemas/PriceTier"
+     },
+     "total_cents": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Total Cents"
+     },
+     "total_display": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Total Display"
+     }
+    },
+    "required": [
+     "tier",
+     "label",
+     "blurb",
+     "status"
+    ],
+    "title": "TierCardOut",
+    "type": "object"
+   },
    "TimelineLineOut": {
     "description": "One line of a cook day's timeline (FLOW_SPEC \u00a720.4), templated by code; times from the schedule.",
     "properties": {
@@ -10269,6 +10386,52 @@
      }
     },
     "summary": "Meal Prep",
+    "tags": [
+     "cook"
+    ]
+   }
+  },
+  "/api/v1/cook/meal-prep/tiers": {
+   "post": {
+    "description": "The shopping step's three budget tier cards for these answers (step 2b.6, AA6): Cheapest, A bit better\nand Fancy, each with an estimated total and protein per day from a quick solve (saved recipes, no LLM).\nTap one and POST /cook/meal-prep with its `price_tier` for the full plan.",
+    "operationId": "meal_prep_tiers_api_v1_cook_meal_prep_tiers_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CookAnswers-Input"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/TierCardOut"
+         },
+         "title": "Response Meal Prep Tiers Api V1 Cook Meal Prep Tiers Post",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Meal Prep Tiers",
     "tags": [
      "cook"
     ]
