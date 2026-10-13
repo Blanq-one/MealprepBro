@@ -158,8 +158,9 @@ def cook_this(
 
 @router.post("/meal-prep/tiers", response_model=list[TierCardOut])
 def meal_prep_tiers(body: CookAnswers, session: DbSession, user: CurrentUser) -> list[TierCardOut]:
-    """The shopping step's three budget tier cards for these answers (step 2b.6, AA6): Cheapest, A bit better
-    and Fancy, each with an estimated total and protein per day from a quick solve (saved recipes, no LLM).
+    """The shopping step's four budget tier cards for these answers (step 2b.6, AA6; its approval, item 2):
+    Broke mode, Cheapest, A bit better and Fancy, each with its estimated regular groceries, the stock-up
+    items apart, and protein, from a quick solve (saved recipes, no LLM).
     Tap one and POST /cook/meal-prep with its `price_tier` for the full plan."""
     if body.mode != "prep":
         raise ProblemError(422, "Not a meal-prep request", 'Send mode "prep" with its amount (prep).')
@@ -174,6 +175,9 @@ def meal_prep_tiers(body: CookAnswers, session: DbSession, user: CurrentUser) ->
             total_display=c.total_display,
             protein_per_day_display=c.protein_per_day_display,
             reason=c.reason,
+            stock_up_cents=c.stock_up_cents,
+            stock_up_display=c.stock_up_display,
+            includes_display=c.includes_display,
         )
         for c in cards
     ]

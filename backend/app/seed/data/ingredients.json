@@ -23,8 +23,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "named",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "units": [
     {
      "name": "thigh",
@@ -54,8 +54,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
-   "price_tier": "better",
-   "price_tier_basis": "named",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "units": [
     {
      "name": "breast",
@@ -108,7 +108,7 @@
    "typical_location": "fridge",
    "assume_in_stock": false,
    "price_tier": "better",
-   "price_tier_basis": "named",
+   "price_tier_basis": "protein_per_dollar",
    "nutrition_reviewed_on": "2026-10-10"
   },
   {
@@ -179,7 +179,7 @@
    "typical_location": "fridge",
    "assume_in_stock": false,
    "price_tier": "fancy",
-   "price_tier_basis": "named",
+   "price_tier_basis": "protein_per_dollar",
    "units": [
     {
      "name": "fillet",
@@ -296,7 +296,7 @@
    "typical_location": "fridge",
    "assume_in_stock": false,
    "price_tier": "fancy",
-   "price_tier_basis": "named"
+   "price_tier_basis": "protein_per_dollar"
   },
   {
    "name": "egg, large",
@@ -320,8 +320,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "named",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "count_rounding_step": "1",
    "count_unit_weight": {
     "usda_portion_id": 88374
@@ -1082,8 +1082,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "estimate",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "density": {
     "usda_portion_id": 88320,
     "measure": "cup"
@@ -1166,7 +1166,7 @@
    "typical_location": "fridge",
    "assume_in_stock": false,
    "price_tier": "cheap",
-   "price_tier_basis": "named",
+   "price_tier_basis": "protein_per_dollar",
    "units": [
     {
      "name": "container",
@@ -1374,8 +1374,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "named",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "stock_up": true,
    "density": {
     "usda_portion_id": 83927,
@@ -1401,8 +1401,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "estimate",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "stock_up": true,
    "density": {
     "usda_portion_id": 85377,
@@ -1429,8 +1429,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "estimate",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "stock_up": true,
    "density": {
     "usda_portion_id": 93454,
@@ -1457,8 +1457,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "estimate",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "stock_up": true,
    "density": {
     "usda_portion_id": 83944,
@@ -1542,8 +1542,8 @@
    "is_perishable": true,
    "typical_location": "pantry",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "named",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "count_rounding_step": "1",
    "count_unit_weight": {
     "label": "flour-tortilla-small"
@@ -1573,8 +1573,8 @@
    "is_perishable": true,
    "typical_location": "pantry",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "named",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "count_rounding_step": "1",
    "count_unit_weight": {
     "usda_portion_id": 95472
@@ -1751,8 +1751,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "estimate",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "units": [
     {
      "name": "can",
@@ -1778,8 +1778,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "estimate",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "density": {
     "usda_portion_id": 95816,
     "measure": "cup"
@@ -1803,8 +1803,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "estimate",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "units": [
     {
      "name": "can",
@@ -1830,8 +1830,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "named",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "stock_up": true,
    "density": {
     "usda_portion_id": 90594,
@@ -1856,8 +1856,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "named",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "stock_up": true,
    "density": {
     "usda_portion_id": 94081,
@@ -1963,8 +1963,8 @@
     "basis": "estimate for whole dry onions in a cool, dry, dark pantry; sources range from about 2 weeks (Virginia Dept. of Health storage chart) to about 6 weeks (Canadian public-health storage guide)"
    },
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "estimate",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "count_rounding_step": "0.5",
    "count_unit_weight": {
     "usda_portion_id": 85860
@@ -2157,8 +2157,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "estimate",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "density": {
     "usda_portion_id": 85963,
     "measure": "cup"
@@ -2180,8 +2180,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "estimate",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "density": {
     "usda_portion_id": 86698,
     "measure": "tbsp"
@@ -2211,8 +2211,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "estimate",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "density": {
     "usda_portion_id": 85971,
     "measure": "cup"
@@ -2268,8 +2268,8 @@
    "is_perishable": false,
    "typical_location": "freezer",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "named",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "units": [
     {
      "name": "cup",
@@ -2409,8 +2409,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "estimate",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "count_rounding_step": "1",
    "count_unit_weight": {
     "usda_portion_id": 86559
@@ -2547,8 +2547,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "estimate",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "count_rounding_step": "0.25",
    "count_unit_weight": {
     "usda_portion_id": 85795
@@ -2671,8 +2671,8 @@
     "basis": "estimate for russet potatoes in a cool, dark, dry place; sources range from 2-4 weeks (Virginia Dept. of Health storage chart) to months in a cold cellar"
    },
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "estimate",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "count_rounding_step": "0.5",
    "count_unit_weight": {
     "usda_portion_id": 85923
@@ -2753,8 +2753,8 @@
    "is_perishable": false,
    "typical_location": "freezer",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "named",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "density": {
     "usda_portion_id": 85902,
     "measure": "cup"
@@ -2779,8 +2779,8 @@
    "is_perishable": false,
    "typical_location": "freezer",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "named",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "density": {
     "usda_portion_id": 83030,
     "measure": "cup"
@@ -3002,8 +3002,8 @@
    "is_perishable": true,
    "typical_location": "pantry",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "estimate",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "count_rounding_step": "0.5",
    "count_unit_weight": {
     "usda_portion_id": 93515
@@ -3538,7 +3538,7 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
-   "price_tier": "better",
+   "price_tier": "cheap",
    "price_tier_basis": "protein_per_dollar",
    "stock_up": true,
    "density": {
@@ -5053,8 +5053,8 @@
    "is_perishable": false,
    "typical_location": "freezer",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "named",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "shelf_life": {
     "freezer_days": 240,
     "basis": "estimate: about 8 months frozen for best quality, like a typical bag's best-by (decision J5)"
@@ -5078,8 +5078,8 @@
    "is_perishable": false,
    "typical_location": "freezer",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "named",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "shelf_life": {
     "freezer_days": 240,
     "basis": "estimate: about 8 months frozen for best quality, like a typical bag's best-by (decision J5)"
@@ -5104,8 +5104,8 @@
    "is_perishable": false,
    "typical_location": "freezer",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "named",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "shelf_life": {
     "freezer_days": 240,
     "basis": "estimate: about 8 months frozen for best quality, like a typical bag's best-by (decision J5)"
@@ -5180,8 +5180,8 @@
    "is_perishable": false,
    "typical_location": "pantry",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "estimate",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "stock_up": true,
    "shelf_life": {
     "pantry_days": 365,
@@ -5320,8 +5320,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "protein_per_dollar",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "refuse": {
     "pct": "27",
     "description": "bone",
@@ -5354,8 +5354,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "protein_per_dollar",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "refuse": {
     "pct": "20",
     "description": "bone",
@@ -5385,8 +5385,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "protein_per_dollar",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "refuse": {
     "pct": "33",
     "description": "bone and cartilage",
@@ -5449,8 +5449,8 @@
    "is_perishable": true,
    "typical_location": "fridge",
    "assume_in_stock": false,
-   "price_tier": "cheap",
-   "price_tier_basis": "protein_per_dollar",
+   "price_tier": "staple",
+   "price_tier_basis": "staple",
    "refuse": {
     "pct": "32",
     "description": "bone",

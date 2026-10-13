@@ -92,7 +92,8 @@
    "ingredient": "pita",
    "quantity": "4",
    "unit": "count",
-   "role": "carb"
+   "role": "carb",
+   "budget": {"ingredient": "flour-tortilla-small", "quantity": "8", "unit": "count"}
   },
   {
    "ingredient": "tomato",

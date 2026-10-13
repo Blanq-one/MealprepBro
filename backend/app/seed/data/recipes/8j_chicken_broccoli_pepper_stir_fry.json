@@ -34,7 +34,8 @@
    "quantity": "300",
    "unit": "g",
    "preparation": "small florets",
-   "role": "vegetable"
+   "role": "vegetable",
+   "budget": {"ingredient": "broccoli-frozen", "quantity": "300", "unit": "g"}
   },
   {
    "ingredient": "bell-pepper",

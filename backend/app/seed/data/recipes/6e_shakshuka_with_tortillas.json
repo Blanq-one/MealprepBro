@@ -54,7 +54,8 @@
    "ingredient": "tomatoes-canned",
    "quantity": "800",
    "unit": "ml",
-   "role": "vegetable"
+   "role": "vegetable",
+   "budget": {"ingredient": "tomato", "quantity": "6", "unit": "count"}
   },
   {
    "ingredient": "cumin-ground",

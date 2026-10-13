@@ -17,7 +17,7 @@
   {"ingredient": "chicken-breast-boneless-skinless", "quantity": "680", "unit": "g", "preparation": "cut into 1-inch-thick pieces", "role": "protein", "component": "chicken"},
   {"ingredient": "rice-long-grain-white", "quantity": "300", "unit": "g", "preparation": "rinsed", "role": "carb", "component": "rice"},
   {"ingredient": "water", "quantity": "540", "unit": "ml", "role": "other", "component": "rice"},
-  {"ingredient": "broccoli", "quantity": "400", "unit": "g", "preparation": "florets", "role": "vegetable"},
+  {"ingredient": "broccoli", "quantity": "400", "unit": "g", "preparation": "florets", "role": "vegetable", "budget": {"ingredient": "broccoli-frozen", "quantity": "400", "unit": "g"}},
   {"ingredient": "olive-oil", "quantity": "1", "unit": "tbsp", "role": "fat"},
   {"ingredient": "garlic-powder", "quantity": "1", "unit": "tsp", "role": "seasoning", "component": "chicken"},
   {"ingredient": "smoked-paprika", "quantity": "1", "unit": "tsp", "role": "seasoning", "component": "chicken"},

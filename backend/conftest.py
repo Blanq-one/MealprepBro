@@ -46,15 +46,25 @@ DB_FIXTURES = {"db", "db_engine", "seeded", "seeded_db", "client"}
 TEST_SOLVER_TIME_LIMIT_S = 300
 _real_lp_solve = pulp.LpProblem.solve
 _real_monotonic = SystemClock.monotonic
+_real_sleep = SystemClock.sleep
 _solve_cache: dict[str, tuple[int, int, dict[str, float | None]]] = {}
 _solve_mode = {"cache": True, "real_limits": False}
-# For the same reason a request's time budget (the time guard) never counts the solver's own seconds in tests:
-# the system clock stands still while a MILP runs, so a slow test machine can't run a plan out of time.
-_inside_solves = {"seconds": 0.0}
+# For the same reason a request's time budget (the time guard, the tier cards' budget) never depends on how
+# fast the test machine is: in tests the system clock is virtual. It moves only when code waits on purpose
+# (SystemClock.sleep, which still sleeps for real so other threads can work), never with solver or Python
+# work, so a busy machine (a parallel run beside a Docker build) can't run a request out of time (step 2b.6
+# approval, item 7). Tests that measure the wall clock on purpose (`perf`, `wall_clock`, `live_llm`) get the
+# real clock.
+_virtual_clock = {"at": 0.0}
 
 
 def _test_monotonic(self: SystemClock) -> float:
-    return _real_monotonic(self) - _inside_solves["seconds"]
+    return _virtual_clock["at"]
+
+
+def _test_sleep(self: SystemClock, seconds: float) -> None:
+    _virtual_clock["at"] += max(seconds, 0.0)
+    _real_sleep(self, seconds)
 
 
 class SolverHitWallClockError(AssertionError):
@@ -88,9 +98,7 @@ def _deterministic_solve(self: pulp.LpProblem, solver: Any = None, **kwargs: Any
             var.varValue = values.get(var.name)
         self.status, self.sol_status = status, sol_status
         return status
-    started = _real_monotonic(SystemClock())
     status = int(_real_lp_solve(self, solver, **kwargs))
-    _inside_solves["seconds"] += _real_monotonic(SystemClock()) - started
     model = getattr(self, "solverModel", None)
     stopped = model.getModelStatus() if model is not None and hasattr(model, "getModelStatus") else None
     if stopped == highspy.HighsModelStatus.kTimeLimit:
@@ -108,19 +116,22 @@ def deterministic_solver() -> Iterator[None]:
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(pulp.LpProblem, "solve", _deterministic_solve)
         mp.setattr(SystemClock, "monotonic", _test_monotonic)
+        mp.setattr(SystemClock, "sleep", _test_sleep)
         yield
 
 
 @pytest.fixture(autouse=True)
 def _solver_test_mode(request: pytest.FixtureRequest) -> Iterator[None]:
     """`solve_cache_off`: always solve. `perf` (opt-in, RUN_PERF_TESTS=1) and `wall_clock`: the production
-    time limits and the real clock, since those tests measure the wall clock on purpose."""
+    time limits and the real clock, since those tests measure the wall clock on purpose; `live_llm` (opt-in):
+    the real clock, since it waits on Groq's real per-minute limits."""
     saved = dict(_solve_mode)
     _solve_mode["cache"] = "solve_cache_off" not in request.keywords
     _solve_mode["real_limits"] = "perf" in request.keywords or "wall_clock" in request.keywords
     with pytest.MonkeyPatch.context() as mp:
-        if _solve_mode["real_limits"]:
+        if _solve_mode["real_limits"] or "live_llm" in request.keywords:
             mp.setattr(SystemClock, "monotonic", _real_monotonic)
+            mp.setattr(SystemClock, "sleep", _real_sleep)
         yield
     _solve_mode.update(saved)
 

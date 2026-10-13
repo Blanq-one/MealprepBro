@@ -140,6 +140,7 @@ def swap_meal(plan_id: int, meal_id: int, body: SwapIn, session: DbSession, user
         allow_buying=body.allow_buying,
         offered=body.offered_version_ids,
         swapped_away=body.exclude_version_ids,
+        close=body.close,
     )
     session.commit()
     return SwapOut(

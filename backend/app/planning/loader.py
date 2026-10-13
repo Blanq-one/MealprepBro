@@ -17,10 +17,19 @@ from app.domain.enums import Equipment, MealSlot, PlanningMode, RecipeKind, Reci
 from app.domain.fridge_life import fridge_life
 from app.domain.nutrition import CORE_CODES
 from app.domain.price_tiers import LABELS as TIER_LABELS
-from app.domain.price_tiers import PriceTier
+from app.domain.price_tiers import (
+    PREMIUM_MIN_GRAMS,
+    RANK,
+    UPGRADE_MIN_GRAMS,
+    IngredientTier,
+    PriceTier,
+    tier_rank,
+)
 from app.domain.purchase import Offer
 from app.domain.units import BASE_UNIT_FOR_KIND, ConversionError, UnitKind, convert
+from app.planning.budget_lines import choose_lines
 from app.planning.problem import (
+    BudgetAlternative,
     CandidateRecipe,
     ExcludedRecipe,
     IngredientPlan,
@@ -31,6 +40,7 @@ from app.planning.problem import (
 from app.planning.recipe_math import cost_per_portion, need_per_portion, recipe_per_portion
 from app.planning.timing import load_timings
 from app.schemas.constraints import ExtraLot, PlanConstraints
+from app.schemas.recipes import BudgetLine
 from app.services.ingredient_data import IngredientData, load_ingredients
 from app.services.pricing import StorePrice, active_stores, current_prices
 
@@ -78,8 +88,26 @@ def version_lines(session: Session, version_ids: Iterable[int]) -> dict[int, lis
                 authored_unit=row.authored_unit,
                 optional=row.is_optional,
                 role=row.role,
+                budget=_budget(row.budget),
             )
         )
+    return out
+
+
+def _budget(raw: dict[str, object] | None) -> BudgetAlternative | None:
+    if raw is None:
+        return None
+    b = BudgetLine.model_validate(raw)
+    return BudgetAlternative(b.ingredient_id, b.quantity, b.unit, b.authored_quantity, b.authored_unit)
+
+
+def line_ingredient_ids(lines: Iterable[RecipeLine]) -> set[int]:
+    """Every ingredient the lines may cook with: each line's own, and its budget equivalent (item 4)."""
+    out = set()
+    for line in lines:
+        out.add(line.ingredient_id)
+        if line.budget is not None:
+            out.add(line.budget.ingredient_id)
     return out
 
 
@@ -216,6 +244,27 @@ def load_ingredient_plans(
     return plans
 
 
+def tier_of(
+    lines: Sequence[RecipeLine], data: Mapping[int, IngredientData], base_servings: int
+) -> tuple[int, bool]:
+    """(the priciest tier among the counted lines with a real share of a portion, whether it has a premium
+    protein) for a tier's upgrades (2b.6 approval, item 2). A garnish of a pricier herb doesn't count."""
+    rank, premium = 0, False
+    for line in lines:
+        if line.optional:
+            continue
+        d = data[line.ingredient_id]
+        try:
+            grams = convert(line.quantity, line.unit, "g", d.units) / base_servings
+        except ConversionError:
+            continue
+        if grams >= UPGRADE_MIN_GRAMS:
+            rank = max(rank, tier_rank(d.price_tier))
+        fancy = d.price_tier is not None and RANK[IngredientTier(d.price_tier)] == RANK[IngredientTier.FANCY]
+        premium = premium or (fancy and d.category == "protein" and grams >= PREMIUM_MIN_GRAMS)
+    return rank, premium
+
+
 def minutes_alone(c: PlanConstraints, timing: DishTiming, base_servings: int) -> int:
     """Start to finish for the smallest batch the week could cook (one meal for everyone), on its own."""
     return dish_alone(timing, base_servings, c.household_size).elapsed
@@ -235,17 +284,21 @@ def build_problem(
     pairs: list[tuple[Recipe, RecipeVersion]] | None = None,
     *,
     keep_version_ids: frozenset[int] = frozenset(),
+    budget_pins: Mapping[int, frozenset[int]] | None = None,
 ) -> PlanningProblem:
     """`pairs`: the recipe versions to offer (default: the default version of every live recipe).
     `keep_version_ids` (swap, step 2b.6): versions already in the plan, kept whatever has changed since (a
-    food you stopped eating, a recipe you hid): the hard filters don't apply to them; their numbers do."""
+    food you stopped eating, a recipe you hid): the hard filters don't apply to them; their numbers do.
+    A budget tier cooks each line with a budget equivalent on the side its rule picks by your stores' prices
+    (item 4); `budget_pins` (a swap): for a version already in the plan, exactly the line ids its stored batch
+    cooked on the budget side."""
     c = constraints
     week_slots = {s for d in c.days for s in d.slots}
     if pairs is None:
         pairs = candidate_versions(session, user_id)
     lines = version_lines(session, [v.id for _, v in pairs])
     timings = load_timings(session, [v for _, v in pairs])
-    ingredient_ids = {line.ingredient_id for ls in lines.values() for line in ls}
+    ingredient_ids = {i for ls in lines.values() for i in line_ingredient_ids(ls)}
     plans = load_ingredient_plans(
         session,
         user_id,
@@ -263,11 +316,28 @@ def build_problem(
     )
     candidates: list[CandidateRecipe] = []
     excluded: list[ExcludedRecipe] = []
+    tier = PriceTier(c.price_tier) if c.price_tier is not None else None
+
+    def usable(ingredient_id: int) -> bool:
+        """A budget pair's side this plan can cook with: not a food you don't eat, and bought by the tier or
+        already yours."""
+        plan = plans[ingredient_id]
+        if ingredient_id in c.excluded_ingredient_ids:
+            return False
+        return c.may_buy(ingredient_id) or plan.unlimited or plan.available > 0
+
     for recipe, version in pairs:
         slots = frozenset(MealSlot(s) for s in version.meal_slots)
         if not slots & week_slots:
             continue  # nothing to fill this week; not an exclusion
-        recipe_lines = lines.get(version.id, [])
+        recipe_lines = choose_lines(
+            lines.get(version.id, []),
+            tier,
+            plans,
+            version.base_servings,
+            usable,
+            pinned=(budget_pins or {}).get(version.id),
+        )
         reasons: list[str] = []
         codes: list[str] = []
         held: list[str] = []
@@ -318,11 +388,18 @@ def build_problem(
             plan = plans[line.ingredient_id]
             if plan.unlimited or plan.offers:
                 continue
-            if c.limit_covers(plan.stock_up) and plan.available <= 0:
+            # a budget tier is a price claim too (2b.6 approval): an item with no price is never free
+            if (c.limit_covers(plan.stock_up) or c.price_tier is not None) and plan.available <= 0:
                 unpriced.append(plan.name)
         if unpriced:
             names = ", ".join(sorted(set(unpriced)))
-            if c.planning_mode is PlanningMode.INVENTORY:
+            if c.price_tier is not None and c.purchase_limit_cents is None:
+                why = (
+                    f"unpriced: {names} has no price at your stores, so the "
+                    f"{TIER_LABELS[PriceTier(c.price_tier)]} tier can't count it (enter a price, or add it "
+                    "to your pantry)"
+                )
+            elif c.planning_mode is PlanningMode.INVENTORY:
                 why = (
                     f"unpriced: {names} isn't in your inventory and has no price at your stores, so a "
                     "top-up can't include it (add it to your inventory or enter a price)"
@@ -376,6 +453,7 @@ def build_problem(
             continue
         totals = recipe_per_portion(recipe_lines, plans, version.base_servings)
         ids = {line.ingredient_id for line in recipe_lines}
+        rank, premium = tier_of(recipe_lines, data, version.base_servings)
         candidates.append(
             CandidateRecipe(
                 version_id=version.id,
@@ -400,6 +478,8 @@ def build_problem(
                 has_disliked=bool(ids & c.disliked_ingredient_ids),
                 uses_preferred=bool(ids & c.preferred_ingredient_ids),
                 timing=timing,
+                tier_rank=rank,
+                premium_protein=premium,
             )
         )
     return PlanningProblem(

@@ -78,7 +78,8 @@
    "unit": "g",
    "preparation": "rinsed",
    "role": "carb",
-   "component": "quinoa"
+   "component": "quinoa",
+   "budget": {"ingredient": "rice-long-grain-white", "quantity": "250", "unit": "g"}
   },
   {
    "ingredient": "vegetable-broth",
@@ -93,7 +94,8 @@
    "unit": "g",
    "preparation": "trimmed",
    "role": "vegetable",
-   "component": "asparagus"
+   "component": "asparagus",
+   "budget": {"ingredient": "broccoli", "quantity": "450", "unit": "g"}
   }
  ],
  "steps": [

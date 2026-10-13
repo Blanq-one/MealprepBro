@@ -244,6 +244,22 @@ _SECTION_EQUIPMENT = {
 }
 
 
+class SeedBudgetLine(_Strict):
+    """A budget equivalent of a line's (classic) ingredient, with its own amount (2b.6 approval, item 4):
+    canned diced tomatoes for fresh ones in a curry. Same culinary role: the same ingredient category, never a
+    protein (chicken forms stay exact)."""
+
+    ingredient: str  # slug
+    quantity: str
+    unit: str
+
+    @field_validator("quantity")
+    @classmethod
+    def _parses(cls, value: str) -> str:
+        parse_quantity(value)
+        return value
+
+
 class SeedRecipeIngredient(_Strict):
     ingredient: str  # slug
     quantity: str
@@ -254,6 +270,7 @@ class SeedRecipeIngredient(_Strict):
     optional: bool = False
     # Quantities are raw / dry / as-sold weights; set this only when a line is something else ("cooked").
     state: FoodState | None = None
+    budget: SeedBudgetLine | None = None  # a budget equivalent (2b.6 approval, item 4)
 
     @field_validator("quantity")
     @classmethod

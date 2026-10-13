@@ -1,8 +1,10 @@
-"""The High protein tile's capped protein reward (F3, E11, E16; 2b.5 AC 3 and 4), on small synthetic weeks.
+"""The High protein tile's capped protein reward (F3, E11, E16; 2b.5 AC 3 and 4) and the protein band (the
+2b.6 approval, item 1), on small synthetic weeks.
 
-With the tile, each day's protein (your portion) earns a reward up to 1.5 × the daily target; protein above
-that earns nothing, so it can't push a plan back into an expensive all-chicken week. Without the tile protein
-earns nothing (C7: it's a floor).
+With the tile, each day's protein (your portion) earns a reward up to the band's top ("ideally no more than";
+it replaced 1.5 × the target); protein above the top earns nothing and costs a little, in every plan, so it
+can't push a plan back into an expensive all-chicken week. Without the tile protein earns nothing (C7: it's a
+floor).
 """
 
 from decimal import Decimal
@@ -22,11 +24,16 @@ MODES = [CalorieMode.WEEKLY, CalorieMode.STRICT_DAILY]
 
 
 def dinner_week(
-    recipes: dict[str, tuple[int, int]], *, target: int, tile: bool, mode: CalorieMode = CalorieMode.WEEKLY
+    recipes: dict[str, tuple[int, int]],
+    *,
+    target: int,
+    tile: bool,
+    band: int = 0,
+    mode: CalorieMode = CalorieMode.WEEKLY,
 ) -> PlanningProblem:
     """Three days of a 600 kcal dinner. `recipes`: title -> (protein g per portion, cents per portion); each
     recipe is one food, 590 g (590 kcal) a portion, inside the solver's rounding margin, so calories never
-    decide."""
+    decide. `band`: the protein band's top a day (0 = none)."""
     ing = {}
     cands = []
     for n, (title, (protein, cents)) in enumerate(sorted(recipes.items()), start=1):
@@ -40,7 +47,7 @@ def dinner_week(
         cands.append(f.recipe(100 + n, title, [D], [f.line(n, 590)], ing, base=1))
     c = f.constraints(
         days=3, slots={D: 600}, cook_weekdays=range(7), protein_g=target, nudge_pct=0, calorie_mode=mode
-    ).model_copy(update={"protein_reward": tile})
+    ).model_copy(update={"protein_reward": tile, "daily_protein_max_g": band})
     return f.problem(c, cands, ing)
 
 
@@ -51,45 +58,59 @@ def chosen(p: PlanningProblem, result: object) -> set[str]:
 
 def test_the_tile_raises_protein_and_without_it_protein_earns_nothing():
     recipes = {"Rice bowl": (32, 200), "Chicken bowl": (60, 240)}  # 40 cents more for 28 g more protein
-    without = dinner_week(recipes, target=30, tile=False)
+    without = dinner_week(recipes, target=30, tile=False, band=60)
     assert chosen(without, solve(without, time_limit_s=30)) == {"Rice bowl"}  # the floor is met, so cheapest
-    with_tile = dinner_week(recipes, target=30, tile=True)
+    with_tile = dinner_week(recipes, target=30, tile=True, band=60)
     assert chosen(with_tile, solve(with_tile, time_limit_s=30)) == {"Chicken bowl"}
 
 
 @pytest.mark.parametrize("mode", MODES)
-def test_reward_capped_at_1_5x_target(mode):
-    """A plan at 1.5 × the target beats a costlier one at 2 × (an all-chicken week) whose only advantage is
-    the extra protein: above 1.5 × the target protein earns nothing."""
+def test_reward_capped_at_the_bands_top(mode):
+    """A plan at the band's top beats a costlier one far above it (an all-chicken week) whose only advantage
+    is the extra protein: above the top protein earns nothing (2b.6 approval, item 1)."""
     p = dinner_week(
-        {"Bowl at 1.5x": (45, 240), "All chicken at 2x": (60, 300)}, target=30, tile=True, mode=mode
+        {"Bowl at the top": (45, 240), "All chicken": (60, 300)}, target=30, tile=True, band=45, mode=mode
     )
-    assert chosen(p, solve(p, time_limit_s=30)) == {"Bowl at 1.5x"}
+    assert chosen(p, solve(p, time_limit_s=30)) == {"Bowl at the top"}
 
 
 @pytest.mark.parametrize("mode", MODES)
 def test_below_the_cap_more_protein_wins_at_equal_cost(mode):
-    p = dinner_week({"Lean bowl": (32, 240), "Bigger bowl": (40, 240)}, target=30, tile=True, mode=mode)
+    p = dinner_week(
+        {"Lean bowl": (32, 240), "Bigger bowl": (40, 240)}, target=30, tile=True, band=45, mode=mode
+    )
     assert chosen(p, solve(p, time_limit_s=30)) == {"Bigger bowl"}
 
 
+@pytest.mark.parametrize("mode", MODES)
+def test_past_the_bands_top_a_plan_leans_back_even_without_the_tile(mode):
+    """Ideally no more than the band's top: at equal cost the bowl inside the band wins (2b.6 approval)."""
+    p = dinner_week(
+        {"In the band": (33, 240), "Way over": (60, 240)}, target=30, tile=False, band=33, mode=mode
+    )
+    assert chosen(p, solve(p, time_limit_s=30)) == {"In the band"}
+
+
 def test_the_protein_term_never_exceeds_its_per_day_bound():
-    p = dinner_week({"Bowl": (60, 240)}, target=30, tile=True)
+    p = dinner_week({"Bowl": (60, 240)}, target=30, tile=True, band=45)
     m = build_model(p)
     rewards = [v for v in m.prob.variables() if v.name.startswith("pr_")]
     assert len(rewards) == 3  # one per day
-    assert all(v.upBound == 45 for v in rewards)  # 1.5 × 30 g
+    assert all(v.upBound == 45 for v in rewards)  # the band's top, no longer 1.5 × the target
     coefficients = {v.name: c for v, c in m.prob.objective.items()}
     assert all(coefficients[v.name] == model.PROTEIN_REWARD_PER_G for v in rewards)
+    overs = [v for v in m.prob.variables() if v.name.startswith("pover_")]
+    assert len(overs) == 3 and all(coefficients[v.name] == -model.PROTEIN_OVER_PER_G for v in overs)
     m.prob.solve(pulp.HiGHS(msg=False))
     term = sum(model.PROTEIN_REWARD_PER_G * v.varValue for v in rewards)
     assert term <= model.PROTEIN_REWARD_PER_G * 45 * 3 + 1e-6
 
 
-def test_with_no_target_the_cap_is_1_5x_100_g():
-    p = dinner_week({"Bowl": (60, 240)}, target=0, tile=True)
-    assert p.constraints.protein_reward_cap_g == 150
-    assert {v.upBound for v in build_model(p).prob.variables() if v.name.startswith("pr_")} == {150}
+def test_with_no_band_nothing_above_the_target_earns_a_reward():
+    p = dinner_week({"Bowl": (60, 240)}, target=30, tile=True)
+    assert p.constraints.protein_reward_cap_g == 30
+    assert {v.upBound for v in build_model(p).prob.variables() if v.name.startswith("pr_")} == {30}
+    assert not [v for v in build_model(p).prob.variables() if v.name.startswith("pover_")]
 
 
 def test_no_reward_terms_without_the_tile():

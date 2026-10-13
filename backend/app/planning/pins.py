@@ -10,6 +10,11 @@ Cooked batches stay exactly as they were.
 
 The options are found one after another: the best fit, then the best fit without that recipe, and so on (the
 model is small, since only one slot is free). Pure: the caller builds the problem and the pins from the plan.
+
+Close fits (step 2b.6 approval, B): when too few meals fit exactly, the same pinned model may also move the
+other batches' portions a little (each keeps its recipe, day and portion count; moving costs a price per
+unit) and go past the calorie limits or a cook day's minutes by up to NearLimits, at a steep price per kcal
+and minute, so the closest fit comes first.
 """
 
 from collections.abc import Mapping
@@ -19,11 +24,13 @@ from decimal import Decimal
 
 import pulp
 
+from app.domain.cook_schedule import DishBatch
 from app.domain.enums import MealSlot
 from app.planning.post_solve import KeptRounding
 from app.planning.problem import PlanningProblem
 from app.planning.solver.model import (
     BatchKey,
+    NearLimits,
     SolverSolution,
     _Model,
     batch_key,
@@ -71,6 +78,8 @@ class Pins:
     # batches the plan cooks besides the kept ones, whatever the slot: your new version of a batch (AA8),
     # with the meals that batch fed; its nudge is free
     added: frozenset[BatchKey] = field(default_factory=frozenset)
+    # a close fit (step 2b.6 approval, B): the kept batches not yet cooked may move their multiplier
+    rebalance: bool = False
 
 
 @dataclass(frozen=True)
@@ -98,9 +107,16 @@ def _may_fill(key: BatchKey, cook_on: date, pins: Pins) -> bool:
     return cook_on >= pins.earliest
 
 
-def pinned_model(problem: PlanningProblem, pins: Pins) -> _Model:
-    """The week's MILP with everything but the swapped slot fixed as the plan has it."""
-    model = build_model(problem, fixed_nudges={k: b.nudge for k, b in pins.batches.items()})
+def pinned_model(problem: PlanningProblem, pins: Pins, near: NearLimits | None = None) -> _Model:
+    """The week's MILP with everything but the swapped slot fixed as the plan has it (with `pins.rebalance`,
+    the multipliers of batches not yet cooked anchored instead of fixed; `near`: a close fit's limits)."""
+    moves = {k for k, b in pins.batches.items() if pins.rebalance and not b.cooked}
+    model = build_model(
+        problem,
+        fixed_nudges={k: b.nudge for k, b in pins.batches.items() if k not in moves},
+        near=near,
+        anchor_nudges={k: pins.batches[k].nudge for k in moves},
+    )
     present = {batch_key(b): b for b in model.batches}
     if missing := sorted(set(pins.batches) - set(present)):
         raise PinError(f"the plan's batches {missing} aren't possible with its own rules any more")
@@ -144,23 +160,29 @@ def filled(solution: SolverSolution, pins: Pins) -> Filled:
     return Filled(batch.version_id, meal.batch_index, key, key not in pins.batches, meal.from_freezer)
 
 
-def _overrun(problem: PlanningProblem, solution: SolverSolution, pins: Pins) -> BatchKey | None:
+def _overrun(
+    problem: PlanningProblem, solution: SolverSolution, pins: Pins, *, allow_minutes: int = 0
+) -> BatchKey | None:
     """A batch the re-solve changed (it filled the slot, or was added), when its cook day's exact schedule
-    now runs over that day's minutes."""
+    now runs over that day's minutes (plus `allow_minutes`, a close fit's)."""
     c = problem.constraints
     changed = set(pins.added)
     if pins.slot is not None:
         changed.add(filled(solution, pins).key)
     for key in sorted(changed):
-        pairs = [
-            (b.cook_on, planned_batch(problem.candidate(b.version_id), b.portion_size.value, b.portions))
-            for b in solution.batches
-            if b.cook_on == key[1]
-        ]
-        schedule = day_schedules(pairs).get(key[1])
-        if schedule is not None and schedule.elapsed > c.day(key[1]).cook_minutes_available:
+        schedule = day_schedules(day_pairs(problem, solution, key[1])).get(key[1])
+        if schedule is not None and schedule.elapsed > c.day(key[1]).cook_minutes_available + allow_minutes:
             return key
     return None
+
+
+def day_pairs(problem: PlanningProblem, solution: SolverSolution, day: date) -> list[tuple[date, DishBatch]]:
+    """One cook day's batches, as the exact schedule takes them."""
+    return [
+        (b.cook_on, planned_batch(problem.candidate(b.version_id), b.portion_size.value, b.portions))
+        for b in solution.batches
+        if b.cook_on == day
+    ]
 
 
 def solve_pinned(
@@ -169,15 +191,20 @@ def solve_pinned(
     *,
     time_limit_s: float = SWAP_TIME_LIMIT_S,
     gap_abs: float = 0.01,
+    near: NearLimits | None = None,
 ) -> tuple[SolverSolution, Pins] | None:
-    """The best way to fill the slot (None: nothing fits), with the pins it took (the cuts it found)."""
+    """The best way to fill the slot (None: nothing fits), with the pins it took (the cuts it found). With
+    `near`, the closest fit within its limits."""
+    allow = near.minutes if near is not None else 0
     for _ in range(MAX_CUT_ROUNDS + 1):
-        model = pinned_model(problem, pins)
+        model = pinned_model(problem, pins, near)
         status = run_solver(model, time_limit_s, SWAP_GAP_REL, gap_abs, kind="swap")
         if status not in (pulp.LpSolutionOptimal, pulp.LpSolutionIntegerFeasible):
             return None
         solution = extract(problem, model, status)
-        over = _overrun(problem, solution, pins)
+        if pins.rebalance:
+            solution = _settle(solution, pins)
+        over = _overrun(problem, solution, pins, allow_minutes=allow)
         if over is None:
             return solution, pins
         if over in pins.added:
@@ -186,14 +213,29 @@ def solve_pinned(
     return None
 
 
+SETTLE_TOLERANCE = Decimal("0.002")  # a rebalanced multiplier this close to the stored one didn't move
+
+
+def _settle(solution: SolverSolution, pins: Pins) -> SolverSolution:
+    """A rebalancing solve's kept batches whose multiplier came back within SETTLE_TOLERANCE of the stored one
+    keep the stored one exactly (so they round as stored); only real moves stay."""
+    batches = []
+    for b in solution.batches:
+        kept = pins.batches.get((b.version_id, b.cook_on, b.portion_size.value))
+        near = kept is not None and b.nudge != kept.nudge and abs(b.nudge - kept.nudge) < SETTLE_TOLERANCE
+        batches.append(replace(b, nudge=kept.nudge) if near and kept is not None else b)
+    return replace(solution, batches=tuple(batches))
+
+
 def swap_options(
-    problem: PlanningProblem, pins: Pins, *, count: int = DEFAULT_OPTIONS
+    problem: PlanningProblem, pins: Pins, *, count: int = DEFAULT_OPTIONS, near: NearLimits | None = None
 ) -> tuple[list[SolverSolution], Pins]:
-    """Up to `count` ways to fill the slot, best first, each with a different recipe."""
+    """Up to `count` ways to fill the slot, best first, each with a different recipe (with `near`, the
+    closest fits)."""
     out: list[SolverSolution] = []
     offer = set(pins.offer)
     while len(out) < count and offer:
-        found = solve_pinned(problem, replace(pins, offer=frozenset(offer)))
+        found = solve_pinned(problem, replace(pins, offer=frozenset(offer)), near=near)
         if found is None:
             break
         solution, pins = found
@@ -203,13 +245,14 @@ def swap_options(
 
 
 def kept_indices(solution: SolverSolution, pins: Pins) -> tuple[dict[int, KeptRounding], frozenset[int]]:
-    """For the rounding (post_solve): the batches kept exactly (same portions as stored), and the ones a swap
-    changed only in portions (they keep their multiplier)."""
+    """For the rounding (post_solve): the batches kept exactly (same portions and multiplier as stored), and
+    the ones a swap changed only in portions (they keep their multiplier). A batch a close fit rebalanced
+    (its multiplier moved) is rounded afresh."""
     exact: dict[int, KeptRounding] = {}
     nudge_only: set[int] = set()
     for i, b in enumerate(solution.batches):
         kept = pins.batches.get((b.version_id, b.cook_on, b.portion_size.value))
-        if kept is None:
+        if kept is None or (b.nudge != kept.nudge and not kept.cooked):
             continue
         if b.portions == kept.portions and b.portions_to_freeze == kept.portions_to_freeze:
             exact[i] = kept.rounding

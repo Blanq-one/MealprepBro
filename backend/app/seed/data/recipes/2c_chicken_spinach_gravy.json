@@ -15,9 +15,9 @@
  "draft_note": "Draft quantities: adjust them in the app. Freeze the gravy only.",
  "ingredients": [
   {"ingredient": "chicken-thigh-boneless-skinless", "quantity": "680", "unit": "g", "preparation": "bite-size pieces", "role": "protein", "component": "gravy"},
-  {"ingredient": "spinach", "quantity": "300", "unit": "g", "role": "vegetable", "component": "gravy"},
+  {"ingredient": "spinach", "quantity": "300", "unit": "g", "role": "vegetable", "component": "gravy", "budget": {"ingredient": "spinach-frozen", "quantity": "300", "unit": "g"}},
   {"ingredient": "onion-yellow", "quantity": "1", "unit": "count", "preparation": "medium, chopped", "role": "vegetable", "component": "gravy"},
-  {"ingredient": "tomato", "quantity": "2", "unit": "count", "preparation": "medium, chopped", "role": "vegetable", "component": "gravy"},
+  {"ingredient": "tomato", "quantity": "2", "unit": "count", "preparation": "medium, chopped", "role": "vegetable", "component": "gravy", "budget": {"ingredient": "tomatoes-canned", "quantity": "240", "unit": "ml"}},
   {"ingredient": "garlic", "quantity": "4", "unit": "clove", "preparation": "grated", "role": "seasoning", "component": "gravy"},
   {"ingredient": "ginger", "quantity": "15", "unit": "g", "preparation": "grated", "role": "seasoning", "component": "gravy"},
   {"ingredient": "cumin-ground", "quantity": "1", "unit": "tsp", "role": "seasoning", "component": "gravy"},

@@ -15,7 +15,7 @@
  "draft_note": "Draft quantities: adjust them in the app. Wrap each one in foil to freeze.",
  "ingredients": [
   {"ingredient": "egg-large", "quantity": "8", "unit": "count", "role": "protein"},
-  {"ingredient": "spinach", "quantity": "100", "unit": "g", "preparation": "roughly chopped", "role": "vegetable"},
+  {"ingredient": "spinach", "quantity": "100", "unit": "g", "preparation": "roughly chopped", "role": "vegetable", "budget": {"ingredient": "spinach-frozen", "quantity": "100", "unit": "g"}},
   {"ingredient": "bell-pepper", "quantity": "1", "unit": "count", "preparation": "diced", "role": "vegetable"},
   {"ingredient": "onion-yellow", "quantity": "1/2", "unit": "count", "preparation": "diced", "role": "vegetable"},
   {"ingredient": "milk-2", "quantity": "2", "unit": "tbsp", "role": "dairy"},

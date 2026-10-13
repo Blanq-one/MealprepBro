@@ -7,6 +7,7 @@ import json
 from decimal import Decimal
 from typing import Any
 
+import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -15,6 +16,7 @@ from app.cook.tests.test_meal_prep_api import meal_prep, plan_of
 from app.cook.tests.test_rate_limit_waits import EMPTY_MINUTE
 from app.db.models import FeedbackEvent, GenerationRun, GroceryList, GroceryListItem, MealPlan, PlanCandidate
 from app.llm.pacing import rate_state
+from app.schemas.constraints import PlanConstraints
 
 THREE_DAYS = {
     "shape": "days",
@@ -74,15 +76,17 @@ def test_options_fit_the_slot_and_one_tap_replaces_just_that_meal(api: Any, seed
     assert 3 <= len(found) <= 5
     versions = [o["version_id"] for o in found]
     assert len(set(versions)) == len(versions) and meal["recipe_version_id"] not in versions
-    keys = [(o["cost_delta_cents"], -Decimal(o["protein_g"])) for o in found]
+    exact = [o for o in found if o["fit"] == "exact"]
+    keys = [(o["cost_delta_cents"], -Decimal(o["protein_g"])) for o in exact]
     assert keys == sorted(keys)  # by what they add to the groceries, then by protein
+    assert found[: len(exact)] == exact  # close fits (if any) come after the exact ones
     for o in found:
         assert o["numbers"][0] == f"{o['kcal']:,} kcal" and o["numbers"][1].endswith(" g protein")
         assert o["cost_delta_display"]
         assert o["source_display"]
 
     chosen = found[0]
-    out = swap(api, plan["id"], meal["plan_meal_id"], chosen["version_id"])
+    out = swap(api, plan["id"], meal["plan_meal_id"], chosen["version_id"], close=chosen["fit"] == "close")
     new = out["plan"]
     assert out["undo_plan_id"] == plan["id"] and out["plan_id"] == new["id"] != plan["id"]
     assert new["status"] == plan["status"] == "draft"
@@ -127,7 +131,7 @@ def test_undo_brings_the_plan_back_exactly(api: Any, seeded_db: Session) -> None
     plan = a_plan(api)
     meal = dinner(plan)
     chosen = options(api, plan["id"], meal["plan_meal_id"])["options"][0]
-    out = swap(api, plan["id"], meal["plan_meal_id"], chosen["version_id"])
+    out = swap(api, plan["id"], meal["plan_meal_id"], chosen["version_id"], close=chosen["fit"] == "close")
     undone = api.post(f"/api/v1/plans/{out['plan_id']}/swap/undo")
     assert undone.status_code == 200, undone.text
     assert undone.json() == api.get(f"/api/v1/plans/{plan['id']}").json() == plan  # AC 4: identical
@@ -173,7 +177,7 @@ def test_check_offs_carry_over_to_the_new_version(api: Any, seeded_db: Session) 
     assert api.patch(f"/api/v1/grocery-items/{first.id}", json={"checked": True}).status_code == 200
     meal = dinner(plan)
     chosen = options(api, plan["id"], meal["plan_meal_id"])["options"][0]
-    out = swap(api, plan["id"], meal["plan_meal_id"], chosen["version_id"])
+    out = swap(api, plan["id"], meal["plan_meal_id"], chosen["version_id"], close=chosen["fit"] == "close")
     seeded_db.expire_all()
     new_list = seeded_db.scalars(select(GroceryList).where(GroceryList.meal_plan_id == out["plan_id"])).one()
     carried = seeded_db.scalars(
@@ -207,7 +211,8 @@ def test_after_done_shopping_a_swap_buys_nothing_unless_you_allow_it(api: Any, s
     for option in pantry["options"]:
         assert option["buys"] == []
     if pantry["options"]:
-        out = swap(api, plan["id"], meal["plan_meal_id"], pantry["options"][0]["version_id"])
+        first = pantry["options"][0]
+        out = swap(api, plan["id"], meal["plan_meal_id"], first["version_id"], close=first["fit"] == "close")
         seeded_db.expire_all()
         new_list = seeded_db.scalars(
             select(GroceryList).where(GroceryList.meal_plan_id == out["plan_id"])
@@ -234,7 +239,7 @@ def test_a_meal_from_a_cooked_batch_keeps_the_food(api: Any, seeded_db: Session)
     assert api.post(f"/api/v1/cook-batches/{fed['id']}/cooked", json={}).status_code == 200
     chosen = options(api, plan["id"], meal["plan_meal_id"])["options"][0]
     assert any(line.startswith(f"Extra portion of {fed['title']}") for line in chosen["also_changed"])
-    out = swap(api, plan["id"], meal["plan_meal_id"], chosen["version_id"])
+    out = swap(api, plan["id"], meal["plan_meal_id"], chosen["version_id"], close=chosen["fit"] == "close")
     kept = next(
         b
         for b in out["plan"]["batches"]
@@ -307,3 +312,80 @@ def test_a_past_meal_and_a_one_meal_plan_cant_be_swapped(api: Any, seeded_db: Se
     seeded_db.flush()
     failed = options(api, plan["id"], meal["plan_meal_id"])
     assert failed["status"] == "failed" and failed["problem"]["status"] == 409
+
+
+# ---------------- step 2b.6 approval: A (a swap sticks) and B (close fits) ----------------
+@pytest.mark.parametrize("accepted", [False, True], ids=["draft", "accepted"])
+def test_every_option_the_sheet_shows_applies_on_a_draft_and_an_accepted_plan(
+    api: Any, seeded_db: Session, accepted: bool
+) -> None:
+    """A: the sheet only offers what a tap can apply (each option is rounded and checked as the plan it would
+    make), on a draft plan and on your current one; the new version keeps the plan's status and passes the
+    full check, and Undo brings the plan back each time."""
+    plan = a_plan(api)
+    if accepted:
+        reply = api.post(f"/api/v1/plans/{plan['id']}/accept")
+        assert reply.status_code == 200, reply.text
+        plan = reply.json()
+        assert plan["status"] == "active"
+    tried = 0
+    for meal in (dinner(plan), [m for m in meals_of(plan) if m["slot"] == "lunch"][-1]):
+        result = options(api, plan["id"], meal["plan_meal_id"])
+        assert result["status"] == "succeeded", result
+        for option in result["options"]:
+            out = swap(
+                api, plan["id"], meal["plan_meal_id"], option["version_id"], close=option["fit"] == "close"
+            )
+            new = out["plan"]
+            assert new["status"] == plan["status"]
+            swapped = next(m for m in meals_of(new) if m["plan_meal_id"] == out["plan_meal_id"])
+            assert (swapped["eat_on"], swapped["slot"]) == (meal["eat_on"], meal["slot"])
+            assert swapped["recipe_version_id"] == option["version_id"]
+            assert (swapped["kcal"], swapped["protein_g"]) == (option["kcal"], option["protein_g"])
+            seeded_db.expire_all()
+            row = seeded_db.get(MealPlan, new["id"])
+            assert row is not None and row.validation_report["ok"] is True
+            undone = api.post(f"/api/v1/plans/{out['plan_id']}/swap/undo")
+            assert undone.status_code == 200, undone.text
+            tried += 1
+    assert tried >= 3
+
+
+def test_close_fits_when_nothing_fits_exactly(api: Any, seeded_db: Session) -> None:
+    """B: once nothing else fits exactly, the closest options still come, each saying what it changes; one
+    applies as a close fit, the plan keeping what it goes past (and saying so), and "no other fits" only when
+    there are no close fits either."""
+    plan = a_plan(api)
+    meal = dinner(plan)
+    away = [meal["recipe_version_id"]]
+    close: dict[str, Any] | None = None
+    for _ in range(40):
+        result = options(api, plan["id"], meal["plan_meal_id"], exclude_version_ids=away)
+        if result["status"] == "none_fit":
+            assert result["no_fit"].startswith("No other dinner fits ")
+            break
+        found = result["options"]
+        assert found and not {o["version_id"] for o in found} & set(away)
+        if all(o["fit"] == "close" for o in found):
+            close = found[0]
+            break
+        away += [o["version_id"] for o in found if o["fit"] == "exact"]
+    assert close is not None, "never reached the close fits"
+    assert close["changes"], close
+    for line in close["changes"]:
+        assert line.endswith("calories") or " min cook time on " in line, line
+    out = swap(
+        api, plan["id"], meal["plan_meal_id"], close["version_id"], close=True, exclude_version_ids=away
+    )
+    new = out["plan"]
+    swapped = next(m for m in meals_of(new) if m["plan_meal_id"] == out["plan_meal_id"])
+    assert swapped["recipe_version_id"] == close["version_id"]
+    seeded_db.expire_all()
+    row = seeded_db.get(MealPlan, new["id"])
+    assert row is not None and row.validation_report["ok"] is True
+    assert any("close fit" in note for note in row.validation_report["notes"])
+    before = PlanConstraints.model_validate(seeded_db.get(MealPlan, plan["id"]).constraints)  # type: ignore[union-attr]
+    after = PlanConstraints.model_validate(row.constraints)
+    went_past = [line for line in close["changes"] if not line.endswith("to balance the calories")]
+    if went_past:  # what it goes past stays with the plan
+        assert after.kcal_allowances or after.days != before.days

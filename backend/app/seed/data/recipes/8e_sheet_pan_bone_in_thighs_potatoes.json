@@ -43,7 +43,8 @@
    "unit": "g",
    "preparation": "trimmed",
    "role": "vegetable",
-   "component": "beans"
+   "component": "beans",
+   "budget": {"ingredient": "green-beans-frozen", "quantity": "340", "unit": "g"}
   },
   {
    "ingredient": "olive-oil",

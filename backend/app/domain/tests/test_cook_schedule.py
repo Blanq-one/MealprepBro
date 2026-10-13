@@ -59,10 +59,9 @@ def test_three_dishes_on_three_appliances_finish_faster_together() -> None:
     alone = [dish_alone(d, 4, 4).elapsed for d in (OVEN_DISH, AIR_DISH, RICE_DISH)]
     assert alone == [41, 20, 26]  # the oven waits for its 10-minute preheat, which overlaps the prep
     s = schedule_day([batch("oven", OVEN_DISH), batch("air", AIR_DISH), batch("rice", RICE_DISH)])
-    # the kitchen order (AA7): all the chopping first (14 min), then the oven (the longest cook), the rice
-    # and the fish while it runs: 45, against 87 one after another (41 if the oven went in before the fish
-    # was chopped)
-    assert s.elapsed == 45 < sum(alone)
+    # the kitchen order (2b.6 approval, item 6): the oven dish (the longest cook) is prepped first and goes
+    # in, the rice and the fish are prepped and cooked while it runs: 41, against 87 one after another
+    assert s.elapsed == 41 < sum(alone)
     assert s.hands_on == 17
 
 
@@ -73,9 +72,9 @@ def test_hands_on_work_that_cant_overlap_adds_to_the_longest_chain() -> None:
         batch("c", DishTiming((Task("z", None, 5, 0), Task("z", "rice_cooker", 1, 25)))),
     ]
     s = schedule_day(prep_heavy)
-    # every dish's prep first (25 min), then the oven dish (the longest chain), the fish and the rice while it
-    # runs: 56, not 41 + 27 + 31
-    assert s.elapsed == 56
+    # the oven dish (the longest chain) prepped first and in the oven, the fish and the rice prepped and
+    # cooked while it runs: 43, not 41 + 27 + 31
+    assert s.elapsed == 43
     assert s.elapsed < sum(dish_alone(b.timing, 4, 4).elapsed for b in prep_heavy)
 
 
@@ -296,11 +295,11 @@ def test_untagged_steps_are_estimated_from_their_sections() -> None:
     assert dish_alone(chilled, 4, 4).elapsed == 10
 
 
-# ---------------- the kitchen order (AA7) ----------------
+# ---------------- the kitchen order (AA7; 2b.6 approval, item 6) ----------------
 def kitchen_order_problems(s) -> list[str]:
-    """What breaks the systematic kitchen order in a schedule: hands-on cooking or portioning started while
-    some prep (chopping, marinating) was ready and waiting, or portioning while some cooking was (and its
-    appliance was free)."""
+    """What breaks the kitchen order in a schedule: hands-on work started while another ready task with a
+    longer chain of work behind it could have started (the longest-cooking item's prep and start come first,
+    the rest while it cooks), or portioning while other work was ready (its appliance free)."""
     out = []
     hands = [p for p in s.placed if p.hands_on]
 
@@ -313,15 +312,25 @@ def kitchen_order_problems(s) -> list[str]:
         busy = sum(1 for o in s.placed if o.equipment == equipment and o.start <= at < o.end)
         return busy < (4 if equipment == "stovetop" else 1)
 
+    def last(p) -> bool:
+        return bool(p.section == "portioning")
+
     for p in hands:
         for q in hands:
-            if q.phase < p.phase and q.ready <= p.start < q.start and free(q.equipment, p.start):
-                out.append(f"{p.section} at {p.start} before the {q.section} ready at {q.ready}")
+            waiting = q.ready <= p.start < q.start and free(q.equipment, p.start)
+            if not waiting:
+                continue
+            if last(p) and not last(q):
+                out.append(f"portioning at {p.start} before the {q.section} ready at {q.ready}")
+            elif last(p) == last(q) and q.tail > p.tail:
+                out.append(f"{p.section} at {p.start} (chain {p.tail}) before {q.section} (chain {q.tail})")
     return out
 
 
-def test_a_cook_day_runs_prep_first_then_the_longest_cook_then_the_rest_and_portions_last() -> None:
-    """AA7: chop and marinate everything first, start the longest-cooking item next, the rest while it cooks,
+def test_a_cook_day_preps_and_starts_the_longest_cook_first_the_rest_while_it_cooks_and_portions_last() -> (
+    None
+):
+    """2b.6 approval, item 6: prep the longest-cooking item first and start it, prep the rest while it cooks,
     and finish by portioning."""
     roast = DishTiming(
         (
@@ -348,19 +357,19 @@ def test_a_cook_day_runs_prep_first_then_the_longest_cook_then_the_rest_and_port
     s = schedule_day([batch("roast", roast), batch("kebab", kebab), batch("stew", stew)])
     assert kitchen_order_problems(s) == []
     lines = [line.text for line in timeline(s) if line.kind != "preheat"]
-    chops = [n for n, text in enumerate(lines) if text.startswith("Prep the")]
-    cooks = [n for n, text in enumerate(lines) if "oven" in text or "air fryer" in text or "stove" in text]
-    assert len(chops) == 3 and max(chops) < min(cooks)  # all the chopping first
-    assert lines.index("Marinate the lamb (30 min)") < min(cooks)  # the marinade starts with the prep
-    assert lines[min(cooks)].startswith("Chicken into the oven")  # the longest cook goes in first
+    # the kebab has the longest chain (its 30-minute marinade): prepped first and started
+    assert lines[:2] == ["Prep the lamb (5 min)", "Marinate the lamb (30 min)"]
+    # then the roast's prep and into the oven, the stew prepped while both run
+    assert lines[2:4] == ["Prep the chicken (8 min)", "Chicken into the oven at 425°F (42 min)"]
+    assert lines.index("Prep the beans (6 min)") > lines.index("Chicken into the oven at 425°F (42 min)")
     portions = [n for n, text in enumerate(lines) if text.startswith("Portion out")]
-    assert lines[-1] == "Done" and portions[-1] == len(lines) - 2  # it ends by portioning
-    assert all(n > min(cooks) for n in portions)
+    assert lines[-1] == "Done" and portions == [len(lines) - 4, len(lines) - 3, len(lines) - 2]
+    assert s.elapsed == 61  # was 66 with every dish's prep first (AA7 as first built)
 
 
 def test_every_cook_day_keeps_the_kitchen_order() -> None:
     """The same order on 300 random cook days of 1-5 dishes (prep chains, marinades, appliances, shared
-    steps, big batches)."""
+    steps, big batches): the longest chain first, portioning last."""
     rng = random.Random(42)
     appliances = ["oven", "air_fryer", "stovetop", "rice_cooker", None]
     for _ in range(300):

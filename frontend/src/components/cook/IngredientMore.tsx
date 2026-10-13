@@ -1,6 +1,7 @@
 "use client";
 
-// A recipe line's ⋯ (step 2b.6, AA5, AA8): Swap it, Leave it out, I'm out of this, Never use this. An edit saves
+// A recipe line's ⋯ (step 2b.6, AA5, AA8): Swap it, Leave it out, I'm out of this, Never use this; for a line
+// with a budget equivalent (2b.6 approval, item 4), Classic or budget: always one side in this recipe. An edit saves
 // your own version of the recipe; from a plan meal, Also update this week's plan switches that batch to it. A
 // swap that cooks differently offers Rewrite steps for this change (one LLM call, only on tap). Every number
 // and line is the server's.
@@ -87,7 +88,7 @@ export function IngredientSheet({
     }
   }
 
-  const edit = (body: { action: "swap" | "leave_out"; ingredient_id?: number }) =>
+  const edit = (body: { action: "swap" | "leave_out" | "use_classic" | "use_budget"; ingredient_id?: number }) =>
     run(async () => setResult(await editLine(versionId, { line_id: lineId, batch_id: batch?.id ?? null, ingredient_id: body.ingredient_id ?? null, action: body.action })));
   const locked = busy || !online;
 
@@ -139,6 +140,20 @@ export function IngredientSheet({
       ) : (
         <>
           <p className="small muted">{options.display}</p>
+          {options.pair && (
+            <section aria-labelledby="pair-h">
+              <h3 id="pair-h">Classic or budget</h3>
+              <p className="small">
+                A budget tier cooks this with whichever is cheaper at your stores: {options.pair.classic} (the classic) or {options.pair.budget_display}. Pick one to always use it in this recipe.
+              </p>
+              <button type="button" className="btn btn-block" disabled={locked} onClick={() => void edit({ action: "use_classic" })}>
+                Always the classic: {options.pair.classic}
+              </button>
+              <button type="button" className="btn btn-block" disabled={locked} onClick={() => void edit({ action: "use_budget" })}>
+                Always the budget one: {options.pair.budget}
+              </button>
+            </section>
+          )}
           <section aria-labelledby="swap-h">
             <h3 id="swap-h">Swap it</h3>
             {options.swaps.length > 0 ? (

@@ -130,11 +130,13 @@ def test_no_seed_portion_uses_more_than_one_scoop_by_default(seeded_db):
 
 
 def test_adding_an_optional_field_doesnt_revise_unchanged_seeds(seeded_db):
-    """A field added later (freeze_note) counts toward a seed's content only when it's set, so seeds that
-    don't use it keep the hash they were loaded with."""
+    """A field added later (freeze_note; a line's budget equivalent, the 2b.6 approval) counts toward a seed's
+    content only when it's set, so seeds that don't use it keep the hash they were loaded with."""
     seeds = {r.title: r for _, r in load_seed_files().recipes}
     plain = seeds["Spiced egg chaat"]
-    assert plain.freeze_note is None
+    assert plain.freeze_note is None and all(line.budget is None for line in plain.ingredients)
     payload = plain.model_dump(mode="json", exclude={"family", "draft_note", "freeze_note"})
+    for line in payload["ingredients"]:
+        del line["budget"]  # as it was before the field existed
     assert content_hash(plain) == hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
     assert seed_all(seeded_db).counts.get("recipes_revised", 0) == 0

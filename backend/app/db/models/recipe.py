@@ -156,6 +156,9 @@ class RecipeIngredient(Base):
     role: Mapped[str] = mapped_column(Text)
     component: Mapped[str | None] = mapped_column(Text)
     is_optional: Mapped[bool] = mapped_column(Boolean, server_default="false")
+    # the 2b.6 approval (item 4): a budget equivalent of this (classic) line (schemas.recipes.BudgetLine);
+    # NULL = none
+    budget: Mapped[dict[str, Any] | None] = mapped_column(JSONB(none_as_null=True))  # None: SQL NULL
 
 
 class RecipeStep(Base):

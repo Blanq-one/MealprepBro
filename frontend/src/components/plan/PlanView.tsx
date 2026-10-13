@@ -56,10 +56,7 @@ export function MealRow({ meal, online, planId, swap }: { meal: Meal; online: bo
         <Emoji symbol={icon.emoji} label={icon.label} className={styles.mealIcon} />
         <span className={styles.mealText}>
           <span className={styles.slot}>{slotLabel(meal.slot)}</span>
-          <span className={styles.mealTitle}>
-            {meal.title}
-            {meal.is_draft && <span className="badge badge-warn"> Draft</span>}
-          </span>
+          <span className={styles.mealTitle}>{meal.title}</span>
           <span className={styles.numbers}>
             {meal.kcal} kcal · {meal.protein_g} g protein
           </span>
@@ -109,7 +106,7 @@ function Timeline({ day, planId }: { day: Day; planId: number }) {
   if (lines.length === 0) return null;
   return (
     <details className={styles.timeline}>
-      <summary>Timeline{day.time_display ? ` · ${day.time_display}` : ""}</summary>
+      <summary>Timeline</summary>
       <ol className={styles.lines}>
         {lines.map((line, i) => (
           <li key={`${line.at_min}-${i}`} className={line.kind === "done" ? styles.done : undefined}>

@@ -22,6 +22,7 @@ from app.schemas.plans import AddToListOut
 from app.schemas.recipes import (
     AssemblyItemOut,
     AssemblyOut,
+    BudgetPairOut,
     HiddenRecipeOut,
     LeaveOutOut,
     LineOptionsOut,
@@ -457,6 +458,11 @@ def line_options(
         shopping=ShoppingTargetOut(
             plan_id=target.plan_id, list_id=target.list_id, can_add=target.can_add, reason=target.reason
         ),
+        pair=BudgetPairOut(
+            classic=opts.pair.classic, budget=opts.pair.budget, budget_display=opts.pair.budget_display
+        )
+        if opts.pair is not None
+        else None,
     )
 
 

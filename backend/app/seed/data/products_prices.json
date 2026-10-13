@@ -2827,6 +2827,171 @@
      "note": "estimated for the M13 seed library: replace with what you pay"
     }
    ]
+  },
+  {
+   "ingredient": "broccoli-frozen",
+   "name": "Frozen broccoli florets, 12 oz bag",
+   "package": {
+    "amount": "12",
+    "unit": "oz"
+   },
+   "price_basis": "per_package",
+   "display_unit": "bag",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 229,
+     "per": {
+      "amount": "12",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated at the 2b.6 approval (Broke mode's frozen veg had no price): replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 179,
+     "per": {
+      "amount": "12",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated at the 2b.6 approval (Broke mode's frozen veg had no price): replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "cauliflower-frozen",
+   "name": "Frozen cauliflower florets, 12 oz bag",
+   "package": {
+    "amount": "12",
+    "unit": "oz"
+   },
+   "price_basis": "per_package",
+   "display_unit": "bag",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 229,
+     "per": {
+      "amount": "12",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated at the 2b.6 approval (Broke mode's frozen veg had no price): replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 179,
+     "per": {
+      "amount": "12",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated at the 2b.6 approval (Broke mode's frozen veg had no price): replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "green-beans-frozen",
+   "name": "Frozen cut green beans, 16 oz bag",
+   "package": {
+    "amount": "16",
+    "unit": "oz"
+   },
+   "price_basis": "per_package",
+   "display_unit": "bag",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 249,
+     "per": {
+      "amount": "16",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated at the 2b.6 approval (Broke mode's frozen veg had no price): replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 199,
+     "per": {
+      "amount": "16",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated at the 2b.6 approval (Broke mode's frozen veg had no price): replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "spinach-frozen",
+   "name": "Frozen chopped spinach, 10 oz box",
+   "package": {
+    "amount": "10",
+    "unit": "oz"
+   },
+   "price_basis": "per_package",
+   "display_unit": "box",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 199,
+     "per": {
+      "amount": "10",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated at the 2b.6 approval (Broke mode's frozen veg had no price): replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 149,
+     "per": {
+      "amount": "10",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated at the 2b.6 approval (Broke mode's frozen veg had no price): replace with what you pay"
+    }
+   ]
+  },
+  {
+   "ingredient": "strawberries-frozen",
+   "name": "Frozen strawberries, 16 oz bag",
+   "package": {
+    "amount": "16",
+    "unit": "oz"
+   },
+   "price_basis": "per_package",
+   "display_unit": "bag",
+   "is_default": true,
+   "prices": [
+    {
+     "store": "Stop & Shop",
+     "price_cents": 399,
+     "per": {
+      "amount": "16",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated at the 2b.6 approval (Broke mode's frozen veg had no price): replace with what you pay"
+    },
+    {
+     "store": "Price Rite",
+     "price_cents": 299,
+     "per": {
+      "amount": "16",
+      "unit": "oz"
+     },
+     "source": "estimate",
+     "note": "estimated at the 2b.6 approval (Broke mode's frozen veg had no price): replace with what you pay"
+    }
+   ]
   }
  ]
 }

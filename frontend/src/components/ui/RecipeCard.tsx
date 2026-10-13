@@ -5,7 +5,9 @@ import { dishIcon } from "@/lib/format/icons";
 import { Emoji } from "./Emoji";
 import styles from "./RecipeCard.module.css";
 
-const BADGE_LABELS: Record<string, string> = { favorite: "Favorite", saved: "Saved", new: "New", draft: "Draft" };
+const BADGE_LABELS: Record<string, string> = { favorite: "Favorite", saved: "Saved", new: "New" };
+// every seed recipe is a draft, so a card never says so: only the recipe page does (step 2b.6 approval, E)
+const HIDDEN_BADGES = new Set(["draft"]);
 
 /** What a card shows. Every number and line is a display string from the API (FLOW_SPEC §5.3). */
 export type RecipeCardData = {
@@ -66,9 +68,9 @@ export function RecipeCard({
           </button>
         )}
       </div>
-      {recipe.badges.length > 0 && (
+      {recipe.badges.some((b) => !HIDDEN_BADGES.has(b)) && (
         <p className={styles.badges}>
-          {recipe.badges.map((b) => (
+          {recipe.badges.filter((b) => !HIDDEN_BADGES.has(b)).map((b) => (
             <span key={b} className={b === "new" ? "badge badge-herb" : "badge badge-accent"}>
               {BADGE_LABELS[b] ?? b}
             </span>

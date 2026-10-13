@@ -21,6 +21,7 @@ from app.db.models import (
     GroceryList,
     GroceryListItem,
     Ingredient,
+    IngredientAlias,
     InventoryItem,
     MealPlan,
     PlanBatchIngredient,
@@ -36,10 +37,13 @@ from app.domain.enums import PortionSize
 from app.domain.expiry import ShelfLife, estimate_expiry
 from app.domain.inventory_math import Lot, allocate
 from app.domain.quantities import format_quantity, portion_note
+from app.domain.step_text import replace_names
 from app.domain.units import ConversionError, convert, grams_of
 from app.planning.reference import daily_values
 from app.planning.rendering import LineInput as RenderLine
 from app.planning.rendering import RenderInput, StepInput, render
+from app.planning.resolver import IngredientResolver
+from app.schemas.recipes import BudgetLine
 from app.services.calculations import LineInput as CalcLine
 from app.services.calculations import calculate
 from app.services.errors import ConflictError
@@ -252,7 +256,14 @@ def batch_view(session: Session, user_id: int, batch_id: int) -> BatchView:
             )
         )
     }
-    data = load_ingredients(session, {row.ingredient_id for row in rows})
+    # lines a budget tier cooked with their budget equivalent (the 2b.6 approval, item 4): line id -> classic
+    budget_sides = {
+        row.recipe_ingredient_id: source.ingredient_id
+        for row in rows
+        if (source := authored.get(row.recipe_ingredient_id or 0)) is not None
+        and source.ingredient_id != row.ingredient_id
+    }
+    data = load_ingredients(session, {row.ingredient_id for row in rows} | set(budget_sides.values()))
     calc_lines: list[CalcLine] = []
     render_lines: list[RenderLine] = []
     shown: list[tuple[PlanBatchIngredient, str, str, str | None, bool, str | None]] = []
@@ -261,6 +272,11 @@ def batch_view(session: Session, user_id: int, batch_id: int) -> BatchView:
         source = authored.get(row.recipe_ingredient_id or 0)
         optional = bool(source and source.is_optional)
         unit = source.authored_unit if source is not None else row.unit
+        name = d.name
+        classic = budget_sides.get(row.recipe_ingredient_id)
+        if classic is not None and source is not None and source.budget is not None:
+            unit = BudgetLine.model_validate(source.budget).authored_unit
+            name = budget_name(d.name, data[classic].name)
         try:
             amount = convert(row.quantity, row.unit, unit, d.units) if unit != row.unit else row.quantity
         except ConversionError:
@@ -270,7 +286,7 @@ def batch_view(session: Session, user_id: int, batch_id: int) -> BatchView:
         render_lines.append(
             RenderLine(
                 row.ingredient_id,
-                d.name,
+                name,
                 amount,
                 unit,
                 grams_of(row.quantity, row.unit, d.units) * d.profile.edible_fraction,  # M5
@@ -284,7 +300,7 @@ def batch_view(session: Session, user_id: int, batch_id: int) -> BatchView:
         shown.append(
             (
                 row,
-                d.name,
+                name,
                 format_quantity(amount, unit),
                 source.preparation if source else None,
                 optional,
@@ -293,10 +309,11 @@ def batch_view(session: Session, user_id: int, batch_id: int) -> BatchView:
         )
     calc = calculate(session, calc_lines, batch.portions)
     flags = (version.change_set or {}).get("flags", {})  # your version cooks differently here (step 2b.6)
+    renames = _budget_renames(session, user_id, budget_sides, rows)
     steps = [
         StepInput(
             s.section,
-            s.text,
+            _renamed(s.text, renames),
             s.duration_minutes,
             s.appliance_temp_f,
             s.doneness_check_ingredient_id,
@@ -344,6 +361,37 @@ def batch_view(session: Session, user_id: int, batch_id: int) -> BatchView:
         _package_notes(session, plan, version.title, rows, data),
         _freeze_notes(plan, version, batch, meals),
     )
+
+
+def budget_name(budget: str, classic: str) -> str:
+    """A line cooked with its budget equivalent: 'canned diced tomatoes (classic: tomato)'."""
+    return f"{budget} (classic: {classic})"
+
+
+def _budget_renames(
+    session: Session, user_id: int, sides: dict[int | None, int], rows: list[PlanBatchIngredient]
+) -> list[tuple[list[str], str]]:
+    """For the steps of a batch cooked with budget equivalents: each classic's names, and the name of what
+    the batch uses instead (code edits the names, no LLM call, as your own versions do)."""
+    if not sides:
+        return []
+    budget_of = {row.recipe_ingredient_id: row.ingredient_id for row in rows}
+    resolver = IngredientResolver(session, user_id)
+    out = []
+    for line, classic in sides.items():
+        aliases = session.scalars(
+            select(IngredientAlias.alias).where(IngredientAlias.ingredient_id == classic)
+        )
+        short = resolver.short_name(classic)
+        names = sorted({resolver.data[classic].name, short} | {a for a in aliases if len(a.split()) >= 2})
+        out.append((names, resolver.short_name(budget_of[line])))
+    return out
+
+
+def _renamed(text: str, renames: list[tuple[list[str], str]]) -> str:
+    for names, new in renames:
+        text = replace_names(text, names, new)
+    return text
 
 
 def _package_notes(

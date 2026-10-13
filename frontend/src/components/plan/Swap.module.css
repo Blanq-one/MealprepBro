@@ -121,6 +121,26 @@
   font-weight: 600;
 }
 
+/* a close fit: what it changes (step 2b.6 approval, B) */
+.changes {
+  display: flex;
+  flex-direction: column;
+  color: var(--warn);
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.failed {
+  color: var(--danger);
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+.group {
+  margin: 4px 0 8px;
+  font-size: var(--text-label);
+}
+
 .busy {
   font-size: var(--text-small);
   font-weight: 600;

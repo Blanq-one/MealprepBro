@@ -33,7 +33,7 @@ describe("the recipe card", () => {
     expect(screen.getByRole("img", { name: "Curry" })).toHaveTextContent("🍛");
     expect(screen.getByText("540 kcal · 41 g protein · 35 min · $2.10")).toBeInTheDocument();
     expect(screen.getByText("Favorite")).toBeInTheDocument();
-    expect(screen.getByText("Draft")).toBeInTheDocument();
+    expect(screen.queryByText("Draft")).toBeNull(); // every seed is a draft: only the recipe page says so (E)
     expect(screen.getByText("Could buy: chickpeas $1.29 (Stop & Shop)")).toBeInTheDocument();
     expect(screen.getByText("Uses 3 of your items · ready in 35 min")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Remove Everyday chicken curry from favorites/ })).toHaveAttribute("aria-pressed", "true");

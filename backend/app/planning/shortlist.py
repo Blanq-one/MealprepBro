@@ -14,7 +14,9 @@ mood allows (P3): the first day of a week cooks every one of its meals itself, s
 could miss a short cook day that the library fits easily. With a money limit (a budget, or inventory mode's
 top-up) it also keeps the meal's cheapest recipe by cost per portion and the cheapest by what it costs to buy
 today (whole packages of what your pantry doesn't cover), since the planner stops at the wider shortlist then
-(D102 follow-up, approved 2026-10-11).
+(D102 follow-up, approved 2026-10-11); so does a cost-first tier (Broke mode, Cheapest). A tier that
+includes upgrades (A bit better, Fancy; 2b.6 approval, item 2) keeps enough of the meal's best upgraded
+recipes, and premium-protein ones, to reach its counts.
 
 Each candidate is scored within its meal, every term scaled 0–1 across that meal's pool, ties by version id:
   nutrition   your priority per kcal (protein, carbs, or iron with heme counted twice; none for balanced)
@@ -36,6 +38,7 @@ from decimal import Decimal
 
 from app.domain.cook_time import MOOD_ORDER
 from app.domain.enums import GroceryMode, MealSlot, NutritionPriority
+from app.domain.price_tiers import COST_FIRST, RANK, IngredientTier, PriceTier, upgrade_slots
 from app.planning.problem import CandidateRecipe, IngredientPlan, PlanningProblem
 from app.schemas.constraints import VARIETY_CAPPED_SLOTS
 
@@ -138,15 +141,25 @@ def meal_portions(problem: PlanningProblem, slot: MealSlot) -> int:
     return max(days, 1) * c.household_size
 
 
+def cost_first(problem: PlanningProblem) -> bool:
+    """Broke mode and Cheapest plan on cost first (2b.6 approval, item 2), like a money limit."""
+    tier = problem.constraints.price_tier
+    return tier is not None and PriceTier(tier) in COST_FIRST
+
+
 def buy_today_cents(x: CandidateRecipe, problem: PlanningProblem, portions: int) -> Decimal | None:
     """What cooking `portions` of a recipe costs to buy today: whole packages (the cheapest way at your
-    stores) of what your pantry doesn't cover, counting only what the money limit covers. None when
-    something it would buy has no price."""
+    stores) of what your pantry doesn't cover, counting only what the money limit covers (a cost-first tier:
+    the regular groceries). None when something it would buy has no price."""
     c = problem.constraints
+    first = cost_first(problem)
     total = Decimal(0)
     for ingredient_id, per_portion in x.need_per_portion.items():
         plan = problem.ingredients.get(ingredient_id)
-        if plan is None or plan.unlimited or not c.limit_covers(plan.stock_up):
+        covered = (
+            c.limit_covers(plan.stock_up) or (first and not plan.stock_up) if plan is not None else False
+        )
+        if plan is None or plan.unlimited or not covered:
             continue
         rest = per_portion * portions - plan.available
         if rest <= 0:
@@ -167,10 +180,10 @@ def buy_today_cents(x: CandidateRecipe, problem: PlanningProblem, portions: int)
 def cheapest(
     pool: Sequence[CandidateRecipe], problem: PlanningProblem, slot: MealSlot, scores: Mapping[int, Decimal]
 ) -> list[CandidateRecipe]:
-    """With a money limit: the meal's cheapest recipe per portion and the cheapest to buy today (ties by
-    score). An unknown cost never counts as cheap. Never-favored and disliked recipes only when nothing else
-    is there."""
-    if not problem.constraints.has_purchase_limit:
+    """With a money limit, or in a cost-first tier: the meal's cheapest recipe per portion and the cheapest
+    to buy today (ties by score). An unknown cost never counts as cheap. Never-favored and disliked recipes
+    only when nothing else is there."""
+    if not problem.constraints.has_purchase_limit and not cost_first(problem):
         return []
     usable = [x for x in pool if not (x.never_favored or x.has_disliked)] or list(pool)
     out: list[CandidateRecipe] = []
@@ -188,6 +201,29 @@ def cheapest(
         best = min(today, key=lambda t: (t[0], -scores[t[1].version_id], t[1].version_id))[1]
         if best not in out:
             out.append(best)
+    return out
+
+
+def tiered(
+    pool: Sequence[CandidateRecipe], problem: PlanningProblem, slot: MealSlot, scores: Mapping[int, Decimal]
+) -> list[CandidateRecipe]:
+    """A tier's upgrades (item 2): the meal's best upgraded recipes, and premium-protein ones, enough to fill
+    the tier's counts within the variety rule (one more than that, so the solver still has a choice)."""
+    c = problem.constraints
+    if slot not in upgrade_slots(s for d in c.days for s in d.slots):
+        return []
+    usable = [x for x in pool if not (x.never_favored or x.has_disliked)]
+    out: list[CandidateRecipe] = []
+    better = RANK[IngredientTier.BETTER]
+    wants = (
+        (c.upgraded_meals_min, [x for x in usable if x.tier_rank >= better]),
+        (c.premium_meals_min, [x for x in usable if x.premium_protein]),
+    )
+    for need, matching in wants:
+        if need <= 0:
+            continue
+        ranked = sorted(matching, key=lambda x: (-scores[x.version_id], x.version_id))
+        out += [x for x in ranked[: math.ceil(need / c.max_portions_per_recipe) + 1] if x not in out]
     return out
 
 
@@ -210,8 +246,10 @@ def shortlist(problem: PlanningProblem, per_slot: int = SHORTLIST_PER_SLOT) -> P
             continue
         scores = score_pool(pool, problem, kcal)
         picked = [x for x in pool if x.version_id in keep][:per_slot]  # already kept for another meal
-        # the shortest cook day can always be met, and a money limit always has the cheap options
-        for must in [*quickest(pool, problem, scores), *cheapest(pool, problem, slot, scores)]:
+        # the shortest cook day can always be met, a money limit always has the cheap options, and a tier its
+        # upgrades
+        musts = [*quickest(pool, problem, scores), *cheapest(pool, problem, slot, scores)]
+        for must in [*musts, *tiered(pool, problem, slot, scores)]:
             if must not in picked:
                 picked.append(must)
                 keep.add(must.version_id)

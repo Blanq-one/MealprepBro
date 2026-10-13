@@ -720,6 +720,30 @@
     "title": "BatchUseOut",
     "type": "object"
    },
+   "BudgetPairOut": {
+    "description": "A line's classic ingredient and its budget equivalent (the 2b.6 approval, item 4).",
+    "properties": {
+     "budget": {
+      "title": "Budget",
+      "type": "string"
+     },
+     "budget_display": {
+      "title": "Budget Display",
+      "type": "string"
+     },
+     "classic": {
+      "title": "Classic",
+      "type": "string"
+     }
+    },
+    "required": [
+     "classic",
+     "budget",
+     "budget_display"
+    ],
+    "title": "BudgetPairOut",
+    "type": "object"
+   },
    "BulkIn": {
     "additionalProperties": false,
     "properties": {
@@ -4455,6 +4479,16 @@
       "title": "Never Used",
       "type": "boolean"
      },
+     "pair": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/BudgetPairOut"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
      "shopping": {
       "$ref": "#/components/schemas/ShoppingTargetOut"
      },
@@ -5422,11 +5456,25 @@
         "type": "null"
        }
       ],
-      "description": "cheapest | better | fancy"
+      "description": "broke | cheapest | better | fancy"
+     },
+     "protein_max_g": {
+      "anyOf": [
+       {
+        "maximum": 400.0,
+        "minimum": 0.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "the protein band's top a day; None = your settings'",
+      "title": "Protein Max G"
      },
      "protein_reward": {
       "default": false,
-      "description": "High protein: reward up to 1.5 \u00d7 the target",
+      "description": "High protein: reward up to the protein band's top (higher tiers only)",
       "title": "Protein Reward",
       "type": "boolean"
      },
@@ -6474,6 +6522,7 @@
    "PriceTier": {
     "description": "A plan's tier (the cards in the shopping step).",
     "enum": [
+     "broke",
      "cheapest",
      "better",
      "fancy"
@@ -6934,7 +6983,9 @@
      "action": {
       "enum": [
        "swap",
-       "leave_out"
+       "leave_out",
+       "use_classic",
+       "use_budget"
       ],
       "title": "Action",
       "type": "string"
@@ -8734,6 +8785,11 @@
       "title": "Allow Buying",
       "type": "boolean"
      },
+     "close": {
+      "default": false,
+      "title": "Close",
+      "type": "boolean"
+     },
      "exclude_version_ids": {
       "items": {
        "type": "integer"
@@ -8855,6 +8911,13 @@
       "title": "Buys",
       "type": "array"
      },
+     "changes": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Changes",
+      "type": "array"
+     },
      "cost_delta_cents": {
       "title": "Cost Delta Cents",
       "type": "integer"
@@ -8865,6 +8928,15 @@
      },
      "dish_category": {
       "title": "Dish Category",
+      "type": "string"
+     },
+     "fit": {
+      "default": "exact",
+      "enum": [
+       "exact",
+       "close"
+      ],
+      "title": "Fit",
       "type": "string"
      },
      "is_draft": {
@@ -9205,6 +9277,17 @@
       "title": "Blurb",
       "type": "string"
      },
+     "includes_display": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Includes Display"
+     },
      "label": {
       "title": "Label",
       "type": "string"
@@ -9234,10 +9317,33 @@
      "status": {
       "enum": [
        "estimated",
-       "none_fits"
+       "none_fits",
+       "not_priced"
       ],
       "title": "Status",
       "type": "string"
+     },
+     "stock_up_cents": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Stock Up Cents"
+     },
+     "stock_up_display": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Stock Up Display"
      },
      "tier": {
       "$ref": "#/components/schemas/PriceTier"
@@ -9577,6 +9683,19 @@
       "minimum": 800.0,
       "title": "Daily Kcal Target",
       "type": "integer"
+     },
+     "daily_protein_max_g": {
+      "anyOf": [
+       {
+        "maximum": 400.0,
+        "minimum": 0.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Daily Protein Max G"
      },
      "daily_protein_target_g": {
       "default": 100,
@@ -10393,7 +10512,7 @@
   },
   "/api/v1/cook/meal-prep/tiers": {
    "post": {
-    "description": "The shopping step's three budget tier cards for these answers (step 2b.6, AA6): Cheapest, A bit better\nand Fancy, each with an estimated total and protein per day from a quick solve (saved recipes, no LLM).\nTap one and POST /cook/meal-prep with its `price_tier` for the full plan.",
+    "description": "The shopping step's four budget tier cards for these answers (step 2b.6, AA6; its approval, item 2):\nBroke mode, Cheapest, A bit better and Fancy, each with its estimated regular groceries, the stock-up\nitems apart, and protein, from a quick solve (saved recipes, no LLM).\nTap one and POST /cook/meal-prep with its `price_tier` for the full plan.",
     "operationId": "meal_prep_tiers_api_v1_cook_meal_prep_tiers_post",
     "requestBody": {
      "content": {

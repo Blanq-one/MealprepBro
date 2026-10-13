@@ -46,7 +46,8 @@
    "quantity": "300",
    "unit": "g",
    "preparation": "sliced",
-   "role": "fruit"
+   "role": "fruit",
+   "budget": {"ingredient": "strawberries-frozen", "quantity": "300", "unit": "g"}
   },
   {
    "ingredient": "rolled-oats",

@@ -28,6 +28,8 @@ function option(overrides: Partial<SwapOption> = {}): SwapOption {
     is_new: false,
     steps_ready: true,
     is_draft: false,
+    fit: "exact",
+    changes: [],
     ...overrides,
   };
 }

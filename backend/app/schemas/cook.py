@@ -294,8 +294,13 @@ class TierCardOut(BaseModel):
     tier: PriceTier
     label: str  # "Cheapest"
     blurb: str  # what it buys
-    status: Literal["estimated", "none_fits"]
-    total_cents: int | None = None
+    status: Literal["estimated", "none_fits", "not_priced"]  # not_priced: no estimate in time; still pickable
+    total_cents: int | None = None  # regular groceries (2b.6 approval: stock-up items apart)
     total_display: str | None = None  # "about $54.20"
-    protein_per_day_display: str | None = None  # "about 132 g protein a day"
+    # "about 104 g protein a day"; for some of your meals: "Lunch + dinner: about 76 g of your 100 g daily
+    # target"
+    protein_per_day_display: str | None = None
     reason: str | None = None  # why none fits
+    stock_up_cents: int | None = None  # what the stock-up items' whole packs cost
+    stock_up_display: str | None = None  # "+ about $6.98 stock-up: rice, olive oil"; None when none
+    includes_display: str | None = None  # "4 meals with an upgrade · up to 4 of one recipe a week"

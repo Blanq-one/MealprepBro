@@ -2,8 +2,11 @@
 
 // Swap (FLOW_SPEC C6, step 2b.6, AA4). ⇄ Swap on a meal row opens a sheet with 3-5 other meals that fit the same
 // slot, day, fridge or freezer and time rules, each with what it adds to the groceries and its protein; one tap
-// replaces just that meal. Write a new one makes one ideas call (a rate-limit wait is a countdown, never an
-// error). The toast after a swap says what else changed, with Undo. Every number and line is the server's.
+// replaces just that meal. When fewer fit exactly, close fits follow under their own heading, each saying what
+// it changes ("+80 kcal over Thursday's calories"). Write a new one makes one ideas call (a rate-limit wait is a
+// countdown, never an error). A swap that fails says why at the top of the sheet and on the option, and the
+// sheet stays open. The toast after a swap says what else changed, with Undo. Every number and line is the
+// server's.
 import { useEffect, useRef, useState } from "react";
 
 import { clockLabel, useCountdown } from "@/components/ui/BuildingSteps";
@@ -11,7 +14,7 @@ import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Emoji } from "@/components/ui/Emoji";
 import { Pottle } from "@/components/ui/Pottle";
 import { NeedsConnection } from "@/components/ui/States";
-import { describeError } from "@/lib/api/client";
+import { ApiError, describeError } from "@/lib/api/client";
 import type { Meal, SwapOption, SwapOptionsBody, SwapResult } from "@/lib/api/types";
 import { dishIcon } from "@/lib/format/icons";
 import { slotLabel } from "@/lib/format/labels";
@@ -19,8 +22,9 @@ import { applySwap, initialSwap, reduceSwap, streamSwapOptions, type SwapSheetSt
 
 import styles from "./Swap.module.css";
 
-function OptionCard({ option, busy, disabled, onPick }: { option: SwapOption; busy: boolean; disabled: boolean; onPick: () => void }) {
+function OptionCard({ option, busy, failed, disabled, onPick }: { option: SwapOption; busy: boolean; failed: string | null; disabled: boolean; onPick: () => void }) {
   const icon = dishIcon(option.dish_category);
+  const changes = option.changes ?? [];
   return (
     <li>
       <button type="button" className={styles.option} disabled={disabled} onClick={onPick} aria-label={`Swap to ${option.title}`}>
@@ -29,15 +33,22 @@ function OptionCard({ option, busy, disabled, onPick }: { option: SwapOption; bu
           <span className={styles.title}>
             {option.title}
             {option.is_new && <span className="badge"> New</span>}
-            {option.is_draft && <span className="badge badge-warn"> Draft</span>}
           </span>
           <span className={styles.numbers}>{option.numbers.join(" · ")}</span>
+          {changes.length > 0 && (
+            <span className={styles.changes}>
+              {changes.map((line) => (
+                <span key={line}>{line}</span>
+              ))}
+            </span>
+          )}
           <span className={styles.cost}>{option.cost_delta_display}</span>
           <span className={styles.source}>{option.source_display}</span>
           {option.also_changed.length > 0 && <span className={styles.also}>Also changes: {option.also_changed.join("; ")}</span>}
           {(option.buys ?? []).length > 0 && <span className={styles.also}>Buys: {(option.buys ?? []).join(", ")}</span>}
           {option.steps_ready === false && <span className={styles.also}>Its steps are written when you first open it.</span>}
           {busy && <span className={styles.busy}>Swapping…</span>}
+          {failed !== null && <span className={styles.failed}>{failed}</span>}
         </span>
       </button>
     </li>
@@ -51,7 +62,9 @@ export function SwapSheet({ planId, meal, away, online, onClose, onSwapped }: { 
   const [state, setState] = useState<SwapSheetState>(initialSwap);
   const [applying, setApplying] = useState<number | null>(null);
   const [error, setError] = useState<unknown>(null);
+  const [failed, setFailed] = useState<{ versionId: number; message: string } | null>(null);
   const retried = useRef(false);
+  const top = useRef<HTMLParagraphElement | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -78,19 +91,26 @@ export function SwapSheet({ planId, meal, away, online, onClose, onSwapped }: { 
     }
   }, [state.status, retryLeft]);
 
+  useEffect(() => {
+    // a failed swap: its message at the top of the sheet, where it can't be missed
+    if (failed) top.current?.scrollIntoView?.({ block: "nearest" });
+  }, [failed]);
+
   async function pick(option: SwapOption) {
     setApplying(option.version_id);
     setError(null);
+    setFailed(null);
     try {
       const result = await applySwap(planId, mealId, {
         version_id: option.version_id,
         allow_buying: body.allow_buying ?? false,
         offered_version_ids: state.options.map((o) => o.version_id),
         exclude_version_ids: away,
+        close: option.fit === "close",
       });
       onSwapped(result);
     } catch (e) {
-      setError(e);
+      setFailed({ versionId: option.version_id, message: swapFailedText(option.title, e) });
     } finally {
       setApplying(null);
     }
@@ -99,8 +119,25 @@ export function SwapSheet({ planId, meal, away, online, onClose, onSwapped }: { 
   const label = state.current?.label ?? slotLabel(meal.slot);
   const current = state.current;
   const busy = applying !== null;
+  const exact = state.options.filter((o) => o.fit !== "close");
+  const close = state.options.filter((o) => o.fit === "close");
+  const card = (option: SwapOption) => (
+    <OptionCard
+      key={option.version_id}
+      option={option}
+      busy={applying === option.version_id}
+      failed={failed?.versionId === option.version_id ? failed.message : null}
+      disabled={busy || !online}
+      onPick={() => void pick(option)}
+    />
+  );
   return (
     <BottomSheet title={`Swap ${label}`} open onClose={onClose}>
+      {failed && (
+        <p ref={top} className="notice notice-danger" role="alert">
+          {failed.message}
+        </p>
+      )}
       {current && (
         <p className={styles.now}>
           Now: <strong>{current.title}</strong> · {current.kcal} kcal · {current.protein_g} g protein
@@ -127,12 +164,18 @@ export function SwapSheet({ planId, meal, away, online, onClose, onSwapped }: { 
           )}
         </div>
       )}
-      {state.status === "ready" && (
+      {state.status === "ready" && exact.length > 0 && (
         <ul className={styles.options} aria-label="Other meals that fit">
-          {state.options.map((option) => (
-            <OptionCard key={option.version_id} option={option} busy={applying === option.version_id} disabled={busy || !online} onPick={() => void pick(option)} />
-          ))}
+          {exact.map(card)}
         </ul>
+      )}
+      {state.status === "ready" && close.length > 0 && (
+        <>
+          <h3 className={styles.group}>{exact.length > 0 ? "Close fits" : "Nothing fits exactly. The closest:"}</h3>
+          <ul className={styles.options} aria-label="Close fits">
+            {close.map(card)}
+          </ul>
+        </>
       )}
       {state.status === "none_fit" && (
         <div className={styles.none}>
@@ -171,6 +214,12 @@ export function SwapSheet({ planId, meal, away, online, onClose, onSwapped }: { 
       </button>
     </BottomSheet>
   );
+}
+
+/** What the sheet says when a tapped option can't be applied: the server's reason, never a silent revert. */
+export function swapFailedText(title: string, error: unknown): string {
+  if (error instanceof ApiError && error.detail) return `Couldn't swap to ${title}: ${error.detail}`;
+  return `Couldn't swap to ${title}. ${describeError(error)}`;
 }
 
 /** ⇄ Swap on a meal row (44 px), with its sheet; `open` is the row's, so the ⋯ sheet can open it too. */

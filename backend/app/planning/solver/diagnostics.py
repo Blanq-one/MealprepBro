@@ -15,7 +15,7 @@ import pulp
 
 from app.domain.cook_schedule import minutes_text, round_up_5
 from app.domain.cook_time import MOOD_ORDER, mood_allows
-from app.domain.enums import CalorieMode, MealSlot, PlanningMode, RecipeMood
+from app.domain.enums import MealSlot, PlanningMode, RecipeMood
 from app.planning.problem import ExcludedRecipe, PlanningProblem
 from app.planning.solver.model import (
     Diagnostic,
@@ -361,16 +361,10 @@ def _report(problem: PlanningProblem, model: _Model) -> tuple[Diagnostic, ...]:
                 amount=len(days),
             )
         )
-    tol = c.tolerance
     for d in c.days:
         under = model.slacks.get("kcal_under", {}).get(d.day)
         over = model.slacks.get("kcal_over", {}).get(d.day)
-        if c.calorie_mode is CalorieMode.STRICT_DAILY:
-            floor = round(d.kcal_target * (1 - tol.daily_under_pct / 100))
-            ceiling = d.kcal_target
-        else:
-            floor = d.kcal_target - tol.daily_band_kcal
-            ceiling = d.kcal_target + tol.daily_band_kcal
+        floor, ceiling = c.kcal_limits(d.day)
         if under is not None and amount(under) > SLACK_TOLERANCE:
             short = round(amount(under))
             out.append(
@@ -393,13 +387,10 @@ def _report(problem: PlanningProblem, model: _Model) -> tuple[Diagnostic, ...]:
                     amount=extra,
                 )
             )
+    week_floor, week_ceiling = c.week_kcal_limits()
     week_limits = {
-        "week_over": ("KCAL_WEEK_ABOVE_CEILING", "above", c.weekly_kcal_target),
-        "week_under": (
-            "KCAL_WEEK_BELOW_FLOOR",
-            "below",
-            round(c.weekly_kcal_target * (1 - tol.weekly_under_pct / 100)),
-        ),
+        "week_over": ("KCAL_WEEK_ABOVE_CEILING", "above", week_ceiling),
+        "week_under": ("KCAL_WEEK_BELOW_FLOOR", "below", week_floor),
     }
     for kind, (code, label, limit) in week_limits.items():
         var = model.slacks.get(kind, {}).get("week")

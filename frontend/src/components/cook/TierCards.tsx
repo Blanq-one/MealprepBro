@@ -1,8 +1,10 @@
 "use client";
 
-// The shopping step's budget tiers (step 2b.6, AA6): Cheapest, A bit better and Fancy for this week, each with
-// its estimated total and protein per day (a quick solve on the server, so they say "about"). Tapping one picks
-// it; the full plan is solved when you build it. Every number and line is the server's.
+// The shopping step's budget tiers (step 2b.6, AA6; four since its approval): Broke mode, Cheapest, A bit better
+// and Fancy for this week, each with its estimated regular groceries, the stock-up items apart, its protein (for
+// some of your meals, their share of your day's target) and what it includes. A quick solve on the server, so
+// they say "about"; a card with no estimate in time can still be picked. Tapping one picks it; the full plan is
+// solved when you build it. Every number and line is the server's.
 import { useEffect, useState } from "react";
 
 import { Pottle } from "@/components/ui/Pottle";
@@ -44,7 +46,7 @@ export function TierCards({ answers, selected, online, onPick }: { answers: Cook
     return (
       <div className={styles.working} role="status">
         <Pottle state="working" size={40} decorative />
-        <p>Pricing three ways to shop this week…</p>
+        <p>Pricing four ways to shop this week…</p>
       </div>
     );
   return (
@@ -52,17 +54,24 @@ export function TierCards({ answers, selected, online, onPick }: { answers: Cook
       {cards.map((card) => {
         const on = selected === card.tier;
         const fits = card.status === "estimated";
+        const pickable = fits || card.status === "not_priced";
         return (
           <li key={card.tier}>
-            <button type="button" className={on ? `${styles.card} ${styles.on}` : styles.card} aria-pressed={on} disabled={!fits} onClick={() => onPick(card.tier)}>
+            <button type="button" className={on ? `${styles.card} ${styles.on}` : styles.card} aria-pressed={on} disabled={!pickable} onClick={() => onPick(card.tier)}>
               <span className={styles.head}>
                 <span className={styles.label}>
                   {on && <span aria-hidden="true">✓ </span>}
                   {card.label}
                 </span>
-                {fits && <span className={styles.total}>{card.total_display}</span>}
+                {fits && (
+                  <span className={styles.total}>
+                    {card.total_display} <span className={styles.unit}>groceries</span>
+                  </span>
+                )}
               </span>
+              {fits && card.stock_up_display && <span className={styles.stock}>{card.stock_up_display}</span>}
               {fits ? <span className={styles.protein}>{card.protein_per_day_display}</span> : <span className={styles.protein}>{card.reason}</span>}
+              {fits && card.includes_display && <span className={styles.includes}>{card.includes_display}</span>}
               <span className={styles.blurb}>{card.blurb}</span>
             </button>
           </li>

@@ -104,6 +104,15 @@ class ExtraLot(_Frozen):
     unit: str = Field(min_length=1, max_length=20)
 
 
+class KcalAllowance(_Frozen):
+    """How far one plan may go past a calorie limit: a swap's close fit you picked (step 2b.6 approval, B),
+    "+80 kcal over Thursday's calories". Stored with the plan, so its later checks and swaps keep it."""
+
+    day: date | None = None  # None: the plan's total (weekly mode)
+    over: int = Field(default=0, ge=0, le=2000)
+    under: int = Field(default=0, ge=0, le=2000)
+
+
 class PortionRequest(_Frozen):
     """'Make 7 portions', 'I need lunch for Monday-Friday', 'make 10 and freeze half'."""
 
@@ -163,8 +172,12 @@ class PlanConstraints(_Frozen):
     max_portions_per_recipe: int = Field(default=5, ge=1, le=14)  # per week, VARIETY_CAPPED_SLOTS only
     region_code: str | None = None
     # ---- step 2b.5 (meal prep) ----
-    # the High protein tile (F3, E11): each day's protein earns a reward up to 1.5 × the daily target
+    # the High protein tile (F3, E11): each day's protein earns a reward up to the band's top (2b.6
+    # approval, item 1: no longer 1.5 × the target), in A bit better and Fancy only
     protein_reward: bool = False
+    # the protein band's top a day (2b.6 approval, item 1): ideally no more than this; planning leans away
+    # from going past it and nothing above it earns a reward. 0 = no top.
+    daily_protein_max_g: int = Field(default=0, ge=0, le=400)
     # "Use what I have": the only ingredients this plan may buy (your could-buy items); None = anything
     allowed_purchase_ingredient_ids: frozenset[int] | None = None
     # could-buy items on a shopping list: a small preference, no rule
@@ -174,7 +187,13 @@ class PlanConstraints(_Frozen):
     daily_amount_caps: tuple[ResolvedDailyCap, ...] = ()  # e.g. protein powder: usually 1 scoop, at most 2
     # ---- step 2b.6 (AA6) ----
     # a budget tier: allowed_purchase_ingredient_ids holds what it may buy (its ingredients, your could-buys)
-    price_tier: str | None = None  # cheapest | better | fancy
+    price_tier: str | None = None  # broke | cheapest | better | fancy
+    # what the tier includes (2b.6 approval, item 2): meals with an upgraded item, meals with a premium
+    # protein (rewarded up to these counts, so a week that can't reach them still plans)
+    upgraded_meals_min: int = Field(default=0, ge=0, le=50)
+    premium_meals_min: int = Field(default=0, ge=0, le=50)
+    # ---- step 2b.6 approval (B) ----
+    kcal_allowances: tuple[KcalAllowance, ...] = ()  # limits a close-fit swap you picked goes past
 
     @model_validator(mode="after")
     def _consistency(self) -> Self:
@@ -264,8 +283,9 @@ class PlanConstraints(_Frozen):
 
     @property
     def protein_reward_cap_g(self) -> int:
-        """E11/E16: each day's protein earns a reward up to 1.5 × the target (1.5 × 100 g with no target)."""
-        return int(Decimal("1.5") * (self.daily_protein_target_g or 100))
+        """Each day's protein earns a reward up to the band's top (2b.6 approval, item 1), never above it;
+        with no band, up to the target."""
+        return self.daily_protein_max_g or self.daily_protein_target_g
 
     def keep_horizon_days(self) -> int:
         """Food left at the end of the plan keeps if it is still good at the end of the next one."""
@@ -274,6 +294,28 @@ class PlanConstraints(_Frozen):
     @property
     def week_protein_target_g(self) -> int:
         return self.daily_protein_target_g * len(self.days)
+
+    def kcal_allowance(self, day: date | None) -> KcalAllowance:
+        """What a close-fit swap allowed past one day's calorie limits (None: the plan's total)."""
+        found = [a for a in self.kcal_allowances if a.day == day]
+        return KcalAllowance(day=day, over=sum(a.over for a in found), under=sum(a.under for a in found))
+
+    def kcal_limits(self, day: date) -> tuple[int, int]:
+        """(floor, ceiling) of one day's calories in its mode, with any close-fit allowance."""
+        spec = self.day(day)
+        tol = self.tolerance
+        if self.calorie_mode is CalorieMode.STRICT_DAILY:
+            ceiling, floor = spec.kcal_target, round(spec.kcal_target * (1 - tol.daily_under_pct / 100))
+        else:
+            ceiling, floor = spec.kcal_target + tol.daily_band_kcal, spec.kcal_target - tol.daily_band_kcal
+        allow = self.kcal_allowance(day)
+        return floor - allow.under, ceiling + allow.over
+
+    def week_kcal_limits(self) -> tuple[int, int]:
+        """(floor, ceiling) of the plan's calories in weekly mode, with any close-fit allowance."""
+        allow = self.kcal_allowance(None)
+        floor = round(self.weekly_kcal_target * (1 - self.tolerance.weekly_under_pct / 100))
+        return floor - allow.under, self.weekly_kcal_target + allow.over
 
     def canonical(self) -> dict[str, Any]:
         """JSON-ready dump with sets sorted, so equal constraints always serialize (and hash) the same."""

@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, time
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
+from typing import Any
 
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
@@ -52,6 +53,7 @@ from app.domain.units import (
     to_base,
 )
 from app.planning.assemblies import AssemblyAddOn, AssemblyPart, assembly_title, default_item
+from app.schemas.recipes import BudgetLine
 from app.schemas.seed import (
     LabelRef,
     PortionRef,
@@ -522,9 +524,14 @@ def _settings(
 def content_hash(recipe: SeedRecipe) -> str:
     """The seed's content, for spotting a changed file. A field added later counts only when set, so adding
     it (freeze_note, step 2b.5) doesn't revise every seed."""
-    added_later = {"freeze_note"} if recipe.freeze_note is None else set()
+    added_later: dict[str, Any] = {"freeze_note": True} if recipe.freeze_note is None else {}
+    # a line's budget equivalent (the 2b.6 approval, item 4) counts only on the lines that have one
+    plain = {n: {"budget"} for n, line in enumerate(recipe.ingredients) if line.budget is None}
+    if plain:
+        added_later["ingredients"] = plain
     payload = json.dumps(
-        recipe.model_dump(mode="json", exclude={"family", "draft_note"} | added_later), sort_keys=True
+        recipe.model_dump(mode="json", exclude={"family": True, "draft_note": True, **added_later}),
+        sort_keys=True,
     )
     return hashlib.sha256(payload.encode()).hexdigest()
 
@@ -543,6 +550,32 @@ def _check_lines(
         ingredient = data[line.ingredient]
         if problem := line_state_error(ingredient.name, line.state, ingredient.mapping_state):
             raise SeedError(f"{file_name}: {problem}")
+        if line.budget is not None:
+            _check_budget(file_name, line, data)
+
+
+def _check_budget(file_name: str, line: SeedRecipeIngredient, data: Mapping[str, IngredientData]) -> None:
+    """A budget equivalent (the 2b.6 approval, item 4): a known ingredient of the same category (the same
+    culinary role), never a protein (chicken forms stay exact), never a forbidden one, raw/dry/as-sold like
+    any line."""
+    assert line.budget is not None
+    slug = line.budget.ingredient
+    if slug not in data:
+        raise SeedError(f"{file_name}: unknown budget ingredient '{slug}'")
+    classic, budget = data[line.ingredient], data[slug]
+    if slug == line.ingredient:
+        raise SeedError(f"{file_name}: '{slug}' can't be its own budget equivalent")
+    if budget.category != classic.category:
+        raise SeedError(
+            f"{file_name}: the budget equivalent '{slug}' ({budget.category}) isn't in the same role as "
+            f"'{line.ingredient}' ({classic.category})"
+        )
+    if "protein" in (classic.category, budget.category):
+        raise SeedError(f"{file_name}: proteins have no budget equivalent ('{line.ingredient}' stays exact)")
+    if forbidden := budget.tagged.diet_tags & SEED_FORBIDDEN_TAGS:
+        raise SeedError(f"{file_name}: the budget equivalent '{slug}' is tagged {sorted(forbidden)}")
+    if problem := line_state_error(budget.name, None, budget.mapping_state):
+        raise SeedError(f"{file_name}: {problem}")
 
 
 def _family(session: Session, user: AppUser, name: str | None) -> RecipeFamily | None:
@@ -717,6 +750,18 @@ def _add_lines(
         ingredient = data[line.ingredient]
         amount = parse_quantity(line.quantity)
         base = to_base(amount, line.unit, ingredient.units)
+        budget = None
+        if line.budget is not None:
+            alt = data[line.budget.ingredient]
+            alt_amount = parse_quantity(line.budget.quantity)
+            alt_base = to_base(alt_amount, line.budget.unit, alt.units)
+            budget = BudgetLine(
+                ingredient_id=alt.id,
+                quantity=_q3(alt_base.amount),
+                unit=alt_base.unit.value,
+                authored_quantity=_q3(alt_amount),
+                authored_unit=normalize_unit(line.budget.unit, alt.units.named_units),
+            ).model_dump(mode="json")
         session.add(
             RecipeIngredient(
                 recipe_version_id=version.id,
@@ -730,6 +775,7 @@ def _add_lines(
                 role=line.role.value,
                 component=line.component,
                 is_optional=line.optional,
+                budget=budget,
             )
         )
     session.flush()
@@ -739,7 +785,12 @@ ASSEMBLY_MINUTES = 5  # an assembly's own work on the eating day: reheat and put
 
 
 def assembly_hash(seed: SeedAssembly) -> str:
-    payload = json.dumps(seed.model_dump(mode="json", exclude={"draft_note"}), sort_keys=True)
+    """An add-on line's budget equivalent (the 2b.6 approval) counts only when it's set, like a recipe's."""
+    exclude: dict[str, Any] = {"draft_note": True}
+    plain = {n: {"budget"} for n, line in enumerate(seed.add_ons) if line.budget is None}
+    if plain:
+        exclude["add_ons"] = plain
+    payload = json.dumps(seed.model_dump(mode="json", exclude=exclude), sort_keys=True)
     return hashlib.sha256(payload.encode()).hexdigest()
 
 

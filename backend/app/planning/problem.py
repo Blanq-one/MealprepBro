@@ -22,6 +22,18 @@ NUTRIENT_FOR_PRIORITY = {"protein": "protein_g", "carb": "carbohydrate_g", "iron
 
 
 @dataclass(frozen=True)
+class BudgetAlternative:
+    """A line's budget equivalent (the 2b.6 approval, item 4), in the line's terms: base quantity for the
+    recipe's base servings, and the authored amount."""
+
+    ingredient_id: int
+    quantity: Decimal
+    unit: str
+    authored_quantity: Decimal
+    authored_unit: str
+
+
+@dataclass(frozen=True)
 class RecipeLine:
     recipe_ingredient_id: int | None
     ingredient_id: int
@@ -31,6 +43,9 @@ class RecipeLine:
     authored_unit: str
     optional: bool = False
     role: str = "other"
+    budget: BudgetAlternative | None = None  # the line's budget equivalent, if it has one (item 4)
+    # set when this line is the budget equivalent a tier picked: the classic ingredient it stands in for
+    classic_ingredient_id: int | None = None
 
 
 @dataclass(frozen=True)
@@ -60,6 +75,11 @@ class CandidateRecipe:
     # step 2b.9: the recipe's tasks for the cook-day schedule (an idea's own, tagged steps, or estimated);
     # None = only its stated minutes (a recipe built without steps, e.g. in tests)
     timing: DishTiming | None = None
+    # 2b.6 approval (item 2): the priciest tier among its counted lines with a real share of a portion
+    # (domain/price_tiers.tier_rank; 2 = better or up makes a meal an upgrade), and whether it has a premium
+    # protein (a fancy one: salmon, shrimp)
+    tier_rank: int = 0
+    premium_protein: bool = False
 
     @property
     def schedule_timing(self) -> DishTiming:

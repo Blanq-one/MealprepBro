@@ -21,7 +21,15 @@ the same day with D161–D167 and Not for me's storage as you chose it (Z5, migr
 outcome note, §9). **Step 2b.7 was approved 2026-10-12, including D161–D167 and Z5 (AA1–AA8, §12.1)**: C1's
 freezer extras renamed first, then **step 2b.6 before the deploy, expanded** (meal swap with 3–5 alternatives,
 ingredient options, budget tiers, the cooking order); new order **2b.6 → 2b.13 (deploy) → 2b.11 → 2b.12 → 2b.8**. Step 2b.6 was
-built the same day with D168–D183 (2b.6 outcome note, §9, migration `0011_price_tier`); it awaits your approval.
+built the same day with D168–D183 (2b.6 outcome note, §9, migration `0011_price_tier`). **Step 2b.6 was approved
+2026-10-13, including D168–D183 (AB1–AB13, §12.1)**: its approval round (bugs A–E: a swap that sticks, close fits,
+the cooked-day label, one cook-time line, no Draft badge on rows and cards; items 1–9: the protein band, four budget
+tiers with Broke mode, the partial-plan protein line, classic and budget ingredients, tiers by protein per dollar,
+the kitchen order's alternative, a test clock that can't run out on a busy machine, a dev-server compile check, the
+body's hydration warning) was built the same day with D184–D199 (2b.6 approval note, §9; migration
+`0012_budget_lines`; later phases' migrations move up by one) and committed first; then step 2b.13's code side
+(items 10–13: the login rate limit on the real client address, production safety checks, `.env.example`, the
+deploy checklist), nothing deployed. Open: AB-Q1 (§12.2).
 **Source documents:** `CLAUDE.md` (build rules, wins on conflict), `docs/PRD.md` (product vision; "Primary user flow" at the top), `docs/FLOW_SPEC.md` (screens and backend work for Phase 2b).
 
 This plan covers Phases 0–6, plus Phase 2b. One phase per session; Phase 2b is split into build steps, one per session (§9). A phase or step is done only when its acceptance criteria are met, its tests pass, and the test output has been shown.
@@ -40,7 +48,7 @@ This plan covers Phases 0–6, plus Phase 2b. One phase per session; Phase 2b is
 | — | Pre-Phase 1 tasks | Done | 2026-10-08 | 2026-10-08 | Package-label data (tortillas, protein powder), USDA mapping review sheet (`docs/review/usda_mappings.md`), raw/dry/as-sold rule + check (§7.8), CLAUDE.md machine-boundaries rule. Round 2: FoodSafety.gov chart transcribed (53 rows, §7.2), top-25 mappings approved, tortilla renamed, Docker rule clarified, fresh-clone check made a per-phase step. |
 | 1 | Planning brain | Approved 2026-10-09; post-approval round done | 2026-10-08 | 2026-10-09 | First pass: 645 tests, fresh-clone check passed; D1–D13 and C1–C3 approved 2026-10-09. Fix-up round (C4–C8: budget per request with inventory/shop modes, cash vs food eaten, freeze-on-shopping-day and waste, 100 g protein floor, elapsed time): 705 tests pass (the opt-in live test skips), domain coverage 99%, ruff/mypy clean, fresh-clone check passed; deviations D14–D22 in the fix-up note. Approved 2026-10-09. Post-approval round (C9–C14: powder prices, stock-up items, shelf-life fix, regular chicken packs, two-week steady-state check, A3 hosting): 721 tests pass (the opt-in live test skips), domain coverage 99%; deviations D23–D28. |
 | 2 | Mobile PWA + cloud deploy (deploy prep only, K7) | Approved 2026-10-10 | 2026-10-09 | 2026-10-09 | Pre-work K2–K6 done; PWA, auth, shopping, Mark cooked, quick add, exposure log. 800 backend tests pass (2 opt-in skipped), 78 frontend tests; not deployed (your step, `docs/deploy.md`). Deviations D29–D43 in the Phase 2 outcome note (§9). |
-| 2b | Cook-first flow redesign | 2b.1 approved 2026-10-10 (D44–D53); 2b.2 approved 2026-10-10 (D54–D64, H1–H6); 2b.3a approved 2026-10-10 (D65–D76, J1–J6); 2b.4 approved 2026-10-10 (D77–D88, M1–M20); 2b.4 fixes approved 2026-10-10 (N1–N3); 2b.3b approved 2026-10-11 (D89–D101, P1–P8); pre-work P2–P7 done and approved 2026-10-11 (D102–D106, T1–T8); 2b.5 approved 2026-10-11 (D107–D126, U1); freeze note in the ideas pass done (D127, U2); designs for smart prep and parallel cooking approved 2026-10-11 (X1–X9; steps 2b.9–2b.13); 2b.9 approved 2026-10-11 (D128–D142, Y1–Y3); time guard built 2026-10-11 (D143–D147); 2b.10 approved 2026-10-12 (D148–D156, Z1–Z4); day repairs built 2026-10-12 (Y4, D157–D160); 2b.7 approved 2026-10-12 (D161–D167, Z5; AA1–AA8); 2b.6 (expanded: swap, ingredient options, budget tiers, the kitchen order) built 2026-10-12 (D168–D183), awaiting your approval | 2026-10-10 | | `docs/FLOW_SPEC.md`; PRD "Primary user flow"; 14 build steps, built in the order 2b.1, 2b.2, 2b.3a, **2b.4, 2b.3b**, 2b.5, then **2b.9, 2b.10, 2b.7, 2b.13 (deploy), 2b.11, 2b.12, 2b.6, 2b.8** (H3, X8; §9); changes F1–F21 approved (FLOW_SPEC §16); decisions E1–E17 (§12.1). Two-stage generation added the same day (E15, E17; built in 2b.3b). **2b.1 (backend foundations):** 898 backend tests pass (2 opt-in skipped), 78 frontend tests, ruff/mypy clean; deviations D44–D53 in the 2b.1 outcome note (§9). **2b.2 (look, shell, onboarding, Settings, Pantry):** 180 frontend tests (78 before), 899 backend tests pass (2 opt-in skipped), type checks clean, static export builds; AA contrast tested, 375 px not yet checked on a device; deviations D54–D64 in the 2b.2 outcome note (§9). Footer fix H2 done before 2b.3a. **2b.3a (ranking and cards, no LLM calls):** 964 backend tests pass (2 opt-in skipped), 187 frontend tests, ruff, mypy and type check clean; deviations D65–D76 in the 2b.3a outcome note (§9). **2b.4 (A meal now: screens, with J2–J6):** 993 backend tests pass (2 opt-in skipped), 236 frontend tests, ruff, mypy and type check clean, static export builds; migration `0006_pantry_presets`; deviations D77–D88 in the 2b.4 outcome note (§9). **2b.4 fixes (M2–M13, M15, M17, M20):** 1056 backend tests pass (2 opt-in skipped), 244 frontend tests, ruff, mypy and type check clean; no migration; 37 new draft seed recipes (47 in all); solver shortlist; fixes outcome note (§9). **2b.3b (ideas, steps, More ideas, background batch, rate-limit waits, live test, screens; with N2, ground vs whole cuts):** 1132 backend tests pass (2 opt-in skipped), 263 frontend tests, ruff, mypy and type check clean, static export builds; no migration, no new dependency; the live Groq test ran (FLOW_SPEC §15.1); deviations D89–D101 in the 2b.3b outcome note (§9). **2b.3b approval pre-work (P2–P7):** 1143 backend tests pass with `--run-slow` (3 opt-in skipped); the default run is parallel and skips 6 `slow` tests (100 s, was about 20 min); 265 frontend tests; ruff, mypy and type check clean; no migration; new dev dependency pytest-xdist (approved); `LLM_IDEAS_MODEL` (20b by default in compose); deviations D102–D106 in 2b.3b's approval note (§9). **2b.5 (meal prep engine, with T2–T4):** 1218 backend tests pass with `--run-slow` (3 opt-in skipped), 266 (265 before) frontend tests; ruff, mypy and type check clean; migration `0007_recipe_freeze_note`; no new dependency; deviations D107–D126 in the 2b.5 outcome note (§9). **2b.5 approval (U1–U5):** the ideas pass carries an optional freeze note under the seeds' rules (D127): 1218 backend tests pass in the default run (9 skipped: 6 slow, 3 opt-in), ruff and mypy clean, no migration; FLOW_SPEC §19–§21 and the proposed steps 2b.9–2b.12 (§9) are written for your review. **2b.9 (cook-day schedule):** 1353 backend tests pass in the default run (13 skipped: 8 slow, 2 perf, 3 opt-in), 1363 with `--run-slow` and the perf tests (3 opt-in skipped); 266 frontend tests; ruff, mypy and type check clean, static export builds; migration `0008_step_timing`; no new dependency; the live Groq test ran (8.3K tokens); deviations D128–D142 in the 2b.9 outcome note (§9). **Time guard (Y2):** 1361 backend tests pass in the default run (13 skipped), 266 frontend tests; ruff, mypy and type check clean; no migration, no new dependency; your dev seed week went from 245 s to 171 s with a plan marked not proven best; D143–D147 in the 2b.9 approval note (§9). **2b.10 (smart prep data model):** 1497 backend tests pass in the default run (13 skipped), 266 frontend tests; ruff, mypy and type check clean; migration `0009_smart_prep`; the FoodKeeper rows transcribed (V1); 20 draft prep items and 12 assemblies (`docs/review/prep_items.md`); deviations D148–D156 in the 2b.10 outcome note (§9). **Day repairs (Y4):** 1500 backend tests pass in the default run (14 skipped), the slow solver tests pass with `--run-slow`; ruff and mypy clean; no migration, no new dependency; your dev seed week went from 171–245 s to 61.5 s (opt-in perf test), the time guard never cutting a solve short; D157–D160 in the 2b.10 approval note (§9). **2b.7 (the new plan screens, with Not for me):** 1515 backend tests pass in the default run (14 skipped), 304 frontend tests; ruff, mypy and type check clean, static export builds; migration `0010_recipe_hidden` (Z5); later phases' migrations move up by one; deviations D161–D167 in the 2b.7 outcome note (§9). **2b.6 (expanded, AA3–AA8: meal swap, ingredient options, budget tiers, the kitchen order):** 1548 backend tests pass in the default run (14 skipped), 324 frontend tests; ruff, mypy and type check clean, static export builds; migration `0011_price_tier` (later phases' migrations move up by one); deviations D168–D183 in the 2b.6 outcome note (§9). |
+| 2b | Cook-first flow redesign | 2b.1 approved 2026-10-10 (D44–D53); 2b.2 approved 2026-10-10 (D54–D64, H1–H6); 2b.3a approved 2026-10-10 (D65–D76, J1–J6); 2b.4 approved 2026-10-10 (D77–D88, M1–M20); 2b.4 fixes approved 2026-10-10 (N1–N3); 2b.3b approved 2026-10-11 (D89–D101, P1–P8); pre-work P2–P7 done and approved 2026-10-11 (D102–D106, T1–T8); 2b.5 approved 2026-10-11 (D107–D126, U1); freeze note in the ideas pass done (D127, U2); designs for smart prep and parallel cooking approved 2026-10-11 (X1–X9; steps 2b.9–2b.13); 2b.9 approved 2026-10-11 (D128–D142, Y1–Y3); time guard built 2026-10-11 (D143–D147); 2b.10 approved 2026-10-12 (D148–D156, Z1–Z4); day repairs built 2026-10-12 (Y4, D157–D160); 2b.7 approved 2026-10-12 (D161–D167, Z5; AA1–AA8); 2b.6 (expanded: swap, ingredient options, budget tiers, the kitchen order) built 2026-10-12 (D168–D183), approved 2026-10-13 (AB1–AB13); its approval round built 2026-10-13 (D184–D199); 2b.13's code side built 2026-10-13 (D200–D205), not deployed | 2026-10-10 | | `docs/FLOW_SPEC.md`; PRD "Primary user flow"; 14 build steps, built in the order 2b.1, 2b.2, 2b.3a, **2b.4, 2b.3b**, 2b.5, then **2b.9, 2b.10, 2b.7, 2b.13 (deploy), 2b.11, 2b.12, 2b.6, 2b.8** (H3, X8; §9); changes F1–F21 approved (FLOW_SPEC §16); decisions E1–E17 (§12.1). Two-stage generation added the same day (E15, E17; built in 2b.3b). **2b.1 (backend foundations):** 898 backend tests pass (2 opt-in skipped), 78 frontend tests, ruff/mypy clean; deviations D44–D53 in the 2b.1 outcome note (§9). **2b.2 (look, shell, onboarding, Settings, Pantry):** 180 frontend tests (78 before), 899 backend tests pass (2 opt-in skipped), type checks clean, static export builds; AA contrast tested, 375 px not yet checked on a device; deviations D54–D64 in the 2b.2 outcome note (§9). Footer fix H2 done before 2b.3a. **2b.3a (ranking and cards, no LLM calls):** 964 backend tests pass (2 opt-in skipped), 187 frontend tests, ruff, mypy and type check clean; deviations D65–D76 in the 2b.3a outcome note (§9). **2b.4 (A meal now: screens, with J2–J6):** 993 backend tests pass (2 opt-in skipped), 236 frontend tests, ruff, mypy and type check clean, static export builds; migration `0006_pantry_presets`; deviations D77–D88 in the 2b.4 outcome note (§9). **2b.4 fixes (M2–M13, M15, M17, M20):** 1056 backend tests pass (2 opt-in skipped), 244 frontend tests, ruff, mypy and type check clean; no migration; 37 new draft seed recipes (47 in all); solver shortlist; fixes outcome note (§9). **2b.3b (ideas, steps, More ideas, background batch, rate-limit waits, live test, screens; with N2, ground vs whole cuts):** 1132 backend tests pass (2 opt-in skipped), 263 frontend tests, ruff, mypy and type check clean, static export builds; no migration, no new dependency; the live Groq test ran (FLOW_SPEC §15.1); deviations D89–D101 in the 2b.3b outcome note (§9). **2b.3b approval pre-work (P2–P7):** 1143 backend tests pass with `--run-slow` (3 opt-in skipped); the default run is parallel and skips 6 `slow` tests (100 s, was about 20 min); 265 frontend tests; ruff, mypy and type check clean; no migration; new dev dependency pytest-xdist (approved); `LLM_IDEAS_MODEL` (20b by default in compose); deviations D102–D106 in 2b.3b's approval note (§9). **2b.5 (meal prep engine, with T2–T4):** 1218 backend tests pass with `--run-slow` (3 opt-in skipped), 266 (265 before) frontend tests; ruff, mypy and type check clean; migration `0007_recipe_freeze_note`; no new dependency; deviations D107–D126 in the 2b.5 outcome note (§9). **2b.5 approval (U1–U5):** the ideas pass carries an optional freeze note under the seeds' rules (D127): 1218 backend tests pass in the default run (9 skipped: 6 slow, 3 opt-in), ruff and mypy clean, no migration; FLOW_SPEC §19–§21 and the proposed steps 2b.9–2b.12 (§9) are written for your review. **2b.9 (cook-day schedule):** 1353 backend tests pass in the default run (13 skipped: 8 slow, 2 perf, 3 opt-in), 1363 with `--run-slow` and the perf tests (3 opt-in skipped); 266 frontend tests; ruff, mypy and type check clean, static export builds; migration `0008_step_timing`; no new dependency; the live Groq test ran (8.3K tokens); deviations D128–D142 in the 2b.9 outcome note (§9). **Time guard (Y2):** 1361 backend tests pass in the default run (13 skipped), 266 frontend tests; ruff, mypy and type check clean; no migration, no new dependency; your dev seed week went from 245 s to 171 s with a plan marked not proven best; D143–D147 in the 2b.9 approval note (§9). **2b.10 (smart prep data model):** 1497 backend tests pass in the default run (13 skipped), 266 frontend tests; ruff, mypy and type check clean; migration `0009_smart_prep`; the FoodKeeper rows transcribed (V1); 20 draft prep items and 12 assemblies (`docs/review/prep_items.md`); deviations D148–D156 in the 2b.10 outcome note (§9). **Day repairs (Y4):** 1500 backend tests pass in the default run (14 skipped), the slow solver tests pass with `--run-slow`; ruff and mypy clean; no migration, no new dependency; your dev seed week went from 171–245 s to 61.5 s (opt-in perf test), the time guard never cutting a solve short; D157–D160 in the 2b.10 approval note (§9). **2b.7 (the new plan screens, with Not for me):** 1515 backend tests pass in the default run (14 skipped), 304 frontend tests; ruff, mypy and type check clean, static export builds; migration `0010_recipe_hidden` (Z5); later phases' migrations move up by one; deviations D161–D167 in the 2b.7 outcome note (§9). **2b.6 (expanded, AA3–AA8: meal swap, ingredient options, budget tiers, the kitchen order):** 1548 backend tests pass in the default run (14 skipped), 324 frontend tests; ruff, mypy and type check clean, static export builds; migration `0011_price_tier` (later phases' migrations move up by one); deviations D168–D183 in the 2b.6 outcome note (§9). **2b.6 approval round (bugs A–E, items 1–9):** 1565 backend tests pass in the default run (14 skipped), 332 frontend tests; ruff, mypy and type check clean, the dev-server compile check passes; migration `0012_budget_lines`; no new dependency; D184–D199 in the 2b.6 approval note (§9). |
 | 3 | Feedback loop | Not started | | | Favorites moved to 2b. |
 | 4 | Daily overrides | Not started | | | |
 | 5 | Grocery intelligence | Not started | | | |
@@ -108,10 +116,11 @@ Mealbro/
 │   │   ├── 0009_smart_prep.py         # P2b (2b.10): prep items, assemblies, prep batches, finish tasks
 │   │   ├── 0010_recipe_hidden.py      # P2b (2b.7, Z5): recipe_hidden (Not for me, F24)
 │   │   ├── 0011_price_tier.py         # P2b (2b.6, AA6): ingredient price tiers
-│   │   ├── 0012_feedback_loop.py      # P3 (planned as 0003)
-│   │   ├── 0013_daily_overrides.py    # P4 (planned as 0004)
-│   │   ├── 0014_grocery_intelligence.py  # P5 (planned as 0005)
-│   │   └── 0015_ranker.py             # P6 (planned as 0006)
+│   │   ├── 0012_budget_lines.py       # P2b (2b.6 approval, AB6): a line's budget equivalent
+│   │   ├── 0013_feedback_loop.py      # P3 (planned as 0003)
+│   │   ├── 0014_daily_overrides.py    # P4 (planned as 0004)
+│   │   ├── 0015_grocery_intelligence.py  # P5 (planned as 0005)
+│   │   └── 0016_ranker.py             # P6 (planned as 0006)
 │   └── app/
 │       ├── main.py · config.py · cli.py
 │       ├── db/                        # P0: base (naming convention), session, types, models/
@@ -216,10 +225,11 @@ Mealbro/
 | `0009_smart_prep` | 2b (2b.10, X1) | assembly_component, plan_meal_component, plan_finish_task | `recipe_version.kind`, `.stages`, `.pairs_with`, `.label`; `recipe_step.stage`; `plan_cook_batch.stop_stage`, `.stop_state`, `.fridge_until`; `plan_meal.assembly_version_id` |
 | `0010_recipe_hidden` | 2b (2b.7, Z5) | recipe_hidden (Not for me, F24: the same shape as recipe_favorite) | — |
 | `0011_price_tier` | 2b (2b.6, AA6) | — | `ingredient.price_tier`, `ingredient.price_tier_basis` |
-| `0012_feedback_loop` (planned as 0003, then 0008, then 0010, then 0011) | 3 | prepared_portion, preference_profile | `plan_meal.prepared_portion_id`, `inventory_event.prepared_portion_id` + CHECK |
-| `0013_daily_overrides` (planned as 0004, then 0009, then 0011, then 0012) | 4 | day_override, consumption_entry | — |
-| `0014_grocery_intelligence` (planned as 0005, then 0010, then 0012, then 0013) | 5 | region, ingredient_seasonality, cart_session | `price_observation.cart_session_id` |
-| `0015_ranker` (planned as 0006, then 0011, then 0013, then 0014) | 6 | ranker_model | — |
+| `0012_budget_lines` | 2b (2b.6 approval, AB6) | — | `recipe_ingredient.budget` (JSONB: a line's budget equivalent) |
+| `0013_feedback_loop` (planned as 0003, then 0008, then 0010, then 0011, then 0012) | 3 | prepared_portion, preference_profile | `plan_meal.prepared_portion_id`, `inventory_event.prepared_portion_id` + CHECK |
+| `0014_daily_overrides` (planned as 0004, then 0009, then 0011, then 0012, then 0013) | 4 | day_override, consumption_entry | — |
+| `0015_grocery_intelligence` (planned as 0005, then 0010, then 0012, then 0013, then 0014) | 5 | region, ingredient_seasonality, cart_session | `price_observation.cart_session_id` |
+| `0016_ranker` (planned as 0006, then 0011, then 0013, then 0014, then 0015) | 6 | ranker_model | — |
 
 ### 4.2a Table audit for `0001_initial` (2026-10-08)
 
@@ -802,8 +812,13 @@ recipe_hidden        (user_id FK→app_user, recipe_id FK→recipe, created_at; 
 -- 0011_price_tier (Phase 2b, step 2b.6; AA6) ----------------------------------------------
 ALTER ingredient ADD price_tier text NULL        -- cheap | better | fancy; NULL = any tier (seasonings, oils)
 ALTER ingredient ADD price_tier_basis text NULL  -- protein_per_dollar | named (AA6) | estimate
+-- (2b.6 approval, AB4: price_tier also takes staple, Broke mode's; price_tier_basis also staple; text, no migration)
 
--- 0012_feedback_loop (Phase 3; planned as 0003, then 0008, then 0010, then 0011) -----------
+-- 0012_budget_lines (Phase 2b, the 2b.6 approval; AB6) ---------------------------------------
+ALTER recipe_ingredient ADD budget jsonb NULL     -- schemas.recipes.BudgetLine: a budget equivalent of the line's
+                                                  -- (classic) ingredient with its own amount; NULL = none
+
+-- 0013_feedback_loop (Phase 3; planned as 0003, then 0008, then 0010, then 0011, then 0012) -----
 prepared_portion                                -- cooked leftovers / frozen meal-prep portions
   id, user_id FK→app_user, recipe_version_id FK→recipe_version, cook_batch_id NULL FK→plan_cook_batch,
   portions smallint NN CHECK ≥ 0, portion_size text NN, location text NN (fridge | freezer),
@@ -816,21 +831,21 @@ ALTER plan_meal       ADD prepared_portion_id bigint NULL FK→prepared_portion
 ALTER inventory_event ADD prepared_portion_id bigint NULL FK→prepared_portion
 ALTER inventory_event ADD CHECK (inventory_item_id IS NOT NULL OR prepared_portion_id IS NOT NULL)
 
--- 0013_daily_overrides (Phase 4; planned as 0004, then 0009, then 0011, then 0012) --------
+-- 0014_daily_overrides (Phase 4; planned as 0004, then 0009, then 0011, then 0012, then 0013) --
 day_override        (id, meal_plan_id FK, day date NN, cook_minutes smallint NULL, mood text NULL,
                      slots text[] NN, reason text NULL, generation_run_id NULL FK, created_at)
 consumption_entry   (id, user_id FK, consumed_on date NN, slot text NULL, plan_meal_id NULL FK, description text NN,
                      kcal integer NN CHECK ≥ 0, protein_g numeric(8,2) NULL, source text NN (planned_meal | manual | parsed),
                      is_estimate bool NN, parsed_items jsonb NULL, created_at)
 
--- 0014_grocery_intelligence (Phase 5; planned as 0005, then 0010, then 0012, then 0013) ---
+-- 0015_grocery_intelligence (Phase 5; planned as 0005, then 0010, then 0012, then 0013, then 0014)
 region                 (code text PK, name text NN)
 ingredient_seasonality (ingredient_id FK, region_code text FK→region.code, month smallint CHECK 1–12,
                         availability text NN (peak | available), source text NN, PK (ingredient_id, region_code, month))
 cart_session           (id, user_id FK, store_id NN FK→store, started_at, ended_at NULL, status text NN)
 ALTER price_observation ADD cart_session_id bigint NULL FK→cart_session
 
--- 0015_ranker (Phase 6; planned as 0006, then 0011, then 0013, then 0014) -----------------
+-- 0016_ranker (Phase 6; planned as 0006, then 0011, then 0013, then 0014, then 0015) -------
 ranker_model (id, version integer NN UNIQUE, algorithm text NN, trained_at timestamptz NN, train_window jsonb NN,
               n_examples integer NN, feature_spec jsonb NN, weights jsonb NN, metrics jsonb NN,
               is_active bool NN DEFAULT false, created_at)   UQ partial (is_active) WHERE is_active
@@ -1342,8 +1357,8 @@ How the filter decides:
 - **Layers:** `domain/` tests are pure and fast. `services/`, `usda/`, `seed/` and `planning/` tests use the `db-test` Postgres (tmpfs; migrations run once per session; each test in a rolled-back transaction). `api/` tests use TestClient.
 - **LLM:** automated tests use `FakeLLMClient` fixtures, in both `strict` and `best_effort` modes. Real Groq runs only in `pytest -m live_llm` and the CLI.
 - **Architecture tests:** `domain/` imports nothing from `db`/`api`/`llm`/`sqlalchemy`/`fastapi`. `groq` is imported only in `app/llm/client.py`. No model-name literals in `app/`. Every `*_cents` column is `Integer`. No `stream`/`tools` with structured outputs. `PlanValidator` accepts only `RoundedPlan`.
-- **No wall-clock dependence (Phase 2, K6):** in tests every MILP runs with no wall-clock cut (`conftest.py` replaces its time limit with 300 s and fails a test whose solve still stops on the clock). Single-threaded HiGHS with gap stops is deterministic, so an identical model reuses the answer within a session (tests marked `solve_cache_off` always solve). Orchestration tests that re-solve use 3-day weeks; the timed 30-candidate test is opt-in (`perf` marker, `RUN_PERF_TESTS=1`). The system clock stands still while a MILP runs, so a request's time budget never counts the solver's own seconds in tests (D146); the time guard's one real-clock test is marked `wall_clock`.
-- **End of phase:** full `pytest` (and `vitest` from Phase 2) output pasted in the summary, plus the fresh-clone Docker test check (`scripts/fresh_clone_check.sh`), run after committing even when dependencies didn't change.
+- **No wall-clock dependence (Phase 2, K6):** in tests every MILP runs with no wall-clock cut (`conftest.py` replaces its time limit with 300 s and fails a test whose solve still stops on the clock). Single-threaded HiGHS with gap stops is deterministic, so an identical model reuses the answer within a session (tests marked `solve_cache_off` always solve). Orchestration tests that re-solve use 3-day weeks; the timed 30-candidate test is opt-in (`perf` marker, `RUN_PERF_TESTS=1`). The system clock stands still while a MILP runs, so a request's time budget never counts the solver's own seconds in tests (D146); the time guard's one real-clock test is marked `wall_clock`. **Since the 2b.6 approval (AB10, D198) the test clock is virtual:** `SystemClock` moves only when code waits on purpose (`sleep`, which still sleeps for real), never with solver or Python work, so a busy machine can't run a request or the tier cards out of time; `perf`, `wall_clock` and `live_llm` tests get the real clock.
+- **End of phase:** full `pytest` (and `vitest` from Phase 2) output pasted in the summary, plus the fresh-clone Docker test check (`scripts/fresh_clone_check.sh`), run after committing even when dependencies didn't change, and (since the 2b.6 approval, AB11) the dev-server compile check (`scripts/dev_compile_check.sh`: restarts this repo's frontend container, then loads every page and fails on a compile error).
 
 ### 7.6 LLM budget facts (checked 2026-10-08)
 
@@ -3395,6 +3410,125 @@ Decisions and deviations:
 
 **For 2b.8:** What should I buy? takes the same tier cards (AA6).
 
+**Approved 2026-10-13, including D168–D183 (AB1, §12.1).** The approval round (AB2–AB11: bugs A–E, then items 1–9)
+was built the same day and committed on its own, before step 2b.13's code side (AB12). 1565 backend tests pass in
+the default run (14 skipped), 332 frontend tests; ruff, mypy and the type check are clean, the static export builds, the
+dev-server compile check passes. Migration `0012_budget_lines`; no new dependency.
+
+What was built, and why:
+- **A. A swap that sticks.** Cause: the sheet offered the pinned re-solve's options before rounding, and the tap
+  rounded and checked them; on your dev plan 3 of 4 options failed there (the week 60–100 kcal over its total), so
+  the tap got a 409 the sheet showed at its bottom, out of sight. Now every option is rounded and checked as the
+  plan it would make, exactly as the tap applies it (D184); a refused tap says why at the top of the sheet and on the
+  option, and the sheet stays open. Tests: a swap on a draft plan and on an accepted plan, every option applies
+  (backend), and the plan screen showing the new meal, the toast and a refused swap's message (frontend).
+- **B. Close fits** (D185): when fewer than 3 meals fit exactly, the closest ones follow under "Close fits" (or
+  "Nothing fits exactly. The closest:"), each saying what it changes: "+12 min cook time on Wednesday", "+80 kcal
+  over Thursday's calories", "Fri 16's Yogurt chicken gravy: portions 7% smaller, to balance the calories".
+  "No other … fits" only when there is no close fit either. On your dev plan the three meals that said no other
+  dinner or lunch fits now offer 3 close fits each, and all 12 options apply.
+- **C.** A meal eaten the day it's cooked says "Fresh, cooked this day" (the day viewed, never the real date);
+  other days keep "From the fridge, cooked Thu 15".
+- **D.** The cook-day time ("about 1 h 12 min start to finish · 36 min hands-on") is said once, in the Cook header;
+  the Timeline's summary is "Timeline".
+- **E.** No Draft badge on plan rows, recipe cards or swap options; the recipe page keeps "Draft: adjust me".
+- **1. The protein band** (D186): at least your target (100 g), ideally no more than its top (110 g: a new setting,
+  `daily_protein_max_g`, unset = the target + 10%). The High protein reward stops at the top (it was 1.5 × the
+  target) and only A bit better and Fancy earn it; above the top every plan pays 0.005 points a gram a day, a
+  tie-breaker. Meal now's protein credit per meal stops at the meal's share of the top (one seed order changed:
+  the wings now come before the 46 g yogurt gravy). On your dev week every tier plans 100–102 g a day (128–130 g
+  before).
+- **2. Four tiers that include their upgrades** (D187–D190, D192): **Broke mode** (new): staples only (your list,
+  plus the basics to cook them: yellow onion, potato, carrot, green cabbage, canned tomatoes, tomato sauce and
+  paste, flour, 2% milk, canned black and kidney beans, banana), your pantry first, up to 7 of one recipe a week,
+  every stock-up item counted at its whole (smallest) pack so one is bought only when it's needed, never protein
+  powder; **Cheapest**: cheap staples, 5 a week; **A bit better**: at least a quarter of the lunches and dinners (2
+  or more) use a better or fancy item for at least 25 g a portion, 4 a week; **Fancy**: as many with a premium
+  protein (salmon, shrimp: a fancy protein, at least 50 g a portion), 3 a week. Every tier plans cost first within
+  its own rules (the cost-first weights); the upgrades are rewarded at 10 points (about $6.70) a meal up to the
+  tier's count, so a week that can't reach them still plans. Cards: regular groceries as the number, stock-up items
+  apart ("+ about $16.46 stock-up: red lentils (dry), olive oil, …"), protein, and what each includes ("6 meals
+  with an upgrade · up to 4 of one recipe a week"). Two causes of the near-equal totals you saw were fixed:
+  the cards' quick solve stopped within 100 objective points (about $66) of its bound, nearly its first plan (now
+  within 1 point and 5%, the 10-recipe shortlist then every recipe, 15 s each); and an item with no stored price
+  counted as free in a plan without a money limit (now a tier never counts it free: a recipe needing one you don't
+  have is left out, saying why). Five frozen items had no price; they have estimates now, flagged (D191).
+- **3.** A plan of some of your meals says so: "Lunch + dinner: about 76 g of your 100 g daily target".
+- **4. Classic and budget ingredients** (D193): 18 lines in 16 seeds name a budget equivalent (canned diced
+  tomatoes for fresh in the curries, frozen spinach, frozen broccoli and green beans, frozen strawberries, rice
+  for quinoa and broccoli for asparagus in the bone-in breasts, tortillas for pita; the shakshuka's canned tomatoes
+  with fresh as the other side). The side is picked by your stores' real stored prices: Broke mode and Cheapest the
+  cheaper one, A bit better the classic unless the budget one saves more than 25 cents a portion, Fancy and plans
+  without a tier the classic; a side the tier can't have is never picked (Broke's curry uses canned tomatoes:
+  fresh aren't a staple); where the "budget" side costs more (the shakshuka, frozen broccoli) the classic stays.
+  The batch page shows "diced tomatoes, canned (classic: tomato)" and its steps name what you use; a line's ⋯ has
+  Classic or budget: "Always the classic" / "Always the budget one" saves your version with the line fixed (the
+  existing versioning, so Also update this week's plan works too). Chicken and every other protein stay exact. The
+  table is in `docs/review/price_tiers.md`.
+- **5.** Chicken breast is in Cheapest (a Broke staple: family-pack chicken), and every other protein food is
+  tiered by protein per dollar at your stores, not by the example list (D192).
+- **6. The kitchen order's alternative** (D194): the longest-cooking item is prepped first and started, the rest
+  prepped while it cooks, portioning last. On 450 seed cook days (2–4 dishes at 4 portions, a fixed sample) against
+  the first kitchen order: 256 the same, 179 shorter (7.5 min on average, up to 35), 15 longer (at most 4 min);
+  **348 fit 90 minutes, against 335**. The burrito bowls are back to 30 minutes.
+- **7.** The test clock is virtual (D195): a request's time budget and the tier cards' budget move only on
+  deliberate waits, never with a busy machine. Every MILP in the tests already ran without a wall-clock cut (300 s,
+  and a test fails if one stops on the clock), so the one wall-clock dependence left was the request's time budget
+  counting the Python work between solves, which a busy machine slows. I couldn't reproduce the 45 failures
+  themselves; the suite passes under a deliberately overloaded run (24 workers on 12 cores, see the summary).
+- **8.** `scripts/dev_compile_check.sh` (D196): restarts this repo's frontend container, then loads all 19 pages and
+  fails on a compile error; it is part of every step's end checks (§7.5).
+- **9.** `<body suppressHydrationWarning>`, like `<html>`.
+
+Decisions and deviations:
+- **D184. Every swap option is checked before it's shown,** with the same functions the tap uses (rounded, checked,
+  re-solved with a bound tightened up to twice), so an option on the sheet applies; its kcal and protein are the
+  rounded meal's.
+- **D185. A close fit** may move the other uncooked batches' portions (within the plan's ±10%; 2 points for each 1%
+  a batch moves, so only to keep a limit) and go past the calorie limits (a day's, the plan's) by up to 150 kcal or a
+  cook day's minutes by up to 20 (1 point a kcal, 4 a minute, so the closest fit comes first). The protein floor,
+  the budget, the caps and the variety rule stay exact. Tapping one keeps what it goes past with the plan (a
+  calorie allowance, `PlanConstraints.kcal_allowances`, or the cook day's minutes raised) and says so in the plan's
+  notes ("You swapped Wed 14 dinner for a close fit: +12 min cook time on Wednesday."). New ideas still come first.
+- **D186. The band's top** is a setting with no screen yet (unset = the target + 10%, your 110 g); for some of your
+  meals it is their share, like the target. The penalty above it is a tie-breaker (0.005 a gram): stronger, it
+  shrank portions on short plans until rounding broke their calorie floor.
+- **D187. Broke's staples** add the basics above to your list (without them Broke could make almost nothing);
+  please check them in the review sheet. From an empty pantry Broke can make 8 of the 47 seed dishes, Cheapest 24,
+  A bit better 41, Fancy 47.
+- **D188. Every tier plans cost first** (the cheapest weights): with the balanced weights a dollar counted for so
+  little that A bit better spent about $50 a week on nothing you asked for. The tiers differ by their rules: what
+  they buy, their variety and the upgrades they include.
+- **D189. The tier cards** take up to 15 s each (90 s for all four; about 60 s on your dev week on this PC); a card
+  with no estimate in time says so ("There wasn't time to price this one; tap it to plan it anyway.") and can still
+  be picked.
+- **D190. An unpriced item is never free in a tier plan** (before, with no money limit, a plan counted it free).
+- **D191. Five price estimates added** (frozen broccoli, cauliflower, green beans and spinach, frozen strawberries;
+  marked estimates like the other seed prices): Broke's frozen veg had no price.
+- **D192. Protein per dollar** decides for protein foods: cheap from 20 g a dollar (was 25), better from 12, so
+  Greek yogurt (20.6 g) stays in Cheapest by its own numbers and flaxseed moves to cheap; ground turkey stays in A
+  bit better (17 g), salmon and shrimp in Fancy.
+- **D193. The pair lives on the recipe line** (`recipe_ingredient.budget`, migration `0012_budget_lines`; seed
+  lines' `budget` with the budget side's own amount), only within one ingredient category and never a protein. The
+  validator accepts either side of a declared pair; a swap keeps each stored batch's sides as cooked. Fixing a line
+  is your version of the recipe, so it changes every tier's plans from then on.
+- **D194.** The kitchen order: "the alternative" from D183.
+- **D195. The test clock** (`conftest.py`): `SystemClock` moves only by `sleep` (which still sleeps for real);
+  `perf`, `wall_clock` and `live_llm` tests keep the real clock.
+- **D196.** The dev-server compile check is a script beside the fresh-clone check.
+- **D197. Your dev database:** migrated to 0012 and re-seeded (16 seed revisions, the tiers, 5 new products). A hash
+  slip during that re-seed gave 4 seed assemblies one or two identical extra draft versions (fixed; a re-seed now
+  changes nothing).
+- **D198. Swap options sort** new ideas first, then exact fits by groceries and protein, then close fits, closest
+  first.
+- **D199. The tier cards' numbers are estimates and can be out of order** (AB-Q1, §12.2): on your dev week (7 days,
+  all four meals) Broke mode about $11.49 (+ $16.46 stock-up), 100 g protein a day; Cheapest about $11.51 (+
+  $18.45), 101 g; A bit better about $16.04 (+ $24.93), 100 g, 6 meals with an upgrade; Fancy about $25.91 (+
+  $26.92), 102 g, 3 meals with salmon or shrimp. On lunch and dinner only: Broke $18.00 (+ $12.97), Cheapest $20.30
+  (+ $24.73), A bit better $14.54 (+ $12.97), Fancy $33.96 (+ $30.51), each about 71–76 g of your 100 g.
+
+**Dev database.** Migrated to 0012 and re-seeded. Downgrade: `alembic downgrade 0011`.
+
 #### 2b.7 Meal prep and swap: screens (frontend)
 
 *Reads FLOW_SPEC §7 (C1, C1b, C3b, C4, C6, C8).*
@@ -3595,9 +3729,9 @@ Decisions and deviations:
 7. **Weighted scoring function:** `preference_score` in [−1, 1] → solver preference term, reuse order, prompt hints. Its score and components are written into the `plan_candidate` rows that Phase 2 already logs. Capped never-favored items get no preference-score boost from nutrition, price or inventory features (§7.4).
 8. **Cook Again:** your default version is re-scaled and re-costed deterministically (0 LLM calls). It calls the LLM once only on the triggers (excluded/disliked ingredient, missing equipment, can't fit calories/time by scaling, or "adapt to what I have"). Adapted versions apply to that cook unless you save them.
 
-**Files and folders.** Creates `app/feedback/`, `app/preferences/`, `app/substitutions/`, `app/domain/preferences.py`, `app/schemas/feedback.py`, prompts (comment_tags, substitution, step_rewrite, adaptation), API routes (ratings, cook_logs, recipe_versions, substitutions, cook_again, profile), `migrations/versions/0012_feedback_loop.py`; frontend `history/`, `learned/` (reached from Settings and the Cook tab), rating sheet, editor, substitution sheet. (♥, 🔖 and Not for me shipped in Phase 2b.)
+**Files and folders.** Creates `app/feedback/`, `app/preferences/`, `app/substitutions/`, `app/domain/preferences.py`, `app/schemas/feedback.py`, prompts (comment_tags, substitution, step_rewrite, adaptation), API routes (ratings, cook_logs, recipe_versions, substitutions, cook_again, profile), `migrations/versions/0013_feedback_loop.py`; frontend `history/`, `learned/` (reached from Settings and the Cook tab), rating sheet, editor, substitution sheet. (♥, 🔖 and Not for me shipped in Phase 2b.)
 
-**Database.** Migration `0012_feedback_loop` (planned as 0003): `prepared_portion`, `preference_profile`; `plan_meal.prepared_portion_id`; `inventory_event.prepared_portion_id` + CHECK (§4.5). `feedback_event` and `recipe_favorite` already exist (Phase 2b, `0005_cook_flow`).
+**Database.** Migration `0013_feedback_loop` (planned as 0003): `prepared_portion`, `preference_profile`; `plan_meal.prepared_portion_id`; `inventory_event.prepared_portion_id` + CHECK (§4.5). `feedback_event` and `recipe_favorite` already exist (Phase 2b, `0005_cook_flow`).
 
 **Acceptance criteria**
 1. Favorites (from Phase 2b) feed the weighted preference score; with otherwise-equal candidates the favorite still wins.
@@ -3651,9 +3785,9 @@ Decisions and deviations:
 5. **Mode toggle:** in settings and per plan.
 6. **"What's left today" feeds A meal now:** with consumption logged, the meal-now calorie target becomes the remaining calories for today (e.g. 750 kcal), within the same mode rules.
 
-**Files and folders.** Creates `app/overrides/`; extends `app/domain/calories.py`; prompt `off_plan_parse`; API routes (days, consumption, rebalance); frontend Today additions on the Cook tab; `migrations/versions/0013_daily_overrides.py`.
+**Files and folders.** Creates `app/overrides/`; extends `app/domain/calories.py`; prompt `off_plan_parse`; API routes (days, consumption, rebalance); frontend Today additions on the Cook tab; `migrations/versions/0014_daily_overrides.py`.
 
-**Database.** Migration `0013_daily_overrides` (planned as 0004): `day_override`, `consumption_entry`.
+**Database.** Migration `0014_daily_overrides` (planned as 0004): `day_override`, `consumption_entry`.
 
 **Added at the 2b.4 approval (M19, backlog):** **daily habit items**, a recurring item counted every day toward
 calories and protein (a daily shake, a coffee with milk), with a one-tap "had an extra today". It fits the daily
@@ -3697,9 +3831,9 @@ tracking and rebalancing here: the habit is a standing `consumption_entry`, and 
 5. **Next-list recommendations:** extends Phase 2b's "What should I buy?" (a shop-mode plan with templated reasons from current prices) with expiring items and open packages, usual items from history (a separate dismissible section) and within-store deals, all as templated, data-backed sentences.
 6. **Grocery Store Mode** (in the Grocery tab): a `cart_session` per store; "+ Add Grocery" entries; **Optimize My Cart** in two modes, quick (recipes fixed, cheapest packages) and full re-plan, returning the cheapest combination, nutritional value, meals, servings and cost per serving.
 
-**Files and folders.** Creates `app/grocery/`, `app/domain/price_stats.py`, `app/seed/data/seasonality_new_england.json`, API routes (price_history, deals, recommendations, cart_sessions), frontend `store/`, history views, mode selector, badges, `migrations/versions/0014_grocery_intelligence.py`. Changes `objective.py`, `app/cook/grocery_advice.py` (Phase 2b) and `docs/data-sources.md`.
+**Files and folders.** Creates `app/grocery/`, `app/domain/price_stats.py`, `app/seed/data/seasonality_new_england.json`, API routes (price_history, deals, recommendations, cart_sessions), frontend `store/`, history views, mode selector, badges, `migrations/versions/0015_grocery_intelligence.py`. Changes `objective.py`, `app/cook/grocery_advice.py` (Phase 2b) and `docs/data-sources.md`.
 
-**Database.** Migration `0014_grocery_intelligence` (planned as 0005): `region`, `ingredient_seasonality`, `cart_session`, `price_observation.cart_session_id`.
+**Database.** Migration `0015_grocery_intelligence` (planned as 0005): `region`, `ingredient_seasonality`, `cart_session`, `price_observation.cart_session_id`.
 
 **Acceptance criteria**
 1. Deal labels appear only when the same-store thresholds are met. A lower Price Rite price never marks a Stop & Shop observation as a deal, or vice versa.
@@ -3740,9 +3874,9 @@ tracking and rebalancing here: the habit is a standing `consumption_entry`, and 
 5. **Serving:** blended score → solver preference term; exploration allowance (e.g. one new recipe per week); top features shown in "What I've learned".
 6. **Retraining:** `cli ranker-train`, version registry, one-command rollback.
 
-**Files and folders.** Creates `app/ranking/`, CLI commands, API `ranker/status`, a frontend settings panel, `migrations/versions/0015_ranker.py`. Changes the preference-term source in `objective.py` and in `app/cook/ranking.py` (Phase 2b).
+**Files and folders.** Creates `app/ranking/`, CLI commands, API `ranker/status`, a frontend settings panel, `migrations/versions/0016_ranker.py`. Changes the preference-term source in `objective.py` and in `app/cook/ranking.py` (Phase 2b).
 
-**Database.** Migration `0015_ranker` (planned as 0006): `ranker_model`.
+**Database.** Migration `0016_ranker` (planned as 0006): `ranker_model`.
 
 **Acceptance criteria**
 1. A test proves the dataset is leak-free (features for an occasion use only earlier events).
@@ -4083,7 +4217,37 @@ your instruction; real design decisions stop and wait):
 | AA7 | D. Cooking order | Every cook-day timeline follows a systematic kitchen order: all chopping and marinating first, the longest-cooking items next, the rest while they cook, then portioning and storing. With a test. |
 | AA8 | Asked at the start of 2b.6 | **Tier cards:** a quick solve per tier (the planner on saved recipes, no LLM, a short time limit), shown as "about $X". **Tier rules:** a tier limits what gets bought; what you have, Always-have items, seasonings and oils work in every tier; at most 5 portions of one recipe a week in Cheapest, 4 in A bit better, 3 in Fancy. **Plan edits:** an ingredient edit saves your version and leaves the current plan unchanged; after the edit an **Also update this week's plan** button switches the batch (every meal it feeds) to your version, recomputes nutrition, cost and the shopping list, validates, and re-solves that batch's portions if a limit breaks (or says why it can't); only batches not yet cooked can change. **Step text:** code edits the names (no LLM call) and adds a "Your version" line; a left-out ingredient is marked in the steps that mention it ("(skipped: spinach)"); a swap that changes cooking time, temperature or method (chicken breast for thighs, frozen for fresh vegetables) flags the affected steps with a short note and offers **Rewrite steps for this change**, one LLM steps call made only when you tap it. |
 
+**Step 2b.6 approval (2026-10-13).** You approved 2b.6, then:
+
+| # | Topic | Decision |
+|---|---|---|
+| AB1 | 2b.6 | Approved, including D168–D183. |
+| AB2 | Bugs (first) | **A.** A swap that shows "Swapping" then the old meal again: find the cause, fix it, show any failure clearly; tests for a swap on a draft and on an accepted plan. **B.** "No other dinner fits" is too strict: show the closest options with what they change, and the dead end only when there are truly none. **C.** "Cooked today" on a day that isn't today: "Cooked Thu 15", or "Fresh, cooked this day" on the cook day. **D.** The cook box's time line once. **E.** No Draft badge on plan rows and recipe cards; the recipe page keeps it. |
+| AB3 | 1. Protein band | At least 100 g a day, ideally no more than 110 g; above 110 g no reward in any tier, High protein included (the band replaces the 1.5× cap); lower tiers never chase extra protein. |
+| AB4 | 2. Four tiers | Each meaningfully different, each including its upgrades: **Broke mode** (new: pantry first, staples only, repeats fine, no stock-up purchase unless truly essential, never a new protein powder tub), **Cheapest** (a little more variety), **A bit better** (a few meals with upgraded items, more variety), **Fancy** (several meals with premium proteins, more variety still); cost-aware within their rules; every tier meets your calories and protein floor; cards compare regular groceries with stock-up apart; show the four numbers for the dev week. |
+| AB5 | 3. Partial plans | The protein line says which meals: "Lunch + dinner: about 76 g of your 100 g daily target". |
+| AB6 | 4. Classic vs budget | A line can name a classic ingredient and a budget equivalent from the same role; Broke and Cheapest use the cheaper ("fresh tomatoes (classic: canned crushed tomatoes)"), Fancy the classic, A bit better the classic when the difference is small; you can flip it per recipe; chicken forms stay exact; pairs in seed data, real stored prices, tests. |
+| AB7 | 5. Chicken breast | In Cheapest; tiers follow real protein per dollar at your stores. |
+| AB8 | 6. Cooking order | The alternative: the longest-cooking item prepped first and started, the rest prepped while it cooks, portioning and storing last; report how many seed cook days fit 90 min. |
+| AB9 | 7. Flaky tests | No test may depend on wall-clock solver time. |
+| AB10 | 8. Build checks | A dev-server compile check in every step's end checks; restart this repo's frontend container after adding files. |
+| AB11 | 9. Hydration | `suppressHydrationWarning` on `<body>`. |
+| AB12 | Then 2b.13, code side only | The login rate limit on the real client address (X-Forwarded-For only from the trusted proxy); production safety checks at startup; every production variable in `.env.example` with placeholders, nothing secret in the history; `docs/deploy.md` as a beginner-friendly checklist. No accounts, no push, no deploy. |
+| AB13 | Order | If too much for one session: commit A–E and 1–9 first, stop, and say what's left. |
+
 ### 12.2 Remaining questions (from applying your answers)
+
+- **AB-Q1: the tier cards' order (open, from the 2b.6 approval, D199).** The four tiers now differ in what they
+  include, and every week meets your calories and protein floor, but their prices aren't ordered by construction:
+  every tier plans cost first within its rules, so a higher tier whose upgrades happen to be cheap (fresh broccoli
+  at $1.99 a lb) can come out below a lower one, and the cards are quick, time-limited estimates that can land a few
+  dollars from the tier's real best. On your lunch-and-dinner week A bit better came out at $14.54 against
+  Cheapest's $20.30. Options: **a.** leave it: the cards show what each tier includes, the price is an estimate;
+  **b.** (my recommendation) price the cards by building on each other: Cheapest starts from Broke mode's plan,
+  A bit better from Cheapest's and so on, so a tier is never shown below the one under it unless its own best is
+  lower, and say "about the same as Cheapest" when they're within a dollar; **c.** make the upgrades firmer (more
+  upgraded meals, or upgrades counted only from items that cost more than their cheap counterpart), so the higher
+  tiers really spend more.
 
 - **Y4: answered 2026-10-12 (Z2), option a; built as D157–D160.** The question as asked: **Planning a big week inside 180 s (from the time guard, 2026-10-11).** With your settings (7 cook days, 4
   meals a day) a seed week needs 8 weekly solves at their full 30 s, 245 s in all; the guard now stops it at 180 s,

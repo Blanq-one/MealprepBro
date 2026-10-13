@@ -38,14 +38,18 @@ def portions_display(portions: int, fridge: int, freezer: int) -> str:
     return f"{text} ({fridge} fridge, {freezer} freezer)" if freezer else text
 
 
+FRESH = "Fresh, cooked this day"
+
+
 def meal_source(eat_on: date, cook_on: date, from_freezer: bool) -> tuple[str, str]:
-    """(storage, the meal row's line): fresh 'Cooked today', fridge 'From the fridge, cooked Mon 12', freezer
-    'From the freezer, cooked Mon 12 · thaw Fri 16 night'."""
+    """(storage, the meal row's line): fresh 'Fresh, cooked this day' (relative to the meal's own day, never
+    the real date), fridge 'From the fridge, cooked Mon 12', freezer 'From the freezer, cooked Mon 12 · thaw
+    Fri 16 night'."""
     if from_freezer:
         thaw = date.fromordinal(eat_on.toordinal() - 1)
         return "freezer", f"From the freezer, cooked {short_day(cook_on)} · thaw {short_day(thaw)} night"
     if eat_on == cook_on:
-        return "fresh", "Cooked today"
+        return "fresh", FRESH
     return "fridge", f"From the fridge, cooked {short_day(cook_on)}"
 
 

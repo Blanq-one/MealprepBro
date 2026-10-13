@@ -30,7 +30,7 @@ function prepPlan(overrides: Parameters<typeof plan>[0] = {}) {
           { at_min: 0, at_display: "0:00", text: "Chop the chicken (12 min)", kind: "hands_on", minutes: 12, equipment: null, estimated: false, dish: "Chicken over rice", cook_batch_id: 11 },
           { at_min: 55, at_display: "0:55", text: "Done", kind: "done", minutes: 0, equipment: null, estimated: false, dish: null, cook_batch_id: null },
         ],
-        meals: [meal({ eat_on: MON, slot: "lunch", source_display: "Cooked today" })],
+        meals: [meal({ eat_on: MON, slot: "lunch", source_display: "Fresh, cooked this day" })],
       }),
       day({
         day: TUE,
@@ -169,6 +169,18 @@ describe("C6: the plan view (step 2b.7)", () => {
     expect(within(sheet).getByRole("region", { name: "About this plan" })).toHaveTextContent("Left out Spicy beef chili: uses beef");
   });
 
+  it("a draft recipe's meal row has no Draft badge (every seed is a draft; the recipe page says so)", () => {
+    view(MON, { days: [day({ day: MON, meals: [meal({ eat_on: MON, slot: "lunch", is_draft: true })] })] });
+    expect(screen.getByText("Chicken over rice")).toBeInTheDocument();
+    expect(screen.queryByText(/Draft/)).toBeNull();
+  });
+
+  it("a meal eaten the day it's cooked says so relative to that day, never 'today'", () => {
+    view(TUE, { days: [day({ day: WED, meals: [meal({ eat_on: WED, slot: "lunch", source_display: "Fresh, cooked this day" })] })] });
+    expect(screen.getByText("Fresh, cooked this day")).toBeInTheDocument();
+    expect(screen.queryByText(/today/i, { selector: "span" })).toBeNull();
+  });
+
   it("no notes, no row", () => {
     view(MON, { prep_notes: null });
     expect(screen.queryByRole("button", { name: /Prep notes/ })).toBeNull();
@@ -177,7 +189,9 @@ describe("C6: the plan view (step 2b.7)", () => {
   it("a cook day shows its timeline (in place of the prep order) and starts the cook-day cooking mode", async () => {
     view();
     const summary = screen.getByText(/^Timeline/);
-    expect(summary).toHaveTextContent("Timeline · about 55 min start to finish · 35 min hands-on");
+    expect(summary).toHaveTextContent(/^Timeline$/); // the day's time is said once, in the Cook header (D)
+    expect(screen.getAllByText(/about 55 min start to finish · 35 min hands-on/)).toHaveLength(1);
+    expect(screen.getByText(/^Cook · /)).toHaveTextContent("Cook · about 55 min start to finish · 35 min hands-on");
     await userEvent.click(summary);
     expect(screen.getByText("Chop the chicken (12 min)")).toBeVisible();
     expect(screen.getByRole("link", { name: "Start cooking" })).toHaveAttribute("href", expect.stringMatching(/^\/cook\/cooking\/?\?plan=7&day=2026-10-12$/));

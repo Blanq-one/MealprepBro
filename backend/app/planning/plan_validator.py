@@ -139,15 +139,20 @@ def _cap_amount(amount: Decimal, cap: ResolvedDailyCap) -> str:
 
 
 def _expected_lines(batch: RoundedBatch, recipe: RefRecipe, ref: ReferenceData) -> list[tuple[int, Decimal]]:
-    """(ingredient id, base quantity) for every recipe line at the batch's scale, in recipe order."""
+    """(ingredient id, base quantity) for every recipe line at the batch's scale, in recipe order. A line
+    with a budget equivalent (the 2b.6 approval, item 4) may be cooked on either side of its declared pair:
+    the side the batch has is scaled from that side's own amount."""
     out = []
-    for line in recipe.lines:
-        plan = ref.ingredients[line.ingredient_id]
-        scaled = scale_line(
-            line.authored_quantity, line.authored_unit, batch.scale_factor, plan.count_rounding_step
-        )
+    for n, line in enumerate(recipe.lines):
+        ingredient_id, quantity, unit = line.ingredient_id, line.authored_quantity, line.authored_unit
+        cooked = batch.lines[n].ingredient_id if n < len(batch.lines) else None
+        if line.budget is not None and cooked == line.budget.ingredient_id:
+            ingredient_id = line.budget.ingredient_id
+            quantity, unit = line.budget.authored_quantity, line.budget.authored_unit
+        plan = ref.ingredients[ingredient_id]
+        scaled = scale_line(quantity, unit, batch.scale_factor, plan.count_rounding_step)
         base = to_base(scaled.amount, scaled.unit, plan.units)
-        out.append((line.ingredient_id, base.amount.quantize(QTY_TOLERANCE, ROUND_HALF_UP)))
+        out.append((ingredient_id, base.amount.quantize(QTY_TOLERANCE, ROUND_HALF_UP)))
     return out
 
 
@@ -417,7 +422,7 @@ def validate_plan(
                     meal.eat_on,
                     Meal(
                         f"{_day(meal.eat_on)} {meal.slot.value.replace('_', ' ')} ({recipe.title})",
-                        frozenset(ln.ingredient_id for ln in recipe.lines),
+                        frozenset(ln.ingredient_id for ln in batch.lines),  # as cooked (item 4)
                     ),
                 )
             )
@@ -469,13 +474,9 @@ def validate_plan(
             )
 
     # ---- calories per mode (from the recomputed, displayed meal values) ----
-    tol = c.tolerance
     for spec in c.days if whole_days else ():
         k = day_kcal[spec.day]
-        if c.calorie_mode is CalorieMode.STRICT_DAILY:
-            ceiling, floor = spec.kcal_target, round(spec.kcal_target * (1 - tol.daily_under_pct / 100))
-        else:
-            ceiling, floor = spec.kcal_target + tol.daily_band_kcal, spec.kcal_target - tol.daily_band_kcal
+        floor, ceiling = c.kcal_limits(spec.day)  # with any close-fit allowance (step 2b.6 approval, B)
         if k > ceiling:
             errors.append(
                 Issue(
@@ -496,13 +497,13 @@ def validate_plan(
             )
     week = sum(day_kcal.values())
     if c.calorie_mode is CalorieMode.WEEKLY and whole_days:
-        week_floor = round(c.weekly_kcal_target * (1 - tol.weekly_under_pct / 100))
-        if week > c.weekly_kcal_target:
+        week_floor, week_ceiling = c.week_kcal_limits()
+        if week > week_ceiling:
             errors.append(
                 Issue(
                     "KCAL_WEEK_OVER_CEILING",
-                    f"the week is {week:,} kcal, {week - c.weekly_kcal_target} over {c.weekly_kcal_target:,}",
-                    amount=week - c.weekly_kcal_target,
+                    f"the week is {week:,} kcal, {week - week_ceiling} over {week_ceiling:,}",
+                    amount=week - week_ceiling,
                 )
             )
         if week < week_floor:

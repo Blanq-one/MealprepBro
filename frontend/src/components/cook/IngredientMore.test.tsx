@@ -68,6 +68,28 @@ describe("a line's ⋯ (AA5)", () => {
     expect(calls[0]?.path).toBe("/api/v1/recipe-versions/3/lines/21/options?batch=11");
   });
 
+  it("a line with a budget equivalent can be fixed to either side for this recipe (2b.6 approval, item 4)", async () => {
+    const calls = mockApi((c) => {
+      if (c.path.includes("/options")) return { body: options({ name: "tomato", display: "3 tomato", swaps: [], pair: { classic: "tomato", budget: "diced tomatoes, canned", budget_display: "360 ml diced tomatoes, canned" } }) };
+      if (c.path.endsWith("/edits")) return { body: edited({ note: "Your version: always diced tomatoes instead of tomato", cooking_note: null, flagged_steps: [] }) };
+      return undefined;
+    });
+    render(<IngredientSheet versionId={3} lineId={21} name="tomato" batch={{ id: 11, planId: 5, cookOn: "2026-10-14" }} online onClose={() => undefined} onOpenVersion={() => undefined} />);
+    expect(await screen.findByRole("heading", { name: "Classic or budget" })).toBeInTheDocument();
+    expect(screen.getByText(/whichever is cheaper at your stores: tomato \(the classic\) or 360 ml diced tomatoes, canned/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Always the classic: tomato" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Always the budget one: diced tomatoes, canned" }));
+    expect(await screen.findByText(/always diced tomatoes instead of tomato/)).toBeInTheDocument();
+    expect(calls.find((c) => c.path.endsWith("/edits"))?.body).toMatchObject({ line_id: 21, action: "use_budget", batch_id: 11 });
+  });
+
+  it("a line without one has no Classic or budget section", async () => {
+    mockApi((c) => (c.path.includes("/options") ? { body: options() } : undefined));
+    render(<IngredientSheet versionId={3} lineId={21} name="chicken thigh" online onClose={() => undefined} onOpenVersion={() => undefined} />);
+    expect(await screen.findByRole("heading", { name: "Swap it" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Classic or budget" })).toBeNull();
+  });
+
   it("a non-essential line can be left out, with the drop per portion and a warning", async () => {
     mockApi((c) => (c.path.includes("/options") ? { body: options({ name: "cilantro", leave_out: { allowed: true, reason: null, numbers: ["−1 kcal", "−0.1 g protein", "−$0.05"], warning: null }, swaps: [] }) } : undefined));
     render(<IngredientSheet versionId={3} lineId={21} name="cilantro" online onClose={() => undefined} onOpenVersion={() => undefined} />);

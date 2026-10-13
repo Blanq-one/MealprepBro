@@ -19,7 +19,6 @@ PRIMARY_WEIGHT = Decimal("1.0")
 SECONDARY_WEIGHT = Decimal("0.6")
 QUICK_DEFAULT_MINUTES = 30
 LOW_CALORIE_SHARE = Decimal("0.85")  # Low calorie aims for 85% of the meal's calories (§18 Q1)
-PROTEIN_CAP_TIMES_TARGET = Decimal("1.5")  # E11: protein above 1.5 × the target earns nothing
 PROTEIN_FALLBACK_TARGET_G = 100  # E16: the cap's target when yours is 0
 EXPIRING_WITHIN_DAYS = 3
 
@@ -73,7 +72,7 @@ class MealNowQuery:
     quick_minutes: int | None  # total time limit (Quick)
     low_calorie: bool
     kcal_target: Decimal | None  # the meal's calories (85% with Low calorie); None = not in your settings
-    protein_cap_g: Decimal  # per portion: the meal's share of 1.5 × your daily protein target
+    protein_cap_g: Decimal  # per portion: the meal's share of your protein band's top (2b.6 approval)
     toggled_off: frozenset[int]
     have: frozenset[int]  # "have it" extras: enough for one recipe, unless their amount is given
     have_amounts: dict[int, tuple[Decimal, str]]  # "have it" extras with an amount (quantity, unit), J5
@@ -106,16 +105,17 @@ def nutrition_terms(goals: list[GoalTile], settings: UserSettings) -> tuple[Nutr
 
 
 def protein_cap_g(settings: UserSettings, slot: MealSlot) -> Decimal:
-    """The meal's share of 1.5 × the daily protein target (meal kcal ÷ day kcal; a third of the day for a
-    meal without calories in your settings). A target of 0 uses 100 g (E16)."""
-    target = settings.daily_protein_target_g or PROTEIN_FALLBACK_TARGET_G
+    """The meal's share of your protein band's top (2b.6 approval, item 1: it replaced 1.5 × the target;
+    meal kcal ÷ day kcal, a third of the day for a meal without calories in your settings). A target of 0
+    uses 100 g's band (E16)."""
+    target = settings.protein_band_top_g if settings.daily_protein_target_g else PROTEIN_FALLBACK_TARGET_G
     allocations = {a.slot: a.kcal for a in settings.slot_allocations}
     share = (
         Decimal(allocations[slot]) / Decimal(settings.daily_kcal_target)
         if slot in allocations
         else Decimal(1) / Decimal(3)
     )
-    return share * PROTEIN_CAP_TIMES_TARGET * Decimal(target)
+    return share * Decimal(target)
 
 
 def resolve(answers: CookAnswers, settings: UserSettings, now: datetime) -> MealNowQuery:

@@ -56,7 +56,8 @@
    "unit": "count",
    "preparation": "chopped",
    "role": "vegetable",
-   "component": "keema"
+   "component": "keema",
+   "budget": {"ingredient": "tomatoes-canned", "quantity": "240", "unit": "ml"}
   },
   {
    "ingredient": "garlic",

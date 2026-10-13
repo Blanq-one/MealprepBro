@@ -49,7 +49,8 @@
    "unit": "count",
    "preparation": "chopped",
    "role": "vegetable",
-   "component": "dal"
+   "component": "dal",
+   "budget": {"ingredient": "tomatoes-canned", "quantity": "240", "unit": "ml"}
   },
   {
    "ingredient": "onion-yellow",

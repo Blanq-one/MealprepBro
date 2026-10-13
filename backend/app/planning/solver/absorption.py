@@ -161,21 +161,17 @@ def _select(
         base_day[meal.eat_on] += kcal_display(
             batches[meal.batch_index].per_portion.get("energy_kcal", Decimal(0))
         )
-    tol = c.tolerance
     day_delta: dict[date, list[Any]] = defaultdict(list)
     for i, cand in enumerate(candidates):
         for day, n in meals_by_batch_day[cand.batch_index].items():
             day_delta[day].append(cand.kcal_delta * n * pick[i])
     for spec in c.days:
-        if c.calorie_mode is CalorieMode.STRICT_DAILY:
-            ceiling = spec.kcal_target
-        else:
-            ceiling = spec.kcal_target + tol.daily_band_kcal
+        ceiling = c.kcal_limits(spec.day)[1]
         if day_delta.get(spec.day):
             prob += base_day[spec.day] + pulp.lpSum(day_delta[spec.day]) <= ceiling
     if c.calorie_mode is CalorieMode.WEEKLY:
         week = sum(base_day.values()) + pulp.lpSum(d for deltas in day_delta.values() for d in deltas)
-        prob += week <= c.weekly_kcal_target
+        prob += week <= c.week_kcal_limits()[1]
     status = solve_milp(prob, time_limit_s=10, gap_rel=0.0, gap_abs=0.0, kind="absorb")
     if status not in (pulp.LpSolutionOptimal, pulp.LpSolutionIntegerFeasible):
         return []

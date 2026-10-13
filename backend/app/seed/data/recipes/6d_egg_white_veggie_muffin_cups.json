@@ -37,7 +37,8 @@
    "quantity": "100",
    "unit": "g",
    "preparation": "chopped",
-   "role": "vegetable"
+   "role": "vegetable",
+   "budget": {"ingredient": "spinach-frozen", "quantity": "100", "unit": "g"}
   },
   {
    "ingredient": "bell-pepper",

@@ -203,8 +203,9 @@ export interface paths {
         put?: never;
         /**
          * Meal Prep Tiers
-         * @description The shopping step's three budget tier cards for these answers (step 2b.6, AA6): Cheapest, A bit better
-         *     and Fancy, each with an estimated total and protein per day from a quick solve (saved recipes, no LLM).
+         * @description The shopping step's four budget tier cards for these answers (step 2b.6, AA6; its approval, item 2):
+         *     Broke mode, Cheapest, A bit better and Fancy, each with its estimated regular groceries, the stock-up
+         *     items apart, and protein, from a quick solve (saved recipes, no LLM).
          *     Tap one and POST /cook/meal-prep with its `price_tier` for the full plan.
          */
         post: operations["meal_prep_tiers_api_v1_cook_meal_prep_tiers_post"];
@@ -1504,6 +1505,18 @@ export interface components {
             label: string;
             slot: components["schemas"]["MealSlot"];
         };
+        /**
+         * BudgetPairOut
+         * @description A line's classic ingredient and its budget equivalent (the 2b.6 approval, item 4).
+         */
+        BudgetPairOut: {
+            /** Budget */
+            budget: string;
+            /** Budget Display */
+            budget_display: string;
+            /** Classic */
+            classic: string;
+        };
         /** BulkIn */
         BulkIn: {
             /** Items */
@@ -2756,6 +2769,7 @@ export interface components {
             name: string;
             /** Never Used */
             never_used: boolean;
+            pair?: components["schemas"]["BudgetPairOut"] | null;
             shopping: components["schemas"]["ShoppingTargetOut"];
             /** Swaps */
             swaps: components["schemas"]["SwapChoiceOut"][];
@@ -3102,11 +3116,16 @@ export interface components {
             pantry_off?: number[];
             /** Portion Requests */
             portion_requests?: components["schemas"]["PortionRequest"][];
-            /** @description cheapest | better | fancy */
+            /** @description broke | cheapest | better | fancy */
             price_tier?: components["schemas"]["PriceTier"] | null;
             /**
+             * Protein Max G
+             * @description the protein band's top a day; None = your settings'
+             */
+            protein_max_g?: number | null;
+            /**
              * Protein Reward
-             * @description High protein: reward up to 1.5 × the target
+             * @description High protein: reward up to the protein band's top (higher tiers only)
              * @default false
              */
             protein_reward: boolean;
@@ -3481,7 +3500,7 @@ export interface components {
          * @description A plan's tier (the cards in the shopping step).
          * @enum {string}
          */
-        PriceTier: "cheapest" | "better" | "fancy";
+        PriceTier: "broke" | "cheapest" | "better" | "fancy";
         /**
          * ProblemOut
          * @description application/problem+json shape, also embedded in failed runs.
@@ -3636,7 +3655,7 @@ export interface components {
              * Action
              * @enum {string}
              */
-            action: "swap" | "leave_out";
+            action: "swap" | "leave_out" | "use_classic" | "use_budget";
             /** Batch Id */
             batch_id?: number | null;
             /** Ingredient Id */
@@ -4236,6 +4255,11 @@ export interface components {
              * @default false
              */
             allow_buying: boolean;
+            /**
+             * Close
+             * @default false
+             */
+            close: boolean;
             /** Exclude Version Ids */
             exclude_version_ids?: number[];
             /** Offered Version Ids */
@@ -4290,12 +4314,20 @@ export interface components {
             also_changed: string[];
             /** Buys */
             buys?: string[];
+            /** Changes */
+            changes?: string[];
             /** Cost Delta Cents */
             cost_delta_cents: number;
             /** Cost Delta Display */
             cost_delta_display: string;
             /** Dish Category */
             dish_category: string;
+            /**
+             * Fit
+             * @default exact
+             * @enum {string}
+             */
+            fit: "exact" | "close";
             /**
              * Is Draft
              * @default false
@@ -4421,6 +4453,8 @@ export interface components {
         TierCardOut: {
             /** Blurb */
             blurb: string;
+            /** Includes Display */
+            includes_display?: string | null;
             /** Label */
             label: string;
             /** Protein Per Day Display */
@@ -4431,7 +4465,11 @@ export interface components {
              * Status
              * @enum {string}
              */
-            status: "estimated" | "none_fits";
+            status: "estimated" | "none_fits" | "not_priced";
+            /** Stock Up Cents */
+            stock_up_cents?: number | null;
+            /** Stock Up Display */
+            stock_up_display?: string | null;
             tier: components["schemas"]["PriceTier"];
             /** Total Cents */
             total_cents?: number | null;
@@ -4548,6 +4586,8 @@ export interface components {
              * @default 1800
              */
             daily_kcal_target: number;
+            /** Daily Protein Max G */
+            daily_protein_max_g?: number | null;
             /**
              * Daily Protein Target G
              * @default 100

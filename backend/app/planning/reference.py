@@ -13,7 +13,7 @@ from app.domain.cook_schedule import DishTiming
 from app.domain.enums import Equipment, MealSlot, RecipeMood
 from app.domain.exclusions import ExclusionStatus
 from app.domain.food_safety import SafetyCategory
-from app.planning.loader import load_ingredient_plans, version_lines
+from app.planning.loader import line_ingredient_ids, load_ingredient_plans, version_lines
 from app.planning.problem import IngredientPlan, RecipeLine
 from app.planning.rendering import StepInput
 from app.planning.timing import version_timing
@@ -113,7 +113,7 @@ def load_reference(
     session: Session, user_id: int, constraints: PlanConstraints, version_ids: Iterable[int]
 ) -> ReferenceData:
     recipes = load_recipes(session, version_ids)
-    ingredient_ids = {line.ingredient_id for r in recipes.values() for line in r.lines}
+    ingredient_ids = {i for r in recipes.values() for i in line_ingredient_ids(r.lines)}
     plans = load_ingredient_plans(
         session,
         user_id,

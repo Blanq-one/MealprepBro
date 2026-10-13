@@ -55,6 +55,7 @@ from app.domain.cook_schedule import (
 from app.domain.cook_time import mood_allows
 from app.domain.enums import CalorieMode, MealSlot, PortionSize
 from app.domain.frequency_caps import week_monday
+from app.domain.price_tiers import RANK, IngredientTier, PriceTier, upgrade_slots
 from app.domain.scaling import MAX_SCALE_FACTOR
 from app.domain.units import ConversionError, convert
 from app.planning.problem import CandidateRecipe, PlanningProblem, size_multiplier
@@ -72,6 +73,15 @@ ROUNDING_MARGIN_WEEK_KCAL = 20
 ROUNDING_MARGIN_DAY_PROTEIN_G = 1
 ROUNDING_MARGIN_WEEK_PROTEIN_G = 3
 PROTEIN_REWARD_PER_G = 0.02  # the High protein tile: points per gram of a day's protein, up to its cap
+# the protein band's top (2b.6 approval, item 1): points per gram a day goes past it ("ideally no more"): a
+# tie-breaker, so with the plan's other terms equal it stays in the band, while a dollar, and the pull toward
+# your calorie target (a 10% smaller lunch loses about 55 kcal = 0.11 points for 4 g = 0.02), count for more
+PROTEIN_OVER_PER_G = 0.005
+# a tier's upgrades (2b.6 approval, item 2): points per meal with an upgraded item (or a premium protein) up
+# to the tier's count, about $6.70 of groceries at the cost-first weights every tier plans with, so a tier
+# includes them whenever they fit (a salmon dinner costs about $4 more than a chicken one)
+UPGRADE_REWARD = 10.0
+UPGRADE_RANK = RANK[IngredientTier.BETTER]
 # A perishable package with more than this share left over counts as "opened for a sliver of it".
 SMALL_FRACTION_LEFT = 0.75
 # Package counts are integers only for perishable packs of at least this price (chicken trays, big yogurt
@@ -333,10 +343,29 @@ def _day_limits(problem: PlanningProblem, day: date) -> tuple[float, float]:
         ceiling = float(spec.kcal_target + tol.daily_band_kcal)
         floor = float(spec.kcal_target - tol.daily_band_kcal)
     t = problem.tightening
+    allow = c.kcal_allowance(day)  # a close-fit swap you picked (step 2b.6 approval, B)
     return (
-        floor + ROUNDING_MARGIN_DAY_KCAL + t.day_floor.get(day, 0),
-        ceiling - ROUNDING_MARGIN_DAY_KCAL - t.day_ceiling.get(day, 0),
+        floor - allow.under + ROUNDING_MARGIN_DAY_KCAL + t.day_floor.get(day, 0),
+        ceiling + allow.over - ROUNDING_MARGIN_DAY_KCAL - t.day_ceiling.get(day, 0),
     )
+
+
+@dataclass(frozen=True)
+class NearLimits:
+    """A swap's close fit (step 2b.6 approval, B): how far it may go past the calorie limits (each day's
+    and the plan's, either way) and past a cook day's minutes. Each kcal and minute it needs costs more than
+    every other term, so the closest fit wins and the usual terms only break ties."""
+
+    kcal: int = 150
+    minutes: int = 20
+
+
+NEAR_KCAL_PENALTY = 1.0  # points per kcal past a limit (a dollar of groceries is 0.5)
+NEAR_MINUTE_PENALTY = 4.0  # points per minute past a cook day's time: a minute counts like 4 kcal
+# points per unit of multiplier an anchored batch moves (a swap rebalancing the other portions): 1% on one
+# batch costs 2 points (about $4 of groceries), so portions move only to keep a limit, and moving them a
+# little still beats going past one (1% of a 3-portion, 600 kcal batch is 18 kcal)
+NUDGE_SHIFT_PENALTY = 200.0
 
 
 def build_model(
@@ -346,12 +375,19 @@ def build_model(
     cheapest: bool = False,
     allowed_store_ids: Iterable[int] | None = None,
     fixed_nudges: Mapping[BatchKey, Decimal] | None = None,
+    near: NearLimits | None = None,
+    anchor_nudges: Mapping[BatchKey, Decimal] | None = None,
 ) -> _Model:
     """The weekly MILP. elastic: every hard limit relaxed with penalized slack (diagnostics). cheapest:
     every limit hard, the objective just the cost (a fallback when a tight budget leaves no time to find
     the best plan). fixed_nudges (swap, step 2b.6): batches that keep their multiplier exactly, so their
-    portions count at that nudge with no nudge variable."""
+    portions count at that nudge with no nudge variable. near (a swap's close fit): the calorie and cook-time
+    limits may give by up to its amounts, at a steep price; anchor_nudges: batches whose multiplier may move
+    from the stored one, at a price per unit moved (a close fit rebalancing the other portions)."""
     pinned_nudges = dict(fixed_nudges or {})
+    anchors = dict(anchor_nudges or {})
+    if elastic:
+        near = None
     c = problem.constraints
     w = weights_for(c.grocery_mode)
     keep_days = c.keep_horizon_days()
@@ -434,6 +470,23 @@ def build_model(
         slacks[kind][key] = var
         return var
 
+    def give(kind: str, key: Any, up: float) -> Any:
+        """A limit's slack: unbounded when elastic, up to `up` for a close fit, else none."""
+        if elastic:
+            return slack(kind, key)
+        return slack(kind, key, up) if near is not None else 0
+
+    # a close fit's rebalancing: how far each anchored batch's multiplier moves from the stored one
+    shifts: list[Any] = []
+    for b in batches:
+        anchor = anchors.get(batch_key(b))
+        if anchor is None or b.index not in nudge:
+            continue
+        up = pulp.LpVariable(f"shift_up_{b.index}", lowBound=0)
+        down = pulp.LpVariable(f"shift_down_{b.index}", lowBound=0)
+        prob += nudge[b.index] - _f(anchor) == up - down, f"shift_{b.index}"
+        shifts.extend((up, down))
+
     # ---- batch structure ----
     # Disaggregated links (x ≤ y for every assignment) keep the LP relaxation tight: a batch can't be
     # "1/21 cooked", so cook minutes and batch counts are counted honestly while branching.
@@ -503,7 +556,7 @@ def build_model(
         day_batches = [b for b in batches if b.cook_on == d.day]
         if not day_batches:
             continue
-        extra = slack("time", d.day) if elastic else 0
+        extra = give("time", d.day, near.minutes if near is not None else 0)
         limit = d.cook_minutes_available + extra
         tag = f"{d.day:%m%d}"
         prob += (
@@ -541,20 +594,23 @@ def build_model(
         expr = pulp.lpSum(meal_kcal(b, xv, sv) for s in d.slots for b, xv, sv in by_slot[(d.day, s)])
         day_kcal[d.day] = expr
         floor, ceiling = _day_limits(problem, d.day)
-        over = slack("kcal_over", d.day) if elastic else 0
-        under = slack("kcal_under", d.day) if elastic else 0
+        near_kcal = near.kcal if near is not None else 0
+        over = give("kcal_over", d.day, near_kcal)
+        under = give("kcal_under", d.day, near_kcal)
         prob += expr <= ceiling + over, f"kcal_max_{d.day:%m%d}"
         prob += expr >= floor - under, f"kcal_min_{d.day:%m%d}"
     if c.calorie_mode is CalorieMode.WEEKLY:
         week = pulp.lpSum(day_kcal.values())
-        over = slack("week_over", "week") if elastic else 0
-        under = slack("week_under", "week") if elastic else 0
+        near_kcal = near.kcal if near is not None else 0
+        over = give("week_over", "week", near_kcal)
+        under = give("week_under", "week", near_kcal)
         # a short plan (2 lunches) has a narrow window between the 97% floor and the target: the margins
         # take at most a quarter of it each, so they never close it (step 2b.5)
         window = c.weekly_kcal_target * tol.weekly_under_pct / 100
         margin = min(ROUNDING_MARGIN_WEEK_KCAL, window / 4)
-        week_max = c.weekly_kcal_target - margin - t.week_ceiling
-        week_min = c.weekly_kcal_target - window + margin + t.week_floor
+        allow = c.kcal_allowance(None)
+        week_max = c.weekly_kcal_target + allow.over - margin - t.week_ceiling
+        week_min = c.weekly_kcal_target - window - allow.under + margin + t.week_floor
         prob += week <= week_max + over, "kcal_week_max"
         prob += week >= week_min - under, "kcal_week_min"
 
@@ -591,6 +647,37 @@ def build_model(
             earned = pulp.LpVariable(f"pr_{d.day:%m%d}", lowBound=0, upBound=c.protein_reward_cap_g)
             prob += earned <= day_protein[d.day], f"protein_reward_{d.day:%m%d}"
             protein_reward.append(earned)
+    # past the band's top (item 1): a small price per gram, in every tier
+    protein_over: list[Any] = []
+    if c.daily_protein_max_g and not elastic and not cheapest:
+        for d in c.days:
+            over = pulp.LpVariable(f"pover_{d.day:%m%d}", lowBound=0)
+            prob += over >= day_protein[d.day] - c.daily_protein_max_g, f"protein_over_{d.day:%m%d}"
+            protein_over.append(over)
+
+    # ---- a tier's upgrades (item 2): meals with an upgraded item, and with a premium protein ----
+    upgrades: list[Any] = []
+    if not elastic and not cheapest:
+        counted = upgrade_slots(s for d in c.days for s in d.slots)
+
+        def upgraded(r: CandidateRecipe) -> bool:
+            return r.tier_rank >= UPGRADE_RANK
+
+        def premium(r: CandidateRecipe) -> bool:
+            return r.premium_protein
+
+        wants = (("upgraded", c.upgraded_meals_min, upgraded), ("premium", c.premium_meals_min, premium))
+        for name, need, counts in wants:
+            meals = [
+                var
+                for (bi, _e, s), var in x.items()
+                if s in counted and counts(batches[bi].recipe) and not batches[bi].recipe.never_favored
+            ]
+            if need <= 0 or not meals:
+                continue
+            got = pulp.LpVariable(f"tier_{name}", lowBound=0, upBound=need)
+            prob += got <= pulp.lpSum(meals), f"tier_{name}"
+            upgrades.append(got)
 
     # ---- daily amount caps (M16): an ingredient's amount per day for your portion, counting every meal ----
     amount_over: list[Any] = []
@@ -647,6 +734,8 @@ def build_model(
     never_favored_ids = frozenset(
         i for cap in c.frequency_caps if cap.never_favor for i in cap.member_ingredient_ids
     )
+    # Broke mode (item 2): a stock-up item counts at its whole pack, so one is bought only when it's needed
+    whole_stock_up = c.price_tier == PriceTier.BROKE.value
     cost_terms: list[Any] = []  # cash estimate for everything bought (reporting)
     objective_cost: list[Any] = []  # regular items at cash, stock-up items at what the week uses
     limited_terms: list[Any] = []  # what the purchase limit covers
@@ -736,12 +825,13 @@ def build_model(
         # The first package is whole: nobody sells a third of a bottle. Only for ingredients sold in packages
         # alone, with no inventory that might cover them (then the floor could overcharge). A stock-up item's
         # cash matters only when the limit covers it (an inventory-mode top-up).
-        cash_matters = not plan.stock_up or limited
+        cash_matters = not plan.stock_up or limited or whole_stock_up
         if cash_matters and packs and len(packs) == len(offers) and not all_whole and not inv_parts:
-            # a stock-up item is bought as the pack that is cheapest per unit (the grocery list does the same)
+            # a stock-up item is bought as the pack that is cheapest per unit (the grocery list does the
+            # same); in Broke mode, the smallest pack
             first_offer = (
                 min(packs, key=lambda o: o.cents_per_unit)
-                if plan.stock_up
+                if plan.stock_up and not whole_stock_up
                 else min(packs, key=lambda o: o.package_cents or 0)
             )
             first_pack = first_offer.package_cents or 0
@@ -759,7 +849,7 @@ def build_model(
             prob += cost >= per_unit, f"cash_units_{ingredient_id}"
             prob += cost >= first_pack * used, f"cash_first_pack_{ingredient_id}"
         cost_terms.append(cost)
-        objective_cost.append(per_unit if plan.stock_up else cost)
+        objective_cost.append(per_unit if plan.stock_up and not whole_stock_up else cost)
         if limited:
             limited_terms.append(cost)
         purchases_by_ingredient[ingredient_id] = (purchases, cost)
@@ -910,7 +1000,14 @@ def build_model(
     objective.extend(-w.cost_per_dollar * term for term in inventory_charge)
     objective.extend(-w.batch * y[b.index] for b in batches)
     objective.extend(PROTEIN_REWARD_PER_G * earned for earned in protein_reward)
+    objective.extend(-PROTEIN_OVER_PER_G * over for over in protein_over)
+    objective.extend(UPGRADE_REWARD * got for got in upgrades)
     objective.extend(-w.daily_amount_over * over for over in amount_over)
+    if near is not None:  # a close fit: the least past your limits first
+        for kind, group in slacks.items():
+            weight = NEAR_MINUTE_PENALTY if kind == "time" else NEAR_KCAL_PENALTY
+            objective.extend(-weight * var for var in group.values())
+    objective.extend(-NUDGE_SHIFT_PENALTY * var for var in shifts)
     prob += pulp.lpSum(objective)
     return _Model(
         prob,

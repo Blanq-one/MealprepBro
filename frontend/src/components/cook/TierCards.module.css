@@ -50,10 +50,21 @@
   font-weight: 700;
 }
 
+.unit {
+  font-weight: 400;
+  font-size: var(--text-small);
+}
+
 .protein,
-.blurb {
+.blurb,
+.stock {
   color: var(--muted);
   font-size: var(--text-small);
+}
+
+.includes {
+  font-size: var(--text-small);
+  font-weight: 600;
 }
 
 .working {

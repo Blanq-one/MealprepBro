@@ -55,6 +55,7 @@ from app.planning.problem import IngredientPlan
 from app.planning.resolver import IngredientResolver
 from app.planning.timing import version_timing
 from app.schemas.feedback import EDITED_PAYLOAD_VERSION, EditedPayload, FeedbackEventType
+from app.schemas.recipes import BudgetLine
 from app.services.catalog import Catalog, load_catalog
 from app.services.exclusions import diet_status, preferences
 from app.services.grocery import add_item
@@ -79,7 +80,8 @@ NOT_ESSENTIAL = (
     "Only a garnish, an optional line, a seasoning or a small aromatic can be left out; this one carries the "
     "dish. Swap it instead."
 )
-Action = Literal["swap", "leave_out"]
+# use_classic / use_budget (the 2b.6 approval, item 4): a line with a budget equivalent, fixed to one side
+Action = Literal["swap", "leave_out", "use_classic", "use_budget"]
 
 
 class EditError(ValueError):
@@ -256,6 +258,16 @@ class LeaveOut:
 
 
 @dataclass(frozen=True)
+class BudgetPair:
+    """A line's classic ingredient and its budget equivalent (the 2b.6 approval, item 4): a budget tier
+    cooks with the side its rule picks by your stores' prices; you can fix the line to one side."""
+
+    classic: str  # "tomato"
+    budget: str  # "canned diced tomatoes"
+    budget_display: str  # "360 ml canned diced tomatoes"
+
+
+@dataclass(frozen=True)
 class LineOptions:
     line_id: int
     ingredient_id: int
@@ -265,6 +277,7 @@ class LineOptions:
     leave_out: LeaveOut
     in_pantry: bool  # you have some
     never_used: bool  # already on your Foods I don't eat list (or always excluded, like beef)
+    pair: BudgetPair | None = None  # its budget equivalent, if it has one
 
 
 def _signed(value: Decimal, unit: str, places: str = "1") -> str:
@@ -389,6 +402,19 @@ def line_options(session: Session, user_id: int, version_id: int, line_id: int) 
         leave_out=_leave_out(ctx, row),
         in_pantry=plan is not None and plan.available > 0,
         never_used=row.ingredient_id in ctx.excluded,
+        pair=_pair(ctx, row),
+    )
+
+
+def _pair(ctx: _Context, row: RecipeIngredient) -> BudgetPair | None:
+    if row.budget is None:
+        return None
+    alt = BudgetLine.model_validate(row.budget)
+    name = ctx.data[alt.ingredient_id].name
+    return BudgetPair(
+        classic=ctx.data[row.ingredient_id].name,
+        budget=name,
+        budget_display=f"{format_quantity(alt.authored_quantity, alt.authored_unit)} {name}",
     )
 
 
@@ -487,6 +513,7 @@ def _copy(
                 role=r.role,
                 component=r.component,
                 is_optional=r.is_optional,
+                budget=r.budget,
             )
         )
     for position, st in enumerate(steps or [], start=1):
@@ -591,6 +618,26 @@ def edit_version(
             )
         note = f"Your version: {new_short} instead of {old_short}"
         change: dict[str, Any] = {"kind": "swap", "line": index + 1, "from": old.id, "to": new.id}
+    elif action in ("use_classic", "use_budget"):
+        if row.budget is None:
+            raise EditError("This line has no budget equivalent to choose from.")
+        alt = BudgetLine.model_validate(row.budget)
+        line = lines[index]
+        line.budget = None  # fixed to one side: no tier changes it
+        budget_short = resolver.short_name(alt.ingredient_id)
+        if action == "use_budget":
+            ingredient_id = alt.ingredient_id
+            line.ingredient_id, line.quantity, line.unit = alt.ingredient_id, alt.quantity, alt.unit
+            line.authored_quantity, line.authored_unit = alt.authored_quantity, alt.authored_unit
+            title = replace_names(title, names, budget_short)
+            for st in steps:
+                st.text = replace_names(st.text, names, budget_short)
+                if st.doneness_check_ingredient_id == row.ingredient_id:
+                    st.doneness_check_ingredient_id = alt.ingredient_id
+            note = f"Your version: always {budget_short} instead of {old_short}"
+        else:
+            note = f"Your version: always {old_short}, never {budget_short}"
+        change = {"kind": action, "line": index + 1, "from": old.id, "budget": alt.ingredient_id}
     else:
         if not _leave_out(ctx, row).allowed:
             raise EditError(NOT_ESSENTIAL)
@@ -630,7 +677,7 @@ def edit_version(
                 action=action,
                 line=index + 1,
                 from_ingredient_id=old.id,
-                to_ingredient_id=ingredient_id if action == "swap" else None,
+                to_ingredient_id=ingredient_id if action in ("swap", "use_budget") else None,
                 flagged_steps=[n + 1 for n in marked] if cook_note else [],
             ).model_dump(mode="json"),
             payload_version=EDITED_PAYLOAD_VERSION,

@@ -17,7 +17,7 @@
   {"ingredient": "chicken-thigh-boneless-skinless", "quantity": "680", "unit": "g", "preparation": "bite-size pieces", "role": "protein", "component": "gravy"},
   {"ingredient": "vegetable-oil", "quantity": "3", "unit": "tbsp", "role": "fat", "component": "gravy"},
   {"ingredient": "onion-yellow", "quantity": "2", "unit": "count", "preparation": "medium, finely chopped", "role": "vegetable", "component": "gravy"},
-  {"ingredient": "tomato", "quantity": "3", "unit": "count", "preparation": "medium, chopped", "role": "vegetable", "component": "gravy"},
+  {"ingredient": "tomato", "quantity": "3", "unit": "count", "preparation": "medium, chopped", "role": "vegetable", "component": "gravy", "budget": {"ingredient": "tomatoes-canned", "quantity": "360", "unit": "ml"}},
   {"ingredient": "garlic", "quantity": "5", "unit": "clove", "preparation": "grated", "role": "seasoning", "component": "gravy"},
   {"ingredient": "ginger", "quantity": "15", "unit": "g", "preparation": "grated", "role": "seasoning", "component": "gravy"},
   {"ingredient": "turmeric", "quantity": "1/2", "unit": "tsp", "role": "seasoning", "component": "gravy"},

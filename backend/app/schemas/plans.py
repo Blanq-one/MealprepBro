@@ -52,7 +52,12 @@ class PlanRequest(_Strict):
     # ---- step 2b.5 (meal prep; POST /plans accepts them too) ----
     grocery_mode: GroceryMode | None = None  # None = your settings (Cheap = cheapest)
     household_size: int | None = Field(default=None, ge=1, le=8, description="None = your settings")
-    protein_reward: bool = Field(default=False, description="High protein: reward up to 1.5 × the target")
+    protein_reward: bool = Field(
+        default=False, description="High protein: reward up to the protein band's top (higher tiers only)"
+    )
+    protein_max_g: int | None = Field(
+        default=None, ge=0, le=400, description="the protein band's top a day; None = your settings'"
+    )
     could_buy: list[int] = Field(default_factory=list, description="ingredient ids you'd happily buy")
     only_buy_could_buy: bool = Field(default=False, description="Use what I have: buy only the could-buys")
     extra_lots: list[ExtraLot] = Field(default_factory=list, description="have it, for this plan only")
@@ -60,7 +65,7 @@ class PlanRequest(_Strict):
     pantry_off: list[int] = Field(default_factory=list, description="pantry items not for this plan")
     max_portions_per_recipe: int | None = Field(default=None, ge=1, le=14, description="None = 5 (Q14)")
     # step 2b.6 (AA6): a budget tier in place of a budget: what the plan may buy, and its variety
-    price_tier: PriceTier | None = Field(default=None, description="cheapest | better | fancy")
+    price_tier: PriceTier | None = Field(default=None, description="broke | cheapest | better | fancy")
 
     @model_validator(mode="after")
     def _check(self) -> Self:
@@ -564,6 +569,7 @@ class SwapIn(_Strict):
         default_factory=list, max_length=20
     )  # the sheet's options, in order
     exclude_version_ids: list[int] = Field(default_factory=list, max_length=50)  # swapped away before
+    close: bool = False  # the option was a close fit (fit "close"): the new plan keeps what it goes past
 
 
 class SwapMealOut(BaseModel):
@@ -600,6 +606,11 @@ class SwapOptionOut(BaseModel):
     is_new: bool = False  # written just now (Write a new one)
     steps_ready: bool = True  # False: an idea whose steps are written when you first open it
     is_draft: bool = False
+    # step 2b.6 approval (B): "close" when nothing else fits exactly, with what it changes ("+80 kcal over
+    # Thursday's calories", "+10 min cook time on Thursday", "Fri 16's Chicken curry: portions 4% smaller, to
+    # balance the calories")
+    fit: Literal["exact", "close"] = "exact"
+    changes: list[str] = Field(default_factory=list)
 
 
 class SwapStreamEvent(BaseModel):

@@ -126,6 +126,23 @@ def test_0011_adds_the_price_tier_columns_and_drops_them(scratch_db_url):
         engine.dispose()
 
 
+def test_0012_adds_the_budget_line_column_and_drops_it(scratch_db_url):
+    """The 2b.6 approval (item 4): a nullable JSONB column on recipe_ingredient, added and dropped cleanly."""
+    cfg = alembic_config(scratch_db_url)
+    command.upgrade(cfg, "0012")
+    engine = create_engine(scratch_db_url)
+    try:
+        with engine.connect() as conn:
+            columns = {c["name"] for c in inspect(conn).get_columns("recipe_ingredient")}
+        assert "budget" in columns
+        command.downgrade(cfg, "0011")
+        with engine.connect() as conn:
+            columns = {c["name"] for c in inspect(conn).get_columns("recipe_ingredient")}
+        assert "budget" not in columns
+    finally:
+        engine.dispose()
+
+
 def test_0004_adds_the_exposure_log_price_client_ref_and_login_attempts(scratch_db_url):
     cfg = alembic_config(scratch_db_url)
     command.upgrade(cfg, "0003")

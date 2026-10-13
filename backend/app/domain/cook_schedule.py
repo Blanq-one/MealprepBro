@@ -18,12 +18,12 @@ deterministic; no LLM.
              are within 25°F. A task needs your hands for its hands-on minutes, at its start, and holds its
              appliance until its hands-off minutes end; waiting (marinating, resting, chilling) holds nothing.
              The oven preheats for 10 minutes before its first task, while you work
-  schedule   list scheduling in a systematic kitchen order (AA7): all the chopping and marinating first
-             (prep that comes before any cooking, every dish's), then the cooking, longest chain of work
-             first, the rest while it runs, and portioning last. Within that, at each moment, start the ready
-             tasks with the longest chain of work still behind them (ties: more hands-off first, then dish
-             order) whose hands and appliance are free. The dish orders that change a tie are tried too (up to
-             6 dishes, 720 orders) and the shortest day is kept; ties keep the first
+  schedule   list scheduling in a kitchen order (AA7, as changed at the 2b.6 approval, item 6): prep the
+             longest-cooking item first and start it, then prep the rest while it cooks, and portion last. At
+             each moment, start the ready tasks with the longest chain of work still behind them (ties: more
+             hands-off first, then dish order) whose hands and appliance are free, portioning only once no
+             other work is ready. The dish orders that change a tie are tried too (up to 6 dishes, 720
+             orders) and the shortest day is kept; ties keep the first
   result     the elapsed minutes (start to finish: your time in the kitchen; a dish's last wait in the fridge,
              like overnight oats setting, runs after you leave and doesn't count), the hands-on minutes, the
              longest fridge wait and the timeline
@@ -73,7 +73,8 @@ MAX_HANDS_ON = 60
 MAX_HANDS_OFF = 240
 MAX_WAIT = 720  # chilling or soaking, with no appliance
 MAX_ORDER_DISHES = 6
-# the kitchen order (AA7): prep before any cooking, then cooking, then portioning
+# the kitchen order: a job's phase (prep, cooking, portioning); portioning comes last, while prep and cooking
+# go by the longest chain of work behind them (the longest-cooking item's prep first, 2b.6 approval, item 6)
 PREP, COOK, FINISH = 0, 1, 2
 PREP_SECTIONS = frozenset({"prep", "marinate"})
 FINISH_SECTIONS = frozenset({"portioning"})
@@ -522,6 +523,7 @@ class Placed:
     fridge: bool
     phase: int = COOK  # the kitchen order (AA7): PREP, COOK or FINISH
     ready: int = 0  # when everything before it was done
+    tail: int = 0  # the chain of kitchen work from its start to its dish's end (the scheduler's priority)
 
     @property
     def end(self) -> int:
@@ -606,9 +608,12 @@ def _run(jobs: Sequence[_Job], rank: Sequence[int], oven_ready: int) -> _Run:
     tied: set[int] = set()
     left = n
 
+    def last(j: _Job) -> int:
+        return 1 if j.phase == FINISH else 0  # portioning after everything else that's ready
+
     def key(i: int) -> tuple[int, int, int, int, int]:
         j = jobs[i]
-        return (j.phase, -j.tail, -j.off, rank[j.dish], i)
+        return (last(j), -j.tail, -j.off, rank[j.dish], i)
 
     def same_last(a: int, b: int) -> bool:
         """Two dishes' identical last tasks (portioning, say): either order gives the same day."""
@@ -620,7 +625,7 @@ def _run(jobs: Sequence[_Job], rank: Sequence[int], oven_ready: int) -> _Run:
         ready = sorted((i for i, at in available.items() if at <= t), key=key)
         for a, b in pairwise(ready):
             ja, jb = jobs[a], jobs[b]
-            tie = ja.phase == jb.phase and ja.tail == jb.tail and ja.off == jb.off
+            tie = last(ja) == last(jb) and ja.tail == jb.tail and ja.off == jb.off
             if ja.dish != jb.dish and tie and not same_last(a, b):
                 tied.update((ja.dish, jb.dish))
         for i in ready:
@@ -728,6 +733,7 @@ def schedule_day(dishes: Iterable[DishBatch]) -> DaySchedule:
             fridge=j.fridge,
             phase=j.phase,
             ready=best.ready[i],
+            tail=j.tail,
         )
         for i, j in enumerate(jobs)
     )

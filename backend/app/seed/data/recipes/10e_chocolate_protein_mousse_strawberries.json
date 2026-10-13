@@ -66,7 +66,8 @@
    "quantity": "250",
    "unit": "g",
    "preparation": "sliced",
-   "role": "fruit"
+   "role": "fruit",
+   "budget": {"ingredient": "strawberries-frozen", "quantity": "250", "unit": "g"}
   }
  ],
  "steps": [

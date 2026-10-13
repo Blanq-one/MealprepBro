@@ -11,7 +11,7 @@ MON, WED, FRI, SAT = date(2026, 10, 12), date(2026, 10, 14), date(2026, 10, 16),
 
 
 def test_where_each_portion_comes_from():
-    assert view.meal_source(MON, MON, False) == ("fresh", "Cooked today")
+    assert view.meal_source(MON, MON, False) == ("fresh", "Fresh, cooked this day")
     assert view.meal_source(WED, MON, False) == ("fridge", "From the fridge, cooked Mon 12")
     assert view.meal_source(SAT, MON, True) == (
         "freezer",

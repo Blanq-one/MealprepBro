@@ -10,9 +10,10 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import timedelta
 
-from app.domain.enums import PlanningMode
+from app.domain.enums import GroceryMode, PlanningMode
 from app.domain.exclusions import ExclusionStatus
 from app.domain.frequency_caps import ResolvedCap
+from app.domain.price_tiers import COST_FIRST, upgrade_minimums, upgrade_slots
 from app.domain.price_tiers import MAX_PORTIONS as TIER_MAX_PORTIONS
 from app.schemas.constraints import (
     CalorieTolerance,
@@ -138,10 +139,24 @@ def build_constraints(
         secondary = None
     allowed = could_buy if request.only_buy_could_buy else None
     max_portions = request.max_portions_per_recipe or 5
-    if request.price_tier is not None:
+    grocery_mode = request.grocery_mode or settings.grocery_mode
+    protein_reward = request.protein_reward
+    upgraded = premium = 0
+    tier = request.price_tier
+    if tier is not None:
         allowed = (tier_ingredient_ids | could_buy) - excluded
         if request.max_portions_per_recipe is None:
-            max_portions = TIER_MAX_PORTIONS[request.price_tier]
+            max_portions = TIER_MAX_PORTIONS[tier]
+        # every tier plans cost first within its own rules (2b.6 approval, item 2): what sets them apart is
+        # what they buy, their variety and the upgrades they include; Broke and Cheapest never earn a protein
+        # reward (item 1)
+        grocery_mode = GroceryMode.CHEAPEST
+        if tier in COST_FIRST:
+            protein_reward = False
+        counted = upgrade_slots(s for d in days for s in d.slots)
+        upgraded, premium = upgrade_minimums(tier, sum(1 for d in days for s in d.slots if s in counted))
+    band_top = request.protein_max_g if request.protein_max_g is not None else settings.protein_band_top_g
+    band_top = max(band_top, protein) if band_top else 0
     try:
         return PlanConstraints(
             week_start=request.week_start,
@@ -157,8 +172,9 @@ def build_constraints(
             slot_targets=tuple(SlotTarget(slot=s, kcal=allocations[s]) for s in slots),
             nutrition_priority=primary,
             secondary_priority=secondary,
-            grocery_mode=request.grocery_mode or settings.grocery_mode,
+            grocery_mode=grocery_mode,
             daily_protein_target_g=protein,
+            daily_protein_max_g=band_top,
             planning_mode=request.mode,
             purchase_limit_cents=limit,
             default_portion_size=settings.default_portion_size,
@@ -180,10 +196,12 @@ def build_constraints(
             household_size=request.household_size or settings.household_size,
             max_portions_per_recipe=max_portions,
             region_code=settings.region_code,
-            protein_reward=request.protein_reward,
+            protein_reward=protein_reward,
             allowed_purchase_ingredient_ids=allowed,
             preferred_ingredient_ids=frozenset() if request.only_buy_could_buy else could_buy,
-            price_tier=request.price_tier.value if request.price_tier is not None else None,
+            price_tier=tier.value if tier is not None else None,
+            upgraded_meals_min=upgraded,
+            premium_meals_min=premium,
             extra_lots=tuple(request.extra_lots),
             cap_week_use=tuple(cap_week_use),
             daily_amount_caps=diet.daily_caps,

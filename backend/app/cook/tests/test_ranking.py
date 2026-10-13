@@ -324,8 +324,10 @@ def test_golden_ordering_with_a_pantry_of_chicken_thighs_spinach_and_tortillas(a
         # its carb is a swap you have; the salmon is never swapped for your thighs (a whole cut swaps only
         # with a whole cut of the same form, 2b.4 fixes approval)
         "Lemon garlic salmon with rice and broccoli",
-        "Yogurt chicken gravy",
+        # protein past the meal's share of your band's top (about 40 g at dinner) earns nothing since the 2b.6
+        # approval (item 1), so the 46 g gravy no longer outranks the wings on protein
         "Air-fryer chicken wings with sweet potato wedges",
+        "Yogurt chicken gravy",
         "Roast bone-in chicken breasts with quinoa and asparagus",
         "Chicken and black bean burrito bowls",
     ]
@@ -362,19 +364,15 @@ def test_golden_ordering_with_a_pantry_of_chicken_thighs_spinach_and_tortillas(a
     assert titles(results(again)) == titles(cards) and final(again)["cached"] is True
 
 
-def test_golden_ordering_quick_and_simple_leaves_the_seeds_that_fit(api, seeded_db):
+def test_golden_ordering_quick_and_simple_leaves_the_two_seeds_that_fit(api, seeded_db):
     # step 2b.9: the seeds' totals are their own schedules now, so the air-fryer chicken (the chicken and the
-    # broccoli take turns in the basket) takes 40 minutes; since 2b.6 (AA7) the burrito bowls chop the chicken
-    # before the rice goes on, so they take 35
+    # broccoli take turns in the basket) takes 40 minutes; the burrito bowls take 30 again since the 2b.6
+    # approval (item 6: the rice goes on as soon as it's ready, the chicken is chopped while it cooks)
     stock_thighs_spinach_tortillas(seeded_db)
     events = meal_now(api, slot="dinner", goals=["quick"], time_limit_minutes=30, mood="simple")
-    assert titles(results(events)) == ["Ground turkey tacos"]
-    assert [c["why"] for c in results(events)] == [["Ready in 25 min"]]
-    assert [c["section"] for c in results(events)] == ["match"]
-    roomier = meal_now(api, slot="dinner", goals=["quick"], time_limit_minutes=35, mood="simple")
-    bowls = next(c for c in results(roomier) if c["title"] == "Chicken and black bean burrito bowls")
-    # the bowls are medium (M10)
-    assert bowls["why"] == ["Ready in 35 min"] and bowls["section"] == "more_effort"
+    assert titles(results(events)) == ["Ground turkey tacos", "Chicken and black bean burrito bowls"]
+    assert [c["why"] for c in results(events)] == [["Ready in 25 min"], ["Ready in 30 min"]]
+    assert [c["section"] for c in results(events)] == ["match", "more_effort"]  # the bowls are medium (M10)
     nothing = meal_now(api, slot="dinner", goals=["quick"], time_limit_minutes=20, mood="simple")
     assert results(nothing) == []
     # the mood never empties the list (M10): the time limit does

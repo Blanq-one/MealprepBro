@@ -10,6 +10,21 @@ from app.schemas.api import NutritionOut, StoreCostOut
 from app.schemas.cards import CostLineOut, MissingLineOut, SearchContextOut, SwapLineOut
 
 
+class BudgetLine(BaseModel):
+    """recipe_ingredient.budget (JSONB; the 2b.6 approval, item 4): a budget equivalent of the line's
+    (classic) ingredient, in base units for the recipe's base servings like the line, and its authored
+    amount."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: Literal[1] = 1
+    ingredient_id: int
+    quantity: Decimal = Field(gt=0)
+    unit: Literal["g", "ml", "count"]
+    authored_quantity: Decimal = Field(gt=0)
+    authored_unit: str = Field(min_length=1, max_length=40)
+
+
 class RenderedLineOut(BaseModel):
     ingredient_id: int
     name: str
@@ -218,6 +233,14 @@ class ShoppingTargetOut(BaseModel):
     reason: str | None = None  # why not: no plan, or the trip is done
 
 
+class BudgetPairOut(BaseModel):
+    """A line's classic ingredient and its budget equivalent (the 2b.6 approval, item 4)."""
+
+    classic: str  # "tomato"
+    budget: str  # "canned diced tomatoes"
+    budget_display: str  # "360 ml canned diced tomatoes"
+
+
 class LineOptionsOut(BaseModel):
     line_id: int
     ingredient_id: int
@@ -228,13 +251,16 @@ class LineOptionsOut(BaseModel):
     in_pantry: bool  # you have some
     never_used: bool  # already on Foods I don't eat (or always excluded)
     shopping: ShoppingTargetOut
+    # a budget equivalent: a budget tier picks a side by price; use_classic / use_budget fixes the line
+    pair: BudgetPairOut | None = None
 
 
 class RecipeEditIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     line_id: int
-    action: Literal["swap", "leave_out"]
+    # use_classic / use_budget (the 2b.6 approval, item 4): fix a line with a budget equivalent to one side
+    action: Literal["swap", "leave_out", "use_classic", "use_budget"]
     ingredient_id: int | None = None  # swap: one of the line's swaps
     batch_id: int | None = None  # opened from a plan meal: may that batch switch to your version?
 

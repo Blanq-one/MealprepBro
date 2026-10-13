@@ -1,6 +1,7 @@
 """UserSettings: the typed model behind user_settings.settings (JSONB). Seeded in Phase 0; the settings API
 arrives in Phase 1; version 3 in Phase 2b (migration 0005)."""
 
+from decimal import ROUND_HALF_UP, Decimal
 from enum import StrEnum
 from typing import Literal, Self
 
@@ -21,6 +22,7 @@ from app.domain.frequency_caps import CapTarget
 from app.schemas.inventory import VersionsOut
 
 ALWAYS_EXCLUDED_TAGS = frozenset({"beef"})  # CLAUDE.md dietary rules
+PROTEIN_BAND_SHARE = Decimal("1.1")  # the band's top with none set: your target + 10% (2b.6 approval, item 1)
 
 
 class Weekday(StrEnum):
@@ -119,6 +121,9 @@ class UserSettings(_Strict):
     slot_allocations: list[SlotAllocationSetting] = Field(min_length=1)
     # A floor, not a reward: protein above it earns nothing extra. 0 = no protein target.
     daily_protein_target_g: int = Field(default=100, ge=0, le=400)
+    # the band's top (2b.6 approval, item 1): ideally no more protein than this a day. Nothing above it earns
+    # a reward (High protein included), and planning leans away from going past it. None = the target + 10%.
+    daily_protein_max_g: int | None = Field(default=None, ge=0, le=400)
     nutrition_priority: NutritionPriority = NutritionPriority.PROTEIN
     secondary_priority: NutritionPriority | None = None
     grocery_mode: GroceryMode = GroceryMode.BALANCED
@@ -176,6 +181,9 @@ class UserSettings(_Strict):
             raise ValueError("store_order has duplicates")
         if len(set(self.always_have)) != len(self.always_have):
             raise ValueError("always_have has duplicates")
+        top = self.daily_protein_max_g
+        if top is not None and top < self.daily_protein_target_g:
+            raise ValueError("the protein band's top must be at least your daily protein target")
         capped = [c.ingredient for c in self.daily_amount_caps]
         if len(set(capped)) != len(capped):
             raise ValueError("an ingredient can have one daily amount cap")
@@ -183,6 +191,15 @@ class UserSettings(_Strict):
 
     def cook_day(self, weekday: Weekday) -> CookDaySetting:
         return next(d for d in self.cook_schedule if d.weekday == weekday)
+
+    @property
+    def protein_band_top_g(self) -> int:
+        """Ideally no more protein than this a day: your setting, else the target + 10% (100 g: 110 g)."""
+        if self.daily_protein_max_g is not None:
+            return self.daily_protein_max_g
+        return int(
+            (Decimal(self.daily_protein_target_g) * PROTEIN_BAND_SHARE).to_integral_value(ROUND_HALF_UP)
+        )
 
 
 # ---------------- settings API (Phase 1) ----------------

@@ -53,7 +53,8 @@
    "quantity": "2",
    "unit": "count",
    "preparation": "chopped",
-   "role": "vegetable"
+   "role": "vegetable",
+   "budget": {"ingredient": "tomatoes-canned", "quantity": "240", "unit": "ml"}
   },
   {
    "ingredient": "garlic",

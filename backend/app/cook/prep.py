@@ -158,13 +158,26 @@ def _priorities(answers: CookAnswers) -> tuple[NutritionPriority | None, Nutriti
     return (picked[0] if picked else None, picked[1] if len(picked) > 1 else None)
 
 
-def protein_target(settings: UserSettings, slots: tuple[MealSlot, ...]) -> int:
-    """Your daily protein target, or its share for a plan of some of your meals (by their calories)."""
+def meals_share(settings: UserSettings, slots: tuple[MealSlot, ...]) -> Decimal:
+    """What a plan of these meals is of your day, by their calories (1 for all your meals)."""
     planned = {a.slot: a.kcal for a in settings.slot_allocations}
     if set(slots) >= set(planned):
-        return settings.daily_protein_target_g
-    share = Decimal(sum(planned[s] for s in slots)) / Decimal(settings.daily_kcal_target)
-    return int((Decimal(settings.daily_protein_target_g) * share).to_integral_value(ROUND_HALF_UP))
+        return Decimal(1)
+    return Decimal(sum(planned[s] for s in slots)) / Decimal(settings.daily_kcal_target)
+
+
+def _share_of(grams: int, share: Decimal) -> int:
+    return grams if share == 1 else int((Decimal(grams) * share).to_integral_value(ROUND_HALF_UP))
+
+
+def protein_target(settings: UserSettings, slots: tuple[MealSlot, ...]) -> int:
+    """Your daily protein target, or its share for a plan of some of your meals (by their calories)."""
+    return _share_of(settings.daily_protein_target_g, meals_share(settings, slots))
+
+
+def protein_band_top(settings: UserSettings, slots: tuple[MealSlot, ...]) -> int:
+    """The protein band's top a day (2b.6 approval, item 1), or its share for some of your meals."""
+    return _share_of(settings.protein_band_top_g, meals_share(settings, slots))
 
 
 def header(days: int, slots: tuple[MealSlot, ...], start: date, answers: CookAnswers) -> str:
@@ -252,6 +265,7 @@ def resolve_prep(answers: CookAnswers, settings: UserSettings, today: date) -> P
         budget_cents=None if use_what_i_have or tier is not None else answers.budget_cents,
         topup_cents=answers.budget_cents if use_what_i_have else None,
         protein_target_g=protein_target(settings, slots),
+        protein_max_g=protein_band_top(settings, slots),
         allow_llm=answers.allow_llm,
         grocery_mode=GroceryMode.CHEAPEST if GoalTile.CHEAP in answers.goals else None,
         household_size=answers.people,

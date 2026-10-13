@@ -139,21 +139,18 @@ def snap_batches(
             getattr(opt, attr) * pick[(b, k)] for b in meals_by_day[day] for k, opt in enumerate(options[b])
         )
 
-    tol = c.tolerance
     day_kcal = {spec.day: total(spec.day, "kcal") for spec in c.days}
     day_protein = {spec.day: total(spec.day, "protein_tenths") for spec in c.days}
     for spec in c.days:
-        if c.calorie_mode is CalorieMode.STRICT_DAILY:
-            ceiling, floor = spec.kcal_target, round(spec.kcal_target * (1 - tol.daily_under_pct / 100))
-        else:
-            ceiling, floor = spec.kcal_target + tol.daily_band_kcal, spec.kcal_target - tol.daily_band_kcal
+        floor, ceiling = c.kcal_limits(spec.day)
         prob += day_kcal[spec.day] <= ceiling, f"max_{spec.day:%m%d}"
         prob += day_kcal[spec.day] >= floor, f"min_{spec.day:%m%d}"
     target_tenths = c.daily_protein_target_g * 10
     if c.calorie_mode is CalorieMode.WEEKLY:
         week = pulp.lpSum(day_kcal.values())
-        prob += week <= c.weekly_kcal_target, "week_max"
-        prob += week >= round(c.weekly_kcal_target * (1 - tol.weekly_under_pct / 100)), "week_min"
+        week_floor, week_ceiling = c.week_kcal_limits()
+        prob += week <= week_ceiling, "week_max"
+        prob += week >= week_floor, "week_min"
         if target_tenths:
             prob += pulp.lpSum(day_protein.values()) >= target_tenths * len(c.days), "protein_week"
     elif target_tenths:

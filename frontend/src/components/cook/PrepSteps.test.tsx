@@ -126,22 +126,30 @@ describe("C1 How much are you prepping?", () => {
 });
 
 const CARDS = [
-  { tier: "cheapest", label: "Cheapest", blurb: "Cheap staples: chicken thighs, eggs, lentils, rice, frozen veg, tortillas", status: "estimated", total_cents: 3905, total_display: "about $39.05", protein_per_day_display: "about 130 g protein a day", reason: null },
-  { tier: "better", label: "A bit better", blurb: "Adds chicken breast, Greek yogurt, ground turkey and more fresh veg", status: "estimated", total_cents: 4512, total_display: "about $45.12", protein_per_day_display: "about 129 g protein a day", reason: null },
-  { tier: "fancy", label: "Fancy", blurb: "Adds salmon, shrimp and other premium picks, with more variety", status: "none_fits", total_cents: null, total_display: null, protein_per_day_display: null, reason: "No week fits your limits with the Fancy tier's groceries." },
+  { tier: "broke", label: "Broke mode", blurb: "Rock bottom: your pantry first, then rice, lentils, eggs, chickpeas, oats, frozen veg, tortillas, family-pack chicken; repeats are fine", status: "estimated", total_cents: 1415, total_display: "about $14.15", protein_per_day_display: "Lunch + dinner: about 72 g of your 100 g daily target", reason: null, stock_up_cents: 1804, stock_up_display: "+ about $18.04 stock-up: red lentils (dry), vegetable oil", includes_display: "Repeats are fine (up to 7 of one recipe a week) · stock-up only when needed" },
+  { tier: "cheapest", label: "Cheapest", blurb: "Cheap staples, a little more variety", status: "estimated", total_cents: 1981, total_display: "about $19.81", protein_per_day_display: "Lunch + dinner: about 77 g of your 100 g daily target", reason: null, stock_up_cents: 0, stock_up_display: null, includes_display: "Up to 5 of one recipe a week" },
+  { tier: "better", label: "A bit better", blurb: "A few meals with upgrades (Greek yogurt, ground turkey, fresh veg), more variety", status: "not_priced", total_cents: null, total_display: null, protein_per_day_display: null, reason: "There wasn't time to price this one; tap it to plan it anyway.", stock_up_cents: null, stock_up_display: null, includes_display: null },
+  { tier: "fancy", label: "Fancy", blurb: "Several meals with salmon, shrimp and other premium picks, the most variety", status: "none_fits", total_cents: null, total_display: null, protein_per_day_display: null, reason: "No week fits your limits with the Fancy tier's groceries.", stock_up_cents: null, stock_up_display: null, includes_display: null },
 ];
 
 describe("C3b Shopping for this? (AA6: budget tiers)", () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it("three tier cards for this week, each with its estimate; a tap picks the tier", async () => {
+  it("four tier cards for this week: regular groceries, stock-up apart, protein and what each includes; a tap picks one", async () => {
     const calls = mockApi((c) => (c.path === "/api/v1/cook/meal-prep/tiers" ? { body: CARDS } : undefined));
     render(<Harness step="shop" initial={{ preset: "five_lunches", style: "mix" }} />);
     expect(screen.getByRole("button", { name: "Build my plan" })).toBeDisabled();
     await userEvent.click(screen.getByRole("button", { name: /Make me a shopping list/ }));
-    const cheapest = await screen.findByRole("button", { name: /Cheapest/ });
-    expect(cheapest).toHaveTextContent("about $39.05");
-    expect(cheapest).toHaveTextContent("about 130 g protein a day");
+    const broke = await screen.findByRole("button", { name: /Broke mode/ });
+    expect(broke).toHaveTextContent("about $14.15 groceries");
+    expect(broke).toHaveTextContent("+ about $18.04 stock-up: red lentils (dry), vegetable oil");
+    expect(broke).toHaveTextContent("Lunch + dinner: about 72 g of your 100 g daily target");
+    expect(broke).toHaveTextContent("Repeats are fine (up to 7 of one recipe a week)");
+    const cheapest = screen.getByRole("button", { name: /Cheapest/ });
+    expect(cheapest).toHaveTextContent("about $19.81 groceries");
+    expect(cheapest).not.toHaveTextContent("stock-up");
+    // a card with no estimate in time can still be picked; one that can't fit can't
+    expect(screen.getByRole("button", { name: /A bit better/ })).toBeEnabled();
     expect(screen.getByRole("button", { name: /Fancy/ })).toBeDisabled();
     expect(screen.getByText("No week fits your limits with the Fancy tier's groceries.")).toBeInTheDocument();
     expect(screen.getByText("Pick a tier or set your own limit")).toBeInTheDocument();

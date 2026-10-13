@@ -42,13 +42,13 @@ from app.db.models import (
     PlanCookBatch,
     PlanMeal,
     Recipe,
+    RecipeIngredient,
     RecipeVersion,
 )
 from app.domain.cost import money_display
 from app.domain.enums import MealSlot, PlanningMode, PortionSize
 from app.domain.exclusions import ExclusionStatus
 from app.domain.nutrition import kcal_display
-from app.domain.scaling import ScalingError
 from app.llm.errors import LLMBudgetExceededError, LLMError, LLMWaitTooLongError
 from app.llm.pacing import Clock as LLMClock
 from app.llm.pacing import Deadline
@@ -68,14 +68,14 @@ from app.planning.pins import (
     solve_pinned,
     swap_options,
 )
-from app.planning.plan_validator import validate_plan
+from app.planning.plan_validator import RESOLVABLE, ValidationReport, validate_plan
 from app.planning.post_solve import KeptRounding, build_rounded_plan, exclusion_notes, rounding_fit
 from app.planning.problem import PlanningProblem, Tightening, size_multiplier
-from app.planning.reference import load_reference
+from app.planning.reference import ReferenceData, load_reference
 from app.planning.rounded import ABSORBED, RoundedPlan
 from app.planning.rounding import round_batch
-from app.planning.solver.model import BatchKey, SolvedBatch, SolverSolution
-from app.schemas.constraints import ExtraLot, PlanConstraints
+from app.planning.solver.model import BatchKey, NearLimits, SolvedBatch, SolverSolution
+from app.schemas.constraints import ExtraLot, KcalAllowance, PlanConstraints
 from app.schemas.feedback import SWAPPED_PAYLOAD_VERSION, FeedbackEventType, SwappedPayload
 from app.schemas.plans import SwapMealOut, SwapOptionOut, SwapOptionsIn, SwapStreamEvent
 from app.services import plan_view as view
@@ -205,9 +205,11 @@ def _problem(
     *,
     slot: MealSlot | None,
     extra: frozenset[int] = frozenset(),
+    budget_pins: dict[int, frozenset[int]] | None = None,
 ) -> tuple[PlanningProblem, frozenset[int]]:
     """The plan's own recipes plus every recipe you could have for this meal (your pool as it is now), and
-    `extra` versions (your new version of a batch; it must pass your rules like any recipe)."""
+    `extra` versions (your new version of a batch; it must pass your rules like any recipe). `budget_pins`:
+    each kept version's lines on their budget side, as its stored batch cooked them (item 4)."""
     pool = (
         [(r, v) for r, v in candidate_versions(session, user_id) if slot.value in v.meal_slots]
         if slot is not None
@@ -220,7 +222,9 @@ def _problem(
     ).tuples()
     by_id = {v.id: (r, v) for r, v in [*kept, *pool]}
     pairs = [by_id[vid] for vid in sorted(by_id)]
-    problem = build_problem(session, user_id, constraints, pairs, keep_version_ids=plan_versions)
+    problem = build_problem(
+        session, user_id, constraints, pairs, keep_version_ids=plan_versions, budget_pins=budget_pins
+    )
     kcal, protein = rounding_fit(problem), rounding_fit(problem, "protein_g")
     problem = problem.with_tightening(
         Tightening(
@@ -228,6 +232,28 @@ def _problem(
         )
     )
     return problem, frozenset(v.id for _, v in pool)
+
+
+def _budget_pins(session: Session, batches: list[PlanCookBatch]) -> dict[int, frozenset[int]]:
+    """Per recipe version in the plan: the line ids its stored batch cooked with their budget equivalent
+    (the 2b.6 approval, item 4), so a swap keeps every batch as planned whatever the prices say now."""
+    if not batches:
+        return {}
+    version_of = {b.id: b.recipe_version_id for b in batches}
+    classic = {
+        r.id: r.ingredient_id
+        for r in session.scalars(
+            select(RecipeIngredient).where(RecipeIngredient.recipe_version_id.in_(set(version_of.values())))
+        )
+    }
+    pins: dict[int, set[int]] = {v: set() for v in version_of.values()}
+    for row in session.scalars(
+        select(PlanBatchIngredient).where(PlanBatchIngredient.cook_batch_id.in_(list(version_of)))
+    ):
+        line = row.recipe_ingredient_id
+        if line is not None and line in classic and classic[line] != row.ingredient_id:
+            pins[version_of[row.cook_batch_id]].add(line)
+    return {v: frozenset(lines) for v, lines in pins.items()}
 
 
 def _absorbed_lines(session: Session, batch_ids: list[int]) -> dict[int, tuple[int, Decimal]]:
@@ -279,7 +305,15 @@ def _load(
         raise SwapError("Changing a mix-and-match plan comes with smart prep.")
     saved, solving, after = _constraints(session, user_id, plan, batches, allow_buying=allow_buying)
     plan_versions = frozenset(b.recipe_version_id for b in batches)
-    problem, pool = _problem(session, user_id, solving, plan_versions, slot=slot, extra=extra)
+    problem, pool = _problem(
+        session,
+        user_id,
+        solving,
+        plan_versions,
+        slot=slot,
+        extra=extra,
+        budget_pins=_budget_pins(session, batches),
+    )
     known = {r.version_id for r in problem.candidates}
     if missing := sorted(plan_versions - known):
         raise SwapError(
@@ -426,26 +460,38 @@ def _people(ctx: SwapContext) -> int:
     return ctx.problem.constraints.household_size
 
 
+@dataclass
+class _Fit:
+    """One option as the plan it would make, rounded and checked like any plan (step 2b.6 approval, A), so a
+    tap never fails on what the sheet showed. A close fit (B) moved other portions a little or goes past a
+    calorie limit or a cook day's minutes: `changes` says how, and its plan's constraints carry what it
+    needs past your limits (kept with the plan when you pick it)."""
+
+    solution: SolverSolution
+    pins: Pins
+    plan: RoundedPlan
+    report: ValidationReport
+    close: bool = False
+    changes: tuple[str, ...] = ()
+    distance: int = 0  # kcal past your limits + NEAR_MINUTE_KCAL × minutes past (close fits, closest first)
+
+
 def _option_out(
     ctx: SwapContext,
-    solution: SolverSolution,
+    fit: _Fit,
     *,
     baseline_cents: int,
     versions: dict[int, RecipeVersion],
     categories: dict[int, str],
     new_ids: frozenset[int],
-    bought: tuple[str, ...],
-) -> SwapOptionOut | None:
-    fill = filled(solution, ctx.pins)
+) -> SwapOptionOut:
+    solution = fit.solution
+    pins = fit.pins
+    fill = filled(solution, pins)
     batch = solution.batches[fill.batch_index]
     recipe = ctx.problem.candidate(fill.version_id)
-    try:
-        rounded = round_batch(ctx.problem, batch)
-    except ScalingError:
-        return None
-    kcal = kcal_display(rounded.per_portion.get("energy_kcal", Decimal(0)))
-    protein = rounded.per_portion.get("protein_g", Decimal(0)).quantize(Decimal("0.1"), ROUND_HALF_UP)
-    numbers = [f"{kcal:,} kcal", f"{protein} g protein"]
+    meal = next(m for m in fit.plan.meals if (m.eat_on, m.slot) == ctx.slot)  # the rounded meal
+    numbers = [f"{meal.kcal:,} kcal", f"{meal.protein_g} g protein"]
     if recipe.cost_cents_per_portion is not None:
         cents = int(
             (recipe.cost_cents_per_portion * size_multiplier(batch.portion_size) * batch.nudge).quantize(
@@ -460,19 +506,21 @@ def _option_out(
         recipe_id=recipe.recipe_id,
         title=recipe.title,
         dish_category=categories.get(fill.version_id, "other"),
-        kcal=kcal,
-        protein_g=protein,
+        kcal=meal.kcal,
+        protein_g=meal.protein_g,
         numbers=numbers,
         cost_delta_cents=delta,
         cost_delta_display=view.swap_cost_display(delta, money_display(abs(delta))),
         source_display=view.swap_source(
             batch.cook_on, ctx.slot[0], fill.from_freezer, new=fill.new, title=recipe.title
         ),
-        also_changed=also_changed(ctx, _restore_cooked(solution, ctx.pins)),
-        buys=list(bought),
+        also_changed=also_changed(ctx, solution),
+        buys=list(_bought(ctx, fit.plan)),
         is_new=fill.version_id in new_ids,
         steps_ready=version.steps_status is None,
         is_draft=version.is_draft,
+        fit="close" if fit.close else "exact",
+        changes=list(fit.changes),
     )
 
 
@@ -486,7 +534,9 @@ def find_options(
     session: Session, ctx: SwapContext, *, new_ids: frozenset[int] = frozenset()
 ) -> OptionsResult:
     """3-5 alternatives, sorted by what they add to the groceries, then by protein (new ideas first after
-    Write a new one)."""
+    Write a new one). Each is checked as the plan it would make, exactly as a tap applies it (A). When fewer
+    than 3 fit exactly, the closest fits come after them (B), closest first; "no other fits" only when there
+    is neither."""
     base = solve_pinned(ctx.problem, replace(ctx.pins, offer=frozenset({ctx.current_version})))
     baseline = base[0].estimated_purchase_cents if base is not None else 0
     solutions: list[SolverSolution] = []
@@ -499,40 +549,216 @@ def find_options(
         )
         ctx.pins = replace(ctx.pins, cuts=pins.cuts)
         solutions += found
-    ids = {filled(s, ctx.pins).version_id for s in solutions}
+    exact: list[_Fit] = []
+    for version in dict.fromkeys(filled(s, ctx.pins).version_id for s in solutions):
+        if (fit := exact_fit(session, ctx, version)) is not None:
+            exact.append(fit)
+    close: list[_Fit] = []
+    if len(exact) < MIN_OPTIONS:
+        close = _close_fits(
+            session,
+            ctx,
+            skip={filled(f.solution, f.pins).version_id for f in exact},
+            count=MIN_OPTIONS - len(exact),
+        )
+    fits = [*exact, *close]
+    ids = {filled(f.solution, f.pins).version_id for f in fits}
     versions = {v.id: v for v in session.scalars(select(RecipeVersion).where(RecipeVersion.id.in_(ids)))}
     categories = {vid: c.value for vid, c in dish_categories(session, ids).items()}
-    out = []
-    for solution in solutions:
-        option = _option_out(
-            ctx,
-            solution,
-            baseline_cents=baseline,
-            versions=versions,
-            categories=categories,
-            new_ids=new_ids,
-            bought=_bought(ctx, solution),
+    out = [
+        _option_out(
+            ctx, fit, baseline_cents=baseline, versions=versions, categories=categories, new_ids=new_ids
         )
-        if option is not None:
-            out.append(option)
-    out.sort(key=lambda o: (not o.is_new, o.cost_delta_cents, -o.protein_g, o.title))
+        for fit in fits
+    ]
+    distance = {filled(f.solution, f.pins).version_id: f.distance for f in fits}
+    out.sort(  # new ideas first (D168), then the exact fits, then the close ones, closest first
+        key=lambda o: (
+            not o.is_new,
+            o.fit == "close",
+            distance[o.version_id] if o.fit == "close" else 0,
+            o.cost_delta_cents,
+            -o.protein_g,
+            o.title,
+        )
+    )
     no_fit = view.no_fit_text(ctx.slot[1], ctx.slot[0]) if not out else None
     return OptionsResult(out, no_fit)
 
 
-def _bought(ctx: SwapContext, solution: SolverSolution) -> tuple[str, ...]:
+def _bought(ctx: SwapContext, plan: RoundedPlan) -> tuple[str, ...]:
     """After shopping with buying allowed: what the option needs that your pantry doesn't have."""
     if not ctx.after_shopping or ctx.problem.constraints.planning_mode is PlanningMode.INVENTORY:
-        return ()
-    try:
-        plan = build_rounded_plan(ctx.problem, _restore_cooked(solution, ctx.pins), absorb=False)
-    except ScalingError:
         return ()
     return tuple(
         f"{item.name} ({money_display(item.cost_cents)})" if item.cost_cents is not None else item.name
         for item in plan.grocery.items
         if item.kind == "buy" and (item.bought or item.to_buy) > 0
     )
+
+
+# ---------------- checking an option (A) and close fits (B) ----------------
+NEAR = NearLimits()
+NEAR_MINUTE_KCAL = 4  # a minute past a cook day's time counts like 4 kcal past a limit (sorting)
+# what a close fit may go past (with an allowance kept with the plan); every other limit stays as it is
+ALLOWABLE = frozenset(
+    {
+        "KCAL_DAY_OVER_CEILING",
+        "KCAL_DAY_UNDER_FLOOR",
+        "KCAL_WEEK_OVER_CEILING",
+        "KCAL_WEEK_UNDER_FLOOR",
+        "COOK_TIME_OVER",
+    }
+)
+SHIFT_SHOWN = Decimal("0.001")  # a rebalanced batch says so when its portions moved at all
+MAX_COOK_MINUTES = 600  # DaySpec's limit
+
+
+def _rounded(
+    session: Session, user_id: int, problem: PlanningProblem, pins: Pins, solution: SolverSolution
+) -> tuple[SolverSolution, RoundedPlan, ValidationReport, ReferenceData, frozenset[int]]:
+    """The re-solve rounded as the saved plan would be (cooked batches as cooked), and its check."""
+    solution = _restore_cooked(solution, pins)
+    exact, nudge_only = kept_indices(solution, pins)
+    plan = build_rounded_plan(problem, solution, kept=exact, keep_nudge=nudge_only)
+    reference = load_reference(session, user_id, problem.constraints, [b.version_id for b in plan.batches])
+    kept = frozenset(exact)
+    return solution, plan, validate_plan(plan, reference, kept=kept), reference, kept
+
+
+def exact_fit(session: Session, ctx: SwapContext, version_id: int) -> _Fit | None:
+    """The version in the meal's place with everything else exactly as it is, rounded and checked (with up to
+    MAX_RESOLVES re-solves when rounding pushed a limit); None when it doesn't fit once rounded."""
+    pins = replace(ctx.pins, offer=frozenset({version_id}))
+    found = solve_pinned(ctx.problem, pins)
+    if found is None:
+        return None
+    solution, pins = found
+    user_id = ctx.plan.user_id
+    try:
+        plan, report, solution = _round_and_check(session, user_id, ctx.problem, pins, solution, failed="")
+    except SwapError:
+        return None
+    return _Fit(solution, pins, plan, report)
+
+
+def close_fit(session: Session, ctx: SwapContext, version_id: int) -> _Fit | None:
+    """The version as a close fit: the other batches' portions may move a little, and the calorie limits and
+    the cook day's minutes may give by up to NEAR (each kcal and minute at a steep price). Rounded and
+    checked: re-solved with a bound tightened while that can help, and what is still past a limit becomes the
+    plan's allowance. None when even that doesn't fit."""
+    pins = replace(ctx.pins, offer=frozenset({version_id}), rebalance=True)
+    found = solve_pinned(ctx.problem, pins, near=NEAR)
+    if found is None:
+        return None
+    solution, pins = found
+    problem = ctx.problem
+    user_id = ctx.plan.user_id
+    fallback: _Fit | None = None
+    for resolves in range(MAX_RESOLVES + 1):
+        solution, plan, report, reference, kept = _rounded(session, user_id, problem, pins, solution)
+        if report.ok:
+            return _Fit(solution, pins, plan, report, close=True, changes=tuple(_rebalanced(ctx, plan)))
+        if fallback is None and all(e.code in ALLOWABLE for e in report.errors):
+            fallback = _allowing(
+                ctx, solution=solution, pins=pins, plan=plan, report=report, reference=reference, kept=kept
+            )
+        movable = tuple(e for e in report.errors if e.code != "COOK_TIME_OVER")
+        if resolves == MAX_RESOLVES or not movable or not all(e.code in RESOLVABLE for e in movable):
+            break
+        tightened = replace(report, errors=movable)
+        problem = problem.with_tightening(tightening_from(tightened, problem, solution, plan))
+        found = solve_pinned(problem, pins, near=NEAR)
+        if found is None:
+            break
+        solution, pins = found
+    return fallback
+
+
+def _close_fits(session: Session, ctx: SwapContext, *, skip: set[int], count: int) -> list[_Fit]:
+    """Up to `count` close fits, each a different recipe, closest first."""
+    out: list[_Fit] = []
+    offer = set(ctx.pins.offer) - skip
+    pins = replace(ctx.pins, rebalance=True)
+    while len(out) < count and offer:
+        found = solve_pinned(ctx.problem, replace(pins, offer=frozenset(offer)), near=NEAR)
+        if found is None:
+            break
+        solution, pins = found
+        version = filled(solution, pins).version_id
+        offer.discard(version)
+        if (fit := close_fit(session, ctx, version)) is not None:
+            out.append(fit)
+    return out
+
+
+def _allowing(
+    ctx: SwapContext,
+    *,
+    solution: SolverSolution,
+    pins: Pins,
+    plan: RoundedPlan,
+    report: ValidationReport,
+    reference: ReferenceData,
+    kept: frozenset[int],
+) -> _Fit | None:
+    """The plan with what it goes past allowed: calories as the plan's allowances, a cook day's minutes added
+    to that day. None when any of it is past NEAR, or the plan still fails its check."""
+    c = plan.constraints
+    allowances = list(c.kcal_allowances)
+    minutes: dict[date, int] = {}
+    lines: list[str] = []
+    distance = 0
+    for e in report.errors:
+        amount = e.amount or 0
+        if amount > (NEAR.minutes if e.code == "COOK_TIME_OVER" else NEAR.kcal):
+            return None
+        day = f"{e.day:%A}'s" if e.day is not None else "the plan's"
+        if e.code == "COOK_TIME_OVER" and e.day is not None:
+            minutes[e.day] = minutes.get(e.day, 0) + amount
+            lines.append(f"+{amount} min cook time on {e.day:%A}")
+            distance += NEAR_MINUTE_KCAL * amount
+            continue
+        over = e.code in ("KCAL_DAY_OVER_CEILING", "KCAL_WEEK_OVER_CEILING")
+        allowances.append(KcalAllowance(day=e.day, over=amount if over else 0, under=0 if over else amount))
+        lines.append(f"+{amount} kcal over {day} calories" if over else f"{amount} kcal under {day} calories")
+        distance += amount
+    days = []
+    for d in c.days:
+        extra = minutes.get(d.day, 0)
+        if d.cook_minutes_available + extra > MAX_COOK_MINUTES:
+            return None
+        days.append(d.model_copy(update={"cook_minutes_available": d.cook_minutes_available + extra}))
+    allowed = c.model_copy(update={"kcal_allowances": tuple(allowances), "days": tuple(days)})
+    plan = replace(plan, constraints=allowed)
+    checked = validate_plan(plan, reference, kept=kept)
+    if not checked.ok:
+        return None
+    changes = (*lines, *_rebalanced(ctx, plan))
+    return _Fit(solution, pins, plan, checked, close=True, changes=changes, distance=distance)
+
+
+def close_fit_note(ctx: SwapContext, fit: _Fit) -> str:
+    """The plan's note for a close fit you picked: 'You swapped Thu 15 dinner for a close fit: +80 kcal over
+    Thursday's calories.'"""
+    label = view.meal_label(ctx.slot[0], ctx.slot[1], with_date=True)
+    return f"You swapped {label} for a close fit: {'; '.join(fit.changes)}."
+
+
+def _rebalanced(ctx: SwapContext, plan: RoundedPlan) -> list[str]:
+    """A close fit's other batches whose portions moved: 'Fri 16's Chicken curry: portions 4% smaller, to
+    balance the calories'."""
+    lines = []
+    for b in plan.batches:
+        kept = ctx.pins.batches.get((b.version_id, b.cook_on, b.portion_size.value))
+        if kept is None or kept.cooked or abs(b.nudge - kept.nudge) < SHIFT_SHOWN:
+            continue
+        pct = int((abs(b.nudge - kept.nudge) / kept.nudge * 100).quantize(Decimal(1), ROUND_HALF_UP)) or 1
+        way = "smaller" if b.nudge < kept.nudge else "larger"
+        lines.append(
+            f"{view.short_day(b.cook_on)}'s {b.title}: portions {pct}% {way}, to balance the calories"
+        )
+    return lines
 
 
 # ---------------- Write a new one ----------------
@@ -647,14 +873,16 @@ def _save_version(
     problem: PlanningProblem,
     saved: PlanConstraints,
     marker: dict[str, Any],
+    extra_notes: tuple[str, ...] = (),
 ) -> MealPlan:
     """Save the re-solved plan as the new version of `old`: the old one's notes (plus a package a new batch
-    absorbs), status, acceptance and search; cooked batches stay cooked and check-offs carry over; exposures
-    under a swap run. `marker` (totals["swap"]) is what Undo reads."""
+    absorbs, and `extra_notes`), status, acceptance and search; cooked batches stay cooked and check-offs
+    carry over; exposures under a swap run. `marker` (totals["swap"]) is what Undo reads."""
     old_notes = list((old.validation_report or {}).get("notes", []))
     dropped = set(exclusion_notes(problem))
     absorbed = [n for n in plan.notes if n not in dropped and n not in old_notes and "scaled up" in n]
-    plan = replace(plan, constraints=saved, notes=(*old_notes, *absorbed), solver_status=old.solver_status)
+    notes = (*old_notes, *absorbed, *extra_notes)
+    plan = replace(plan, constraints=saved, notes=notes, solver_status=old.solver_status)
     run = GenerationRun(user_id=user_id, purpose=SWAP, status="succeeded", started_at=datetime.now(UTC))
     session.add(run)
     session.flush()
@@ -680,28 +908,27 @@ def apply_swap(
     allow_buying: bool = False,
     offered: list[int] | None = None,
     swapped_away: list[int] | None = None,
+    close: bool = False,
 ) -> SwapResult:
     """`offered`: the options the sheet showed, in order; `swapped_away`: recipes already swapped away for
-    this meal (both for the meal_swapped event)."""
+    this meal (both for the meal_swapped event). `close`: the option was a close fit (B); the new plan keeps
+    what it goes past (its calorie allowance or the cook day's minutes) and says so in its notes. The fit is
+    found and checked exactly as the sheet did, so an option it showed applies."""
     try:
         ctx = swap_context(session, user_id, plan_id, meal_id, today=today, allow_buying=allow_buying)
         if version_id not in ctx.pins.offer:
             raise SwapError(NO_LONGER_FITS)
-        found = solve_pinned(ctx.problem, replace(ctx.pins, offer=frozenset({version_id})))
-        if found is None:
-            raise SwapError(NO_LONGER_FITS)
-        solution, ctx.pins = found
-        plan, report, solution = _round_and_check(
-            session,
-            user_id,
-            ctx.problem,
-            replace(ctx.pins, offer=frozenset({version_id})),
-            solution,
-            failed="That recipe no longer fits this meal once its amounts are rounded",
-        )
+        fit = close_fit(session, ctx, version_id) if close else exact_fit(session, ctx, version_id)
     except PinError as exc:
         raise SwapError(PLAN_AGAIN) from exc
-    lines = also_changed(ctx, solution)
+    if fit is None:
+        raise SwapError(NO_LONGER_FITS)
+    plan, solution = fit.plan, fit.solution
+    lines = [*also_changed(ctx, solution), *fit.changes]
+    saved = ctx.saved
+    if close:  # what the close fit goes past stays with the plan, so its later checks and swaps keep it
+        allowed = plan.constraints
+        saved = saved.model_copy(update={"kcal_allowances": allowed.kcal_allowances, "days": allowed.days})
     marker = {
         "kind": "meal",
         "from_plan_id": ctx.plan.id,
@@ -713,10 +940,11 @@ def apply_swap(
         ctx.plan,
         ctx.batches,
         plan,
-        report=report,
+        report=fit.report,
         problem=ctx.problem,
-        saved=ctx.saved,
+        saved=saved,
         marker=marker,
+        extra_notes=(close_fit_note(ctx, fit),) if close and fit.changes else (),
     )
     meal_row = session.scalars(
         select(PlanMeal).where(

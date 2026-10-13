@@ -208,7 +208,8 @@ def test_usda_units_link_to_portions(seeded_db):
 
 
 def test_every_price_has_a_store(seeded_db):
-    assert _count(seeded_db, PriceObservation) == 174  # 58, + 58 estimated M13 items at 2 stores
+    # 58, + 58 estimated M13 items at 2 stores, + 5 frozen ones at 2 stores (Broke's veg, 2b.6 approval)
+    assert _count(seeded_db, PriceObservation) == 184
     stores = {s.name: s for s in seeded_db.scalars(select(Store))}
     assert {(s.name, s.priority, s.kind) for s in stores.values()} == {
         ("Stop & Shop", 1, "grocery"),

@@ -2,13 +2,15 @@
 meal, the batch that fed it and at most one other batch (a new one, or one more meal from a batch already in
 the plan); every other meal and batch stays exactly as it was, and every option is a different recipe."""
 
+from dataclasses import replace
 from datetime import date, timedelta
+from decimal import Decimal
 
 from app.domain.enums import MealSlot, PortionSize
 from app.planning.pins import KeptBatch, Pins, filled, kept_indices, solve_pinned, swap_options
 from app.planning.post_solve import KeptRounding, build_rounded_plan
 from app.planning.problem import PlanningProblem, size_multiplier
-from app.planning.solver.model import SolverSolution
+from app.planning.solver.model import NearLimits, SolverSolution
 from app.planning.solver.solve import solve
 from app.testing.factories import MONDAY, constraints, food, line, offer, problem, recipe
 
@@ -139,3 +141,44 @@ def test_a_cooked_batch_never_grows_and_a_new_batch_starts_today_or_later() -> N
         assert fill.new and fill.key[1] >= MONDAY + timedelta(days=2)
     nothing = Pins(**{**late.__dict__, "earliest": MONDAY + timedelta(days=3)})
     assert solve_pinned(p, nothing) is None  # no cook day left from Thursday, and every batch is cooked
+
+
+def test_a_close_fit_moves_other_portions_or_goes_past_a_limit_by_at_most_its_limits() -> None:
+    """Step 2b.6 approval, B: a dinner too big to fit exactly (the other batches fixed) fits once the other
+    batches' portions may move a little and the limits may give by at most NearLimits; every other meal keeps
+    its recipe, day and batch, and every batch its portions."""
+    p = week()
+    base = solve(p)
+    assert isinstance(base, SolverSolution)
+    foods = dict(p.ingredients)
+    feast = recipe(7, "Feast", [LUNCH, DINNER], [line(1, 1500), line(2, 1000)], foods, base=4, active=15)
+    big = replace(p, candidates=(*p.candidates, feast))
+    slot = (MONDAY + timedelta(days=1), DINNER)
+    pins = replace(pins_for(big, base, slot), offer=frozenset({7}))
+    assert solve_pinned(big, pins) is None  # too big with everything else exactly as it is
+    near = NearLimits(kcal=150, minutes=20)
+    found = solve_pinned(big, replace(pins, rebalance=True), near=near)
+    assert found is not None
+    close, _ = found
+    assert filled(close, pins).version_id == 7
+    before = {(m.eat_on, m.slot): base.batches[m.batch_index] for m in base.meals}
+    after = {(m.eat_on, m.slot): close.batches[m.batch_index] for m in close.meals}
+    for key, b in before.items():
+        if key != slot:
+            a = after[key]
+            assert (a.version_id, a.cook_on, a.portion_size) == (b.version_id, b.cook_on, b.portion_size)
+    moved = 0
+    for b in close.batches:
+        kept = pins.batches.get((b.version_id, b.cook_on, b.portion_size.value))
+        if kept is None or kept.key == pins.fed_by:
+            continue
+        assert b.portions == kept.portions  # only multipliers move, within the plan's ±10%
+        assert Decimal("0.9") <= b.nudge <= Decimal("1.1")
+        moved += b.nudge != kept.nudge
+    c = big.constraints
+    week_kcal = sum(close.day_kcal.values(), Decimal(0))
+    assert week_kcal <= c.weekly_kcal_target + near.kcal
+    for spec in c.days:
+        floor, ceiling = c.kcal_limits(spec.day)
+        assert floor - near.kcal <= close.day_kcal[spec.day] <= ceiling + near.kcal
+    assert moved or week_kcal > c.weekly_kcal_target  # it rebalanced, or went past the week's calories
