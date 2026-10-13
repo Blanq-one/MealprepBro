@@ -269,29 +269,43 @@ def short_day(d: date) -> str:
     return f"{d:%a} {d.day}"
 
 
+def before_first_cook_day(c: PlanConstraints) -> Diagnostic | None:
+    """A meal on a day before the plan's first cook day: nothing can be cooked for it, whatever the recipes
+    (AC5: the tier cards said "No week fits" for a dinner-only week that started on a day that isn't a cook
+    day). Two fixes (AD2): start on the first cook day ("Start tomorrow", `start_day`), or cook that day too
+    ("Cook on Tuesday too", with your longest cook day's minutes). No slot: new recipes can't help."""
+    cook_days = [d for d in c.days if d.is_cook_day and d.cook_minutes_available > 0]
+    order = list(MealSlot)
+    for d in c.days:
+        if any(x.day <= d.day for x in cook_days) or not d.slots:
+            continue
+        slot = sorted(d.slots, key=order.index)[0]
+        first = f" ({short_day(cook_days[0].day)})" if cook_days else ""
+        longest = max((x.cook_minutes_available for x in cook_days), default=60)
+        return Diagnostic(
+            "MEAL_BEFORE_COOK_DAY",
+            f"{short_day(d.day)}'s {_slot(slot)} comes before your first cook day{first}, so nothing can be "
+            "cooked for it.",
+            day=d.day,
+            suggested_minutes=round_up_5(longest),
+            start_day=cook_days[0].day if cook_days else None,
+        )
+    return None
+
+
 def uncovered(problem: PlanningProblem) -> Diagnostic | None:
-    """The first meal no batch can feed, whatever the rest of the week does (AC5: the tier cards said "No week
-    fits" for a dinner-only week that started on a day that isn't a cook day). Before your first cook day the
-    fix is a cook day that day, with your longest cook day's minutes ("Cook on Tuesday too")."""
+    """The first meal no batch can feed, whatever the rest of the week does: one before your first cook day
+    (`before_first_cook_day`), or one no cook day before it can reach (the fridge window, moods, times)."""
     c = problem.constraints
+    if (early := before_first_cook_day(c)) is not None:
+        return early
     fed = {target for b in batch_plan(problem) for target in b.targets}
     order = list(MealSlot)
-    cook_days = [d for d in c.days if d.is_cook_day]
     for d in c.days:
         for slot in sorted(d.slots, key=order.index):
             if (d.day, slot) in fed:
                 continue
             meal = f"{short_day(d.day)}'s {_slot(slot)}"
-            if not any(x.day <= d.day for x in cook_days):
-                first = f" ({short_day(cook_days[0].day)})" if cook_days else ""
-                longest = max((x.cook_minutes_available for x in cook_days), default=60)
-                return Diagnostic(
-                    "MEAL_BEFORE_COOK_DAY",
-                    f"{meal} comes before your first cook day{first}, so nothing can be cooked for it.",
-                    slot=slot,
-                    day=d.day,
-                    suggested_minutes=round_up_5(longest),
-                )
             return Diagnostic(
                 "MEAL_UNREACHABLE",
                 f"No recipe can be cooked in time for {meal}: the cook days before it are too far back for "

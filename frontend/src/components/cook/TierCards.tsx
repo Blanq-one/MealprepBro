@@ -4,8 +4,9 @@
 // and Fancy for this week, each with its estimated regular groceries, the stock-up items apart, its protein (for
 // some of your meals, their share of your day's target) and what it includes. A quick solve on the server, so
 // they say "about". Since the deploy (AC3–AC6): the cards stream in one by one (Broke mode first); a card that
-// costs no more than the one below says "Same as Cheapest this week"; one whose upgrades fall short says why,
-// with its fix as a button; one that ran out of time (or a slow database) says "Taking longer than usual" with
+// costs about the same as the priciest one below says "Same as Cheapest this week", and one that costs less says
+// so with its real price and why (AD1: a saving is never hidden); one whose upgrades fall short says why, with
+// its fix as a button; a week that can't be planned says why, with "Start tomorrow" and "Cook on Tuesday too"; one that ran out of time (or a slow database) says "Taking longer than usual" with
 // Try again, still pickable; and the cards for the same answers come back at once when you reopen the step
 // (this page keeps them a few minutes; the server keeps them too). Tapping one picks it; the full plan is solved
 // when you build it. Every number and line is the server's.
@@ -172,19 +173,21 @@ export function TierCards({
                       </span>
                     )}
                   </span>
+                  {fits && card.less_than_display && <span className={styles.less}>{card.less_than_display}</span>}
                   {fits && card.stock_up_display && <span className={styles.stock}>{card.stock_up_display}</span>}
                   {fits ? <span className={styles.protein}>{card.protein_per_day_display}</span> : <span className={slow ? styles.slowTitle : styles.protein}>{card.reason}</span>}
                   {fits && card.includes_display && <span className={styles.includes}>{card.includes_display}</span>}
                   {fits && card.shortfall_display && <span className={styles.shortfall}>{card.shortfall_display}</span>}
                   <span className={styles.blurb}>{card.blurb}</span>
                 </button>
-                {(card.fix || slow) && (
+                {((card.fixes ?? []).length > 0 || slow) && (
                   <div className={styles.after}>
-                    {card.fix && onFix && (
-                      <button type="button" className="btn" onClick={() => onFix(card.fix as TierFix)}>
-                        {card.fix.label}
-                      </button>
-                    )}
+                    {onFix &&
+                      (card.fixes ?? []).map((fix) => (
+                        <button key={`${fix.kind}-${fix.day}`} type="button" className="btn" onClick={() => onFix(fix)}>
+                          {fix.label}
+                        </button>
+                      ))}
                     {slow && (
                       <button type="button" className="btn" onClick={retry}>
                         Try again

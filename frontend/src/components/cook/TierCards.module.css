@@ -67,6 +67,12 @@
   font-weight: 600;
 }
 
+/* AD1: a real saving against the card below, and why */
+.less {
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
 /* AC4: why the tier's upgrades fall short */
 .shortfall {
   font-size: var(--text-small);

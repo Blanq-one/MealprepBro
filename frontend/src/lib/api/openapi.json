@@ -9305,15 +9305,12 @@
       "title": "Cached",
       "type": "boolean"
      },
-     "fix": {
-      "anyOf": [
-       {
-        "$ref": "#/components/schemas/TierFixOut"
-       },
-       {
-        "type": "null"
-       }
-      ]
+     "fixes": {
+      "items": {
+       "$ref": "#/components/schemas/TierFixOut"
+      },
+      "title": "Fixes",
+      "type": "array"
      },
      "includes_display": {
       "anyOf": [
@@ -9329,6 +9326,17 @@
      "label": {
       "title": "Label",
       "type": "string"
+     },
+     "less_than_display": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Less Than Display"
      },
      "protein_per_day_display": {
       "anyOf": [
@@ -9441,7 +9449,7 @@
     "type": "object"
    },
    "TierFixOut": {
-    "description": "A tier card's fix, as a button (AC4, AC5): a cook day's mood, or its minutes (a day that isn't a cook\nday becomes one). The app sends the same answers again with that one change.",
+    "description": "A tier card's fix, as a button (AC4, AC5, AD2): a cook day's mood, its minutes (a day that isn't a cook\nday becomes one), or the plan's start day. The app sends the same answers again with that one change.",
     "properties": {
      "day": {
       "format": "date",
@@ -9451,7 +9459,8 @@
      "kind": {
       "enum": [
        "mood",
-       "minutes"
+       "minutes",
+       "start"
       ],
       "title": "Kind",
       "type": "string"

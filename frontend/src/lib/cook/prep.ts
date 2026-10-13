@@ -3,7 +3,7 @@
 // the server resolves the days, meals, cook days and limits (app/cook/prep.py). The days below are calendar
 // days for the chips, and the minutes come straight from your settings.
 import type { CookAnswers, CookDay, MealSlot, PriceTier, RecipeMood, TierFix, UserSettings } from "@/lib/api/types";
-import { parseDay, toIso } from "@/lib/format/dates";
+import { parseDay, toIso, weekdayName } from "@/lib/format/dates";
 import type { GoalKey } from "@/lib/format/icons";
 
 import { type DraftExtra, GOAL_TILES, QUICK_DEFAULT_MINUTES } from "./answers";
@@ -312,6 +312,11 @@ export function withMinutes(answers: CookAnswers, day: string | null, minutes: n
 export function withDayFix(draft: PrepDraft, fix: TierFix, settings: UserSettings | null, today: Date = new Date()): PrepDraft {
   const style = draft.style ?? "mix";
   const single = style === "big_day" || style === "same_dish";
+  if (fix.kind === "start") {
+    // "Start tomorrow" (AD2): the plan starts on its first cook day; a big cook day before it moves with it
+    const early = single && draft.cookDay !== null && dayOf(draft.cookDay, today) < fix.day;
+    return { ...draft, start: choiceFor(fix.day, today), cookDay: early ? null : draft.cookDay };
+  }
   if (single && dayOf(draft.cookDay ?? draft.start, today) === fix.day) {
     if (fix.kind === "mood") return { ...draft, mood: fix.mood ?? draft.mood };
     return { ...draft, cookMinutes: Math.max(fix.minutes ?? 0, draft.cookMinutes ?? usualMinutes(settings, fix.day)) };
@@ -329,9 +334,37 @@ export function withDayFix(draft: PrepDraft, fix: TierFix, settings: UserSetting
   return { ...draft, style: "sessions", sessions: next, cookDay: null, cookMinutes: null };
 }
 
+/** "Start tomorrow" or "Start on Saturday" (AD2): the button for a plan that starts before its first cook day. */
+export function startLabel(iso: string, today: Date = new Date()): string {
+  if (iso === toIso(today)) return "Start today";
+  if (iso === toIso(addDays(today, 1))) return "Start tomorrow";
+  return `Start on ${weekdayName(iso)}`;
+}
+
+/** "Start tomorrow" (AD2, AD3): the same plan from that day. Sessions outside the moved days are left out (the
+ * server refuses them); a big cook day before the new start moves to it. */
+export function withStart(answers: CookAnswers, day: string, today: Date = new Date()): CookAnswers {
+  const prep = answers.prep;
+  if (!prep) return answers;
+  const count = (prep.shape === "days" ? prep.day_count : prep.portions) ?? 1;
+  const last = toIso(addDays(parseDay(day), count - 1));
+  const cookDay = dayOf(prep.cook_day ?? "today", today);
+  const style = prep.cook_style ?? "mix";
+  return {
+    ...answers,
+    prep: {
+      ...prep,
+      start: choiceFor(day, today),
+      cook_day: (style === "big_day" || style === "same_dish") && cookDay < day ? choiceFor(day, today) : prep.cook_day,
+      sessions: (prep.sessions ?? []).filter((s) => s.day >= day && s.day <= last),
+    },
+  };
+}
+
 /** The "no plan fits" buttons (components/plan/NoPlanFits), each sending the answers again with its change. */
 export function prepFixes(answers: CookAnswers, settings: UserSettings | null, rerun: (answers: CookAnswers) => void) {
   return {
+    onStart: (day: string) => rerun(withStart(answers, day)),
     onTopUp: (cents: number) => rerun(withTopUp(answers, cents)),
     onShop: () => rerun(withShopping(answers)),
     onBudget: (cents: number) => rerun(withBudget(answers, cents)),

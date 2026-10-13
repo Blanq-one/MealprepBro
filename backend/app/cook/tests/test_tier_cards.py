@@ -7,8 +7,9 @@ import json
 import os
 import subprocess
 import sys
+import time
 from dataclasses import dataclass, replace
-from itertools import pairwise
+from datetime import timedelta
 from typing import Any, cast
 
 import pulp
@@ -17,6 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
+from app.api import timing
 from app.cook import tiers
 from app.cook.prep import resolve_prep
 from app.cook.tests.conftest import Borrowed, add_stock
@@ -25,6 +27,7 @@ from app.db.models import GenerationRun, MealPlan
 from app.db.session import ConnectLog, get_session
 from app.domain.enums import MealSlot, RecipeMood
 from app.domain.price_tiers import PriceTier
+from app.planning.solver.diagnostics import before_first_cook_day
 from app.planning.solver.model import SolverSolution, eaten_value
 from app.planning.solver.solve import solve
 from app.schemas.cook import CookAnswers
@@ -97,10 +100,11 @@ def set_cook_moods(session: Session, mood: RecipeMood) -> None:
 
 
 def test_cards_stream_one_by_one_in_order_and_never_go_backwards(api: Any, seeded_db: Session) -> None:
-    """AC3, AC6: a card line per tier as it's ready, Broke mode first; each card starts from the last priced
-    card below it (its meals eat at least that card's regular groceries), and the numbers shown never go
-    down: at or under the number shown below (or within 50 cents over), a card says "Same as Cheapest this
-    week"; the run record keeps every card and what it took."""
+    """AC3, AC6, AD1: a card line per tier as it's ready, Broke mode first; each card starts from the last
+    priced card below it (its meals eat at least that card's regular groceries); against the priciest card
+    below, a card within 50 cents either way says "Same as Cheapest this week", one more than 50 cents under
+    shows its real price and why ("Costs less than Cheapest this week: about $7.27, uses more of what you
+    have."), and one above shows its own number; the run record keeps every card and what it took."""
     events = tier_stream(api, THREE_DAYS)
     assert events[0]["event"] == "started" and events[0]["run_id"]
     lines = [e["card"] for e in events if e["event"] == "card"]
@@ -109,14 +113,22 @@ def test_cards_stream_one_by_one_in_order_and_never_go_backwards(api: Any, seede
     assert cards == lines and events[-1]["status"] == "succeeded"
     priced = [c for c in cards if c["status"] == "estimated"]
     assert len(priced) >= 3, cards
-    shown = [c for c in priced if c["same_as_display"] is None]  # the numbers on the cards
-    assert shown[0] is priced[0]
-    assert all(b["total_cents"] - a["total_cents"] > tiers.SAME_WITHIN_CENTS for a, b in pairwise(shown))
+    top: dict[str, Any] | None = None
+    name = ""
     for card in priced:
-        if card["same_as_display"] is not None:
-            below = [s for s in shown if priced.index(s) < priced.index(card)][-1]
-            assert card["same_as_display"] == f"Same as {below['label']} this week"
-            assert card["total_cents"] - below["total_cents"] <= tiers.SAME_WITHIN_CENTS
+        said = (card["same_as_display"], card["less_than_display"])
+        if top is None:
+            assert said == (None, None)
+            top, name = card, card["label"]
+            continue
+        diff = card["total_cents"] - top["total_cents"]
+        if abs(diff) <= tiers.SAME_WITHIN_CENTS:
+            assert said == (f"Same as {name} this week", None), card
+        elif diff < 0:
+            assert said[0] is None and said[1].startswith(f"Costs less than {name} this week: about $"), card
+        else:
+            assert said == (None, None), card
+            top, name = card, card["label"]
     run = last_run(seeded_db)
     assert run.id == events[0]["run_id"] and run.status == "succeeded"
     assert run.constraints["answers_key"] and run.constraints["today"] == "2026-10-14"
@@ -164,34 +176,44 @@ def test_the_floor_makes_a_higher_tier_cost_the_same_or_more() -> None:
     assert len(out_of_reach.meals) == 3
 
 
-def test_a_card_never_shows_a_lower_number_than_the_card_below() -> None:
-    """AC3, your live example (Broke $19.73, Cheapest $19.66, A bit better $18.36, Fancy $18.42): Broke keeps
-    its number, and every card at or under the number shown below it says "Same as Broke mode this week";
-    within 50 cents over it too; past that its own number shows."""
+def test_a_real_saving_shows_with_its_reason_and_the_same_price_says_same_as() -> None:
+    """AD1, with your live example (Broke $19.73, Cheapest $19.66, A bit better $18.36, Fancy $18.42):
+    Cheapest is "Same as Broke mode" (7 cents under); A bit better and Fancy show their real, lower price and
+    why, never hidden: from your pantry, or fewer part-used packages; a dearer card shows its own number."""
 
-    def card(tier: PriceTier, label: str, cents: int) -> tiers.TierCard:
-        return tiers.TierCard(tier, label, "", "estimated", total_cents=cents)
+    def card(tier: PriceTier, label: str, cents: int, eaten: int, pantry: int) -> tiers.TierCard:
+        return tiers.TierCard(
+            tier,
+            label,
+            "",
+            "estimated",
+            total_cents=cents,
+            total_display=f"about ${cents / 100:.2f}",
+            eaten_cents=eaten,
+            pantry_cents=pantry,
+        )
 
-    shown = None
+    top = None
     out = []
-    for tier, label, cents in [
-        (PriceTier.BROKE, "Broke mode", 1973),
-        (PriceTier.CHEAPEST, "Cheapest", 1966),
-        (PriceTier.BETTER, "A bit better", 1836),
-        (PriceTier.FANCY, "Fancy", 2020),
+    for tier, label, cents, eaten, pantry in [
+        (PriceTier.BROKE, "Broke mode", 1973, 1500, 0),
+        (PriceTier.CHEAPEST, "Cheapest", 1966, 1500, 0),
+        (PriceTier.BETTER, "A bit better", 1836, 1520, 300),  # $3 from the pantry
+        (PriceTier.FANCY, "Fancy", 1842, 1700, 0),  # buys $18.42 and eats $17: little left unused
     ]:
-        c, shown = tiers.same_as(card(tier, label, cents), shown)
-        out.append(c.same_as_display)
+        c, top = tiers.compare(card(tier, label, cents, eaten, pantry), top)
+        out.append(c.same_as_display or c.less_than_display)
     assert out == [
         None,
         "Same as Broke mode this week",
-        "Same as Broke mode this week",
-        "Same as Broke mode this week",
+        "Costs less than Broke mode this week: about $18.36, uses more of what you have.",
+        "Costs less than Broke mode this week: about $18.42, leaves less of what it buys unused.",
     ]
-    dearer, after = tiers.same_as(card(PriceTier.FANCY, "Fancy", 2600), tiers.Shown(1973, "Broke mode"))
-    assert dearer.same_as_display is None and after == tiers.Shown(2600, "Fancy")
-    slow = replace(card(PriceTier.FANCY, "Fancy", 0), status="timed_out", total_cents=None)
-    assert tiers.same_as(slow, after) == (slow, after)
+    assert top is not None and top.label == "Broke mode"
+    dearer, after = tiers.compare(card(PriceTier.FANCY, "Fancy", 2600, 2000, 0), top)
+    assert dearer.same_as_display is None and dearer.less_than_display is None and after == dearer
+    slow = replace(dearer, status="timed_out", total_cents=None, total_display=None)
+    assert tiers.compare(slow, after) == (slow, after)
 
 
 def test_reopening_the_same_week_comes_from_the_run_records(api: Any, seeded_db: Session) -> None:
@@ -268,14 +290,15 @@ def test_fancy_says_why_it_has_no_premium_meals_and_offers_the_fix(api: Any, see
         "No meals with salmon, shrimp or similar this week: the recipes with them are medium to cook, and "
         "none of your cook days allows medium recipes."
     )
-    fix = fancy["fix"]
-    assert fix == {
-        "kind": "mood",
-        "label": "Allow medium recipes on Wednesday",
-        "day": "2026-10-14",
-        "mood": "medium",
-        "minutes": None,
-    }
+    assert fancy["fixes"] == [
+        {
+            "kind": "mood",
+            "label": "Allow medium recipes on Wednesday",
+            "day": "2026-10-14",
+            "mood": "medium",
+            "minutes": None,
+        }
+    ]
     sessions = [{"day": "2026-10-14", "minutes": 90, "mood": "medium"}, {"day": "2026-10-15", "minutes": 90}]
     fixed = tier_stream(api, {**THREE_DAYS, "cook_style": "sessions", "sessions": sessions})
     fancy = next(c for c in cards_of(fixed) if c["tier"] == "fancy")
@@ -309,20 +332,30 @@ def test_a_sessions_own_mood_beats_the_answers_mood() -> None:
 
 def test_a_week_that_starts_before_any_cook_day_says_why(api: Any, seeded_db: Session) -> None:
     """AC5's live case: a dinner-only week starting on a day that isn't a cook day can't be planned at all.
-    Every card says so in plain words, with "Cook on Friday too", instead of "No week fits"."""
+    Every card says so in plain words instead of "No week fits", with both fixes (AD2): start on the first
+    cook day ("Start on Saturday": it isn't tomorrow), or "Cook on Friday too"; each one makes a week."""
     cards = cards_of(tier_stream(api, FROM_FRIDAY))
     for card in cards:
         assert card["status"] == "none_fits"
         assert card["reason"] == (
             "Fri 16's dinner comes before your first cook day (Sat 17), so nothing can be cooked for it."
         )
-        assert card["fix"] == {
-            "kind": "minutes",
-            "label": "Cook on Friday too",
-            "day": "2026-10-16",
-            "mood": None,
-            "minutes": 90,
-        }
+        assert card["fixes"] == [
+            {
+                "kind": "start",
+                "label": "Start on Saturday",
+                "day": "2026-10-17",
+                "mood": None,
+                "minutes": None,
+            },
+            {
+                "kind": "minutes",
+                "label": "Cook on Friday too",
+                "day": "2026-10-16",
+                "mood": None,
+                "minutes": 90,
+            },
+        ]
     run = last_run(seeded_db)
     assert {c["outcome"] for c in run.progress["cards"]} == {"none_fits"}
     assert {c["why"] for c in run.progress["cards"]} == {"uncovered"}
@@ -332,6 +365,37 @@ def test_a_week_that_starts_before_any_cook_day_says_why(api: Any, seeded_db: Se
         "sessions": [{"day": "2026-10-16", "minutes": 90}, {"day": "2026-10-17", "minutes": 90}],
     }
     assert any(c["status"] == "estimated" for c in cards_of(tier_stream(api, with_friday)))
+    from_saturday = {**FROM_FRIDAY, "start": "2026-10-17"}
+    assert any(c["status"] == "estimated" for c in cards_of(tier_stream(api, from_saturday)))
+
+
+def test_tomorrow_is_start_tomorrow() -> None:
+    c = f.constraints(week_start=f.MONDAY, days=3, slots={MealSlot.DINNER: 600}, cook_weekdays=(1,))
+    gap = before_first_cook_day(c)
+    assert gap is not None and gap.start_day == f.MONDAY + timedelta(days=1)
+    fixes = tiers.dead_end_fixes(c, gap, f.MONDAY)
+    assert [x.label for x in fixes] == ["Start tomorrow", "Cook on Monday too"]
+
+
+def test_the_full_plan_says_the_same_with_both_fixes_and_no_llm_call(api: Any, llm: Any) -> None:
+    """AD3: meal prep's own "no plan fits" says why a week starting before its first cook day can't be
+    planned, with what the app needs for "Start on Saturday" and "Cook on Friday too", at once: no new
+    recipes are written for it (they couldn't help) and nothing is solved."""
+    fake = llm()  # an LLM that fails the test if anything is sent to it
+    events = meal_prep(api, prep=FROM_FRIDAY, shopping="make_a_list", allow_llm=True)
+    result = events[-1]
+    assert result["event"] == "result" and result["status"] == "infeasible", result
+    assert result["problem"]["diagnostics"] == [
+        {
+            "code": "MEAL_BEFORE_COOK_DAY",
+            "message": "Fri 16's dinner comes before your first cook day (Sat 17), so nothing can be cooked "
+            "for it.",
+            "day": "2026-10-16",
+            "suggested_minutes": 90,
+            "start_day": "2026-10-17",
+        }
+    ]
+    assert fake.requests == []
 
 
 def test_a_solve_stopped_by_its_time_limit_is_taking_longer_never_no_week_fits(
@@ -342,6 +406,8 @@ def test_a_solve_stopped_by_its_time_limit_is_taking_longer_never_no_week_fits(
     it, and none of it is reused as a cache."""
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(tiers, "run_solver", lambda *_a, **_k: pulp.LpSolutionNoSolutionFound)
+        # a function running for an hour (a test process can be seconds old, which counts as a cold start)
+        mp.setattr(timing, "PROCESS_STARTED", time.monotonic() - 3600)
         events = tier_stream(api, THREE_DAYS)
     cards = cards_of(events)
     assert events[-1]["status"] == "partial"
@@ -469,7 +535,9 @@ def test_cards_store_and_restore_exactly() -> None:
         "blurb",
         "estimated",
         total_cents=1234,
-        fix=fix,
+        fixes=(fix, tiers.TierFix("start", "Start tomorrow", f.MONDAY)),
+        pantry_cents=300,
+        less_than_display="Costs less than Cheapest this week: about $12.34, uses more of what you have.",
         floor_cents=1200,
         shortfall_display="why",
         same_as="Cheapest",

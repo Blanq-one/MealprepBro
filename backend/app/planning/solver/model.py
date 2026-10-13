@@ -166,6 +166,8 @@ class Diagnostic:
     # time and mood fixes (2b.3b approval, P4): "Allow 50 min on Monday", "Allow fancy recipes"
     suggested_minutes: int | None = None
     mood: str | None = None
+    # a meal before the first cook day (AD2): "Start tomorrow" moves the plan's start to this day
+    start_day: date | None = None
 
 
 @dataclass(frozen=True)
@@ -216,6 +218,9 @@ class _Model:
     limited_cost: Any = 0  # the cents the purchase limit applies to
     # step 2b.6 (swap): batches whose nudge is fixed, by (recipe version, cook day, portion size)
     fixed_nudges: Mapping[BatchKey, Decimal] = field(default_factory=dict)
+    # per ingredient: the amount the week takes from your pantry, in its planning unit (AD1: a tier card says
+    # it "uses more of what you have")
+    inventory_used: dict[int, Any] = field(default_factory=dict)
 
 
 def batch_key(b: _Batch) -> BatchKey:
@@ -776,6 +781,7 @@ def build_model(
     waste_terms: list[Any] = []
     sliver_terms: list[Any] = []
     purchases_by_ingredient: dict[int, tuple[Any, Any]] = {}
+    inventory_used: dict[int, Any] = {}
     inventory_bonus: list[Any] = []
     inventory_charge: list[Any] = []
     store_used: dict[int, pulp.LpVariable] = {}
@@ -811,6 +817,8 @@ def build_model(
                 var = pulp.LpVariable(f"inv_{label}_{ingredient_id}", lowBound=0, upBound=avail)
                 inv_parts.append((label, avail, var))
         inventory = pulp.lpSum(var for _, _, var in inv_parts)
+        if inv_parts:
+            inventory_used[ingredient_id] = inventory
         if inv_parts:
             prob += inventory <= need, f"inv_le_need_{ingredient_id}"
             if holdback > 0:
@@ -960,6 +968,7 @@ def build_model(
             purchases_by_ingredient,
             limited_cost,
             pinned_nudges,
+            inventory_used,
         )
 
     if cheapest:  # the cost, and fewer batches to break ties
@@ -981,6 +990,7 @@ def build_model(
             purchases_by_ingredient,
             limited_cost,
             pinned_nudges,
+            inventory_used,
         )
 
     primary_scores = {r.version_id: nutrient_score(r, c.nutrition_priority) for r in problem.candidates}
@@ -1071,6 +1081,7 @@ def build_model(
         purchases_by_ingredient,
         limited_cost,
         pinned_nudges,
+        inventory_used,
     )
 
 

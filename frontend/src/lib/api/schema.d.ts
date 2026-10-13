@@ -4467,11 +4467,14 @@ export interface components {
              * @default false
              */
             cached: boolean;
-            fix?: components["schemas"]["TierFixOut"] | null;
+            /** Fixes */
+            fixes?: components["schemas"]["TierFixOut"][];
             /** Includes Display */
             includes_display?: string | null;
             /** Label */
             label: string;
+            /** Less Than Display */
+            less_than_display?: string | null;
             /** Protein Per Day Display */
             protein_per_day_display?: string | null;
             /** Reason */
@@ -4497,8 +4500,8 @@ export interface components {
         };
         /**
          * TierFixOut
-         * @description A tier card's fix, as a button (AC4, AC5): a cook day's mood, or its minutes (a day that isn't a cook
-         *     day becomes one). The app sends the same answers again with that one change.
+         * @description A tier card's fix, as a button (AC4, AC5, AD2): a cook day's mood, its minutes (a day that isn't a cook
+         *     day becomes one), or the plan's start day. The app sends the same answers again with that one change.
          */
         TierFixOut: {
             /**
@@ -4510,7 +4513,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "mood" | "minutes";
+            kind: "mood" | "minutes" | "start";
             /** Label */
             label: string;
             /** Minutes */

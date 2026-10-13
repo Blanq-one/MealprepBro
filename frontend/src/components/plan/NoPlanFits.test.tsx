@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import type { CookAnswers, PlanStreamEvent } from "@/lib/api/types";
-import { prepFixes, withMinutes } from "@/lib/cook/prep";
+import { prepFixes, startLabel, withMinutes, withStart } from "@/lib/cook/prep";
 import { userSettings } from "@/test/fixtures";
 
 import { NoPlanFits } from "./NoPlanFits";
@@ -79,6 +79,19 @@ describe("no plan fits (M17, P4; C6 Infeasible)", () => {
     expect(onMood).toHaveBeenCalledWith(null, "fancy");
   });
 
+  it("a meal before the first cook day (AD3): Start on that cook day, or cook that day too", async () => {
+    const onStart = vi.fn();
+    const onMinutes = vi.fn();
+    const message = "Fri 16's dinner comes before your first cook day (Sat 17), so nothing can be cooked for it.";
+    render(<NoPlanFits event={result([{ code: "MEAL_BEFORE_COOK_DAY", message, day: "2026-10-16", suggested_minutes: 90, start_day: "2026-10-17" }])} actions={{ onStart, onMinutes }} />);
+    expect(screen.getByText(message)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Write new recipes" })).not.toBeInTheDocument(); // recipes can't help
+    await userEvent.click(screen.getByRole("button", { name: /^Start (tomorrow|on Saturday)$/ }));
+    expect(onStart).toHaveBeenCalledWith("2026-10-17");
+    await userEvent.click(screen.getByRole("button", { name: "Cook on Friday too" }));
+    expect(onMinutes).toHaveBeenCalledWith("2026-10-16", 90);
+  });
+
   it("a budget shortfall offers the server's whole-dollar budget; settings fixes are links, each once", () => {
     const event = result([
       { code: "BUDGET_SHORT", message: "The cheapest plan that fits costs about $52.60 in regular groceries, $7.60 over your budget of $45.00.", suggested_cents: 5300 },
@@ -98,6 +111,17 @@ describe("no plan fits (M17, P4; C6 Infeasible)", () => {
 
 describe("the fixes change only these answers", () => {
   const settings = userSettings();
+
+  it("Start tomorrow (AD2, AD3): the plan moves to that day; sessions outside it and a cook day before it move too", () => {
+    expect(startLabel("2026-10-13", TODAY)).toBe("Start tomorrow");
+    expect(startLabel("2026-10-15", TODAY)).toBe("Start on Thursday");
+    const moved = withStart(answers, "2026-10-13", TODAY);
+    expect(moved.prep).toMatchObject({ start: "tomorrow", day_count: 3, cook_style: "mix" });
+    const sessions = { ...answers, prep: { ...answers.prep!, cook_style: "sessions" as const, sessions: [{ day: "2026-10-12", minutes: 60 }, { day: "2026-10-14", minutes: 90 }, { day: "2026-10-16", minutes: 90 }] } };
+    expect(withStart(sessions, "2026-10-14", TODAY).prep?.sessions).toEqual([{ day: "2026-10-14", minutes: 90 }, { day: "2026-10-16", minutes: 90 }]); // Wed 14 – Fri 16: Monday's left out
+    const big = { ...answers, prep: { ...answers.prep!, cook_style: "big_day" as const, cook_day: "today" } };
+    expect(withStart(big, "2026-10-14", TODAY).prep).toMatchObject({ start: "2026-10-14", cook_day: "2026-10-14" });
+  });
 
   it("a top-up, a shopping list and a budget", () => {
     const rerun = vi.fn();

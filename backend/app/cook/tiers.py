@@ -14,16 +14,18 @@ Since the deploy (AC3–AC6):
   order      the cards are priced in order, Broke mode first, and each one after it starts from the card
              below: its meals eat at least the regular groceries the card below's do, at unit prices (the
              solver's floor, on the food eaten so a surplus bag of rice can't meet it, with a steep price a
-             dollar short, so it never stops a week from planning). So a higher tier costs the same or more;
-             where package sizes still bring its number under (or within 50 cents of) the number shown below
-             it, the card says "Same as Cheapest this week" instead of a lower price. The plan you tap is held
-             to the same floor.
+             dollar short, so it never stops a week from planning). So a higher tier's meals are worth the
+             same or more. Within 50 cents of the priciest card below, either way, a card says "Same as
+             Cheapest this week"; more than that under it, it shows the real, lower price and why (AD1: never
+             hide a real saving): "Costs less than Cheapest this week: about $7.27, uses more of what you
+             have." The plan you tap is held to the same floor.
   honesty    A bit better and Fancy count the meals that really have an upgrade or a premium protein; short of
              what the tier aims for, the card says why in plain words ("the recipes with them are fancy to
              cook, and none of your cook days allows fancy recipes"), with the fix as a button when there is
              one ("Allow fancy recipes on Saturday"). It never claims meals it doesn't have.
   dead ends  a week no plan can fill says why ("Tue 13's dinner comes before your first cook day (Wed 14)",
-             with "Cook on Tuesday too"); "No week fits" only when the solver proves it.
+             with "Start tomorrow" and "Cook on Tuesday too", AD2); "No week fits" only when the solver proves
+             it.
   slow       a card with no estimate in time is "Taking longer than usual", with Try again, never "No week
              fits". The run record (generation_run, purpose tier_cards) says what each card took and which
              happened: a cold start (a database connection that was slow or retried, a function that had just
@@ -80,6 +82,7 @@ from app.planning.shortlist import shortlist
 from app.planning.solver import diagnostics
 from app.planning.solver.backend import SolveBudget, SolveDeadlineError, solve_budget
 from app.planning.solver.model import (
+    Diagnostic,
     SolverSolution,
     _Model,
     build_model,
@@ -107,7 +110,7 @@ SLOW = "Taking longer than usual."  # AC5: a card with no estimate in time
 SAME_WITHIN_CENTS = 50  # AC3: a card this close to the one below is "the same" (they're "about" numbers)
 # AC6: a card's inputs' fingerprint covers the problem it solved, your settings and answers, and this version
 # of the code (bump it when the cards' logic changes); a run record older than this is never reused
-ESTIMATE_VERSION = 3
+ESTIMATE_VERSION = 4
 CACHE_HOURS = 12
 CACHE_RUNS = 30  # the run records looked at
 # AC5: a cold start: a database connection this slow, or retried (Neon waking from scale-to-zero), or a
@@ -119,9 +122,9 @@ Outcome = Literal["estimated", "none_fits", "timed_out"]
 
 @dataclass(frozen=True)
 class TierFix:
-    """A card's fix (AC4, AC5): a cook day's mood, or its minutes."""
+    """A card's fix (AC4, AC5, AD2): a cook day's mood, its minutes, or the plan's start day."""
 
-    kind: Literal["mood", "minutes"]
+    kind: Literal["mood", "minutes", "start"]
     label: str
     day: date
     mood: RecipeMood | None = None
@@ -145,12 +148,16 @@ class TierCard:
     protein_per_day_g: int | None = None
     includes_display: str | None = None  # "4 meals with an upgrade · up to 4 of one recipe a week"
     same_as: str | None = None  # AC3: the label of the card it costs the same as ("Cheapest")
+    # AD1: more than 50 cents under the priciest card below: "Costs less than Cheapest this week: about $7.27,
+    # uses more of what you have."
+    less_than_display: str | None = None
     shortfall_display: str | None = None  # AC4: why its upgrades fall short
-    fix: TierFix | None = None
+    fixes: tuple[TierFix, ...] = ()  # the shortfall's or the dead end's fixes, as buttons
     # AC3: the regular groceries its meals were held to eat (the card below's), and what they eat (the next
     # card's floor), in cents at unit prices
     floor_cents: int | None = None
     eaten_cents: int | None = None
+    pantry_cents: int | None = None  # AD1: of what its meals eat, what comes from your pantry
     cached: bool = False  # AC6: from an earlier run record
 
     @property
@@ -173,8 +180,8 @@ class Priced:
     cached_from: int | None = None  # the run record it came from
 
 
-def _none(tier: PriceTier, reason: str, fix: TierFix | None = None) -> TierCard:
-    return TierCard(tier, LABELS[tier], BLURBS[tier], "none_fits", reason=reason, fix=fix)
+def _none(tier: PriceTier, reason: str, fixes: tuple[TierFix, ...] = ()) -> TierCard:
+    return TierCard(tier, LABELS[tier], BLURBS[tier], "none_fits", reason=reason, fixes=fixes)
 
 
 def _slow(tier: PriceTier) -> TierCard:
@@ -390,6 +397,43 @@ def stock_up_line(cents: int, names: list[str]) -> str | None:
     return f"+ about {money_display(cents)} stock-up: {shown}"
 
 
+def pantry_value(problem: PlanningProblem, model: _Model) -> int:
+    """Cents of regular groceries (stock-up items apart) the week takes from your pantry, each at its cheapest
+    unit price at your stores (AD1: what makes a card's list cost less although its meals eat as much)."""
+    stores = set(problem.constraints.store_ids)
+    total = 0.0
+    for ingredient_id, used in model.inventory_used.items():
+        plan = problem.ingredients[ingredient_id]
+        if plan.stock_up or plan.unlimited:
+            continue
+        prices = [o.cents_per_unit for o in plan.offers if o.store_id in stores]
+        if prices:
+            total += _value(used) * float(min(prices))
+    return round(total)
+
+
+def start_label(c: PlanConstraints, day: date, today: date) -> str:
+    if day == today:
+        return "Start today"
+    if day == today + timedelta(days=1):
+        return "Start tomorrow"
+    return f"Start on {diagnostics.weekday(c, day)}"
+
+
+def dead_end_fixes(c: PlanConstraints, gap: Diagnostic, today: date) -> tuple[TierFix, ...]:
+    """A meal before the first cook day (AD2): start on that cook day ("Start tomorrow"), or cook that day
+    too ("Cook on Tuesday too"). Any other dead end has no fix to offer here."""
+    if gap.code != "MEAL_BEFORE_COOK_DAY" or gap.day is None:
+        return ()
+    fixes: list[TierFix] = []
+    if gap.start_day is not None:
+        fixes.append(TierFix("start", start_label(c, gap.start_day, today), gap.start_day))
+    if gap.suggested_minutes:
+        label = f"Cook on {diagnostics.weekday(c, gap.day)} too"
+        fixes.append(TierFix("minutes", label, gap.day, minutes=gap.suggested_minutes))
+    return tuple(fixes)
+
+
 # ---------------- a card's inputs' fingerprint (AC6) ----------------
 
 
@@ -470,9 +514,9 @@ def price(
     if (hit := cached.get((tier.value, key))) is not None:
         return replace(hit, card=replace(hit.card, cached=True), load_s=load_s, solves=())
 
-    def none(reason: str, why: str, fix: TierFix | None = None) -> Priced:
+    def none(reason: str, why: str, fixes: tuple[TierFix, ...] = ()) -> Priced:
         return Priced(
-            replace(_none(tier, reason, fix), floor_cents=floor_cents), key, "none_fits", why, load_s
+            replace(_none(tier, reason, fixes), floor_cents=floor_cents), key, "none_fits", why, load_s
         )
 
     if not problem.candidates:
@@ -480,15 +524,7 @@ def price(
     if pre := diagnostics.precheck(problem):
         return none(pre[0].message, "precheck")
     if (gap := diagnostics.uncovered(problem)) is not None:
-        fix = None
-        if gap.code == "MEAL_BEFORE_COOK_DAY" and gap.day is not None and gap.suggested_minutes:
-            fix = TierFix(
-                "minutes",
-                f"Cook on {diagnostics.weekday(problem.constraints, gap.day)} too",
-                gap.day,
-                minutes=gap.suggested_minutes,
-            )
-        return none(gap.message, "uncovered", fix)
+        return none(gap.message, "uncovered", dead_end_fixes(problem.constraints, gap, today))
     full = problem
     kcal, protein = rounding_fit(problem), rounding_fit(problem, "protein_g")
     problem = problem.with_tightening(
@@ -557,6 +593,7 @@ def price(
     )
     per_day = int((eaten / len(problem.constraints.days)).quantize(Decimal(1), ROUND_HALF_UP))
     why_short, fix = shortfall(tier, full, problem, solution)
+    pantry = pantry_value(problem, model)
     card = TierCard(
         tier,
         LABELS[tier],
@@ -570,30 +607,54 @@ def price(
         protein_per_day_g=per_day,
         includes_display=includes_line(tier, problem, solution),
         shortfall_display=why_short,
-        fix=fix,
+        fixes=(fix,) if fix is not None else (),
         floor_cents=floor_cents,
         eaten_cents=eaten_value(problem, solution),
+        pantry_cents=pantry,
     )
     return Priced(card, key, "estimated", None, load_s, tuple(solves))
 
 
-@dataclass(frozen=True)
-class Shown:
-    """The price the cards below show so far: its cents and the card that shows it."""
+def _why_less(card: TierCard, top: TierCard) -> str | None:
+    """Why a card's list costs less than the priciest card below, though its meals eat as much (AD1): the
+    larger of what it takes from your pantry and what it buys and leaves unused (part-used packages)."""
+    if None in (card.eaten_cents, card.pantry_cents, top.eaten_cents, top.pantry_cents):
+        return None
+    assert card.eaten_cents is not None and card.pantry_cents is not None and card.total_cents is not None
+    assert top.eaten_cents is not None and top.pantry_cents is not None and top.total_cents is not None
+    pantry = card.pantry_cents - top.pantry_cents
+    unused = (top.total_cents - (top.eaten_cents - top.pantry_cents)) - (
+        card.total_cents - (card.eaten_cents - card.pantry_cents)
+    )
+    eats = top.eaten_cents - card.eaten_cents
+    reasons = [
+        (pantry, "uses more of what you have"),
+        (unused, "leaves less of what it buys unused"),
+        (eats, "its meals use a little less food"),
+    ]
+    best, reason = max(reasons, key=lambda r: r[0])
+    return reason if best > 0 else None
 
-    cents: int
-    label: str
 
-
-def same_as(card: TierCard, shown: Shown | None) -> tuple[TierCard, Shown | None]:
-    """AC3: a priced card never shows a lower number than the card below: at or under the price shown below,
-    or within 50 cents over it, it says "Same as Cheapest this week" (naming the card whose number shows).
-    Returns the card and the price shown after it."""
+def compare(card: TierCard, top: TierCard | None) -> tuple[TierCard, TierCard | None]:
+    """A priced card against the priciest priced card below it (AC3, AD1): within 50 cents either way, "Same
+    as Cheapest this week" (naming the card that card itself is the same as, if any); more than 50 cents
+    under, the real price and why, "Costs less than Cheapest this week: about $7.27, uses more of what you
+    have."; more than 50 cents over, its own number. Returns the card and the priciest card after it."""
+    plain = replace(card, same_as=None, less_than_display=None)
     if card.status != "estimated" or card.total_cents is None:
-        return replace(card, same_as=None), shown
-    if shown is not None and card.total_cents - shown.cents <= SAME_WITHIN_CENTS:
-        return replace(card, same_as=shown.label), shown
-    return replace(card, same_as=None), Shown(card.total_cents, card.label)
+        return plain, top
+    if top is None or top.total_cents is None:
+        return plain, card
+    diff = card.total_cents - top.total_cents
+    name = top.same_as or top.label
+    if abs(diff) <= SAME_WITHIN_CENTS:
+        return replace(plain, same_as=name), top
+    if diff < 0:
+        why = _why_less(card, top)
+        text = f"Costs less than {name} this week: {card.total_display}" + (f", {why}." if why else ".")
+        return replace(plain, less_than_display=text), top
+    return plain, card
 
 
 def price_all(
@@ -612,7 +673,7 @@ def price_all(
     budget = SolveBudget(Deadline.after(SystemClock(), TIERS_BUDGET_S), reserve_s=0)
     out: list[Priced] = []
     floor: int | None = None
-    shown: Shown | None = None
+    top: TierCard | None = None
     with solve_budget(budget):
         for tier in PriceTier:
             try:
@@ -628,7 +689,7 @@ def price_all(
                 )
             except SolveDeadlineError:  # out of time before the solve itself
                 priced = Priced(replace(_slow(tier), floor_cents=floor), "", "timed_out", "budget")
-            card, shown = same_as(priced.card, shown)
+            card, top = compare(priced.card, top)
             priced = replace(priced, card=card)
             on_card(priced)
             out.append(priced)
@@ -640,9 +701,7 @@ def price_all(
 # ---------------- run records: what happened, and the cache (AC5, AC6) ----------------
 
 
-def fix_json(fix: TierFix | None) -> dict[str, Any] | None:
-    if fix is None:
-        return None
+def fix_json(fix: TierFix) -> dict[str, Any]:
     return {
         "kind": fix.kind,
         "label": fix.label,
@@ -655,16 +714,15 @@ def fix_json(fix: TierFix | None) -> dict[str, Any] | None:
 def card_json(card: TierCard) -> dict[str, Any]:
     out: dict[str, Any] = {f.name: getattr(card, f.name) for f in fields(card)}
     out["tier"] = card.tier.value
-    out["fix"] = fix_json(card.fix)
+    out["fixes"] = [fix_json(f) for f in card.fixes]
     return out
 
 
 def card_from_json(data: Mapping[str, Any]) -> TierCard:
     names = {f.name for f in fields(TierCard)}
     values = {k: v for k, v in data.items() if k in names}
-    fix = data.get("fix")
     values["tier"] = PriceTier(data["tier"])
-    values["fix"] = (
+    values["fixes"] = tuple(
         TierFix(
             fix["kind"],
             fix["label"],
@@ -672,8 +730,7 @@ def card_from_json(data: Mapping[str, Any]) -> TierCard:
             mood=RecipeMood(fix["mood"]) if fix.get("mood") else None,
             minutes=fix.get("minutes"),
         )
-        if fix
-        else None
+        for fix in data.get("fixes") or ()
     )
     return TierCard(**values)
 
@@ -766,7 +823,6 @@ def slow_start(connects: list[ConnectLog], process_age_s: float | None) -> dict[
 
 
 def card_out(card: TierCard) -> TierCardOut:
-    fix = card.fix
     return TierCardOut(
         tier=card.tier,
         label=card.label,
@@ -775,15 +831,17 @@ def card_out(card: TierCard) -> TierCardOut:
         total_cents=card.total_cents,
         total_display=card.total_display,
         same_as_display=card.same_as_display,
+        less_than_display=card.less_than_display,
         protein_per_day_display=card.protein_per_day_display,
         reason=card.reason,
         stock_up_cents=card.stock_up_cents,
         stock_up_display=card.stock_up_display,
         includes_display=card.includes_display,
         shortfall_display=card.shortfall_display,
-        fix=TierFixOut(kind=fix.kind, label=fix.label, day=fix.day, mood=fix.mood, minutes=fix.minutes)
-        if fix
-        else None,
+        fixes=[
+            TierFixOut(kind=f.kind, label=f.label, day=f.day, mood=f.mood, minutes=f.minutes)
+            for f in card.fixes
+        ],
         cached=card.cached,
     )
 

@@ -292,12 +292,13 @@ class CookHomeOut(BaseModel):
 
 
 class TierFixOut(BaseModel):
-    """A tier card's fix, as a button (AC4, AC5): a cook day's mood, or its minutes (a day that isn't a cook
-    day becomes one). The app sends the same answers again with that one change."""
+    """A tier card's fix, as a button (AC4, AC5, AD2): a cook day's mood, its minutes (a day that isn't a cook
+    day becomes one), or the plan's start day. The app sends the same answers again with that one change."""
 
-    kind: Literal["mood", "minutes"]
-    label: str  # "Allow fancy recipes on Saturday", "Allow 55 min on Saturday", "Cook on Tuesday too"
-    day: date
+    kind: Literal["mood", "minutes", "start"]
+    # "Allow fancy recipes on Saturday", "Allow 55 min on Saturday", "Cook on Tuesday too", "Start tomorrow"
+    label: str
+    day: date  # the cook day it changes, or (start) the plan's new first day
     mood: RecipeMood | None = None  # kind mood
     minutes: int | None = None  # kind minutes: start to finish that day, at least
 
@@ -313,9 +314,12 @@ class TierCardOut(BaseModel):
     status: Literal["estimated", "none_fits", "timed_out"]
     total_cents: int | None = None  # regular groceries (2b.6 approval: stock-up items apart)
     total_display: str | None = None  # "about $54.20"
-    # AC3: within 50 cents of the card below (the tiers never go backwards), said instead of the number:
-    # "Same as Cheapest this week"
+    # AC3: within 50 cents (either way) of the priciest card below, said instead of the number: "Same as
+    # Cheapest this week"
     same_as_display: str | None = None
+    # AD1: more than 50 cents under the priciest card below, the real price and why: "Costs less than Cheapest
+    # this week: about $7.27, uses more of what you have."
+    less_than_display: str | None = None
     # "about 104 g protein a day"; for some of your meals: "Lunch + dinner: about 76 g of your 100 g daily
     # target"
     protein_per_day_display: str | None = None
@@ -326,7 +330,7 @@ class TierCardOut(BaseModel):
     # AC4: A bit better's or Fancy's upgrades fall short of what the tier aims for, and why ("No meals with
     # salmon, shrimp or similar this week: …")
     shortfall_display: str | None = None
-    fix: TierFixOut | None = None  # the shortfall's (or none_fits') fix, when there is one
+    fixes: list[TierFixOut] = Field(default_factory=list)  # the shortfall's (or none_fits') fixes, as buttons
     cached: bool = False  # AC6: worked out earlier for the same week, answers, settings and data
 
 

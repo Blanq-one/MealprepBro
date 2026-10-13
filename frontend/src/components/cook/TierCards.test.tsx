@@ -16,7 +16,7 @@ const ANSWERS: CookAnswers = { schema_version: 1, mode: "prep", prep: { shape: "
 const PATH = "/api/v1/cook/meal-prep/tiers";
 
 function card(tier: TierCard["tier"], label: string, extra: Partial<TierCard> = {}): TierCard {
-  return { tier, label, blurb: `${label} blurb`, status: "estimated", total_cents: 1000, total_display: "about $10.00", same_as_display: null, protein_per_day_display: "about 40 g protein a day", reason: null, stock_up_cents: 0, stock_up_display: null, includes_display: null, shortfall_display: null, fix: null, cached: false, ...extra } as TierCard;
+  return { tier, label, blurb: `${label} blurb`, status: "estimated", total_cents: 1000, total_display: "about $10.00", same_as_display: null, protein_per_day_display: "about 40 g protein a day", reason: null, stock_up_cents: 0, stock_up_display: null, includes_display: null, shortfall_display: null, less_than_display: null, fixes: [], cached: false, ...extra } as TierCard;
 }
 
 const BROKE = card("broke", "Broke mode", { total_cents: 1973, total_display: "about $19.73" });
@@ -85,9 +85,19 @@ describe("the tier cards (AC3–AC6)", () => {
     expect(screen.getByRole("button", { name: /^A bit better/ })).toHaveTextContent("about $24.80 groceries");
   });
 
+  it("a card that costs less than the one below shows its real price and why, never hidden (AD1)", async () => {
+    const less = card("better", "A bit better", { total_cents: 727, total_display: "about $7.27", less_than_display: "Costs less than Cheapest this week: about $7.27, uses more of what you have." });
+    mockApi((c) => (c.path === PATH ? { lines: lines([BROKE, card("cheapest", "Cheapest", { total_cents: 1931, total_display: "about $19.31" }), less]) } : undefined));
+    render(<Cards />);
+    const better = await screen.findByRole("button", { name: /^A bit better/ });
+    expect(better).toHaveTextContent("about $7.27 groceries");
+    expect(better).toHaveTextContent("Costs less than Cheapest this week: about $7.27, uses more of what you have.");
+    expect(better).not.toHaveTextContent("Same as");
+  });
+
   it("a card's shortfall says why, and its fix is a button beside it (AC4)", async () => {
     const fix: TierFix = { kind: "mood", label: "Allow fancy recipes on Saturday", day: "2026-10-17", mood: "fancy", minutes: null };
-    const fancy = card("fancy", "Fancy", { includes_display: "Up to 3 of one recipe a week", shortfall_display: "No meals with salmon, shrimp or similar this week: the recipes with them are fancy to cook, and none of your cook days allows fancy recipes.", fix });
+    const fancy = card("fancy", "Fancy", { includes_display: "Up to 3 of one recipe a week", shortfall_display: "No meals with salmon, shrimp or similar this week: the recipes with them are fancy to cook, and none of your cook days allows fancy recipes.", fixes: [fix] });
     mockApi((c) => (c.path === PATH ? { lines: lines([BROKE, CHEAPEST, BETTER, fancy]) } : undefined));
     const onFix = vi.fn();
     render(<Cards onFix={onFix} />);
@@ -99,12 +109,14 @@ describe("the tier cards (AC3–AC6)", () => {
   it("a week that can't be planned says why, with its fix; its card can't be picked (AC5)", async () => {
     const why = "Tue 13's dinner comes before your first cook day (Wed 14), so nothing can be cooked for it.";
     const fix: TierFix = { kind: "minutes", label: "Cook on Tuesday too", day: "2026-10-13", mood: null, minutes: 90 };
-    const none = FOUR.map((c) => ({ ...c, status: "none_fits", total_cents: null, total_display: null, same_as_display: null, reason: why, fix }) as TierCard);
+    const start: TierFix = { kind: "start", label: "Start tomorrow", day: "2026-10-13", mood: null, minutes: null };
+    const none = FOUR.map((c) => ({ ...c, status: "none_fits", total_cents: null, total_display: null, same_as_display: null, reason: why, fixes: [start, fix] }) as TierCard);
     mockApi((c) => (c.path === PATH ? { lines: lines(none) } : undefined));
     render(<Cards />);
     expect(await screen.findByRole("button", { name: /Broke mode/ })).toBeDisabled();
     expect(screen.getAllByText(why)).toHaveLength(4);
     expect(screen.getAllByRole("button", { name: "Cook on Tuesday too" })).toHaveLength(4);
+    expect(screen.getAllByRole("button", { name: "Start tomorrow" })).toHaveLength(4); // AD2: both fixes
     expect(screen.queryByText(/No week fits/)).not.toBeInTheDocument();
   });
 
@@ -198,6 +210,13 @@ describe("a tier card's fix on the draft (AC4, AC5)", () => {
     const sessions: PrepDraft = { ...base, style: "sessions", sessions: [{ day: "2026-10-14", minutes: 120 }] };
     const raise: TierFix = { kind: "minutes", label: "Allow 55 min on Wednesday", day: "2026-10-14", mood: null, minutes: 55 };
     expect(withDayFix(sessions, raise, settings, TODAY).sessions).toEqual([{ day: "2026-10-14", minutes: 120 }]);
+  });
+
+  it("Start tomorrow moves the plan's first day; a big cook day before it moves with it (AD2)", () => {
+    const start: TierFix = { kind: "start", label: "Start tomorrow", day: "2026-10-13", mood: null, minutes: null };
+    expect(withDayFix(base, start, settings, TODAY)).toMatchObject({ start: "tomorrow", style: "mix" });
+    const big: PrepDraft = { ...base, style: "big_day", cookDay: "today" };
+    expect(withDayFix(big, start, settings, TODAY)).toMatchObject({ start: "tomorrow", cookDay: null }); // the start day
   });
 
   it("one big cook day takes it on its own day", () => {

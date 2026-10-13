@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { Pottle } from "@/components/ui/Pottle";
 import type { PlanStreamEvent } from "@/lib/api/types";
+import { startLabel } from "@/lib/cook/prep";
 import { weekdayName } from "@/lib/format/dates";
 import { formatCents } from "@/lib/format/money";
 
@@ -18,9 +19,12 @@ export type PlanDiagnostic = {
   day?: string; // "YYYY-MM-DD"
   suggested_minutes?: number; // COOK_TIME_SHORT and COOK_TIME_TOO_SHORT: the minutes to allow (P4)
   mood?: string; // RECIPES_LEFT_OUT: the mood the left-out recipes need, e.g. "fancy"
+  start_day?: string; // MEAL_BEFORE_COOK_DAY: the first cook day, where "Start tomorrow" moves the plan (AD3)
 };
 
 export type FixActions = {
+  /** Plan again starting on this day ("Start tomorrow": a meal came before the first cook day). */
+  onStart?: (day: string) => void;
   /** Plan again from what you have, allowing this top-up. */
   onTopUp?: (cents: number) => void;
   /** Plan again with a shopping list. */
@@ -76,6 +80,14 @@ function Fixes({ d, actions, busy, seen }: { d: PlanDiagnostic; actions: FixActi
     if (actions.onMinutes) buttons.push({ label: day ? `Allow ${minutes} min on ${weekdayName(day)}` : `Allow ${minutes} min`, primary: true, run: () => actions.onMinutes?.(day, minutes) });
     if (actions.onMood) buttons.push({ label: "Use simpler recipes", run: () => actions.onMood?.(day, "simple") });
   }
+  if (d.code === "MEAL_BEFORE_COOK_DAY") {
+    // AD3: start on the first cook day, or cook that day too (the tier cards offer the same two)
+    const start = d.start_day;
+    const day = d.day;
+    const minutes = d.suggested_minutes;
+    if (start && actions.onStart) buttons.push({ label: startLabel(start), primary: true, run: () => actions.onStart?.(start) });
+    if (day && minutes && actions.onMinutes) buttons.push({ label: `Cook on ${weekdayName(day)} too`, run: () => actions.onMinutes?.(day, minutes) });
+  }
   if (d.code === "RECIPES_LEFT_OUT" && d.mood && actions.onMood) {
     const mood = d.mood;
     buttons.push({ label: `Allow ${mood} recipes`, run: () => actions.onMood?.(null, mood) });
@@ -125,8 +137,8 @@ function Reason({ d, actions, busy, seen }: { d: PlanDiagnostic; actions: FixAct
 }
 
 /** The final `result` line when it isn't a plan (M17, P4; C6 Infeasible): Pottle oops and one to three
- * reasons in plain words, each said once with its fix as a button: "Allow a $37 top-up", "Switch to
- * shopping", "Raise the budget to $55", "Allow 65 min on Monday", "Use simpler recipes", "Allow fancy
+ * reasons in plain words, each said once with its fix as a button: "Start tomorrow", "Cook on Tuesday too",
+ * "Allow a $37 top-up", "Switch to shopping", "Raise the budget to $55", "Allow 65 min on Monday", "Use simpler recipes", "Allow fancy
  * recipes", "Change calories", "Review held items". The items a money fix would buy sit behind "See what it
  * would buy". No command-line wording. */
 export function NoPlanFits({ event, actions = {}, busy = false }: { event: PlanStreamEvent; actions?: FixActions; busy?: boolean }) {

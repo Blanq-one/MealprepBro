@@ -54,6 +54,7 @@ from app.planning.rounded import RoundedPlan
 from app.planning.shortlist import FULL_SOLVE_MAX, SHORTLIST_PER_SLOT, SHORTLIST_WIDER, shortlist
 from app.planning.snap import stepiest_batch
 from app.planning.solver.backend import SolveBudget, SolveDeadlineError, SolveStats, solve_budget
+from app.planning.solver.diagnostics import before_first_cook_day
 from app.planning.solver.model import (
     Diagnostic,
     EmptyCandidatePoolError,
@@ -163,6 +164,7 @@ def problem_json(
                     "items": list(d.items) or None,
                     "suggested_minutes": d.suggested_minutes,
                     "mood": d.mood,
+                    "start_day": d.start_day.isoformat() if d.start_day else None,
                 }.items()
                 if v is not None
             }
@@ -486,6 +488,19 @@ class Orchestrator:
         run.constraints = constraints.canonical()
         self._progress(run, "candidates")
         problem = build_problem(self.session, self.user_id, constraints)
+        # a meal before the first cook day (AD3): no recipe can help, so say so before any LLM call or solve
+        if (early := before_first_cook_day(constraints)) is not None:
+            return self._finish(
+                run,
+                PlanOutcome(
+                    "infeasible",
+                    run.id,
+                    diagnostics=(early,),
+                    error=problem_json(
+                        "No plan fits this week", early.message, code="infeasible", diagnostics=(early,)
+                    ),
+                ),
+            )
         llm = self._llm(run) if request.allow_llm else None
         generator: CandidateGenerator | IdeaCandidates | None = None
         if llm is not None:
