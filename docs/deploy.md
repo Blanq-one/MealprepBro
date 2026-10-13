@@ -1,92 +1,248 @@
-# Deploying Mealbro ($0/month: Vercel Hobby + Neon Free)
+# Deploying Mealbro: a step-by-step checklist ($0/month: Vercel Hobby + Neon Free)
 
-Why this setup, and its limits: `docs/hosting.md`. Nothing here has been run yet: no accounts exist and nothing
-is deployed. These are the steps for you to follow.
+Why this setup, and its limits: `docs/hosting.md`. **Nothing here has been done yet**: no accounts exist, the repo
+has no GitHub remote and nothing is deployed. Work down the list and tick each box. It takes about an hour the
+first time. If a screen looks different from what's described, or a command prints an error, stop there and send
+me a screenshot or the output; don't improvise.
 
 ```
-browser ──https──▶ Vercel project (one domain)
+iPhone ──https──▶ Vercel project (one address, e.g. https://mealbro.vercel.app)
                     ├─ /api/*, /health ─▶ "api" service: FastAPI as one Python function (backend/)
-                    └─ everything else ─▶ "web" service: the Next.js PWA, static export (frontend/)
+                    └─ everything else ─▶ "web" service: the Next.js PWA, a static export (frontend/)
                     api ──pooled connection──▶ Neon Postgres (AWS us-east-1)
 ```
 
-`vercel.json` (repo root) defines both services and the routing. The API function may run up to 300 s;
-planning budgets 180 s of that (`PLAN_TIME_BUDGET_SECONDS`) and streams progress while it works.
+`vercel.json` (repo root) defines both services and the routing. The API function may run up to 300 s; planning
+budgets 180 s of that (`PLAN_TIME_BUDGET_SECONDS`) and streams progress while it works.
 
-## 1. Neon (database)
+**Where each secret lives.** Your password hash, session secret, Groq key and Neon connection strings go into
+**Vercel's settings page only** (step 6), and into the terminal for the one-time database load (step 5). Never
+into a file in the repo, never into `.env.example`. Both free plans stay free: over a limit, Vercel Hobby pauses
+the feature for 30 days and Neon Free pauses the database; neither bills you.
 
-1. Sign up at neon.com (Free plan). Create a project **mealbro**, Postgres **17**, region **AWS US East
-   (N. Virginia)**, which is next to Vercel's default function region (`iad1`).
-2. In **Connect**, copy two connection strings for the `neondb` database:
-   - **pooled** (Connection pooling on; the host contains `-pooler`): this is `DATABASE_URL`.
-   - **direct** (pooling off): this is `DATABASE_URL_UNPOOLED`. Migrations, `pg_dump` and the one-time
-     data load use it, because the pooler runs PgBouncer in transaction mode.
+Commands below are for **Git Bash** (it came with Git for Windows). PowerShell equivalents are given where they
+differ.
 
-## 2. Load the database once, from your PC
+---
 
-From `backend/`, with the direct string (PowerShell: `$env:DATABASE_URL = "postgresql://..."` instead of
-`export`):
+## 1. Check that nothing secret is in the repo
 
-```bash
-export DATABASE_URL='postgresql://<user>:<password>@ep-xxxx.us-east-1.aws.neon.tech/neondb?sslmode=require'
-uv run python -m app.cli migrate        # creates the schema (alembic upgrade head)
-uv run python -m app.cli usda-import    # the full USDA cache from data/raw/usda (64 MB; COPY, a minute or two)
-uv run python -m app.cli seed           # ingredients, stores, prices, seed recipes, your default settings
-uv run python -m app.cli plan-week --no-llm --dry-run   # sanity check against the cloud database
-```
+- [ ] In Git Bash, from the repo folder:
 
-The full USDA import is what lets you approve new ingredients later (it maps them to a USDA food). It fits
-Neon Free easily; `usda-import app/testing/fixtures/usda_subset/*` loads only the foods the seed uses.
+  ```bash
+  git status                                    # "nothing to commit, working tree clean"
+  git ls-files | grep -i "\.env"                # only: .env.example
+  git log --all -p | grep -cE "gsk_[A-Za-z0-9]{20,}|scrypt:[0-9]+:[0-9]+:[0-9]+:[A-Za-z0-9_-]{16,}:"   # 0
+  ```
 
-## 3. Your password
+  The last line looks through every commit ever made for a Groq key or a password hash: it must print `0`. (I ran
+  the same checks on 2026-10-13: `.env` has never been committed, only `.env.example`, which holds placeholders.)
+  Your real `.env` stays on your PC; `.gitignore` keeps it out.
 
-```bash
-cd backend && uv run python -m app.cli hash-password
-```
+## 2. Push the code to a private GitHub repository
 
-It asks for the password twice and prints two lines, `AUTH_PASSWORD_HASH=...` and `SESSION_SECRET=...`, for
-the next step. The hash has no `$`. A new `SESSION_SECRET` signs out every device.
+- [ ] Sign in at **github.com** (or create a free account).
+- [ ] Click **+** (top right) → **New repository**. Name: `mealbro`. Choose **Private**. Leave "Add a README",
+  ".gitignore" and "license" **off** (the repo already has them). Click **Create repository**.
+- [ ] Back in Git Bash, in the repo folder (replace `<you>` with your GitHub user name):
 
-## 4. Vercel (app)
+  ```bash
+  git remote add origin https://github.com/<you>/mealbro.git
+  git push -u origin master
+  ```
 
-1. Push this repository to a private GitHub repo (Vercel deploys from Git; it has no remote yet).
-2. Sign up at vercel.com (Hobby). **Add New → Project**, import the repo, leave **Root Directory** as the
-   repo root (`vercel.json` there defines the two services). Don't add a framework preset by hand.
-3. **Settings → Environment Variables**, all for the **Production** environment only (preview deployments
-   then have no database and can't touch your data):
+  The first push opens a browser window to sign in to GitHub; approve it.
+- [ ] On the repository's GitHub page: it says **Private** next to the name, and there is no `.env` in the file
+  list (`.env.example` is fine).
 
-   | Variable | Value |
-   |---|---|
-   | `DATABASE_URL` | the **pooled** Neon string |
-   | `DATABASE_URL_UNPOOLED` | the **direct** Neon string |
-   | `AUTH_PASSWORD_HASH` | from step 3 |
-   | `SESSION_SECRET` | from step 3 |
-   | `GROQ_API_KEY` | your Groq key |
-   | `LLM_MODEL` | e.g. `openai/gpt-oss-120b` (a Groq model with strict structured outputs) |
-   | `LLM_STRUCTURED_MODE` | `strict` |
-   | `RUN_MIGRATIONS_ON_DEPLOY` | `1` (see step 5), or leave unset and migrate by hand |
+From now on, every `git push` of `master` deploys the app (once step 6 is done).
 
-   Everything else has a working default (`.env.example` lists them). Don't copy
-   `SESSION_COOKIE_SECURE=false` from your local `.env`: on Vercel it must stay unset (true). On Vercel the app itself switches to
-   one connection per request (`DB_POOL` null), secure cookies and no public `/docs`.
-4. Deploy. Then open `https://<project>.vercel.app/health` (`{"status": "ok", "database": "ok"}`: this also wakes the database) and the app's sign-in page.
+## 3. Create the Neon database
 
-## 5. Migrations on deploy
+- [ ] Sign up at **neon.com** (Free plan; "Sign up with GitHub" is fine).
+- [ ] Create a project: name `mealbro`, Postgres version **17**, region **AWS US East 1 (N. Virginia)**. That's
+  next to Vercel's default function region (`iad1`), so every database call is short.
+- [ ] On the project dashboard, click **Connect**. Database `neondb`. Copy two connection strings into a password
+  manager or a note **outside the repo folder**:
+  - with **Connection pooling on** (the host contains `-pooler`): this is the **pooled** string, `DATABASE_URL`.
+  - with **Connection pooling off**: this is the **direct** string, `DATABASE_URL_UNPOOLED`. Migrations and the
+    one-time load use it, because the pooler runs PgBouncer in transaction mode.
 
-The backend's build step is `python -m app.deploy`. With `RUN_MIGRATIONS_ON_DEPLOY=1` on a **production**
-deployment it runs `alembic upgrade head` over the direct connection before the new code goes live; on preview
-deployments it does nothing. That is safe while the old code is still serving, because every migration is
-additive (BUILD_PLAN §4.1: new tables, nullable columns, indexes; nothing renamed or dropped).
+  Both look like `postgresql://<user>:<password>@ep-xxxx.us-east-1.aws.neon.tech/neondb?sslmode=require`. They
+  contain the database password: treat them like a password.
 
-If you'd rather not migrate from the build, leave the flag unset and run `uv run python -m app.cli migrate`
-from your PC (step 2's direct `DATABASE_URL`) before pushing a change that adds a migration.
+## 4. Make a new password and session secret for the live app
 
-## 6. On the iPhone
+Use a **new** password, not the one on your PC: the live app is on the internet. A long passphrase is best
+(four or more unrelated words); the minimum is 8 characters.
 
-Open the `https://<project>.vercel.app` address in **Safari**, sign in, then **Share → Add to Home Screen**.
-It launches full screen with its own icon; the sign-in cookie lasts 180 days and renews itself as you use it.
-After one online visit the plan, its recipes, the inventory and the grocery list open offline; check-offs
-and prices you enter offline are sent once you're back online.
+- [ ] In Git Bash:
+
+  ```bash
+  cd backend
+  uv run python -m app.cli hash-password
+  ```
+
+  It asks for the password twice and prints two lines:
+
+  ```
+  AUTH_PASSWORD_HASH=scrypt:32768:8:1:...
+  SESSION_SECRET=...
+  ```
+
+  Keep both lines with the Neon strings (outside the repo); they go into Vercel in step 6. The hash is made with the
+  full work factor, and the secret is 64 random characters. The live app refuses to start with your PC's values,
+  `.env.example`'s placeholders, or a hash made for tests (`app/production.py`).
+
+## 5. Load the Neon database once, from your PC
+
+This fills the new database: the schema (migrations), the USDA nutrition cache, then the seed (ingredients, stores,
+prices, the seed recipes and your default settings). The live app starts fresh: the plans, inventory and settings
+on your PC stay on your PC (if you want them copied over, ask me first).
+
+- [ ] Docker isn't needed for this step. In a **new** Git Bash window, from the repo's `backend` folder, paste the
+  **direct** string from step 3 between the quotes:
+
+  ```bash
+  export DATABASE_URL='postgresql://<user>:<password>@ep-xxxx.us-east-1.aws.neon.tech/neondb?sslmode=require'
+  export DATABASE_URL_UNPOOLED="$DATABASE_URL"
+  uv run python -m app.cli migrate        # the schema; the last line: "Running upgrade 0011 -> 0012, ..."
+  uv run python -m app.cli usda-import    # the full USDA cache from data/raw/usda (a few minutes over the internet)
+  uv run python -m app.cli seed           # ingredients, stores, prices, seed recipes, default settings
+  uv run python -m app.cli plan-week --no-llm --dry-run   # a test plan from the cloud database; saves nothing
+  ```
+
+  (PowerShell instead of `export`: `$env:DATABASE_URL = '...'` and `$env:DATABASE_URL_UNPOOLED = $env:DATABASE_URL`.)
+
+  These two variables win over your `.env`, so every command here talks to Neon, not to your PC's database. The
+  last command prints a week of meals with its totals; if any command prints an error instead, stop and send it to
+  me.
+- [ ] **Close this terminal window** when done, so a later command can't reach Neon by accident.
+
+The full USDA import is what lets you approve new ingredients later (it maps them to a USDA food); it fits Neon
+Free easily (your PC's database is about 64 MB with it).
+
+## 6. Create the Vercel project and set its variables
+
+- [ ] Sign up at **vercel.com** with **Continue with GitHub**, on the **Hobby** plan.
+- [ ] **Add New… → Project**. Under "Import Git Repository", connect GitHub; when GitHub asks which repositories
+  Vercel may see, choose **Only select repositories** → `mealbro`. Click **Import** next to `mealbro`.
+- [ ] On the configure screen: leave **Root Directory** as the repo root (`./`) and don't change the framework
+  preset: `vercel.json` in the repo defines the two parts. Don't add variables here. Click **Deploy**.
+- [ ] **This first deployment fails on purpose.** Its build log ends with
+  `app.deploy: refusing to deploy to production: SESSION_SECRET is missing; AUTH_PASSWORD_HASH is missing; DATABASE_URL points at localhost, a local database, not your Neon one`.
+  That's the production safety check doing its job: there are no settings yet.
+- [ ] Open the project → **Settings → Environment Variables**. Add each row below. For **every** row, tick
+  **Production only** (untick Preview and Development), so preview deployments have no database and can't touch
+  your data. Turn on **Sensitive** for the rows marked so (Vercel then never shows the value again). Paste the
+  value only: no quotes, no `NAME=` in front.
+
+  | Name | Value | Sensitive |
+  |---|---|---|
+  | `DATABASE_URL` | the **pooled** Neon string (step 3, host has `-pooler`) | yes |
+  | `DATABASE_URL_UNPOOLED` | the **direct** Neon string (step 3) | yes |
+  | `AUTH_PASSWORD_HASH` | from step 4, everything after `AUTH_PASSWORD_HASH=` | yes |
+  | `SESSION_SECRET` | from step 4, everything after `SESSION_SECRET=` | yes |
+  | `GROQ_API_KEY` | a Groq key: at console.groq.com → **API Keys → Create API Key**, name it `mealbro-vercel` (its own key, so you can revoke it alone) | yes |
+  | `LLM_MODEL` | `openai/gpt-oss-120b` (a Groq model with strict structured outputs) | no |
+  | `LLM_IDEAS_MODEL` | `openai/gpt-oss-20b` (the faster model for meal ideas, as on your PC) | no |
+  | `LLM_STRUCTURED_MODE` | `strict` | no |
+  | `RUN_MIGRATIONS_ON_DEPLOY` | `1` (each production deploy runs new migrations first; see "Later deploys") | no |
+
+  **Don't add** anything else from your `.env`. In particular not `SESSION_COOKIE_SECURE` (it must stay unset,
+  which means true: https only; `false` makes the app refuse to start), `VERCEL` or `VERCEL_ENV` (Vercel sets them),
+  `DB_POOL`, `TRUSTED_PROXIES`, `APP_ENV`, `TEST_DATABASE_URL`, `POSTGRES_*` or `BACKEND_ORIGIN`. Everything else has
+  a working default (`.env.example` lists them all). On Vercel the app by itself uses one database connection per
+  request, a Secure sign-in cookie, the client address Vercel reports for the sign-in limit, and no public `/docs`.
+
+  Groq's free allowance (about 200K tokens a day) belongs to your Groq account, so your PC and the live app share
+  it.
+- [ ] **Deployments** tab → the failed deployment's **⋯** menu → **Redeploy**. This time the build log shows
+  `app.deploy: migrating the production database` (nothing to do: step 5 already did it) and the deployment turns
+  **Ready**. The first Python build takes a few minutes.
+
+## 7. Check the live app (on your PC's browser)
+
+- [ ] The project page shows its address under **Domains** (e.g. `https://mealbro.vercel.app`; Vercel adds a suffix
+  if the name is taken). Open `https://<your address>/health`. It shows `{"status": "ok", "database": "ok"}` (the
+  first visit may take a few seconds while Neon wakes up).
+- [ ] Open `https://<your address>/`, sign in with the **new** password from step 4. (Five wrong tries within 15
+  minutes pause sign-in from that device for a while, so don't test that on purpose.)
+- [ ] `https://<your address>/docs` is **not found** (no public API docs on the live app).
+- [ ] Make one plan: on the **Cook** tab choose meal prep, answer the questions, pick a budget card, and let it
+  build. It finishes inside the request (progress lines while it works).
+
+## 8. Check solve times in the run records
+
+Every planning run keeps a record of what its solves took (`generation_run.progress["solve"]`). On your PC your dev
+week plans in about 62 s of its 180 s; a Vercel function has one CPU, so it may be slower. Check after your first
+few plans, and again after any change to the planner.
+
+- [ ] In the Neon console, open your project → **SQL Editor**, paste this and click **Run**:
+
+  ```sql
+  select id, purpose, status,
+         finished_at - started_at                     as took,
+         progress->'solve'->>'seconds'                 as solver_seconds,
+         progress->'solve'->>'week_solves'             as week_solves,
+         progress->'solve'->>'repairs'                 as day_repairs,
+         progress->'solve'->>'stopped_on_time'         as stopped_on_time,
+         progress->'solve'->>'ran_out_of_time'         as ran_out_of_time,
+         progress->'solve'->>'proven_best'             as proven_best
+  from generation_run
+  where progress ? 'solve'
+  order by id desc
+  limit 10;
+  ```
+
+- [ ] Healthy: `status` is `succeeded`, `took` is well under 3 minutes, `ran_out_of_time` is `false`. A
+  `stopped_on_time` above 0 now and then is fine (that solve kept its best plan so far). If any row says
+  `ran_out_of_time = true`, or `took` is over about 2.5 minutes, copy the rows and send them to me: the time limits
+  may need tuning for Vercel's CPU.
+- [ ] The budget cards share 90 s between them. If a card says "There wasn't time to price this one", tell me which
+  one; it can still be picked.
+
+(Signed in on the live app, `https://<your address>/api/v1/generation-runs/<id>` shows one run's full record too.)
+
+## 9. Check it on the iPhone
+
+- [ ] Open your address in **Safari** (not another browser: only Safari can add a web app to the Home Screen with
+  offline support). Sign in.
+- [ ] **Share → Add to Home Screen → Add**. Open Mealbro from its new icon: it opens full screen, without Safari's
+  address bar.
+- [ ] Open this week's plan, a recipe, Inventory and the grocery list once while online.
+- [ ] Turn on **Airplane Mode**, close Mealbro (swipe it away) and open it again from the icon: the plan, its
+  recipes, the inventory and the grocery list still open. Tick one grocery item.
+- [ ] Turn Airplane Mode off and open Mealbro again: the tick is still there (it was sent once you were back online).
+- [ ] Days later: you're still signed in. The sign-in cookie lasts 180 days and renews itself as you use the app.
+
+## Later deploys
+
+- Every `git push` of `master` builds and deploys production. The build step (`python -m app.deploy`) first runs
+  the safety checks, then, with `RUN_MIGRATIONS_ON_DEPLOY=1`, any new migrations over the direct connection before
+  the new code goes live. That's safe while the old code is still serving, because every migration is additive
+  (BUILD_PLAN §4.1: new tables, nullable columns, indexes; nothing renamed or dropped). New seed recipes or prices
+  need `uv run python -m app.cli seed` against Neon, as in step 5.
+- Rather migrate by hand? Set `RUN_MIGRATIONS_ON_DEPLOY` to `0` and run step 5's `migrate` line before pushing a
+  change that adds a migration.
+- Something broke? **Deployments** → the last good one → **⋯ → Promote to Production** (Instant Rollback) puts the
+  previous code back in seconds; the additive migrations mean the older code still works on the newer schema.
+- Changing the password: run step 4 again, replace both `AUTH_PASSWORD_HASH` and `SESSION_SECRET` on Vercel, then
+  Redeploy. A new `SESSION_SECRET` signs every device out.
+- Branches other than `master` get preview deployments without any of step 6's settings: they build, but have no
+  database and no keys, so they can't touch your data. That's intended.
+
+## If something goes wrong
+
+| What you see | What it means |
+|---|---|
+| Build log: `refusing to deploy to production: ...` | A setting in step 6 is missing or wrong; the message names it. Fix it on Vercel, then Redeploy. |
+| `SESSION_SECRET looks like a dev or example value` | A placeholder or a short, made-up value: use step 4's. |
+| `AUTH_PASSWORD_HASH isn't a password hash` | Usually quotes, a space, or `AUTH_PASSWORD_HASH=` pasted along with it. |
+| `DATABASE_URL points at localhost` | The variable isn't set for **Production**, or holds your PC's URL. |
+| `/health` shows `"database": "error"` | The pooled string is wrong, or the Neon project is paused; check it in the Neon console. |
+| Sign-in always says the password is wrong | The hash on Vercel isn't from the password you're typing: run step 4 again. |
+| A plan stops with a Groq message | The key, `LLM_MODEL` or the day's Groq allowance; the message says which. |
 
 ## Backups
 
@@ -111,4 +267,6 @@ Fallback with two Vercel projects from the same repo:
 
 See README.md, "Run it on your phone over home Wi-Fi". That runs over plain http, so sign-in uses a non-Secure
 cookie (`SESSION_COOKIE_SECURE=false`, set by docker compose) and iOS won't run the service worker; offline
-use needs the https deploy.
+use needs the https deploy. At home every device shares one sign-in counter (five wrong tries in 15 minutes
+pause sign-in for all of them): the Next dev server passes a device's own `X-Forwarded-For` along unchanged, so
+the backend believes no forwarded address there. On Vercel each device gets its own counter.

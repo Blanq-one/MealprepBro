@@ -46,7 +46,10 @@ one project, one domain, and each part built on its own.
 - **Connections.** On Vercel each request opens its own short-lived connection (no pool to go stale) to Neon's
   PgBouncer endpoint, without psycopg's server-side prepared statements, and connecting retries with back-off
   while a compute wakes from scale-to-zero. Migrations use the direct connection.
-- **Sign-in rate limiting** is counted in the database, since function instances share no memory.
+- **Sign-in rate limiting** is counted in the database, since function instances share no memory, and keyed on
+  the client address Vercel's edge reports (`x-vercel-forwarded-for`, which a client can't set; PD1, step 2b.13).
+- **Production safety checks** (step 2b.13): the app and the build step refuse an insecure cookie, a missing or
+  example session secret or password hash, and a local database URL (`app/production.py`).
 
 ## Options considered before (for the record)
 

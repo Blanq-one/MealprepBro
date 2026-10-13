@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.api.deps import DbSession
 from app.auth import rate_limit, sessions
+from app.auth.client_address import client_address
 from app.auth.dependencies import (
     AppSettings,
     AuthError,
@@ -17,6 +18,7 @@ from app.auth.dependencies import (
     set_session_cookie,
 )
 from app.auth.passwords import verify_password
+from app.config import Settings
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"], dependencies=[Depends(check_origin)])
 SignedIn = Annotated[sessions.Session, Depends(require_session)]
@@ -32,13 +34,15 @@ class SessionOut(BaseModel):
     expires_at: datetime
 
 
-def client_address(request: Request, trust_proxy: bool) -> str:
-    """On Vercel the platform sets these headers (a client can't); elsewhere use the socket's address."""
-    if trust_proxy:
-        forwarded = request.headers.get("x-real-ip") or request.headers.get("x-forwarded-for", "")
-        if first := forwarded.split(",")[0].strip():
-            return first
-    return request.client.host if request.client else "unknown"
+def request_address(request: Request, settings: Settings) -> str:
+    """The real client address (PD1): Vercel's own header on Vercel, a trusted proxy's X-Forwarded-For behind
+    TRUSTED_PROXIES, else the socket's peer (auth/client_address.py)."""
+    return client_address(
+        request.headers,
+        request.client.host if request.client else None,
+        on_vercel=bool(settings.vercel),
+        trusted=settings.trusted_proxy_set,
+    )
 
 
 @router.post("/login", status_code=204, response_class=Response)
@@ -48,7 +52,7 @@ def login(body: LoginIn, request: Request, session: DbSession, settings: AppSett
     secret = session_secret(settings)
     if settings.auth_password_hash is None or not settings.auth_password_hash.get_secret_value():
         raise AuthError(503, "Sign-in isn't set up", "Set AUTH_PASSWORD_HASH (see docs/deploy.md).")
-    key = rate_limit.client_key(secret, client_address(request, trust_proxy=bool(settings.vercel)))
+    key = rate_limit.client_key(secret, request_address(request, settings))
     limits = rate_limit.Limits(
         settings.login_max_failures,
         settings.login_max_failures_global,

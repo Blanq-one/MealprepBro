@@ -7,6 +7,8 @@ from typing import Literal
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from app.auth.client_address import TrustedProxies, parse_trusted, trusted_proxies
+
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 
 StructuredMode = Literal["strict", "best_effort"]
@@ -34,6 +36,9 @@ class Settings(BaseSettings):
     db_connect_timeout_seconds: int = Field(default=15, ge=1, le=120)  # Neon wakes from scale-to-zero
     db_connect_retries: int = Field(default=3, ge=0, le=10)
     vercel: str | None = None  # set to "1" by Vercel
+    vercel_env: str | None = None  # set by Vercel: production | preview | development
+    # production on another host: APP_ENV=production turns on the startup safety checks (app/production.py)
+    app_env: str | None = None
     usda_raw_dir: Path = BACKEND_DIR.parent / "data" / "raw" / "usda"
     log_level: str = "INFO"
 
@@ -44,6 +49,10 @@ class Settings(BaseSettings):
     session_cookie_secure: bool = True  # False only for plain-http testing on your home Wi-Fi
     session_max_age_days: int = Field(default=180, ge=1, le=400)
     allowed_origins: str = ""  # extra origins that may send changes (comma-separated); same-origin always may
+    # proxies whose X-Forwarded-For is believed off Vercel (addresses, networks or host names, comma
+    # separated), only ones that append the address they saw; never the Next dev server, which relays a
+    # client's own header. Empty (docker compose too) = none: the socket's peer is the client (PD1, 2b.13)
+    trusted_proxies: str = ""
     login_max_failures: int = Field(default=5, ge=1, le=100)  # per client within the window...
     login_max_failures_global: int = Field(default=20, ge=1, le=1000)  # ...and from everywhere together
     login_window_minutes: int = Field(default=15, ge=1, le=1440)
@@ -77,7 +86,14 @@ class Settings(BaseSettings):
     # More ideas' background batch never leaves less than this much of the daily budget for calls you ask for
     llm_prefetch_daily_reserve: int = Field(default=30_000, ge=0)
 
-    @field_validator("llm_reasoning_effort", "llm_ideas_model", mode="before")
+    @field_validator(
+        "llm_reasoning_effort",
+        "llm_ideas_model",
+        "database_url_unpooled",
+        "app_env",
+        "vercel_env",
+        mode="before",
+    )
     @classmethod
     def _blank_is_none(cls, value: object) -> object:
         return None if isinstance(value, str) and not value.strip() else value
@@ -90,6 +106,16 @@ class Settings(BaseSettings):
     solver_time_limit_seconds: int = Field(default=30, ge=1, le=600)
     solver_gap_rel: float = Field(default=0.005, ge=0, le=0.2)
     solver_gap_abs: float = Field(default=1.0, ge=0, le=20)  # objective points (~$2 of groceries)
+
+    @field_validator("trusted_proxies")
+    @classmethod
+    def _proxies(cls, value: str) -> str:
+        parse_trusted(value, resolver=lambda _: [])  # a bad entry is a configuration error at startup
+        return value
+
+    @property
+    def trusted_proxy_set(self) -> TrustedProxies:
+        return trusted_proxies(self.trusted_proxies)
 
     @property
     def app_database_url(self) -> str:

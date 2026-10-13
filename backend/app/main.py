@@ -21,6 +21,7 @@ from app.api.routes import (
 )
 from app.auth.dependencies import check_origin, require_session
 from app.config import get_settings
+from app.production import check_production
 
 # Everything under /api/v1 needs a signed-in session and a same-origin request, except sign-in itself.
 PROTECTED: tuple[APIRouter, ...] = (
@@ -41,7 +42,9 @@ PROTECTED: tuple[APIRouter, ...] = (
 
 
 def create_app() -> FastAPI:
-    docs = not get_settings().vercel  # no public API docs on the deployed app
+    settings = get_settings()
+    check_production(settings)  # refuses to start on unsafe production settings (step 2b.13)
+    docs = not settings.vercel  # no public API docs on the deployed app
     app = FastAPI(
         title="Mealbro",
         version="0.2.0",

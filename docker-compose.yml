@@ -55,6 +55,11 @@ services:
       # Plain http on your home Wi-Fi: a Secure cookie would never be sent back. The cloud deploy uses https.
       SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}
+      # No proxy's X-Forwarded-For is believed here (PD1): the Next dev server (the frontend service) passes a
+      # client's own header along unchanged and never adds the address it saw, so believing it would let any
+      # device on the Wi-Fi pick its own sign-in counter. Every device here shares one counter; on Vercel each
+      # gets its own. Set it in .env only for a proxy that appends the address (nginx's $proxy_add_x_forwarded_for).
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
     ports:
       - "8000:8000"
     volumes:
