@@ -27,7 +27,9 @@ from app.db.models import (
 )
 from app.domain.enums import PriceSource, StorageLocation
 from app.domain.expiry import ShelfLife, estimate_expiry
+from app.domain.purchase import cheapest_cover
 from app.domain.units import UnitError, convert, normalize_unit
+from app.planning.loader import load_ingredient_plans
 from app.services import products as product_service
 from app.services.errors import ConflictError
 from app.services.ingredient_data import load_ingredients
@@ -218,3 +220,74 @@ def complete(
     glist.status = "done"
     session.flush()
     return CompleteResult(glist, lots, prices, False, skipped)
+
+
+# ---------------- step 2b.6: I'm out of this (AA5) ----------------
+OUT_OF_IT_NOTE = "Added: you're out of it"
+
+
+def add_item(
+    session: Session,
+    user_id: int,
+    list_id: int,
+    ingredient_id: int,
+    *,
+    quantity: Decimal,
+    unit: str,
+    store_ids: tuple[int, ...],
+    recipe: str | None = None,
+) -> tuple[GroceryListItem, bool]:
+    """Put an ingredient on a shopping list (I'm out of this): the cheapest whole packages at your stores that
+    cover `quantity`. Returns the item and whether it was added (False: it was already on the list to buy)."""
+    glist = session.get(GroceryList, list_id)
+    if glist is None or glist.user_id != user_id:
+        raise GroceryError(f"grocery list {list_id} not found")
+    if glist.status == "done":
+        raise ConflictError("This trip is done, so it can't take more items; it goes on your next list.")
+    items = list(session.scalars(select(GroceryListItem).where(GroceryListItem.grocery_list_id == glist.id)))
+    for item in items:
+        if (
+            item.ingredient_id == ingredient_id
+            and (item.is_manual or (item.reason or {}).get("kind") in ("buy", "unpriced"))
+            and not item.checked_at
+        ):
+            return item, False
+    plan = load_ingredient_plans(session, user_id, [ingredient_id], store_ids)[ingredient_id]
+    try:
+        need = plan.to_planning(quantity, unit).quantize(Q3)
+    except UnitError as exc:
+        raise GroceryError(f"can't read {quantity} {unit}: {exc}") from exc
+    cover = cheapest_cover(need, plan.offers)
+    buys = cover.buys if cover is not None else ()
+    first = buys[0] if buys else None
+    packages = sum(b.packages or 0 for b in buys) or None
+    item = GroceryListItem(
+        grocery_list_id=glist.id,
+        position=max((i.position for i in items), default=0) + 1,
+        ingredient_id=ingredient_id,
+        product_id=first.offer.product_id if first else None,
+        store_id=first.offer.store_id if first else None,
+        needed_quantity=need,
+        inventory_used_quantity=Decimal(0),
+        to_buy_quantity=(cover.purchased if cover is not None else need).quantize(Q3),
+        expected_remainder_quantity=cover.remainder.quantize(Q3)
+        if cover is not None and cover.remainder
+        else None,
+        unit=plan.planning_unit,
+        packages=packages,
+        estimated_cost_cents=cover.cents if cover is not None else None,
+        price_observation_id=first.offer.ref if first else None,
+        is_manual=True,
+        reason={
+            "kind": "buy" if cover is not None else "unpriced",
+            "recipes": [recipe] if recipe else [],
+            "note": OUT_OF_IT_NOTE,
+            "is_estimate": any(b.offer.is_estimate for b in buys),
+            "perishable": plan.perishable,
+            "stock_up": plan.stock_up,
+            "to_buy_total": str(need),
+        },
+    )
+    session.add(item)
+    session.flush()
+    return item, True

@@ -25,6 +25,7 @@ from app.services.ingredients import IngredientNotFoundError
 from app.services.inventory import InventoryError
 from app.services.plans import RunNotFoundError
 from app.services.products import ProductError
+from app.services.recipe_edits import EditError
 from app.services.recipes import RecipeNotFoundError
 from app.services.settings import NotSeededError, SettingsError
 from app.services.suggestions import SuggestionError
@@ -66,6 +67,7 @@ def install_error_handlers(app: FastAPI) -> None:
         ConstraintError,
         GroceryError,
         CookThisError,
+        EditError,
     )
 
     @app.exception_handler(ValueError)

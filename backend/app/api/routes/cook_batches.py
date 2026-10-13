@@ -85,6 +85,7 @@ def get_batch(batch_id: int, session: DbSession, user: CurrentUser) -> BatchDeta
                 optional=optional,
                 adjustment=row.adjustment,
                 portion_note=note,
+                line_id=row.recipe_ingredient_id,
             )
             for row, name, display, prep, optional, note in view.lines
         ],

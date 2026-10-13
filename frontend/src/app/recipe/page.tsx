@@ -1,9 +1,10 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useState } from "react";
 
 import { useOnline } from "@/components/AppShell";
+import { IngredientMore } from "@/components/cook/IngredientMore";
 import { NotForMe } from "@/components/cook/NotForMe";
 import { RecipeActions } from "@/components/cook/RecipeActions";
 import { StepsPending } from "@/components/cook/StepsPending";
@@ -12,12 +13,13 @@ import { Page } from "@/components/Page";
 import { type RecipeLine, RecipeView } from "@/components/RecipeView";
 import { ProblemNotice, SyncNote } from "@/components/Status";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
-import { ApiError } from "@/lib/api/client";
+import { ApiError, describeError } from "@/lib/api/client";
 import type { BatchDetail, PortionSize, RecipeVersion, SearchContext } from "@/lib/api/types";
 import { useSteps, writeSteps } from "@/lib/cook/steps";
 import { dayLabel } from "@/lib/format/dates";
 import { slotLabel } from "@/lib/format/labels";
 import { useApi } from "@/lib/hooks/useApi";
+import { undoSwap } from "@/lib/plan/swap";
 
 const SIZES: PortionSize[] = ["small", "normal", "large", "extra_large"];
 const MAX_COOK_PORTIONS = 8; // Cook this cooks for up to 8 (CookMealIn); bigger batches are meal prep
@@ -39,7 +41,42 @@ function linesWith(recipe: RecipeVersion, details: Map<number, string>): RecipeL
     optional: l.optional,
     detail: details.get(l.ingredient_id) ?? null,
     portionNote: l.portion_note ?? null,
+    lineId: l.line_id ?? null,
   }));
+}
+
+/** A line's ⋯ on a recipe page (step 2b.6): an edit opens your version. */
+function useLineAction(versionId: number, online: boolean) {
+  const router = useRouter();
+  return (line: RecipeLine) => <IngredientMore versionId={versionId} lineId={line.lineId ?? 0} name={line.name} online={online} onOpenVersion={(id) => router.push(`/recipe/?version=${id}`)} />;
+}
+
+type PlanUpdated = { message: string; planId: number; oldBatch: number };
+
+/** After Also update this week's plan: what changed, with Undo (the plan as it was). */
+function UpdatedNote({ updated, onUndone }: { updated: PlanUpdated; onUndone: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+  return (
+    <p className="notice" role="status">
+      {updated.message}{" "}
+      <button
+        type="button"
+        className="btn btn-link"
+        disabled={busy}
+        onClick={() => {
+          setBusy(true);
+          undoSwap(updated.planId)
+            .then(onUndone)
+            .catch((e: unknown) => setError(e))
+            .finally(() => setBusy(false));
+        }}
+      >
+        {busy ? "Undoing…" : "Undo"}
+      </button>
+      {error !== null && <span className="small"> {describeError(error)}</span>}
+    </p>
+  );
 }
 
 /** "Before you start" for a meal now: what to buy, what's missing, and swaps with what you have (C8, M11). */
@@ -80,6 +117,8 @@ function useIdeaSteps(recipe: RecipeVersion | null, query: string, online: boole
 function BatchRecipe({ batchId }: { batchId: string }) {
   const batch = useApi<BatchDetail>(`/api/v1/cook-batches/${batchId}`);
   const online = useOnline();
+  const router = useRouter();
+  const [updated, setUpdated] = useState<PlanUpdated | null>(null);
   const steps = useIdeaSteps(batch.data?.recipe ?? null, "", online, batch.reload);
   if (batch.loading && !batch.data) return <Skeleton cards={3} label="Loading the recipe" />;
   if (!batch.data) return <Unavailable error={batch.error} onRetry={() => void batch.reload()} />;
@@ -101,8 +140,32 @@ function BatchRecipe({ batchId }: { batchId: string }) {
           note: l.adjustment === "absorbed_full_package" ? "whole package" : l.adjustment === "substituted" ? "substituted" : null,
           detail: notes.get(l.ingredient_id) ?? null,
           portionNote: l.portion_note ?? null,
+          lineId: l.line_id ?? null,
         }))}
+        lineAction={(line) => (
+          <IngredientMore
+            versionId={b.recipe.version_id}
+            lineId={line.lineId ?? 0}
+            name={line.name}
+            batch={{ id: b.id, planId: b.plan_id, cookOn: b.cook_on }}
+            online={online}
+            onOpenVersion={(id) => router.push(`/recipe/?version=${id}`)}
+            onPlanUpdated={(update, newBatch) => {
+              setUpdated({ message: update.message, planId: update.plan_id, oldBatch: b.id });
+              if (newBatch) router.replace(`/recipe/?batch=${newBatch}`);
+            }}
+          />
+        )}
       >
+        {updated && (
+          <UpdatedNote
+            updated={updated}
+            onUndone={() => {
+              setUpdated(null);
+              router.replace(`/recipe/?batch=${updated.oldBatch}`);
+            }}
+          />
+        )}
         <section className="card">
           <p>
             <strong>Cook on {dayLabel(b.cook_on)}</strong> · {b.portions} portions
@@ -127,6 +190,7 @@ function SearchRecipe({ versionId, searchId }: { versionId: string; searchId: st
   const version = useApi<RecipeVersion>(`/api/v1/recipe-versions/${versionId}?search=${searchId}`);
   const online = useOnline();
   const steps = useIdeaSteps(version.data, `search=${searchId}`, online, version.reload);
+  const lineAction = useLineAction(Number(versionId), online);
   if (version.loading && !version.data) return <Skeleton cards={3} label="Loading the recipe" />;
   if (!version.data) return <Unavailable error={version.error} onRetry={() => void version.reload()} />;
   const recipe = version.data;
@@ -135,7 +199,7 @@ function SearchRecipe({ versionId, searchId }: { versionId: string; searchId: st
   return (
     <>
       <SyncNote syncedAt={version.syncedAt} fromCache={version.fromCache} />
-      <RecipeView recipe={recipe} lines={linesWith(recipe, details)} portionsLine={context?.portions_display ?? null} stepsSlot={steps.slot}>
+      <RecipeView recipe={recipe} lines={linesWith(recipe, details)} portionsLine={context?.portions_display ?? null} stepsSlot={steps.slot} lineAction={lineAction}>
         {context && <BeforeYouStart context={context} />}
         <RecipeActions
           recipe={recipe}
@@ -157,6 +221,7 @@ function VersionRecipe({ versionId, portions, size }: { versionId: string; porti
   const version = useApi<RecipeVersion>(`/api/v1/recipe-versions/${versionId}?${query.toString()}`);
   const online = useOnline();
   const steps = useIdeaSteps(version.data, query.toString(), online, version.reload);
+  const lineAction = useLineAction(Number(versionId), online);
   const shownCount = count ?? version.data?.portions ?? 1;
   if (version.loading && !version.data) return <Skeleton cards={3} label="Loading the recipe" />;
   if (!version.data) return <Unavailable error={version.error} onRetry={() => void version.reload()} />;
@@ -179,7 +244,7 @@ function VersionRecipe({ versionId, portions, size }: { versionId: string; porti
         </select>
       </section>
       <ProblemNotice error={version.error} />
-      <RecipeView recipe={version.data} stepsSlot={steps.slot}>
+      <RecipeView recipe={version.data} stepsSlot={steps.slot} lineAction={lineAction}>
         <RecipeActions
           recipe={version.data}
           cook={{ meal: { version_id: version.data.version_id, search_id: null, portions: shownCount } }}

@@ -85,7 +85,9 @@ const KINDS: { value: Kind; label: string }[] = [
   { value: "dislike", label: "Use less" },
 ];
 
-/** Your exclude and dislike decisions. Each change is saved at once (an ingredient decision, not a setting). */
+/** Foods I don't eat (step 2b.6, AA5): your never-use list, like beef (plans, searches and new ideas leave them
+ * out), with Allow again, and what you'd rather use less. Each change is saved at once (an ingredient decision,
+ * not a setting). Never use this on a recipe line adds to it too. */
 export function PreferencesEditor({ onDone, online }: { onDone: () => void; online: boolean }) {
   const loaded = useApi<SettingsOut>("/api/v1/settings");
   const [query, setQuery] = useState("");
@@ -129,8 +131,8 @@ export function PreferencesEditor({ onDone, online }: { onDone: () => void; onli
 
   return (
     <QuestionScreen
-      title="Excluded and disliked"
-      why="Never use keeps an ingredient out of everything; use less lets it in only when nothing else fits."
+      title="Foods I don't eat"
+      why="Plans, searches and new ideas never use these, like beef. Use less lets one in only when nothing else fits."
       onBack={onDone}
       primaryLabel="Done"
       onPrimary={onDone}
@@ -139,15 +141,20 @@ export function PreferencesEditor({ onDone, online }: { onDone: () => void; onli
         loaded.error ? <ErrorState error={loaded.error} onRetry={() => void loaded.reload()} /> : <Skeleton cards={1} />
       ) : (
         <>
-          {mine.length === 0 && <p className="muted">Nothing here yet.</p>}
           <ul className="list">
+            <li className={styles.row}>
+              <span>
+                <strong>Beef</strong> <span className="badge">Always</span>
+                <span className="small muted"> Includes broth, tallow and gelatin from beef.</span>
+              </span>
+            </li>
             {mine.map((p) => (
               <li key={p.ingredient_id} className={styles.row}>
                 <span>
                   <strong>{p.name}</strong> <span className="badge">{p.preference === "exclude" ? "Never use" : "Use less"}</span>
                 </span>
-                <button type="button" className="btn btn-small" disabled={busy || !online} onClick={() => void set(p.ingredient_id, null)}>
-                  Remove
+                <button type="button" className="btn btn-small" disabled={busy || !online} onClick={() => void set(p.ingredient_id, null)} aria-label={`${p.preference === "exclude" ? "Allow again" : "Remove"}: ${p.name}`}>
+                  {p.preference === "exclude" ? "Allow again" : "Remove"}
                 </button>
               </li>
             ))}

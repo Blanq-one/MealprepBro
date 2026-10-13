@@ -79,6 +79,39 @@
     "title": "AddOptionsOut",
     "type": "object"
    },
+   "AddToListOut": {
+    "description": "I'm out of this: the item on your shopping list.",
+    "properties": {
+     "added": {
+      "title": "Added",
+      "type": "boolean"
+     },
+     "item": {
+      "$ref": "#/components/schemas/GroceryItemOut"
+     },
+     "list_id": {
+      "title": "List Id",
+      "type": "integer"
+     },
+     "message": {
+      "title": "Message",
+      "type": "string"
+     },
+     "plan_id": {
+      "title": "Plan Id",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "added",
+     "plan_id",
+     "list_id",
+     "item",
+     "message"
+    ],
+    "title": "AddToListOut",
+    "type": "object"
+   },
    "AlwaysHaveOptionOut": {
     "description": "An ingredient you can mark as Always have (S2); common staples come first.",
     "properties": {
@@ -427,6 +460,17 @@
      "ingredient_id": {
       "title": "Ingredient Id",
       "type": "integer"
+     },
+     "line_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Line Id"
      },
      "name": {
       "title": "Name",
@@ -4244,6 +4288,48 @@
     "title": "LastSearchOut",
     "type": "object"
    },
+   "LeaveOutOut": {
+    "properties": {
+     "allowed": {
+      "title": "Allowed",
+      "type": "boolean"
+     },
+     "numbers": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Numbers",
+      "type": "array"
+     },
+     "reason": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Reason"
+     },
+     "warning": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Warning"
+     }
+    },
+    "required": [
+     "allowed"
+    ],
+    "title": "LeaveOutOut",
+    "type": "object"
+   },
    "LeftoverOut": {
     "properties": {
      "amount": {
@@ -4318,6 +4404,60 @@
      "note"
     ],
     "title": "LineContextOut",
+    "type": "object"
+   },
+   "LineOptionsOut": {
+    "properties": {
+     "display": {
+      "title": "Display",
+      "type": "string"
+     },
+     "in_pantry": {
+      "title": "In Pantry",
+      "type": "boolean"
+     },
+     "ingredient_id": {
+      "title": "Ingredient Id",
+      "type": "integer"
+     },
+     "leave_out": {
+      "$ref": "#/components/schemas/LeaveOutOut"
+     },
+     "line_id": {
+      "title": "Line Id",
+      "type": "integer"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "never_used": {
+      "title": "Never Used",
+      "type": "boolean"
+     },
+     "shopping": {
+      "$ref": "#/components/schemas/ShoppingTargetOut"
+     },
+     "swaps": {
+      "items": {
+       "$ref": "#/components/schemas/SwapChoiceOut"
+      },
+      "title": "Swaps",
+      "type": "array"
+     }
+    },
+    "required": [
+     "line_id",
+     "ingredient_id",
+     "name",
+     "display",
+     "swaps",
+     "leave_out",
+     "in_pantry",
+     "never_used",
+     "shopping"
+    ],
+    "title": "LineOptionsOut",
     "type": "object"
    },
    "LoginIn": {
@@ -5721,6 +5861,42 @@
     "title": "PlanSummaryOut",
     "type": "object"
    },
+   "PlanUpdateOut": {
+    "description": "Also update this week's plan: the new plan version (Undo brings back `undo_plan_id`).",
+    "properties": {
+     "also_changed": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Also Changed",
+      "type": "array"
+     },
+     "message": {
+      "title": "Message",
+      "type": "string"
+     },
+     "plan": {
+      "$ref": "#/components/schemas/PlanSummaryOut"
+     },
+     "plan_id": {
+      "title": "Plan Id",
+      "type": "integer"
+     },
+     "undo_plan_id": {
+      "title": "Undo Plan Id",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "plan_id",
+     "undo_plan_id",
+     "plan",
+     "message",
+     "also_changed"
+    ],
+    "title": "PlanUpdateOut",
+    "type": "object"
+   },
    "PlanningMode": {
     "description": "Per-request: cook from what you have (purchases off unless you allow a top-up), or plan a shop.",
     "enum": [
@@ -6711,6 +6887,114 @@
     "title": "RecipeCalculationOut",
     "type": "object"
    },
+   "RecipeEditIn": {
+    "additionalProperties": false,
+    "properties": {
+     "action": {
+      "enum": [
+       "swap",
+       "leave_out"
+      ],
+      "title": "Action",
+      "type": "string"
+     },
+     "batch_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Batch Id"
+     },
+     "ingredient_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Ingredient Id"
+     },
+     "line_id": {
+      "title": "Line Id",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "line_id",
+     "action"
+    ],
+    "title": "RecipeEditIn",
+    "type": "object"
+   },
+   "RecipeEditOut": {
+    "description": "Your new version (it's the recipe's default from now on), and whether this week's plan can take it.",
+    "properties": {
+     "batch_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Batch Id"
+     },
+     "can_update_plan": {
+      "default": false,
+      "title": "Can Update Plan",
+      "type": "boolean"
+     },
+     "cooking_note": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cooking Note"
+     },
+     "flagged_steps": {
+      "items": {
+       "type": "integer"
+      },
+      "title": "Flagged Steps",
+      "type": "array"
+     },
+     "note": {
+      "title": "Note",
+      "type": "string"
+     },
+     "plan_note": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Plan Note"
+     },
+     "version": {
+      "$ref": "#/components/schemas/RecipeVersionOut"
+     }
+    },
+    "required": [
+     "version",
+     "note"
+    ],
+    "title": "RecipeEditOut",
+    "type": "object"
+   },
    "RecipeLineIn": {
     "additionalProperties": false,
     "properties": {
@@ -6983,6 +7267,11 @@
       "title": "Base Servings",
       "type": "integer"
      },
+     "can_rewrite_steps": {
+      "default": false,
+      "title": "Can Rewrite Steps",
+      "type": "boolean"
+     },
      "change_summary": {
       "anyOf": [
        {
@@ -7119,6 +7408,17 @@
       "title": "Origin",
       "type": "string"
      },
+     "parent_version_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Parent Version Id"
+     },
      "per_container": {
       "title": "Per Container",
       "type": "string"
@@ -7189,6 +7489,11 @@
      "version_number": {
       "title": "Version Number",
       "type": "integer"
+     },
+     "your_version": {
+      "default": false,
+      "title": "Your Version",
+      "type": "boolean"
      }
     },
     "required": [
@@ -7289,6 +7594,17 @@
       "title": "Ingredient Id",
       "type": "integer"
      },
+     "line_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Line Id"
+     },
      "name": {
       "title": "Name",
       "type": "string"
@@ -7357,6 +7673,17 @@
        }
       ],
       "title": "Duration Minutes"
+     },
+     "flag": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Flag"
      },
      "safety_note": {
       "anyOf": [
@@ -7834,6 +8161,55 @@
     "title": "SettingsPreviewOut",
     "type": "object"
    },
+   "ShoppingTargetOut": {
+    "description": "Where I'm out of this adds the item: the plan you opened it from, or your current plan.",
+    "properties": {
+     "can_add": {
+      "title": "Can Add",
+      "type": "boolean"
+     },
+     "list_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "List Id"
+     },
+     "plan_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Plan Id"
+     },
+     "reason": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Reason"
+     }
+    },
+    "required": [
+     "plan_id",
+     "list_id",
+     "can_add"
+    ],
+    "title": "ShoppingTargetOut",
+    "type": "object"
+   },
    "SlotAllocationSetting": {
     "additionalProperties": false,
     "properties": {
@@ -8253,6 +8629,60 @@
      "value"
     ],
     "title": "SummaryLineOut",
+    "type": "object"
+   },
+   "SwapChoiceOut": {
+    "description": "One substitute for a line, with the change per portion (code-computed).",
+    "properties": {
+     "cooking_note": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cooking Note"
+     },
+     "display": {
+      "title": "Display",
+      "type": "string"
+     },
+     "ingredient_id": {
+      "title": "Ingredient Id",
+      "type": "integer"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "note": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Note"
+     },
+     "numbers": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Numbers",
+      "type": "array"
+     }
+    },
+    "required": [
+     "ingredient_id",
+     "name",
+     "display",
+     "numbers"
+    ],
+    "title": "SwapChoiceOut",
     "type": "object"
    },
    "SwapIn": {
@@ -8965,6 +9395,20 @@
      "source"
     ],
     "title": "UnitOut",
+    "type": "object"
+   },
+   "UseVersionIn": {
+    "additionalProperties": false,
+    "properties": {
+     "version_id": {
+      "title": "Version Id",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "version_id"
+    ],
+    "title": "UseVersionIn",
     "type": "object"
    },
    "UserSettings": {
@@ -10916,6 +11360,68 @@
     ]
    }
   },
+  "/api/v1/plans/{plan_id}/batches/{batch_id}/use-version": {
+   "post": {
+    "description": "Also update this week's plan (AA8): the batch (and every meal it feeds) switches to your version of its\nrecipe; nutrition, cost and the shopping list are recomputed and checked, the batch's portion size\nre-solved if a limit breaks. Cooked batches keep the recipe they were cooked with (409 says why).",
+    "operationId": "use_version_api_v1_plans__plan_id__batches__batch_id__use_version_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "plan_id",
+      "required": true,
+      "schema": {
+       "title": "Plan Id",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "path",
+      "name": "batch_id",
+      "required": true,
+      "schema": {
+       "title": "Batch Id",
+       "type": "integer"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/UseVersionIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PlanUpdateOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Use Version",
+    "tags": [
+     "plans"
+    ]
+   }
+  },
   "/api/v1/plans/{plan_id}/grocery-list": {
    "get": {
     "operationId": "grocery_list_api_v1_plans__plan_id__grocery_list_get",
@@ -11450,6 +11956,242 @@
      }
     },
     "summary": "Get Version",
+    "tags": [
+     "recipes"
+    ]
+   }
+  },
+  "/api/v1/recipe-versions/{version_id}/edits": {
+   "post": {
+    "description": "Swap a line or leave it out, saved as your own version of the recipe (its default from now on). From a\nplan meal (`batch_id`), whether this week's plan can take it (POST\n/plans/{id}/batches/{batch}/use-version).",
+    "operationId": "edit_line_api_v1_recipe_versions__version_id__edits_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "version_id",
+      "required": true,
+      "schema": {
+       "title": "Version Id",
+       "type": "integer"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RecipeEditIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RecipeEditOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Edit Line",
+    "tags": [
+     "recipes"
+    ]
+   }
+  },
+  "/api/v1/recipe-versions/{version_id}/lines/{line_id}/add-to-list": {
+   "post": {
+    "description": "I'm out of this: the line's ingredient on your shopping list (the plan the page came from, else your\ncurrent plan), as much as that plan's batch uses, in whole packages at your stores.",
+    "operationId": "add_to_list_api_v1_recipe_versions__version_id__lines__line_id__add_to_list_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "version_id",
+      "required": true,
+      "schema": {
+       "title": "Version Id",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "path",
+      "name": "line_id",
+      "required": true,
+      "schema": {
+       "title": "Line Id",
+       "type": "integer"
+      }
+     },
+     {
+      "description": "the plan batch the page was opened from",
+      "in": "query",
+      "name": "batch",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "integer"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "the plan batch the page was opened from",
+       "title": "Batch"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AddToListOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Add To List",
+    "tags": [
+     "recipes"
+    ]
+   }
+  },
+  "/api/v1/recipe-versions/{version_id}/lines/{line_id}/options": {
+   "get": {
+    "description": "A line's \u22ef: Swap it (substitutes from its culinary group or role, with the change per portion in kcal,\nprotein and cost), Leave it out (non-essential lines only), I'm out of this (where it would be added to\na shopping list) and Never use this.",
+    "operationId": "line_options_api_v1_recipe_versions__version_id__lines__line_id__options_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "version_id",
+      "required": true,
+      "schema": {
+       "title": "Version Id",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "path",
+      "name": "line_id",
+      "required": true,
+      "schema": {
+       "title": "Line Id",
+       "type": "integer"
+      }
+     },
+     {
+      "description": "the plan batch the page was opened from",
+      "in": "query",
+      "name": "batch",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "integer"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "the plan batch the page was opened from",
+       "title": "Batch"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/LineOptionsOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Line Options",
+    "tags": [
+     "recipes"
+    ]
+   }
+  },
+  "/api/v1/recipe-versions/{version_id}/rewrite-steps": {
+   "post": {
+    "description": "Rewrite steps for this change: a version of your recipe whose steps are written once, by one LLM call\nwhen its page opens (POST /recipe-versions/{id}/steps); its lines and times stay as they are.",
+    "operationId": "rewrite_steps_api_v1_recipe_versions__version_id__rewrite_steps_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "version_id",
+      "required": true,
+      "schema": {
+       "title": "Version Id",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RecipeVersionOut"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Rewrite Steps",
     "tags": [
      "recipes"
     ]

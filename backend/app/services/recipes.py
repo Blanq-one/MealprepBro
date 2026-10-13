@@ -142,6 +142,7 @@ def _render_lines(session: Session, version_id: int, scaled: ScaledCalculation) 
                 d.safety_category,
                 row.preparation,
                 row.is_optional,
+                row.id,
             )
         )
     return out
@@ -171,9 +172,16 @@ def version_view(
     lines = version_lines(session, version.id)
     scaled = calculate_scaled(session, lines, version.base_servings, n, PORTION_MULTIPLIERS[size.value])
     calc = scaled.calculation
+    flags = (version.change_set or {}).get("flags", {})  # your version cooks differently here (step 2b.6)
     steps = [
         StepInput(
-            s.section, s.text, s.duration_minutes, s.appliance_temp_f, s.doneness_check_ingredient_id, s.stage
+            s.section,
+            s.text,
+            s.duration_minutes,
+            s.appliance_temp_f,
+            s.doneness_check_ingredient_id,
+            s.stage,
+            flags.get(str(s.position)),
         )
         for s in session.scalars(
             select(RecipeStep).where(RecipeStep.recipe_version_id == version.id).order_by(RecipeStep.position)

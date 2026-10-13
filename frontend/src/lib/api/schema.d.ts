@@ -631,6 +631,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/plans/{plan_id}/batches/{batch_id}/use-version": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Use Version
+         * @description Also update this week's plan (AA8): the batch (and every meal it feeds) switches to your version of its
+         *     recipe; nutrition, cost and the shopping list are recomputed and checked, the batch's portion size
+         *     re-solved if a limit breaks. Cooked batches keep the recipe they were cooked with (409 says why).
+         */
+        post: operations["use_version_api_v1_plans__plan_id__batches__batch_id__use_version_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/plans/{plan_id}/grocery-list": {
         parameters: {
             query?: never;
@@ -788,6 +810,92 @@ export interface paths {
         get: operations["get_version_api_v1_recipe_versions__version_id__get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/recipe-versions/{version_id}/edits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Edit Line
+         * @description Swap a line or leave it out, saved as your own version of the recipe (its default from now on). From a
+         *     plan meal (`batch_id`), whether this week's plan can take it (POST
+         *     /plans/{id}/batches/{batch}/use-version).
+         */
+        post: operations["edit_line_api_v1_recipe_versions__version_id__edits_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/recipe-versions/{version_id}/lines/{line_id}/add-to-list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add To List
+         * @description I'm out of this: the line's ingredient on your shopping list (the plan the page came from, else your
+         *     current plan), as much as that plan's batch uses, in whole packages at your stores.
+         */
+        post: operations["add_to_list_api_v1_recipe_versions__version_id__lines__line_id__add_to_list_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/recipe-versions/{version_id}/lines/{line_id}/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Line Options
+         * @description A line's ⋯: Swap it (substitutes from its culinary group or role, with the change per portion in kcal,
+         *     protein and cost), Leave it out (non-essential lines only), I'm out of this (where it would be added to
+         *     a shopping list) and Never use this.
+         */
+        get: operations["line_options_api_v1_recipe_versions__version_id__lines__line_id__options_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/recipe-versions/{version_id}/rewrite-steps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rewrite Steps
+         * @description Rewrite steps for this change: a version of your recipe whose steps are written once, by one LLM call
+         *     when its page opens (POST /recipe-versions/{id}/steps); its lines and times stay as they are.
+         */
+        post: operations["rewrite_steps_api_v1_recipe_versions__version_id__rewrite_steps_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1120,6 +1228,21 @@ export interface components {
             versions: components["schemas"]["VersionsOut"] | null;
         };
         /**
+         * AddToListOut
+         * @description I'm out of this: the item on your shopping list.
+         */
+        AddToListOut: {
+            /** Added */
+            added: boolean;
+            item: components["schemas"]["GroceryItemOut"];
+            /** List Id */
+            list_id: number;
+            /** Message */
+            message: string;
+            /** Plan Id */
+            plan_id: number;
+        };
+        /**
          * AlwaysHaveOptionOut
          * @description An ingredient you can mark as Always have (S2); common staples come first.
          */
@@ -1254,6 +1377,8 @@ export interface components {
             display: string;
             /** Ingredient Id */
             ingredient_id: number;
+            /** Line Id */
+            line_id?: number | null;
             /** Name */
             name: string;
             /** Optional */
@@ -2550,6 +2675,17 @@ export interface components {
             /** Summary */
             summary: string;
         };
+        /** LeaveOutOut */
+        LeaveOutOut: {
+            /** Allowed */
+            allowed: boolean;
+            /** Numbers */
+            numbers?: string[];
+            /** Reason */
+            reason?: string | null;
+            /** Warning */
+            warning?: string | null;
+        };
         /** LeftoverOut */
         LeftoverOut: {
             /** Amount */
@@ -2580,6 +2716,25 @@ export interface components {
              * @enum {string}
              */
             status: "have" | "short" | "could_buy" | "missing" | "owned";
+        };
+        /** LineOptionsOut */
+        LineOptionsOut: {
+            /** Display */
+            display: string;
+            /** In Pantry */
+            in_pantry: boolean;
+            /** Ingredient Id */
+            ingredient_id: number;
+            leave_out: components["schemas"]["LeaveOutOut"];
+            /** Line Id */
+            line_id: number;
+            /** Name */
+            name: string;
+            /** Never Used */
+            never_used: boolean;
+            shopping: components["schemas"]["ShoppingTargetOut"];
+            /** Swaps */
+            swaps: components["schemas"]["SwapChoiceOut"][];
         };
         /** LoginIn */
         LoginIn: {
@@ -3074,6 +3229,21 @@ export interface components {
             week_start: string;
         };
         /**
+         * PlanUpdateOut
+         * @description Also update this week's plan: the new plan version (Undo brings back `undo_plan_id`).
+         */
+        PlanUpdateOut: {
+            /** Also Changed */
+            also_changed: string[];
+            /** Message */
+            message: string;
+            plan: components["schemas"]["PlanSummaryOut"];
+            /** Plan Id */
+            plan_id: number;
+            /** Undo Plan Id */
+            undo_plan_id: number;
+        };
+        /**
          * PlanningMode
          * @description Per-request: cook from what you have (purchases off unless you allow a top-up), or plan a shop.
          * @enum {string}
@@ -3428,6 +3598,42 @@ export interface components {
             scale_factor: string;
             total: components["schemas"]["NutritionOut"];
         };
+        /** RecipeEditIn */
+        RecipeEditIn: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "swap" | "leave_out";
+            /** Batch Id */
+            batch_id?: number | null;
+            /** Ingredient Id */
+            ingredient_id?: number | null;
+            /** Line Id */
+            line_id: number;
+        };
+        /**
+         * RecipeEditOut
+         * @description Your new version (it's the recipe's default from now on), and whether this week's plan can take it.
+         */
+        RecipeEditOut: {
+            /** Batch Id */
+            batch_id?: number | null;
+            /**
+             * Can Update Plan
+             * @default false
+             */
+            can_update_plan: boolean;
+            /** Cooking Note */
+            cooking_note?: string | null;
+            /** Flagged Steps */
+            flagged_steps?: number[];
+            /** Note */
+            note: string;
+            /** Plan Note */
+            plan_note?: string | null;
+            version: components["schemas"]["RecipeVersionOut"];
+        };
         /** RecipeLineIn */
         RecipeLineIn: {
             /** Ingredient Id */
@@ -3520,6 +3726,11 @@ export interface components {
             badge: string | null;
             /** Base Servings */
             base_servings: number;
+            /**
+             * Can Rewrite Steps
+             * @default false
+             */
+            can_rewrite_steps: boolean;
             /** Change Summary */
             change_summary: string | null;
             /** Costs */
@@ -3571,6 +3782,8 @@ export interface components {
             mood: string;
             /** Origin */
             origin: string;
+            /** Parent Version Id */
+            parent_version_id?: number | null;
             /** Per Container */
             per_container: string;
             per_portion: components["schemas"]["NutritionOut"];
@@ -3599,6 +3812,11 @@ export interface components {
             version_id: number;
             /** Version Number */
             version_number: number;
+            /**
+             * Your Version
+             * @default false
+             */
+            your_version: boolean;
         };
         /** RecipeVersionSummaryOut */
         RecipeVersionSummaryOut: {
@@ -3629,6 +3847,8 @@ export interface components {
             display: string;
             /** Ingredient Id */
             ingredient_id: number;
+            /** Line Id */
+            line_id?: number | null;
             /** Name */
             name: string;
             /** Optional */
@@ -3646,6 +3866,8 @@ export interface components {
             appliance_temp_f: number | null;
             /** Duration Minutes */
             duration_minutes: number | null;
+            /** Flag */
+            flag?: string | null;
             /** Safety Note */
             safety_note: string | null;
             /** Section */
@@ -3811,6 +4033,20 @@ export interface components {
             /** Valid */
             valid: boolean;
         };
+        /**
+         * ShoppingTargetOut
+         * @description Where I'm out of this adds the item: the plan you opened it from, or your current plan.
+         */
+        ShoppingTargetOut: {
+            /** Can Add */
+            can_add: boolean;
+            /** List Id */
+            list_id: number | null;
+            /** Plan Id */
+            plan_id: number | null;
+            /** Reason */
+            reason?: string | null;
+        };
         /** SlotAllocationSetting */
         SlotAllocationSetting: {
             /** Kcal */
@@ -3942,6 +4178,24 @@ export interface components {
             label: string;
             /** Value */
             value: string;
+        };
+        /**
+         * SwapChoiceOut
+         * @description One substitute for a line, with the change per portion (code-computed).
+         */
+        SwapChoiceOut: {
+            /** Cooking Note */
+            cooking_note?: string | null;
+            /** Display */
+            display: string;
+            /** Ingredient Id */
+            ingredient_id: number;
+            /** Name */
+            name: string;
+            /** Note */
+            note?: string | null;
+            /** Numbers */
+            numbers: string[];
         };
         /** SwapIn */
         SwapIn: {
@@ -4207,6 +4461,11 @@ export interface components {
             name: string;
             /** Source */
             source: string;
+        };
+        /** UseVersionIn */
+        UseVersionIn: {
+            /** Version Id */
+            version_id: number;
         };
         /** UserSettings */
         UserSettings: {
@@ -5455,6 +5714,42 @@ export interface operations {
             };
         };
     };
+    use_version_api_v1_plans__plan_id__batches__batch_id__use_version_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: number;
+                batch_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UseVersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanUpdateOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     grocery_list_api_v1_plans__plan_id__grocery_list_get: {
         parameters: {
             query?: {
@@ -5761,6 +6056,142 @@ export interface operations {
                 /** @description a meal-now search: its coverage lines for this recipe */
                 search?: number | null;
             };
+            header?: never;
+            path: {
+                version_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecipeVersionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    edit_line_api_v1_recipe_versions__version_id__edits_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecipeEditIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecipeEditOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_to_list_api_v1_recipe_versions__version_id__lines__line_id__add_to_list_post: {
+        parameters: {
+            query?: {
+                /** @description the plan batch the page was opened from */
+                batch?: number | null;
+            };
+            header?: never;
+            path: {
+                version_id: number;
+                line_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AddToListOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    line_options_api_v1_recipe_versions__version_id__lines__line_id__options_get: {
+        parameters: {
+            query?: {
+                /** @description the plan batch the page was opened from */
+                batch?: number | null;
+            };
+            header?: never;
+            path: {
+                version_id: number;
+                line_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LineOptionsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rewrite_steps_api_v1_recipe_versions__version_id__rewrite_steps_post: {
+        parameters: {
+            query?: never;
             header?: never;
             path: {
                 version_id: number;

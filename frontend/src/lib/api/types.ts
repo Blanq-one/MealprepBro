@@ -91,3 +91,10 @@ export type SwapStreamEvent = S["SwapStreamEvent"];
 export type SwapOptionsBody = Partial<S["SwapOptionsIn"]>;
 export type SwapBody = S["SwapIn"];
 export type SwapResult = S["SwapOut"];
+// Step 2b.6: a line's ⋯ (AA5, AA8)
+export type LineOptions = S["LineOptionsOut"];
+export type SwapChoice = S["SwapChoiceOut"];
+export type RecipeEditBody = S["RecipeEditIn"];
+export type RecipeEdit = S["RecipeEditOut"];
+export type PlanUpdate = S["PlanUpdateOut"];
+export type AddToList = S["AddToListOut"];

@@ -61,13 +61,16 @@ class KeptBatch:
 
 @dataclass(frozen=True)
 class Pins:
-    slot: Slot  # the swapped meal
-    fed_by: BatchKey  # the batch it came from
+    slot: Slot | None  # the swapped meal (None: no free meal, e.g. a batch switched to your version)
+    fed_by: BatchKey | None  # the batch it came from
     meals: Mapping[Slot, BatchKey]  # every other meal and its batch
     batches: Mapping[BatchKey, KeptBatch]
     offer: frozenset[int]  # recipe versions that may fill the slot
     earliest: date  # a new batch is cooked on this day or later (today)
     cuts: frozenset[BatchKey] = field(default_factory=frozenset)  # batches that ran over their cook day
+    # batches the plan cooks besides the kept ones, whatever the slot: your new version of a batch (AA8),
+    # with the meals that batch fed; its nudge is free
+    added: frozenset[BatchKey] = field(default_factory=frozenset)
 
 
 @dataclass(frozen=True)
@@ -105,10 +108,12 @@ def pinned_model(problem: PlanningProblem, pins: Pins) -> _Model:
         b = present.get(key)
         if b is None or target not in b.targets:
             raise PinError(f"{target[0]} {target[1].value} can't come from its batch any more")
+    if missing := sorted(pins.added - set(present)):
+        raise PinError(f"the batches {missing} aren't possible on their cook days")
     for b in model.batches:
         key = batch_key(b)
         kept = pins.batches.get(key)
-        fills = pins.slot in b.targets and _may_fill(key, b.cook_on, pins)
+        fills = pins.slot is not None and pins.slot in b.targets and _may_fill(key, b.cook_on, pins)
         for target in b.targets:
             var = model.x[(b.index, *target)]
             if target == pins.slot:
@@ -122,7 +127,9 @@ def pinned_model(problem: PlanningProblem, pins: Pins) -> _Model:
             if b.index in model.frozen:
                 _fix(model.frozen[b.index], kept.portions_to_freeze)
         else:
-            if not fills:
+            if key in pins.added:
+                _fix(model.y[b.index], 1)
+            elif not fills:
                 _fix(model.y[b.index], 0)
             if b.index in model.frozen:
                 _fix(model.frozen[b.index], 0)
@@ -130,6 +137,7 @@ def pinned_model(problem: PlanningProblem, pins: Pins) -> _Model:
 
 
 def filled(solution: SolverSolution, pins: Pins) -> Filled:
+    assert pins.slot is not None
     meal = next(m for m in solution.meals if (m.eat_on, m.slot) == pins.slot)
     batch = solution.batches[meal.batch_index]
     key = (batch.version_id, batch.cook_on, batch.portion_size.value)
@@ -137,18 +145,21 @@ def filled(solution: SolverSolution, pins: Pins) -> Filled:
 
 
 def _overrun(problem: PlanningProblem, solution: SolverSolution, pins: Pins) -> BatchKey | None:
-    """The batch that filled the slot, when its cook day's exact schedule now runs over that day's minutes."""
-    fill = filled(solution, pins)
+    """A batch the re-solve changed (it filled the slot, or was added), when its cook day's exact schedule
+    now runs over that day's minutes."""
     c = problem.constraints
-    pairs = []
-    for b in solution.batches:
-        if b.cook_on == fill.key[1]:
-            pairs.append(
-                (b.cook_on, planned_batch(problem.candidate(b.version_id), b.portion_size.value, b.portions))
-            )
-    schedule = day_schedules(pairs).get(fill.key[1])
-    if schedule is not None and schedule.elapsed > c.day(fill.key[1]).cook_minutes_available:
-        return fill.key
+    changed = set(pins.added)
+    if pins.slot is not None:
+        changed.add(filled(solution, pins).key)
+    for key in sorted(changed):
+        pairs = [
+            (b.cook_on, planned_batch(problem.candidate(b.version_id), b.portion_size.value, b.portions))
+            for b in solution.batches
+            if b.cook_on == key[1]
+        ]
+        schedule = day_schedules(pairs).get(key[1])
+        if schedule is not None and schedule.elapsed > c.day(key[1]).cook_minutes_available:
+            return key
     return None
 
 
@@ -169,6 +180,8 @@ def solve_pinned(
         over = _overrun(problem, solution, pins)
         if over is None:
             return solution, pins
+        if over in pins.added:
+            return None  # a batch the plan must cook runs over: no cut can help
         pins = replace(pins, cuts=pins.cuts | {over})
     return None
 

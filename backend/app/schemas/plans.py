@@ -544,6 +544,7 @@ class BatchLineOut(BaseModel):
     optional: bool
     adjustment: str | None  # absorbed_full_package | substituted
     portion_note: str | None = None  # "1 scoop per portion · 4 scoops for the batch of 4" (A1)
+    line_id: int | None = None  # the recipe line it came from (the line's ⋯, step 2b.6)
 
 
 # ---------------- swap (step 2b.6, E5, AA4) ----------------
@@ -636,6 +637,31 @@ class SwapOut(BaseModel):
     also_changed: list[str]
 
 
+class UseVersionIn(_Strict):
+    version_id: int  # your version of the batch's recipe (AA8)
+
+
+class PlanUpdateOut(BaseModel):
+    """Also update this week's plan: the new plan version (Undo brings back `undo_plan_id`)."""
+
+    plan_id: int
+    undo_plan_id: int
+    plan: "PlanSummaryOut"
+    message: str  # "Updated this week's plan: Mon 12's Chicken over rice uses your version."
+    also_changed: list[str]
+
+
+class AddToListOut(BaseModel):
+    """I'm out of this: the item on your shopping list."""
+
+    added: bool  # False: it was already on the list to buy
+    plan_id: int
+    list_id: int
+    item: GroceryItemOut
+    message: str  # "Added 1 × chicken thigh, 2 lb to your shopping list ($6.99)."
+
+
 PlanStreamEvent.model_rebuild()
 BatchDetailOut.model_rebuild()
 SwapOut.model_rebuild()
+PlanUpdateOut.model_rebuild()

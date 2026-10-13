@@ -362,14 +362,19 @@ def test_golden_ordering_with_a_pantry_of_chicken_thighs_spinach_and_tortillas(a
     assert titles(results(again)) == titles(cards) and final(again)["cached"] is True
 
 
-def test_golden_ordering_quick_and_simple_leaves_the_two_seeds_that_fit(api, seeded_db):
+def test_golden_ordering_quick_and_simple_leaves_the_seeds_that_fit(api, seeded_db):
     # step 2b.9: the seeds' totals are their own schedules now, so the air-fryer chicken (the chicken and the
-    # broccoli take turns in the basket) takes 40 minutes and the burrito bowls 30
+    # broccoli take turns in the basket) takes 40 minutes; since 2b.6 (AA7) the burrito bowls chop the chicken
+    # before the rice goes on, so they take 35
     stock_thighs_spinach_tortillas(seeded_db)
     events = meal_now(api, slot="dinner", goals=["quick"], time_limit_minutes=30, mood="simple")
-    assert titles(results(events)) == ["Ground turkey tacos", "Chicken and black bean burrito bowls"]
-    assert [c["why"] for c in results(events)] == [["Ready in 25 min"], ["Ready in 30 min"]]
-    assert [c["section"] for c in results(events)] == ["match", "more_effort"]  # the bowls are medium (M10)
+    assert titles(results(events)) == ["Ground turkey tacos"]
+    assert [c["why"] for c in results(events)] == [["Ready in 25 min"]]
+    assert [c["section"] for c in results(events)] == ["match"]
+    roomier = meal_now(api, slot="dinner", goals=["quick"], time_limit_minutes=35, mood="simple")
+    bowls = next(c for c in results(roomier) if c["title"] == "Chicken and black bean burrito bowls")
+    # the bowls are medium (M10)
+    assert bowls["why"] == ["Ready in 35 min"] and bowls["section"] == "more_effort"
     nothing = meal_now(api, slot="dinner", goals=["quick"], time_limit_minutes=20, mood="simple")
     assert results(nothing) == []
     # the mood never empties the list (M10): the time limit does

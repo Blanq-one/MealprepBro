@@ -202,14 +202,21 @@ def _problem(
     user_id: int,
     constraints: PlanConstraints,
     plan_versions: frozenset[int],
-    slot: MealSlot,
+    *,
+    slot: MealSlot | None,
+    extra: frozenset[int] = frozenset(),
 ) -> tuple[PlanningProblem, frozenset[int]]:
-    """The plan's own recipes plus every recipe you could have for this meal (your pool as it is now)."""
-    pool = [(r, v) for r, v in candidate_versions(session, user_id) if slot.value in v.meal_slots]
+    """The plan's own recipes plus every recipe you could have for this meal (your pool as it is now), and
+    `extra` versions (your new version of a batch; it must pass your rules like any recipe)."""
+    pool = (
+        [(r, v) for r, v in candidate_versions(session, user_id) if slot.value in v.meal_slots]
+        if slot is not None
+        else []
+    )
     kept = session.execute(
         select(Recipe, RecipeVersion)
         .join(Recipe, Recipe.id == RecipeVersion.recipe_id)
-        .where(RecipeVersion.id.in_(plan_versions))
+        .where(RecipeVersion.id.in_(plan_versions | extra))
     ).tuples()
     by_id = {v.id: (r, v) for r, v in [*kept, *pool]}
     pairs = [by_id[vid] for vid in sorted(by_id)]
@@ -234,17 +241,30 @@ def _absorbed_lines(session: Session, batch_ids: list[int]) -> dict[int, tuple[i
     return out
 
 
-def swap_context(
+@dataclass
+class _Loaded:
+    """A stored plan, read for a re-solve: its batches as kept batches, its meals, and the problem."""
+
+    batches: list[PlanCookBatch]
+    meals: list[PlanMeal]
+    saved: PlanConstraints
+    after_shopping: bool
+    problem: PlanningProblem
+    pool: frozenset[int]
+    kept: dict[BatchKey, KeptBatch]
+    key_of: dict[int, BatchKey]
+    plan_versions: frozenset[int]
+
+
+def _load(
     session: Session,
     user_id: int,
-    plan_id: int,
-    meal_id: int,
+    plan: MealPlan,
     *,
-    today: date,
-    exclude: frozenset[int] = frozenset(),
-    allow_buying: bool = False,
-) -> SwapContext:
-    plan, meal = _plan_and_meal(session, user_id, plan_id, meal_id, today)
+    allow_buying: bool,
+    slot: MealSlot | None,
+    extra: frozenset[int] = frozenset(),
+) -> _Loaded:
     batches = list(
         session.scalars(
             select(PlanCookBatch).where(PlanCookBatch.meal_plan_id == plan.id).order_by(PlanCookBatch.id)
@@ -256,11 +276,10 @@ def swap_context(
         )
     )
     if any(m.assembly_version_id is not None for m in meals):
-        raise SwapError("Swapping in a mix-and-match plan comes with smart prep.")
+        raise SwapError("Changing a mix-and-match plan comes with smart prep.")
     saved, solving, after = _constraints(session, user_id, plan, batches, allow_buying=allow_buying)
-    slot = MealSlot(meal.slot)
     plan_versions = frozenset(b.recipe_version_id for b in batches)
-    problem, pool = _problem(session, user_id, solving, plan_versions, slot)
+    problem, pool = _problem(session, user_id, solving, plan_versions, slot=slot, extra=extra)
     known = {r.version_id for r in problem.candidates}
     if missing := sorted(plan_versions - known):
         raise SwapError(
@@ -288,22 +307,39 @@ def swap_context(
             cooked=b.status == "cooked",
         )
         key_of[b.id] = key
+    return _Loaded(batches, meals, saved, after, problem, pool, kept, key_of, plan_versions)
+
+
+def swap_context(
+    session: Session,
+    user_id: int,
+    plan_id: int,
+    meal_id: int,
+    *,
+    today: date,
+    exclude: frozenset[int] = frozenset(),
+    allow_buying: bool = False,
+) -> SwapContext:
+    plan, meal = _plan_and_meal(session, user_id, plan_id, meal_id, today)
+    slot = MealSlot(meal.slot)
+    loaded = _load(session, user_id, plan, allow_buying=allow_buying, slot=slot)
+    problem, key_of = loaded.problem, loaded.key_of
     assert meal.cook_batch_id is not None
-    current = kept[key_of[meal.cook_batch_id]]
+    current = loaded.kept[key_of[meal.cook_batch_id]]
     offer = frozenset(
         r.version_id
         for r in problem.candidates
-        if slot in r.meal_slots and r.version_id in pool and r.version_id not in exclude
+        if slot in r.meal_slots and r.version_id in loaded.pool and r.version_id not in exclude
     ) - {current.key[0]}
     pins = Pins(
         slot=(meal.eat_on, slot),
         fed_by=current.key,
         meals={
             (m.eat_on, MealSlot(m.slot)): key_of[m.cook_batch_id]
-            for m in meals
+            for m in loaded.meals
             if m.id != meal.id and m.cook_batch_id is not None
         },
-        batches=kept,
+        batches=loaded.kept,
         offer=offer,
         earliest=today,
     )
@@ -313,12 +349,12 @@ def swap_context(
         slot=(meal.eat_on, slot),
         problem=problem,
         pins=pins,
-        saved=saved,
-        after_shopping=after,
+        saved=loaded.saved,
+        after_shopping=loaded.after_shopping,
         current_version=current.key[0],
         current_title=current.title,
-        batches=batches,
-        plan_version_ids=plan_versions,
+        batches=loaded.batches,
+        plan_version_ids=loaded.plan_versions,
     )
 
 
@@ -338,6 +374,7 @@ def current_meal(ctx: SwapContext) -> SwapMealOut:
 
 
 def _meal_protein(ctx: SwapContext) -> Decimal:
+    assert ctx.pins.fed_by is not None
     kept = ctx.pins.batches[ctx.pins.fed_by]
     batch = SolvedBatch(kept.key[0], kept.key[1], PortionSize(kept.key[2]), kept.nudge, kept.portions)
     rounded = round_batch(
@@ -516,10 +553,16 @@ class SwapResult:
 
 
 def _round_and_check(
-    session: Session, user_id: int, ctx: SwapContext, solution: SolverSolution
+    session: Session,
+    user_id: int,
+    problem: PlanningProblem,
+    pins: Pins,
+    solution: SolverSolution,
+    *,
+    failed: str,
 ) -> tuple[RoundedPlan, Any, SolverSolution]:
-    problem = ctx.problem
-    pins = replace(ctx.pins, offer=frozenset({filled(solution, ctx.pins).version_id}))
+    """Round, validate and, when rounding pushed a day past a limit, re-solve with the bound tightened (as the
+    planner does), keeping the pins. `failed` starts the message when it can't fit."""
     for resolves in range(MAX_RESOLVES + 1):
         solution = _restore_cooked(solution, pins)
         exact, nudge_only = kept_indices(solution, pins)
@@ -531,14 +574,11 @@ def _round_and_check(
         if report.ok:
             return plan, report, solution
         if not report.resolvable or resolves == MAX_RESOLVES:
-            raise SwapError(
-                "That recipe no longer fits this meal once its amounts are rounded: "
-                + "; ".join(e.message for e in report.errors[:3])
-            )
+            raise SwapError(f"{failed}: " + "; ".join(e.message for e in report.errors[:3]))
         problem = problem.with_tightening(tightening_from(report, problem, solution, plan))
         found = solve_pinned(problem, pins)
         if found is None:
-            raise SwapError("That recipe no longer fits this meal once its amounts are rounded.")
+            raise SwapError(f"{failed}.")
         solution, pins = found
     raise AssertionError("unreachable")
 
@@ -573,12 +613,10 @@ def _carry_check_offs(session: Session, old_plan_id: int, new_plan_id: int) -> N
     session.flush()
 
 
-def _copy_statuses(session: Session, ctx: SwapContext, new_plan_id: int) -> None:
+def _copy_statuses(session: Session, batches: list[PlanCookBatch], new_plan_id: int) -> None:
     """Cooked batches stay cooked in the new version."""
     status = {
-        (b.recipe_version_id, b.cook_on, b.portion_size): b.status
-        for b in ctx.batches
-        if b.status != "planned"
+        (b.recipe_version_id, b.cook_on, b.portion_size): b.status for b in batches if b.status != "planned"
     }
     for b in session.scalars(select(PlanCookBatch).where(PlanCookBatch.meal_plan_id == new_plan_id)):
         b.status = status.get((b.recipe_version_id, b.cook_on, b.portion_size), b.status)
@@ -596,6 +634,39 @@ def _replace_plan(session: Session, old: MealPlan, new: MealPlan) -> None:
     for search in session.scalars(select(CookSearch).where(CookSearch.meal_plan_id == old.id)):
         search.meal_plan_id = new.id
     session.flush()
+
+
+def _save_version(
+    session: Session,
+    user_id: int,
+    old: MealPlan,
+    batches: list[PlanCookBatch],
+    plan: RoundedPlan,
+    *,
+    report: Any,
+    problem: PlanningProblem,
+    saved: PlanConstraints,
+    marker: dict[str, Any],
+) -> MealPlan:
+    """Save the re-solved plan as the new version of `old`: the old one's notes (plus a package a new batch
+    absorbs), status, acceptance and search; cooked batches stay cooked and check-offs carry over; exposures
+    under a swap run. `marker` (totals["swap"]) is what Undo reads."""
+    old_notes = list((old.validation_report or {}).get("notes", []))
+    dropped = set(exclusion_notes(problem))
+    absorbed = [n for n in plan.notes if n not in dropped and n not in old_notes and "scaled up" in n]
+    plan = replace(plan, constraints=saved, notes=(*old_notes, *absorbed), solver_status=old.solver_status)
+    run = GenerationRun(user_id=user_id, purpose=SWAP, status="succeeded", started_at=datetime.now(UTC))
+    session.add(run)
+    session.flush()
+    new = save_plan(session, user_id, plan, report, run.id, kind=old.kind)
+    run.finished_at = datetime.now(UTC)
+    _replace_plan(session, old, new)
+    _copy_statuses(session, batches, new.id)
+    _carry_check_offs(session, old.id, new.id)
+    new.totals = {**new.totals, "swap": marker}
+    log_exposures(session, run.id, new.id, problem, plan)
+    session.flush()
+    return new
 
 
 def apply_swap(
@@ -620,29 +691,33 @@ def apply_swap(
         if found is None:
             raise SwapError(NO_LONGER_FITS)
         solution, ctx.pins = found
-        plan, report, solution = _round_and_check(session, user_id, ctx, solution)
+        plan, report, solution = _round_and_check(
+            session,
+            user_id,
+            ctx.problem,
+            replace(ctx.pins, offer=frozenset({version_id})),
+            solution,
+            failed="That recipe no longer fits this meal once its amounts are rounded",
+        )
     except PinError as exc:
         raise SwapError(PLAN_AGAIN) from exc
     lines = also_changed(ctx, solution)
-    old_notes = list((ctx.plan.validation_report or {}).get("notes", []))
-    dropped = set(exclusion_notes(ctx.problem))
-    absorbed = [n for n in plan.notes if n not in dropped and n not in old_notes and "scaled up" in n]
-    plan = replace(
-        plan, constraints=ctx.saved, notes=(*old_notes, *absorbed), solver_status=ctx.plan.solver_status
-    )
-    run = GenerationRun(user_id=user_id, purpose=SWAP, status="succeeded", started_at=datetime.now(UTC))
-    session.add(run)
-    session.flush()
-    new = save_plan(session, user_id, plan, report, run.id, kind=ctx.plan.kind)
-    run.finished_at = datetime.now(UTC)
-    _replace_plan(session, ctx.plan, new)
-    _copy_statuses(session, ctx, new.id)
-    _carry_check_offs(session, ctx.plan.id, new.id)
-    new.totals = {
-        **new.totals,
-        "swap": {"from_plan_id": ctx.plan.id, "plan_meal": [ctx.slot[0].isoformat(), ctx.slot[1].value]},
+    marker = {
+        "kind": "meal",
+        "from_plan_id": ctx.plan.id,
+        "plan_meal": [ctx.slot[0].isoformat(), ctx.slot[1].value],
     }
-    log_exposures(session, run.id, new.id, ctx.problem, plan)
+    new = _save_version(
+        session,
+        user_id,
+        ctx.plan,
+        ctx.batches,
+        plan,
+        report=report,
+        problem=ctx.problem,
+        saved=ctx.saved,
+        marker=marker,
+    )
     meal_row = session.scalars(
         select(PlanMeal).where(
             PlanMeal.meal_plan_id == new.id,
@@ -676,6 +751,114 @@ def apply_swap(
     )
     session.flush()
     return SwapResult(new, ctx.plan.id, meal_row.id, lines)
+
+
+# ---------------- Also update this week's plan (AA8) ----------------
+@dataclass
+class VersionResult:
+    plan: MealPlan
+    undo_plan_id: int
+    message: str
+    also_changed: list[str]
+
+
+def batch_for_update(
+    session: Session, user_id: int, batch_id: int, *, today: date
+) -> tuple[PlanCookBatch, MealPlan, str | None]:
+    """A plan batch, its plan, and why it can't switch to another version (None: it can)."""
+    batch = session.get(PlanCookBatch, batch_id)
+    plan = session.get(MealPlan, batch.meal_plan_id) if batch is not None else None
+    if batch is None or plan is None or plan.user_id != user_id:
+        raise PlanNotFoundError(f"cook batch {batch_id} not found")
+    when = view.short_day(batch.cook_on)
+    if batch.status != "planned":
+        return batch, plan, f"{when}'s batch is already cooked, so it keeps the recipe it was cooked with."
+    if plan.status not in LIVE_STATUSES or plan.kind == SINGLE:
+        return batch, plan, "This plan was replaced, so it keeps its recipes."
+    if batch.cook_on < today:
+        return batch, plan, f"{when}'s cooking day has passed, so this plan keeps its recipe."
+    return batch, plan, None
+
+
+def use_version(
+    session: Session, user_id: int, batch_id: int, version_id: int, *, today: date
+) -> VersionResult:
+    """Switch one batch of a plan (and every meal it feeds) to another version of its recipe: your edited
+    version (AA8). The batch's portion size may be re-solved within the plan's ±nudge so the days it feeds
+    stay inside your limits; every other batch and meal stays exactly as it was. Saved as a new version of the
+    plan, which Undo brings back. Raises SwapError saying why when it can't fit."""
+    batch, plan, why_not = batch_for_update(session, user_id, batch_id, today=today)
+    if why_not is not None:
+        raise SwapError(why_not)
+    old_version = session.get(RecipeVersion, batch.recipe_version_id)
+    new_version = session.get(RecipeVersion, version_id)
+    if new_version is None or old_version is None or new_version.recipe_id != old_version.recipe_id:
+        raise PlanNotFoundError(f"recipe version {version_id} not found for this batch")
+    if version_id == batch.recipe_version_id:
+        raise SwapError("This batch already uses that version.")
+    try:
+        loaded = _load(session, user_id, plan, allow_buying=True, slot=None, extra=frozenset({version_id}))
+    except PinError as exc:
+        raise SwapError(PLAN_AGAIN) from exc
+    if version_id not in {r.version_id for r in loaded.problem.candidates}:
+        reasons = next((e.reasons for e in loaded.problem.excluded if e.version_id == version_id), ())
+        raise SwapError(
+            "Your version can't be planned: " + "; ".join(reasons or ("it breaks one of your rules",))
+        )
+    old_key = loaded.key_of[batch.id]
+    new_key = (version_id, batch.cook_on, batch.portion_size)
+    kept = {k: b for k, b in loaded.kept.items() if k != old_key}
+    meals = {
+        (m.eat_on, MealSlot(m.slot)): new_key
+        if m.cook_batch_id == batch.id
+        else loaded.key_of[m.cook_batch_id]
+        for m in loaded.meals
+        if m.cook_batch_id is not None
+    }
+    pins = Pins(None, None, meals, kept, frozenset(), today, added=frozenset({new_key}))
+    title = new_version.title
+    failed = f"With your version, {view.short_day(batch.cook_on)}'s {title} doesn't fit this week's limits"
+    try:
+        found = solve_pinned(loaded.problem, pins)
+        if found is None:
+            raise SwapError(_why_version_cant(loaded.problem, batch, version_id, failed))
+        solution, pins = found
+        rounded, report, solution = _round_and_check(
+            session, user_id, loaded.problem, pins, solution, failed=failed
+        )
+    except PinError as exc:
+        raise SwapError(PLAN_AGAIN) from exc
+    marker = {"kind": "version", "from_plan_id": plan.id, "batch_id": batch.id, "version_id": version_id}
+    new = _save_version(
+        session,
+        user_id,
+        plan,
+        loaded.batches,
+        rounded,
+        report=report,
+        problem=loaded.problem,
+        saved=loaded.saved,
+        marker=marker,
+    )
+    after = next(b for b in solution.batches if (b.version_id, b.cook_on, b.portion_size.value) == new_key)
+    line = f"{view.short_day(batch.cook_on)}'s {title} uses your version"
+    if after.nudge != loaded.kept[old_key].nudge:
+        line += ", its portions adjusted to keep your calories in range"
+    return VersionResult(new, plan.id, f"Updated this week's plan: {line}.", [line])
+
+
+def _why_version_cant(problem: PlanningProblem, batch: PlanCookBatch, version_id: int, failed: str) -> str:
+    """What the new version does to a portion, so the message says why no portion size fits."""
+    recipe = problem.candidate(version_id)
+    size = size_multiplier(PortionSize(batch.portion_size))
+    kcal = kcal_display(recipe.kcal * size)
+    protein = (recipe.protein_g * size).quantize(Decimal("0.1"), ROUND_HALF_UP)
+    nudge = problem.constraints.portion_nudge_pct
+    return (
+        f"{failed}: a portion would be about {kcal} kcal and {protein} g protein, and no portion size within "
+        f"{nudge:g}% keeps the days it feeds inside your calorie and protein limits. This plan keeps the "
+        "recipe as it was; your version is used from your next plan."
+    )
 
 
 # ---------------- undo ----------------

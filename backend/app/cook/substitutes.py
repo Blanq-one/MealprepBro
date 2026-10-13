@@ -21,7 +21,7 @@ Amounts are code-computed and rounded to something you can measure. Nothing is s
 stay those of the recipe as written.
 """
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
@@ -197,21 +197,49 @@ def find_substitute(
     taken: frozenset[int] = frozenset(),  # already standing in for another line of this recipe
     units: str = "us",
 ) -> Substitute | None:
+    return next(
+        substitutes(
+            line,
+            haves,
+            pairs,
+            unusable=unusable,
+            recipe_ingredient_ids=recipe_ingredient_ids,
+            taken=taken,
+            units=units,
+        ),
+        None,
+    )
+
+
+def substitutes(
+    line: MissingLine,
+    haves: Sequence[Have],
+    pairs: Sequence[AcceptedPair],
+    *,
+    unusable: frozenset[int] = frozenset(),
+    recipe_ingredient_ids: frozenset[int] = frozenset(),
+    taken: frozenset[int] = frozenset(),
+    units: str = "us",
+) -> Iterator[Substitute]:
+    """Every substitute in the order find_substitute tries them (its first is find_substitute's), each
+    ingredient once: Swap it on a recipe line lists them (step 2b.6, AA5)."""
     by_id = {h.ingredient_id: h for h in haves if h.ingredient_id not in unusable | taken}
+    seen: set[int] = set()
     for pair in sorted(pairs, key=lambda p: p.to_id):
         if pair.from_id != line.ingredient_id or pair.to_id not in by_id:
             continue
         if not _same_kind(line, by_id[pair.to_id]):
             continue
         if (found := _pair_substitute(line, pair, by_id[pair.to_id], units)) is not None:
-            return found
+            seen.add(found.ingredient_id)
+            yield found
     if not line.grouped and line.role not in PANTRY_ROLES:
-        return None
+        return
     rule = ROLE_RULES.get(line.role, SAME_MASS)
     for have in sorted(by_id.values(), key=_order):
         if have.ingredient_id == line.ingredient_id or have.ingredient_id in recipe_ingredient_ids:
             continue
-        if not _same_kind(line, have):
+        if have.ingredient_id in seen or not _same_kind(line, have):
             continue
         if line.grouped:
             if line.group is None or have.group != line.group:  # the group decides, whatever the role
@@ -225,5 +253,5 @@ def find_substitute(
             grams is not None
             and (found := _make(have, grams, via="pantry", units=units, note=None)) is not None
         ):
-            return found
-    return None
+            seen.add(found.ingredient_id)
+            yield found

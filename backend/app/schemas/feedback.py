@@ -69,3 +69,21 @@ class SwappedPayload(BaseModel):
 
 
 SWAPPED_PAYLOAD_VERSION = 1
+
+
+class EditedPayload(BaseModel):
+    """One ingredient line edited into your own version (step 2b.6, AA5): the row's recipe_version_id is the
+    new version, ingredient_id the line's ingredient before, cook_batch_id the plan batch you edited it
+    from."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    from_version_id: int
+    action: str  # swap | leave_out
+    line: int  # its position in the recipe
+    from_ingredient_id: int
+    to_ingredient_id: int | None = None
+    flagged_steps: list[int] = []  # steps that cook differently now (positions)
+
+
+EDITED_PAYLOAD_VERSION = 1

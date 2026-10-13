@@ -63,3 +63,15 @@
   margin: 16px 0 4px;
   font-size: 1.2rem;
 }
+
+/* a line with its ⋯ (step 2b.6): the text wraps beside a 48 px target */
+.withMore {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.lineText {
+  flex: 1;
+  min-width: 0;
+}

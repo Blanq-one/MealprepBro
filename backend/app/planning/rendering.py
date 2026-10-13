@@ -57,6 +57,7 @@ class StepInput:
     appliance_temp_f: int | None = None
     doneness_check_ingredient_id: int | None = None
     stage: int | None = None  # a prep item's stage (step 2b.10)
+    flag: str | None = None  # your version cooks differently here (step 2b.6): the note
 
 
 @dataclass(frozen=True)
@@ -70,6 +71,7 @@ class LineInput:
     safety_category: SafetyCategory | None = None
     preparation: str | None = None
     optional: bool = False
+    line_id: int | None = None  # its recipe_ingredient row (the line's ⋯, step 2b.6)
 
 
 @dataclass(frozen=True)
@@ -100,6 +102,7 @@ class RenderedStep:
     safety_note: str | None = None
     added_by_app: bool = False
     stage: int | None = None
+    flag: str | None = None
 
 
 @dataclass(frozen=True)
@@ -111,6 +114,7 @@ class RenderedLine:
     optional: bool
     amount_display: str = ""  # "1¼ tsp": the batch's amount alone
     portion_note: str | None = None  # "⅜ tsp per portion · 1¼ tsp for the batch of 4" (A1)
+    line_id: int | None = None
 
 
 @dataclass(frozen=True)
@@ -153,7 +157,13 @@ def render(data: RenderInput) -> RenderedRecipe:
             has_doneness = has_doneness or note is not None
         steps.append(
             RenderedStep(
-                step.section, step.text, step.duration_minutes, step.appliance_temp_f, note, stage=step.stage
+                step.section,
+                step.text,
+                step.duration_minutes,
+                step.appliance_temp_f,
+                note,
+                stage=step.stage,
+                flag=step.flag,
             )
         )
     requirement = doneness_requirement(_safety_lines(data.lines))
@@ -229,6 +239,7 @@ def render(data: RenderInput) -> RenderedRecipe:
                 ln.optional,
                 format_quantity(ln.amount, ln.unit),
                 portion_note(ln.amount, ln.unit, data.portions),
+                ln.line_id,
             )
             for ln in data.lines
         ),

@@ -278,6 +278,7 @@ def batch_view(session: Session, user_id: int, batch_id: int) -> BatchView:
                 d.safety_category,
                 source.preparation if source is not None else None,
                 optional,
+                row.recipe_ingredient_id,
             )
         )
         shown.append(
@@ -291,8 +292,16 @@ def batch_view(session: Session, user_id: int, batch_id: int) -> BatchView:
             )
         )
     calc = calculate(session, calc_lines, batch.portions)
+    flags = (version.change_set or {}).get("flags", {})  # your version cooks differently here (step 2b.6)
     steps = [
-        StepInput(s.section, s.text, s.duration_minutes, s.appliance_temp_f, s.doneness_check_ingredient_id)
+        StepInput(
+            s.section,
+            s.text,
+            s.duration_minutes,
+            s.appliance_temp_f,
+            s.doneness_check_ingredient_id,
+            flag=flags.get(str(s.position)),
+        )
         for s in session.scalars(
             select(RecipeStep).where(RecipeStep.recipe_version_id == version.id).order_by(RecipeStep.position)
         )

@@ -5,6 +5,8 @@ from fastapi.responses import StreamingResponse
 
 from app.api.deps import CurrentUser, DbSession, LLMClientFactory, LLMClock, LLMSettings, SessionFactory
 from app.cook import search as search_service
+from app.db.models import PlanCookBatch
+from app.planning.persistence import PlanNotFoundError
 from app.schemas.plans import (
     GenerationRunOut,
     GroceryListOut,
@@ -12,10 +14,12 @@ from app.schemas.plans import (
     PlanRequest,
     PlanStreamEvent,
     PlanSummaryOut,
+    PlanUpdateOut,
     SwapIn,
     SwapOptionsIn,
     SwapOut,
     SwapStreamEvent,
+    UseVersionIn,
 )
 from app.services import plans as service
 from app.services import swap as swap_service
@@ -155,6 +159,29 @@ def undo_swap(plan_id: int, session: DbSession, user: CurrentUser) -> PlanSummar
     old = swap_service.undo_swap(session, user.id, plan_id)
     session.commit()
     return service.plan_summary(session, user.id, old.id)
+
+
+@router.post("/plans/{plan_id}/batches/{batch_id}/use-version", response_model=PlanUpdateOut)
+def use_version(
+    plan_id: int, batch_id: int, body: UseVersionIn, session: DbSession, user: CurrentUser
+) -> PlanUpdateOut:
+    """Also update this week's plan (AA8): the batch (and every meal it feeds) switches to your version of its
+    recipe; nutrition, cost and the shopping list are recomputed and checked, the batch's portion size
+    re-solved if a limit breaks. Cooked batches keep the recipe they were cooked with (409 says why)."""
+    batch = session.get(PlanCookBatch, batch_id)
+    if batch is None or batch.meal_plan_id != plan_id:
+        raise PlanNotFoundError(f"cook batch {batch_id} not found in plan {plan_id}")
+    result = swap_service.use_version(
+        session, user.id, batch_id, body.version_id, today=search_service.local_now(user).date()
+    )
+    session.commit()
+    return PlanUpdateOut(
+        plan_id=result.plan.id,
+        undo_plan_id=result.undo_plan_id,
+        plan=service.plan_summary(session, user.id, result.plan.id),
+        message=result.message,
+        also_changed=result.also_changed,
+    )
 
 
 @router.get("/plans/{plan_id}/grocery-list", response_model=GroceryListOut)

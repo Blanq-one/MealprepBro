@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import CurrentUser, DbSession, LLMClientFactory, LLMClock, LLMSettings, SessionFactory
 from app.api.presenters import costs_out, nutrition_out
+from app.api.problems import ProblemError
 from app.cook import search as search_service
 from app.cook.saved import saved_cards
 from app.cook.stream import steps_events
@@ -17,21 +18,30 @@ from app.planning.assemblies import Assembly, ItemPortion
 from app.schemas.api import SeedRecipeOut
 from app.schemas.cards import SearchContextOut
 from app.schemas.cook import StepsStreamEvent
+from app.schemas.plans import AddToListOut
 from app.schemas.recipes import (
     AssemblyItemOut,
     AssemblyOut,
     HiddenRecipeOut,
+    LeaveOutOut,
+    LineOptionsOut,
     PrepItemOut,
     PrepStageOut,
+    RecipeEditIn,
+    RecipeEditOut,
     RecipeOut,
     RecipeVersionOut,
     RecipeVersionSummaryOut,
     RenderedLineOut,
     RenderedStepOut,
     SavedRecipeOut,
+    ShoppingTargetOut,
     StorageOut,
+    SwapChoiceOut,
 )
 from app.services import favorites, hidden
+from app.services import plans as plan_service
+from app.services import recipe_edits as edits
 from app.services.dishes import dish_categories
 from app.services.recipes import VersionView, recipe_view, seed_recipes, version_view
 
@@ -163,6 +173,7 @@ def version_out(
                 optional=ln.optional,
                 amount_display=ln.amount_display,
                 portion_note=ln.portion_note,
+                line_id=ln.line_id,
             )
             for ln in rendered.lines
         ],
@@ -175,6 +186,7 @@ def version_out(
                 safety_note=s.safety_note,
                 added_by_app=s.added_by_app,
                 stage=s.stage,
+                flag=s.flag,
             )
             for s in rendered.steps
         ]
@@ -199,6 +211,11 @@ def version_out(
         prep=prep_out(view.item, list(v.pairs_with or [])) if view.item is not None else None,
         assembly=assembly_out(view.assembly) if view.assembly is not None else None,
         is_hidden=is_hidden,
+        your_version=v.created_by == "user",
+        parent_version_id=v.parent_version_id,
+        can_rewrite_steps=v.created_by == "user"
+        and v.steps_status is None
+        and bool((v.change_set or {}).get("flags")),
     )
 
 
@@ -395,4 +412,111 @@ def write_steps(
     )
     return StreamingResponse(
         events, media_type=NDJSON, headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"}
+    )
+
+
+# ---------------- step 2b.6: a line's ⋯ (AA5, AA8) ----------------
+BatchQuery = Annotated[
+    int | None, Query(alias="batch", description="the plan batch the page was opened from")
+]
+
+
+@versions_router.get("/{version_id}/lines/{line_id}/options", response_model=LineOptionsOut)
+def line_options(
+    version_id: int, line_id: int, session: DbSession, user: CurrentUser, batch: BatchQuery = None
+) -> LineOptionsOut:
+    """A line's ⋯: Swap it (substitutes from its culinary group or role, with the change per portion in kcal,
+    protein and cost), Leave it out (non-essential lines only), I'm out of this (where it would be added to
+    a shopping list) and Never use this."""
+    opts = edits.line_options(session, user.id, version_id, line_id)
+    target = edits.shopping_target(session, user.id, batch, today=search_service.local_now(user).date())
+    return LineOptionsOut(
+        line_id=opts.line_id,
+        ingredient_id=opts.ingredient_id,
+        name=opts.name,
+        display=opts.display,
+        swaps=[
+            SwapChoiceOut(
+                ingredient_id=c.ingredient_id,
+                name=c.name,
+                display=c.display,
+                numbers=c.numbers,
+                note=c.note,
+                cooking_note=c.cooking_note,
+            )
+            for c in opts.swaps
+        ],
+        leave_out=LeaveOutOut(
+            allowed=opts.leave_out.allowed,
+            reason=opts.leave_out.reason,
+            numbers=opts.leave_out.numbers,
+            warning=opts.leave_out.warning,
+        ),
+        in_pantry=opts.in_pantry,
+        never_used=opts.never_used,
+        shopping=ShoppingTargetOut(
+            plan_id=target.plan_id, list_id=target.list_id, can_add=target.can_add, reason=target.reason
+        ),
+    )
+
+
+@versions_router.post("/{version_id}/edits", response_model=RecipeEditOut)
+def edit_line(version_id: int, body: RecipeEditIn, session: DbSession, user: CurrentUser) -> RecipeEditOut:
+    """Swap a line or leave it out, saved as your own version of the recipe (its default from now on). From a
+    plan meal (`batch_id`), whether this week's plan can take it (POST
+    /plans/{id}/batches/{batch}/use-version)."""
+    if body.action == "swap" and body.ingredient_id is None:
+        raise ProblemError(422, "Pick a swap", "A swap needs the ingredient to use instead (ingredient_id).")
+    result = edits.edit_version(
+        session,
+        user.id,
+        version_id,
+        line_id=body.line_id,
+        action=body.action,
+        ingredient_id=body.ingredient_id,
+        batch_id=body.batch_id,
+        today=search_service.local_now(user).date(),
+    )
+    session.commit()
+    return RecipeEditOut(
+        version=version_out(session, version_view(session, user.id, result.version.id)),
+        note=result.note,
+        cooking_note=result.cooking_note,
+        flagged_steps=result.flagged_steps,
+        batch_id=result.batch_id,
+        can_update_plan=result.can_update_plan,
+        plan_note=result.plan_note,
+    )
+
+
+@versions_router.post("/{version_id}/rewrite-steps", response_model=RecipeVersionOut)
+def rewrite_steps(version_id: int, session: DbSession, user: CurrentUser) -> RecipeVersionOut:
+    """Rewrite steps for this change: a version of your recipe whose steps are written once, by one LLM call
+    when its page opens (POST /recipe-versions/{id}/steps); its lines and times stay as they are."""
+    version = edits.rewrite_steps(session, user.id, version_id)
+    session.commit()
+    return version_out(session, version_view(session, user.id, version.id))
+
+
+@versions_router.post("/{version_id}/lines/{line_id}/add-to-list", response_model=AddToListOut)
+def add_to_list(
+    version_id: int, line_id: int, session: DbSession, user: CurrentUser, batch: BatchQuery = None
+) -> AddToListOut:
+    """I'm out of this: the line's ingredient on your shopping list (the plan the page came from, else your
+    current plan), as much as that plan's batch uses, in whole packages at your stores."""
+    item, added, target = edits.add_to_list(
+        session, user.id, version_id, line_id, batch_id=batch, today=search_service.local_now(user).date()
+    )
+    session.commit()
+    out = plan_service.one_grocery_item(session, item)
+    what = out.to_buy or out.needed
+    cost = f" ({out.estimated_cost_display})" if out.estimated_cost_display else ""
+    message = (
+        f"Added {what} {out.name} to your shopping list{cost}."
+        if added
+        else f"{out.name} is already on your shopping list."
+    )
+    assert target.plan_id is not None and target.list_id is not None
+    return AddToListOut(
+        added=added, plan_id=target.plan_id, list_id=target.list_id, item=out, message=message
     )

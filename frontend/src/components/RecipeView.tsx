@@ -21,6 +21,8 @@ export type RecipeLine = {
   detail?: string | null;
   /** "1 scoop per portion · 4 scoops for the batch of 4" (server text, A1). */
   portionNote?: string | null;
+  /** Its recipe line (step 2b.6): the line's ⋯ opens its options. */
+  lineId?: number | null;
 };
 
 const SECTION_LABELS: Record<string, string> = {
@@ -72,6 +74,11 @@ function StepList({ steps, keyPrefix }: { steps: Step[]; keyPrefix: string }) {
                 {step.safety_note && (
                   <p className="notice notice-safety" data-testid="safety-note">
                     <strong>Food safety:</strong> {step.safety_note}
+                  </p>
+                )}
+                {step.flag && (
+                  <p className="notice notice-warn small" data-testid="step-flag">
+                    <strong>Your version:</strong> {step.flag}
                   </p>
                 )}
               </li>
@@ -146,6 +153,7 @@ export function RecipeView({
   notes = [],
   portionsLine,
   stepsSlot,
+  lineAction,
   children,
 }: {
   recipe: RecipeVersion;
@@ -155,6 +163,8 @@ export function RecipeView({
   portionsLine?: string | null;
   /** Shown in place of the steps while a new idea's steps are being written (C8). */
   stepsSlot?: ReactNode;
+  /** Beside each line with a line id: its ⋯ (step 2b.6). */
+  lineAction?: (line: RecipeLine) => ReactNode;
   children?: ReactNode;
 }) {
   const shown: RecipeLine[] =
@@ -166,6 +176,7 @@ export function RecipeView({
       preparation: l.preparation,
       optional: l.optional,
       portionNote: l.portion_note ?? null,
+      lineId: l.line_id ?? null,
     }));
   const nutrition = recipe.per_portion;
   const heme = nutrition.heme_iron;
@@ -180,6 +191,11 @@ export function RecipeView({
           {recipe.is_favorite && <span className="badge badge-accent">Favorite</span>}
           {recipe.is_saved && <span className="badge badge-accent">Saved</span>}
         </div>
+        {recipe.your_version && recipe.change_summary && (
+          <p className="notice" data-testid="your-version">
+            {recipe.change_summary}
+          </p>
+        )}
         {recipe.description && !stepsSlot && <p className="muted">{recipe.description}</p>}
         <p className="small muted">
           {portionsLine ?? `${recipe.portions} portions`} ({recipe.portion_size.replace(/_/g, " ")}) · {minutesLabel(recipe.active_minutes)}{" "}
@@ -211,16 +227,19 @@ export function RecipeView({
         <h2 id="ingredients-h">{recipe.kind === "assembly" ? "Add-ons, per portion" : "Ingredients"}</h2>
         <ul className={`list ${styles.lines}`}>
           {shown.map((line) => (
-            <li key={line.key}>
-              <span className={styles.amount}>{line.display}</span>{" "}
-              <span>
-                {line.name}
-                {line.preparation ? `, ${line.preparation}` : ""}
-                {line.optional && <span className="muted"> (optional)</span>}
+            <li key={line.key} className={lineAction && line.lineId ? styles.withMore : undefined}>
+              <span className={styles.lineText}>
+                <span className={styles.amount}>{line.display}</span>{" "}
+                <span>
+                  {line.name}
+                  {line.preparation ? `, ${line.preparation}` : ""}
+                  {line.optional && <span className="muted"> (optional)</span>}
+                </span>
+                {line.note && <span className="badge"> {line.note}</span>}
+                {line.portionNote && <span className={styles.detail}>{line.portionNote}</span>}
+                {line.detail && <span className={styles.detail}>{line.detail}</span>}
               </span>
-              {line.note && <span className="badge"> {line.note}</span>}
-              {line.portionNote && <span className={styles.detail}>{line.portionNote}</span>}
-              {line.detail && <span className={styles.detail}>{line.detail}</span>}
+              {lineAction && line.lineId ? lineAction(line) : null}
             </li>
           ))}
         </ul>

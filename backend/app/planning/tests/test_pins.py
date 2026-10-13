@@ -80,7 +80,7 @@ def test_a_swap_changes_only_the_meal_and_the_batches_that_feed_it() -> None:
     assert found is not None
     swapped, _ = found
     fill = filled(swapped, pins)
-    assert fill.version_id != pins.fed_by[0]
+    assert pins.fed_by is not None and fill.version_id != pins.fed_by[0]
     before = {(m.eat_on, m.slot): base.batches[m.batch_index] for m in base.meals}
     after = {(m.eat_on, m.slot): swapped.batches[m.batch_index] for m in swapped.meals}
     assert before.keys() == after.keys()
@@ -119,7 +119,7 @@ def test_the_options_are_different_recipes_and_never_the_ones_swapped_away() -> 
     found, _ = swap_options(p, pins, count=5)
     versions = [filled(s, pins).version_id for s in found]
     assert len(versions) == len(set(versions)) >= 3
-    assert pins.fed_by[0] not in versions
+    assert pins.fed_by is not None and pins.fed_by[0] not in versions
     away = frozenset(versions[:2])
     again, _ = swap_options(p, Pins(**{**pins.__dict__, "offer": pins.offer - away}), count=5)
     assert not {filled(s, pins).version_id for s in again} & away

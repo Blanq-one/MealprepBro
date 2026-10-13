@@ -46,6 +46,14 @@ function hiddenValue(count: number | null): string {
 
 /** The rows, grouped. The weekly band row exists only in weekly mode (hidden in strict mode, FLOW_SPEC §11).
  * `hidden`: how many recipes you hid with Not for me (null until it arrives). */
+/** Foods I don't eat (step 2b.6, AA5): your never-use list, then what you use less. */
+export function foodsValue(prefs: { name: string; preference: string }[]): string {
+  const never = prefs.filter((p) => p.preference === "exclude").map((p) => p.name);
+  const less = prefs.filter((p) => p.preference === "dislike").map((p) => p.name);
+  const parts = [never.join(", "), less.length ? `use less: ${less.join(", ")}` : ""].filter(Boolean);
+  return parts.join(" · ") || "None";
+}
+
 export function settingsGroups(out: SettingsOut, summary: Record<string, string>, hidden: number | null = null): Group[] {
   const s = out.settings;
   const held = (out.diet_review ?? []).filter((d) => d.decision === "held").length;
@@ -104,7 +112,7 @@ export function settingsGroups(out: SettingsOut, summary: Record<string, string>
           value: pork ? (pork.max_meals_per_week === 0 ? "Pork: never" : `Pork: up to ${pork.max_meals_per_week} a week`) : `${(s.frequency_caps ?? []).length} caps`,
         },
         { field: "daily_amount_caps", label: "Daily caps", value: summary.daily_caps ?? dailyCapsValue(s) },
-        { field: "preferences", label: "Excluded and disliked", value: prefs.length ? prefs.map((p) => p.name).join(", ") : "None" },
+        { field: "preferences", label: "Foods I don't eat", value: foodsValue(prefs) },
         { field: "hidden_recipes", label: "Hidden recipes", value: hiddenValue(hidden) },
       ],
     },

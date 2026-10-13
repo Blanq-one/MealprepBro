@@ -1140,3 +1140,13 @@ def grocery_view(session: Session, user_id: int, plan_id: int, group_by: str = "
         note=note,
         groups=group_out,
     )
+
+
+def one_grocery_item(session: Session, item: GroceryListItem) -> GroceryItemOut:
+    """One list item as the Grocery tab shows it (step 2b.6: I'm out of this)."""
+    data = load_ingredients(session, [item.ingredient_id])
+    stores = {s.id: s.name for s in session.scalars(select(Store))}
+    products = {
+        p.id: p.name for p in session.scalars(select(Product).where(Product.id == (item.product_id or 0)))
+    }
+    return grocery_item_out(item, data, stores, products)

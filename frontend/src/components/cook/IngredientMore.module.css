@@ -1,0 +1,78 @@
+/* The ⋯ beside an ingredient line: a 48 px target. */
+.more {
+  flex: none;
+  width: var(--tap);
+  min-height: var(--tap);
+  margin-left: auto;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.choice {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-tile);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.choice:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.amount,
+.numbers {
+  color: var(--muted);
+  font-size: var(--text-small);
+  font-weight: 400;
+}
+
+.cook {
+  font-size: var(--text-small);
+}
+
+.never {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: var(--radius-tile);
+  background: var(--surface-2);
+  font-size: var(--text-small);
+}
+
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

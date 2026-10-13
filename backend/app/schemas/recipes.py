@@ -4,7 +4,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.schemas.api import NutritionOut, StoreCostOut
 from app.schemas.cards import CostLineOut, MissingLineOut, SearchContextOut, SwapLineOut
@@ -18,6 +18,7 @@ class RenderedLineOut(BaseModel):
     optional: bool
     amount_display: str = ""  # "1¼ tsp": the amount alone
     portion_note: str | None = None  # "1 scoop per portion · 4 scoops for the batch of 4" (A1)
+    line_id: int | None = None  # the line's ⋯ (step 2b.6): its options are GET …/lines/{line_id}/options
 
 
 class RenderedStepOut(BaseModel):
@@ -28,6 +29,7 @@ class RenderedStepOut(BaseModel):
     safety_note: str | None
     added_by_app: bool
     stage: int | None = None  # a prep item's stage (step 2b.10); None for a dish
+    flag: str | None = None  # your version cooks differently in this step (step 2b.6, AA8)
 
 
 class StorageOut(BaseModel):
@@ -130,6 +132,11 @@ class RecipeVersionOut(BaseModel):
     assembly: AssemblyOut | None = None
     # step 2b.7: Not for me (F24) is on: left out of every suggestion and plan until shown again
     is_hidden: bool = False
+    # step 2b.6 (AA5, AA8): your own version ("Your version: chicken breast instead of chicken thigh" is its
+    # change_summary), the version it came from, and whether a step is flagged (Rewrite steps for this change)
+    your_version: bool = False
+    parent_version_id: int | None = None
+    can_rewrite_steps: bool = False
 
 
 class HiddenRecipeOut(BaseModel):
@@ -181,3 +188,64 @@ class SavedRecipeOut(BaseModel):
     missing: list[MissingLineOut]  # what you'd buy, with its price (M11)
     swaps: list[SwapLineOut] = Field(default_factory=list)  # what you can make with something you have
     saved_at: datetime
+
+
+# ---------------- step 2b.6: a line's ⋯ (AA5, AA8) ----------------
+class SwapChoiceOut(BaseModel):
+    """One substitute for a line, with the change per portion (code-computed)."""
+
+    ingredient_id: int
+    name: str
+    display: str  # its amount for the recipe as written: "150 g"
+    numbers: list[str]  # per portion: "+12 kcal", "−4.5 g protein", "+$0.30"
+    note: str | None = None  # an accepted pair's note
+    cooking_note: str | None = None  # it cooks differently: the steps that name it are flagged
+
+
+class LeaveOutOut(BaseModel):
+    allowed: bool  # only garnishes, optional lines, seasonings and small aromatics
+    reason: str | None = None  # why not
+    numbers: list[str] = Field(default_factory=list)  # per portion
+    warning: str | None = None  # "Protein drops by 12.5 g a portion."
+
+
+class ShoppingTargetOut(BaseModel):
+    """Where I'm out of this adds the item: the plan you opened it from, or your current plan."""
+
+    plan_id: int | None
+    list_id: int | None
+    can_add: bool
+    reason: str | None = None  # why not: no plan, or the trip is done
+
+
+class LineOptionsOut(BaseModel):
+    line_id: int
+    ingredient_id: int
+    name: str
+    display: str  # the line as written: "600 g chicken thigh, boneless skinless"
+    swaps: list[SwapChoiceOut]
+    leave_out: LeaveOutOut
+    in_pantry: bool  # you have some
+    never_used: bool  # already on Foods I don't eat (or always excluded)
+    shopping: ShoppingTargetOut
+
+
+class RecipeEditIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    line_id: int
+    action: Literal["swap", "leave_out"]
+    ingredient_id: int | None = None  # swap: one of the line's swaps
+    batch_id: int | None = None  # opened from a plan meal: may that batch switch to your version?
+
+
+class RecipeEditOut(BaseModel):
+    """Your new version (it's the recipe's default from now on), and whether this week's plan can take it."""
+
+    version: RecipeVersionOut
+    note: str  # "Your version: chicken breast instead of chicken thigh"
+    cooking_note: str | None = None  # it cooks differently: Rewrite steps for this change is offered
+    flagged_steps: list[int] = Field(default_factory=list)
+    batch_id: int | None = None
+    can_update_plan: bool = False  # Also update this week's plan
+    plan_note: str | None = None  # why not: "Mon 12's batch is already cooked, so it keeps …"
