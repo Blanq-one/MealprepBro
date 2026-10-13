@@ -199,8 +199,24 @@ few plans, and again after any change to the planner.
   `stopped_on_time` above 0 now and then is fine (that solve kept its best plan so far). If any row says
   `ran_out_of_time = true`, or `took` is over about 2.5 minutes, copy the rows and send them to me: the time limits
   may need tuning for Vercel's CPU.
-- [ ] The budget cards share 90 s between them. If a card says "There wasn't time to price this one", tell me which
-  one; it can still be picked.
+- [ ] The budget cards share 90 s between them and show up one by one. If a card says "Taking longer than usual",
+  it can still be picked, and Try again prices just the missing ones. Each request keeps a run record that says
+  why (a cold start: the database or the function waking up; or the time budget):
+
+  ```sql
+  select id, status, created_at,
+         progress->>'slow'                       as slow,
+         progress->'timed_out'                   as timed_out,
+         progress->'start'->>'cold_start'         as cold_start,
+         progress->'start'->>'db_connect_s'       as db_connect_s,
+         progress->'start'->>'process_age_s'      as process_age_s,
+         progress->>'elapsed_s'                  as elapsed_s,
+         progress->'cached'                      as cached
+  from generation_run
+  where purpose = 'tier_cards'
+  order by id desc
+  limit 10;
+  ```
 
 (Signed in on the live app, `https://<your address>/api/v1/generation-runs/<id>` shows one run's full record too.)
 
@@ -218,7 +234,7 @@ few plans, and again after any change to the planner.
 
 ## Later deploys
 
-- Every `git push` of `master` builds and deploys production. The build step (`python -m app.deploy`) first runs
+- Every `git push` of `master` builds and deploys production, so only you push (CLAUDE.md: I commit, never push). The build step (`python -m app.deploy`) first runs
   the safety checks, then, with `RUN_MIGRATIONS_ON_DEPLOY=1`, any new migrations over the direct connection before
   the new code goes live. That's safe while the old code is still serving, because every migration is additive
   (BUILD_PLAN §4.1: new tables, nullable columns, indexes; nothing renamed or dropped). New seed recipes or prices
@@ -243,6 +259,7 @@ few plans, and again after any change to the planner.
 | `/health` shows `"database": "error"` | The pooled string is wrong, or the Neon project is paused; check it in the Neon console. |
 | Sign-in always says the password is wrong | The hash on Vercel isn't from the password you're typing: run step 4 again. |
 | A plan stops with a Groq message | The key, `LLM_MODEL` or the day's Groq allowance; the message says which. |
+| "Taking longer than usual" with Try again | The database didn't answer in time (Neon waking from scale-to-zero) or a budget card ran out of time; Try again. The tier cards' run record (step 8) says which. |
 
 ## Backups
 

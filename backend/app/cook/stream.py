@@ -15,6 +15,7 @@ from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
 from app.config import Settings, get_settings
@@ -22,6 +23,7 @@ from app.cook import more as more_service
 from app.cook import search as service
 from app.cook.ideas import ClientFactory, LLMAccess, wait_seconds
 from app.db.models import AppUser, Recipe, RecipeVersion
+from app.db.session import DATABASE_SLOW_DETAIL, DATABASE_SLOW_TITLE
 from app.llm.pacing import Clock, Deadline, SystemClock
 from app.planning.orchestrator import problem_json
 from app.planning.steps import StepsWriter
@@ -87,11 +89,26 @@ def stream_events(
                 lines.put(("event", {"event": "result", **result}))
             except Exception as exc:
                 log.exception("%s crashed", name)
-                session.rollback()
-                problem = problem_json(crash_title, str(exc), status=500, code="internal")
-                result = on_crash(session, user, dict(known), problem)
-                session.commit()
+                if isinstance(exc, OperationalError):  # the database didn't answer (AC5): try again
+                    problem = problem_json(
+                        DATABASE_SLOW_TITLE, DATABASE_SLOW_DETAIL, status=503, code="db_unavailable"
+                    )
+                else:
+                    problem = problem_json(crash_title, str(exc), status=500, code="internal")
+                try:  # the last line is the result even when the crash can't be recorded
+                    session.rollback()
+                    result = on_crash(session, user, dict(known), problem)
+                    session.commit()
+                except Exception:
+                    log.exception("%s couldn't record its crash", name)
+                    result = {}
                 lines.put(("event", {"event": "result", **result, "status": "failed", "problem": problem}))
+        except OperationalError:  # before it started: the database didn't answer
+            log.exception("%s couldn't reach the database", name)
+            problem = problem_json(
+                DATABASE_SLOW_TITLE, DATABASE_SLOW_DETAIL, status=503, code="db_unavailable"
+            )
+            lines.put(("event", {"event": "result", "status": "failed", "problem": problem}))
         finally:
             session.close()
             lines.put(("done", {}))

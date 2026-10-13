@@ -6,7 +6,13 @@ from sqlalchemy import text
 from sqlalchemy.pool import NullPool, QueuePool
 
 from app.config import Settings, sqlalchemy_url
-from app.db.session import connect_with_retry, engine_options, make_engine
+from app.db.session import (
+    active_connect_log,
+    connect_with_retry,
+    engine_options,
+    logging_connects,
+    make_engine,
+)
 
 NEON = "postgresql://me:pw@ep-cool-name-123456-pooler.us-east-1.aws.neon.tech/mealbro?sslmode=require"
 NEON_DIRECT = "postgres://me:pw@ep-cool-name-123456.us-east-1.aws.neon.tech/mealbro?sslmode=require"
@@ -80,12 +86,38 @@ def test_connecting_gives_up_after_the_retries_and_at_once_on_a_wrong_password()
     assert slept == []
 
 
+def test_a_run_record_can_count_the_connections_and_their_retries():
+    """AC5: inside logging_connects, every connection (and every retry, and a failure) is counted, so a run
+    record can say a Neon compute was waking up; outside it nothing is kept."""
+    calls: list[int] = []
+
+    def flaky() -> str:
+        calls.append(1)
+        if len(calls) == 1:
+            raise psycopg.OperationalError("connection to server failed: Connection refused")
+        return "connected"
+
+    def down() -> None:
+        raise psycopg.OperationalError("timeout expired")
+
+    assert active_connect_log() is None
+    with logging_connects() as record:
+        assert connect_with_retry(flaky, 3, sleep=lambda _s: None) == "connected"
+        with pytest.raises(psycopg.OperationalError):
+            connect_with_retry(down, 1, sleep=lambda _s: None)
+    assert (record.connects, record.attempts, record.failed, record.retries) == (1, 4, 1, 2)
+    assert record.seconds >= 0 and active_connect_log() is None
+    connect_with_retry(flaky, 3, sleep=lambda _s: None)  # nothing active: nothing counted
+    assert record.connects == 1
+
+
 def test_the_engine_connects_through_the_retrying_hook(test_db_url):
     engine = make_engine(test_db_url, settings(db_pool="null"))
     try:
         assert isinstance(engine.pool, NullPool)
-        with engine.connect() as conn:
+        with logging_connects() as record, engine.connect() as conn:
             assert conn.execute(text("SELECT 1")).scalar_one() == 1
+        assert record.connects == 1 and record.retries == 0
     finally:
         engine.dispose()
     pooled = make_engine(test_db_url, settings(db_pool="queue"))

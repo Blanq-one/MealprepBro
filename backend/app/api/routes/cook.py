@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Response
+from fastapi import APIRouter, Request, Response
 from fastapi.responses import StreamingResponse
 
 from app.api.deps import CurrentUser, DbSession, LLMClientFactory, LLMClock, LLMSettings, SessionFactory
 from app.api.problems import ProblemError
+from app.api.timing import request_connects, request_process_age_s
 from app.cook import search as search_service
 from app.cook.home import cook_home
 from app.cook.ideas import LLMAccess
@@ -10,7 +11,7 @@ from app.cook.meal_prep import meal_prep_events, prepare
 from app.cook.prep import PrepAnswersError
 from app.cook.single_meal import cook_meal
 from app.cook.stream import meal_now_events, more_events
-from app.cook.tiers import tier_cards
+from app.cook.tiers import tier_events
 from app.schemas.cook import (
     CookAnswers,
     CookHomeOut,
@@ -18,7 +19,7 @@ from app.schemas.cook import (
     CookMealOut,
     CookSearchOut,
     CookStreamEvent,
-    TierCardOut,
+    TierStreamEvent,
 )
 from app.schemas.plans import PlanStreamEvent
 
@@ -156,28 +157,28 @@ def cook_this(
     return out
 
 
-@router.post("/meal-prep/tiers", response_model=list[TierCardOut])
-def meal_prep_tiers(body: CookAnswers, session: DbSession, user: CurrentUser) -> list[TierCardOut]:
+@router.post(
+    "/meal-prep/tiers",
+    response_class=StreamingResponse,
+    responses={200: {"model": TierStreamEvent, "content": {NDJSON: {}}, "description": "NDJSON event lines"}},
+)
+def meal_prep_tiers(
+    *, body: CookAnswers, request: Request, user: CurrentUser, session_factory: SessionFactory
+) -> StreamingResponse:
     """The shopping step's four budget tier cards for these answers (step 2b.6, AA6; its approval, item 2):
     Broke mode, Cheapest, A bit better and Fancy, each with its estimated regular groceries, the stock-up
-    items apart, and protein, from a quick solve (saved recipes, no LLM).
-    Tap one and POST /cook/meal-prep with its `price_tier` for the full plan."""
+    items apart, and protein, from a quick solve (saved recipes, no LLM). Priced in that order, each held to
+    cost at least the one below (AC3). A stream of JSON lines (`TierStreamEvent`, AC6): `started`, a `card`
+    line per tier as soon as it's ready, heartbeats, then one `result`; a card worked out earlier for the
+    same week, answers, settings and data comes at once. Tap one and POST /cook/meal-prep with its
+    `price_tier` for the full plan."""
     if body.mode != "prep":
         raise ProblemError(422, "Not a meal-prep request", 'Send mode "prep" with its amount (prep).')
-    cards = tier_cards(session, user.id, body, today=search_service.local_now(user).date())
-    return [
-        TierCardOut(
-            tier=c.tier,
-            label=c.label,
-            blurb=c.blurb,
-            status=c.status,
-            total_cents=c.total_cents,
-            total_display=c.total_display,
-            protein_per_day_display=c.protein_per_day_display,
-            reason=c.reason,
-            stock_up_cents=c.stock_up_cents,
-            stock_up_display=c.stock_up_display,
-            includes_display=c.includes_display,
-        )
-        for c in cards
-    ]
+    events = tier_events(
+        session_factory,
+        user.id,
+        body,
+        request_connects=request_connects(request),
+        process_age_s=request_process_age_s(request),
+    )
+    return StreamingResponse(events, media_type=NDJSON, headers=STREAM_HEADERS)

@@ -98,6 +98,8 @@ export type RecipeEditBody = S["RecipeEditIn"];
 export type RecipeEdit = S["RecipeEditOut"];
 export type PlanUpdate = S["PlanUpdateOut"];
 export type AddToList = S["AddToListOut"];
-// Step 2b.6: budget tier cards (AA6)
+// Step 2b.6: budget tier cards (AA6); streamed one by one, with their fix, since the deploy (AC3–AC6)
 export type TierCard = S["TierCardOut"];
 export type PriceTier = TierCard["tier"];
+export type TierFix = S["TierFixOut"];
+export type TierStreamEvent = S["TierStreamEvent"];

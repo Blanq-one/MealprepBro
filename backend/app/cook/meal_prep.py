@@ -8,12 +8,14 @@ first. The plan is a draft of kind "meal_prep" until you accept it (overlap-awar
 """
 
 from collections.abc import Callable, Iterator
+from dataclasses import replace
 from datetime import date
 
 from sqlalchemy.orm import Session
 
 from app.cook.answers import answers_hash
 from app.cook.prep import PrepPlan, resolve_prep
+from app.cook.tiers import tier_floor
 from app.db.models import CookSearch, Ingredient
 from app.domain.enums import StorageLocation
 from app.planning.orchestrator import PlanOutcome
@@ -31,6 +33,9 @@ def prepare(session: Session, user_id: int, answers: CookAnswers, today: date) -
     """Resolve the answers (a PrepAnswersError says what to change), write the Save-to-pantry items, and
     remember the search. The caller commits."""
     plan = resolve_prep(answers, load_settings(session, user_id), today)
+    if (floor := tier_floor(session, user_id, answers, today)) is not None:
+        # the tier you tapped costs the same or more than the one below, as its card did (AC3)
+        plan = replace(plan, request=plan.request.model_copy(update={"regular_floor_cents": floor}))
     if plan.save_to_pantry:
         add_lots(
             session,

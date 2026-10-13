@@ -6,12 +6,14 @@ from fastapi import FastAPI, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import OperationalError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.problems import ProblemError
 from app.auth.passwords import PasswordHashError
 from app.cook.search import SearchNotFoundError
 from app.cook.single_meal import CookThisError, StepsNotReadyError
+from app.db.session import DATABASE_RETRY_AFTER_S, DATABASE_SLOW_DETAIL, DATABASE_SLOW_TITLE
 from app.domain.quantities import QuantityParseError
 from app.domain.scaling import ScalingError
 from app.domain.units import InvalidQuantityError, UnitError
@@ -124,3 +126,10 @@ def install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(PasswordHashError)
     async def _bad_hash(_: Request, exc: PasswordHashError) -> JSONResponse:
         return problem(503, "Sign-in isn't set up", str(exc))
+
+    @app.exception_handler(OperationalError)
+    async def _database(_: Request, exc: OperationalError) -> JSONResponse:
+        # the database didn't answer after the connect retries (a Neon compute waking up, AC5): try again
+        response = problem(503, DATABASE_SLOW_TITLE, DATABASE_SLOW_DETAIL, code="db_unavailable")
+        response.headers["Retry-After"] = str(DATABASE_RETRY_AFTER_S)
+        return response

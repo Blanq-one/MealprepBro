@@ -185,6 +185,8 @@ def _constraints(
         "lots_off_ingredient_ids": frozenset(),
         # one meal of "Same dish, many portions" may become another dish: you asked for it
         "portion_requests": tuple(r.model_copy(update={"same_recipe": False}) for r in c.portion_requests),
+        # the tier cards' floor (AC3) priced the week against the tier below; a swap may save money
+        "regular_floor_cents": None,
     }
     if after:
         update |= {"allowed_purchase_ingredient_ids": None, "preferred_ingredient_ids": frozenset()}

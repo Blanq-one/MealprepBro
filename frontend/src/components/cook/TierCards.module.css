@@ -67,6 +67,46 @@
   font-weight: 600;
 }
 
+/* AC4: why the tier's upgrades fall short */
+.shortfall {
+  font-size: var(--text-small);
+}
+
+/* AC5: "Taking longer than usual" */
+.slowTitle {
+  margin: 0;
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
+/* a card's fix and Try again, under the card (a button can't hold buttons) */
+.after {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.slow,
+.failed {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0 12px;
+}
+
+.slow > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.failed {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
 .working {
   display: flex;
   align-items: center;

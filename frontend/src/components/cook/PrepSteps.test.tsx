@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -10,6 +10,7 @@ import { mockApi } from "@/test/api";
 import { userSettings } from "@/test/fixtures";
 
 import { AmountStep, CookStyleStep, FREEZER_EXTRA_NOTE, ShopStep } from "./PrepSteps";
+import { forgetTierCards } from "./TierCards";
 
 const TODAY = new Date(2026, 9, 12); // Mon Oct 12; cook days Mon, Wed, Thu, Sat, Sun at 90 min (the seed default)
 const settings = userSettings();
@@ -126,17 +127,25 @@ describe("C1 How much are you prepping?", () => {
 });
 
 const CARDS = [
-  { tier: "broke", label: "Broke mode", blurb: "Rock bottom: your pantry first, then rice, lentils, eggs, chickpeas, oats, frozen veg, tortillas, family-pack chicken; repeats are fine", status: "estimated", total_cents: 1415, total_display: "about $14.15", protein_per_day_display: "Lunch + dinner: about 72 g of your 100 g daily target", reason: null, stock_up_cents: 1804, stock_up_display: "+ about $18.04 stock-up: red lentils (dry), vegetable oil", includes_display: "Repeats are fine (up to 7 of one recipe a week) · stock-up only when needed" },
-  { tier: "cheapest", label: "Cheapest", blurb: "Cheap staples, a little more variety", status: "estimated", total_cents: 1981, total_display: "about $19.81", protein_per_day_display: "Lunch + dinner: about 77 g of your 100 g daily target", reason: null, stock_up_cents: 0, stock_up_display: null, includes_display: "Up to 5 of one recipe a week" },
-  { tier: "better", label: "A bit better", blurb: "A few meals with upgrades (Greek yogurt, ground turkey, fresh veg), more variety", status: "not_priced", total_cents: null, total_display: null, protein_per_day_display: null, reason: "There wasn't time to price this one; tap it to plan it anyway.", stock_up_cents: null, stock_up_display: null, includes_display: null },
-  { tier: "fancy", label: "Fancy", blurb: "Several meals with salmon, shrimp and other premium picks, the most variety", status: "none_fits", total_cents: null, total_display: null, protein_per_day_display: null, reason: "No week fits your limits with the Fancy tier's groceries.", stock_up_cents: null, stock_up_display: null, includes_display: null },
+  { tier: "broke", label: "Broke mode", blurb: "Rock bottom: your pantry first, then rice, lentils, eggs, chickpeas, oats, frozen veg, tortillas, family-pack chicken; repeats are fine", status: "estimated", total_cents: 1415, total_display: "about $14.15", same_as_display: null, protein_per_day_display: "Lunch + dinner: about 72 g of your 100 g daily target", reason: null, stock_up_cents: 1804, stock_up_display: "+ about $18.04 stock-up: red lentils (dry), vegetable oil", includes_display: "Repeats are fine (up to 7 of one recipe a week) · stock-up only when needed", shortfall_display: null, fix: null, cached: false },
+  { tier: "cheapest", label: "Cheapest", blurb: "Cheap staples, a little more variety", status: "estimated", total_cents: 1981, total_display: "about $19.81", same_as_display: null, protein_per_day_display: "Lunch + dinner: about 77 g of your 100 g daily target", reason: null, stock_up_cents: 0, stock_up_display: null, includes_display: "Up to 5 of one recipe a week", shortfall_display: null, fix: null, cached: false },
+  { tier: "better", label: "A bit better", blurb: "A few meals with upgrades (Greek yogurt, ground turkey, fresh veg), more variety", status: "timed_out", total_cents: null, total_display: null, same_as_display: null, protein_per_day_display: null, reason: "Taking longer than usual.", stock_up_cents: null, stock_up_display: null, includes_display: null, shortfall_display: null, fix: null, cached: false },
+  { tier: "fancy", label: "Fancy", blurb: "Several meals with salmon, shrimp and other premium picks, the most variety", status: "none_fits", total_cents: null, total_display: null, same_as_display: null, protein_per_day_display: null, reason: "No week fits your limits with the Fancy tier's groceries.", stock_up_cents: null, stock_up_display: null, includes_display: null, shortfall_display: null, fix: null, cached: false },
 ];
 
+/** The tier stream as the server sends it (AC6): started, a card line per tier, then the result. */
+function tierLines(cards: unknown[], status = "partial"): unknown[] {
+  return [{ event: "started", run_id: 1, elapsed_s: 0 }, ...cards.map((card) => ({ event: "card", run_id: 1, elapsed_s: 1, card })), { event: "result", run_id: 1, elapsed_s: 2, status, cards }];
+}
+
 describe("C3b Shopping for this? (AA6: budget tiers)", () => {
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    forgetTierCards();
+  });
 
   it("four tier cards for this week: regular groceries, stock-up apart, protein and what each includes; a tap picks one", async () => {
-    const calls = mockApi((c) => (c.path === "/api/v1/cook/meal-prep/tiers" ? { body: CARDS } : undefined));
+    const calls = mockApi((c) => (c.path === "/api/v1/cook/meal-prep/tiers" ? { lines: tierLines(CARDS) } : undefined));
     render(<Harness step="shop" initial={{ preset: "five_lunches", style: "mix" }} />);
     expect(screen.getByRole("button", { name: "Build my plan" })).toBeDisabled();
     await userEvent.click(screen.getByRole("button", { name: /Make me a shopping list/ }));
@@ -148,8 +157,11 @@ describe("C3b Shopping for this? (AA6: budget tiers)", () => {
     const cheapest = screen.getByRole("button", { name: /Cheapest/ });
     expect(cheapest).toHaveTextContent("about $19.81 groceries");
     expect(cheapest).not.toHaveTextContent("stock-up");
-    // a card with no estimate in time can still be picked; one that can't fit can't
-    expect(screen.getByRole("button", { name: /A bit better/ })).toBeEnabled();
+    // a card that ran out of time says so and can still be picked (AC5); one that can't fit can't
+    const better = screen.getByRole("button", { name: /A bit better/ });
+    expect(better).toBeEnabled();
+    expect(better).toHaveTextContent("Taking longer than usual.");
+    expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Fancy/ })).toBeDisabled();
     expect(screen.getByText("No week fits your limits with the Fancy tier's groceries.")).toBeInTheDocument();
     expect(screen.getByText("Pick a tier or set your own limit")).toBeInTheDocument();
@@ -160,8 +172,24 @@ describe("C3b Shopping for this? (AA6: budget tiers)", () => {
     expect(calls[0]?.body).toMatchObject({ mode: "prep", shopping: "make_a_list", price_tier: null, budget_cents: null });
   });
 
+  it("a card's fix (AC4) changes that day in the answers, and the cards are priced again", async () => {
+    const fancy = { ...CARDS[3], status: "estimated", total_cents: 2210, total_display: "about $22.10", reason: null, includes_display: "Up to 3 of one recipe a week", shortfall_display: "No meals with salmon, shrimp or similar this week: the recipes with them are medium to cook, and none of your cook days allows medium recipes.", fix: { kind: "mood", label: "Allow medium recipes on Wednesday", day: "2026-10-14", mood: "medium", minutes: null } };
+    const calls = mockApi((c) => (c.path === "/api/v1/cook/meal-prep/tiers" ? { lines: tierLines([CARDS[0], CARDS[1], fancy], "succeeded") } : undefined));
+    render(<Harness step="shop" initial={{ preset: "five_lunches", style: "mix" }} />);
+    await userEvent.click(screen.getByRole("button", { name: /Make me a shopping list/ }));
+    const card = await screen.findByRole("button", { name: /Fancy/ });
+    expect(card).toHaveTextContent("Up to 3 of one recipe a week");
+    expect(card).not.toHaveTextContent("0 meals");
+    expect(card).toHaveTextContent("none of your cook days allows medium recipes.");
+    await userEvent.click(screen.getByRole("button", { name: "Allow medium recipes on Wednesday" }));
+    // Mon 12 – Fri 16 from your cook days (Mon, Wed, Thu), Wednesday's mood medium
+    expect(latest).toMatchObject({ style: "sessions", sessions: [{ day: "2026-10-12", minutes: 90 }, { day: "2026-10-14", minutes: 90, mood: "medium" }, { day: "2026-10-15", minutes: 90 }] });
+    await waitFor(() => expect(calls.filter((c) => c.path === "/api/v1/cook/meal-prep/tiers")).toHaveLength(2));
+    expect(calls[1]?.body).toMatchObject({ prep: { cook_style: "sessions", sessions: expect.arrayContaining([{ day: "2026-10-14", minutes: 90, mood: "medium" }]) } });
+  });
+
   it("Set my own limit takes a budget number instead; Use what I have none", async () => {
-    mockApi((c) => (c.path === "/api/v1/cook/meal-prep/tiers" ? { body: CARDS } : undefined));
+    mockApi((c) => (c.path === "/api/v1/cook/meal-prep/tiers" ? { lines: tierLines(CARDS) } : undefined));
     render(<Harness step="shop" initial={{ preset: "five_lunches", style: "mix" }} />);
     await userEvent.click(screen.getByRole("button", { name: /Make me a shopping list/ }));
     await userEvent.click(screen.getByRole("button", { name: "Set my own limit" }));

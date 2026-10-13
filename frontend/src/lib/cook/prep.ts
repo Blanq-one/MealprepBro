@@ -2,7 +2,7 @@
 // then sent as CookAnswers to POST /cook/meal-prep. Nothing here computes a nutrition, amount or money number:
 // the server resolves the days, meals, cook days and limits (app/cook/prep.py). The days below are calendar
 // days for the chips, and the minutes come straight from your settings.
-import type { CookAnswers, CookDay, MealSlot, PriceTier, RecipeMood, UserSettings } from "@/lib/api/types";
+import type { CookAnswers, CookDay, MealSlot, PriceTier, RecipeMood, TierFix, UserSettings } from "@/lib/api/types";
 import { parseDay, toIso } from "@/lib/format/dates";
 import type { GoalKey } from "@/lib/format/icons";
 
@@ -13,6 +13,8 @@ export type CookStyle = "big_day" | "sessions" | "same_dish" | "mix";
 export type AmountPreset = "five_lunches" | "lunch_dinner_5" | "usual_week" | "custom";
 /** "today", "tomorrow" (they move with the calendar, so Same as last time still works next week), or a date. */
 export type DayChoice = "today" | "tomorrow" | string;
+/** One cook day of "A few sessions"; `mood` only when a tier card's fix set that day's own (AC4). */
+export type PrepSession = { day: string; minutes: number; mood?: RecipeMood | null };
 
 export type PrepDraft = {
   preset: AmountPreset | null; // null = not picked yet
@@ -26,7 +28,8 @@ export type PrepDraft = {
   style: CookStyle | null; // null = not picked yet
   cookDay: DayChoice | null; // one big cook day, same dish: the day (null = the start day)
   cookMinutes: number | null; // ... and its minutes, start to finish (null = that day's usual)
-  sessions: { day: string; minutes: number }[]; // a few sessions: the days (dates) and their minutes
+  // a few sessions: the days (dates), their minutes, and a day's own mood (a tier card's fix, AC4)
+  sessions: PrepSession[];
   people: number | null;
   goals: GoalKey[];
   quickMinutes: number | null;
@@ -300,6 +303,30 @@ export function withMinutes(answers: CookAnswers, day: string | null, minutes: n
   if (day !== null && !raised.some((s) => s.day === day)) raised.push({ day, minutes });
   raised.sort((a, b) => (a.day < b.day ? -1 : 1));
   return { ...answers, ...quick, prep: { ...prep, cook_style: "sessions", sessions: raised } };
+}
+
+/** A tier card's fix on the draft (AC4, AC5): that day's mood ("Allow fancy recipes on Saturday") or at least
+ * its minutes ("Allow 55 min on Saturday"; "Cook on Tuesday too" makes a day that isn't a cook day one). One
+ * big cook day takes it on its own day; otherwise the cook days become a few sessions (your cook days and
+ * minutes, as Mix it up plans them) so that one day can change, as the "no plan fits" fixes do. */
+export function withDayFix(draft: PrepDraft, fix: TierFix, settings: UserSettings | null, today: Date = new Date()): PrepDraft {
+  const style = draft.style ?? "mix";
+  const single = style === "big_day" || style === "same_dish";
+  if (single && dayOf(draft.cookDay ?? draft.start, today) === fix.day) {
+    if (fix.kind === "mood") return { ...draft, mood: fix.mood ?? draft.mood };
+    return { ...draft, cookMinutes: Math.max(fix.minutes ?? 0, draft.cookMinutes ?? usualMinutes(settings, fix.day)) };
+  }
+  const days = planDays(draft, settings, today);
+  const sessions: PrepSession[] = single
+    ? [{ day: dayOf(draft.cookDay ?? draft.start, today), minutes: draft.cookMinutes ?? usualMinutes(settings, dayOf(draft.cookDay ?? draft.start, today)) }]
+    : style === "sessions"
+      ? draft.sessions
+      : defaultSessions(days, settings);
+  const apply = (s: PrepSession): PrepSession => (fix.kind === "mood" ? { ...s, mood: fix.mood ?? null } : { ...s, minutes: Math.max(s.minutes, fix.minutes ?? 0) });
+  const next = sessions.map((s) => (s.day === fix.day ? apply(s) : s));
+  if (!next.some((s) => s.day === fix.day)) next.push(apply({ day: fix.day, minutes: fix.minutes ?? usualMinutes(settings, fix.day) }));
+  next.sort((a, b) => (a.day < b.day ? -1 : 1));
+  return { ...draft, style: "sessions", sessions: next, cookDay: null, cookMinutes: null };
 }
 
 /** The "no plan fits" buttons (components/plan/NoPlanFits), each sending the answers again with its change. */

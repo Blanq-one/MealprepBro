@@ -32,6 +32,7 @@ import {
   type PrepDraft,
   styleProblems,
   usualMinutes,
+  withDayFix,
 } from "@/lib/cook/prep";
 import { toIso } from "@/lib/format/dates";
 import { SLOT_ICONS } from "@/lib/format/icons";
@@ -230,6 +231,13 @@ export function CookStyleStep({ draft, settings, onChange, onBack, onNext, today
               onChange={(m) => onChange({ ...draft, sessions: draft.sessions.map((s) => (s.day === session.day ? { ...s, minutes: m } : s)) })}
             />
           ))}
+          {draft.sessions
+            .filter((s) => s.mood && days.includes(s.day))
+            .map((s) => (
+              <p key={`mood-${s.day}`} className="small muted">
+                {dayChipLabel(s.day, today)}: {s.mood} recipes allowed
+              </p>
+            ))}
         </>
       )}
       {draft.style === "mix" && <p className="small muted">Your cook days and their minutes from Settings, with a variety of recipes.</p>}
@@ -291,7 +299,13 @@ export function ShopStep({ draft, settings, onChange, onBack, onNext, online, to
       {shopping === "make_a_list" && (
         <>
           <p className={styles.label}>How do you want to shop this week?</p>
-          <TierCards answers={buildPrepAnswers({ ...draft, priceTier: null }, settings, today)} selected={tier === "own" ? null : tier} online={online} onPick={(priceTier) => onChange({ ...draft, priceTier, budgetCents: null })} />
+          <TierCards
+            answers={buildPrepAnswers({ ...draft, priceTier: null }, settings, today)}
+            selected={tier === "own" ? null : tier}
+            online={online}
+            onPick={(priceTier) => onChange({ ...draft, priceTier, budgetCents: null })}
+            onFix={(fix) => onChange(withDayFix(draft, fix, settings, today))}
+          />
           <p className="small muted">{TIER_NOTE}</p>
           {tier === "own" ? (
             <>

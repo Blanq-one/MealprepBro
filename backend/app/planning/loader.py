@@ -434,6 +434,7 @@ def build_problem(
             except ConversionError as exc:
                 reasons.append(f"can't convert a line to its purchase unit: {exc}")
                 codes.append("conversion")
+        rank, premium = tier_of(recipe_lines, data, version.base_servings)
         if reasons:
             excluded.append(
                 ExcludedRecipe(
@@ -448,12 +449,13 @@ def build_problem(
                     mood=mood,
                     active_minutes=version.active_minutes,
                     minutes_needed=alone,
+                    tier_rank=rank,
+                    premium_protein=premium,
                 )
             )
             continue
         totals = recipe_per_portion(recipe_lines, plans, version.base_servings)
         ids = {line.ingredient_id for line in recipe_lines}
-        rank, premium = tier_of(recipe_lines, data, version.base_servings)
         candidates.append(
             CandidateRecipe(
                 version_id=version.id,

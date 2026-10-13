@@ -19,6 +19,7 @@ from app.api.routes import (
     settings,
     stores,
 )
+from app.api.timing import ConnectLogMiddleware
 from app.auth.dependencies import check_origin, require_session
 from app.config import get_settings
 from app.production import check_production
@@ -53,6 +54,7 @@ def create_app() -> FastAPI:
         openapi_url="/openapi.json" if docs else None,
     )
     install_error_handlers(app)
+    app.add_middleware(ConnectLogMiddleware)  # a run record's slow-start facts (AC5)
     app.include_router(health.router)
     app.include_router(auth.router)
     guarded = [Depends(check_origin), Depends(require_session)]

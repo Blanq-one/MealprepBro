@@ -66,6 +66,11 @@ class PlanRequest(_Strict):
     max_portions_per_recipe: int | None = Field(default=None, ge=1, le=14, description="None = 5 (Q14)")
     # step 2b.6 (AA6): a budget tier in place of a budget: what the plan may buy, and its variety
     price_tier: PriceTier | None = Field(default=None, description="broke | cheapest | better | fancy")
+    # the tier cards' order (AC3: AB-Q1, option b): a tier's meals eat at least the tier below's regular
+    # groceries (at unit prices) this week; meal prep sets it from that week's cards
+    regular_floor_cents: int | None = Field(
+        default=None, ge=0, description="a tier only: meals eating at least this in regular groceries"
+    )
 
     @model_validator(mode="after")
     def _check(self) -> Self:

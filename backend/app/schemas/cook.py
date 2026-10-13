@@ -60,6 +60,9 @@ class CookSession(_Strict):
 
     day: date
     minutes: int = Field(ge=0, le=600)
+    # that day's mood for this plan (AC4: a tier card's "Allow fancy recipes on Saturday"); None = your
+    # settings' (or the answers' mood, when one is picked)
+    mood: RecipeMood | None = None
 
 
 class PrepAmount(_Strict):
@@ -288,19 +291,54 @@ class CookHomeOut(BaseModel):
     portion_size: PortionSize = PortionSize.NORMAL
 
 
+class TierFixOut(BaseModel):
+    """A tier card's fix, as a button (AC4, AC5): a cook day's mood, or its minutes (a day that isn't a cook
+    day becomes one). The app sends the same answers again with that one change."""
+
+    kind: Literal["mood", "minutes"]
+    label: str  # "Allow fancy recipes on Saturday", "Allow 55 min on Saturday", "Cook on Tuesday too"
+    day: date
+    mood: RecipeMood | None = None  # kind mood
+    minutes: int | None = None  # kind minutes: start to finish that day, at least
+
+
 class TierCardOut(BaseModel):
     """One budget tier card for this week (step 2b.6, AA6): a quick estimate, so it says "about"."""
 
     tier: PriceTier
     label: str  # "Cheapest"
     blurb: str  # what it buys
-    status: Literal["estimated", "none_fits", "not_priced"]  # not_priced: no estimate in time; still pickable
+    # timed_out (AC5): no estimate in time, or the database was slow; "Taking longer than usual", with Try
+    # again, and still pickable (the full plan has its own time). none_fits: no week can be planned, and why.
+    status: Literal["estimated", "none_fits", "timed_out"]
     total_cents: int | None = None  # regular groceries (2b.6 approval: stock-up items apart)
     total_display: str | None = None  # "about $54.20"
+    # AC3: within 50 cents of the card below (the tiers never go backwards), said instead of the number:
+    # "Same as Cheapest this week"
+    same_as_display: str | None = None
     # "about 104 g protein a day"; for some of your meals: "Lunch + dinner: about 76 g of your 100 g daily
     # target"
     protein_per_day_display: str | None = None
-    reason: str | None = None  # why none fits
+    reason: str | None = None  # none_fits: why; timed_out: "Taking longer than usual."
     stock_up_cents: int | None = None  # what the stock-up items' whole packs cost
     stock_up_display: str | None = None  # "+ about $6.98 stock-up: rice, olive oil"; None when none
     includes_display: str | None = None  # "4 meals with an upgrade · up to 4 of one recipe a week"
+    # AC4: A bit better's or Fancy's upgrades fall short of what the tier aims for, and why ("No meals with
+    # salmon, shrimp or similar this week: …")
+    shortfall_display: str | None = None
+    fix: TierFixOut | None = None  # the shortfall's (or none_fits') fix, when there is one
+    cached: bool = False  # AC6: worked out earlier for the same week, answers, settings and data
+
+
+class TierStreamEvent(BaseModel):
+    """One line of POST /cook/meal-prep/tiers (NDJSON, AC6): `started` (the run id), a `card` line for each
+    tier as soon as its estimate is ready (Broke mode first), heartbeats, then one `result` with all four."""
+
+    event: Literal["started", "card", "heartbeat", "result"]
+    run_id: int | None = None
+    elapsed_s: float
+    card: TierCardOut | None = None
+    status: Literal["succeeded", "partial", "failed"] | None = None  # result only; partial: some timed out
+    cards: list[TierCardOut] = Field(default_factory=list)  # result only
+    problem: ProblemOut | None = None
+    pad: str | None = None

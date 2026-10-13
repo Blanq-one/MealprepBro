@@ -29,8 +29,13 @@ the kitchen order's alternative, a test clock that can't run out on a busy machi
 body's hydration warning) was built the same day with D184–D199 (2b.6 approval note, §9; migration
 `0012_budget_lines`; later phases' migrations move up by one) and committed first; then step 2b.13's code side
 (items 10–13: the login rate limit on the real client address, production safety checks, `.env.example`, the
-deploy checklist; D200–D205, 2b.13 in §9), committed second; nothing was created, pushed or deployed. Open:
-AB-Q1 (§12.2); then the live deploy with you (2b.13 deliverable 3, `docs/deploy.md`).
+deploy checklist; D200–D205, 2b.13 in §9), committed second; nothing was created, pushed or deployed. **You
+deployed it on 2026-10-13 (2b.13 deliverable 3): the app is live at https://mealprepbro-one.vercel.app on Vercel +
+Neon (AC1, §12.1).** From your testing of the live app (AC2–AC7): a new CLAUDE.md rule (never `git push`: pushing
+master redeploys production), and four fixes to the tier cards, built the same day with D206–D216 (2b.13's
+live-test note, §9): prices that never go backwards (AB-Q1 answered, option b), honest upgrades with their fix,
+"Taking longer than usual" instead of "No week fits" (the live cause was a week that started before its first
+cook day), cards streamed one by one and cached. Committed, not pushed.
 **Source documents:** `CLAUDE.md` (build rules, wins on conflict), `docs/PRD.md` (product vision; "Primary user flow" at the top), `docs/FLOW_SPEC.md` (screens and backend work for Phase 2b).
 
 This plan covers Phases 0–6, plus Phase 2b. One phase per session; Phase 2b is split into build steps, one per session (§9). A phase or step is done only when its acceptance criteria are met, its tests pass, and the test output has been shown.
@@ -49,7 +54,7 @@ This plan covers Phases 0–6, plus Phase 2b. One phase per session; Phase 2b is
 | — | Pre-Phase 1 tasks | Done | 2026-10-08 | 2026-10-08 | Package-label data (tortillas, protein powder), USDA mapping review sheet (`docs/review/usda_mappings.md`), raw/dry/as-sold rule + check (§7.8), CLAUDE.md machine-boundaries rule. Round 2: FoodSafety.gov chart transcribed (53 rows, §7.2), top-25 mappings approved, tortilla renamed, Docker rule clarified, fresh-clone check made a per-phase step. |
 | 1 | Planning brain | Approved 2026-10-09; post-approval round done | 2026-10-08 | 2026-10-09 | First pass: 645 tests, fresh-clone check passed; D1–D13 and C1–C3 approved 2026-10-09. Fix-up round (C4–C8: budget per request with inventory/shop modes, cash vs food eaten, freeze-on-shopping-day and waste, 100 g protein floor, elapsed time): 705 tests pass (the opt-in live test skips), domain coverage 99%, ruff/mypy clean, fresh-clone check passed; deviations D14–D22 in the fix-up note. Approved 2026-10-09. Post-approval round (C9–C14: powder prices, stock-up items, shelf-life fix, regular chicken packs, two-week steady-state check, A3 hosting): 721 tests pass (the opt-in live test skips), domain coverage 99%; deviations D23–D28. |
 | 2 | Mobile PWA + cloud deploy (deploy prep only, K7) | Approved 2026-10-10 | 2026-10-09 | 2026-10-09 | Pre-work K2–K6 done; PWA, auth, shopping, Mark cooked, quick add, exposure log. 800 backend tests pass (2 opt-in skipped), 78 frontend tests; not deployed (your step, `docs/deploy.md`). Deviations D29–D43 in the Phase 2 outcome note (§9). |
-| 2b | Cook-first flow redesign | 2b.1 approved 2026-10-10 (D44–D53); 2b.2 approved 2026-10-10 (D54–D64, H1–H6); 2b.3a approved 2026-10-10 (D65–D76, J1–J6); 2b.4 approved 2026-10-10 (D77–D88, M1–M20); 2b.4 fixes approved 2026-10-10 (N1–N3); 2b.3b approved 2026-10-11 (D89–D101, P1–P8); pre-work P2–P7 done and approved 2026-10-11 (D102–D106, T1–T8); 2b.5 approved 2026-10-11 (D107–D126, U1); freeze note in the ideas pass done (D127, U2); designs for smart prep and parallel cooking approved 2026-10-11 (X1–X9; steps 2b.9–2b.13); 2b.9 approved 2026-10-11 (D128–D142, Y1–Y3); time guard built 2026-10-11 (D143–D147); 2b.10 approved 2026-10-12 (D148–D156, Z1–Z4); day repairs built 2026-10-12 (Y4, D157–D160); 2b.7 approved 2026-10-12 (D161–D167, Z5; AA1–AA8); 2b.6 (expanded: swap, ingredient options, budget tiers, the kitchen order) built 2026-10-12 (D168–D183), approved 2026-10-13 (AB1–AB13); its approval round built 2026-10-13 (D184–D199); 2b.13's code side built 2026-10-13 (D200–D205), not deployed | 2026-10-10 | | `docs/FLOW_SPEC.md`; PRD "Primary user flow"; 14 build steps, built in the order 2b.1, 2b.2, 2b.3a, **2b.4, 2b.3b**, 2b.5, then **2b.9, 2b.10, 2b.7, 2b.13 (deploy), 2b.11, 2b.12, 2b.6, 2b.8** (H3, X8; §9); changes F1–F21 approved (FLOW_SPEC §16); decisions E1–E17 (§12.1). Two-stage generation added the same day (E15, E17; built in 2b.3b). **2b.1 (backend foundations):** 898 backend tests pass (2 opt-in skipped), 78 frontend tests, ruff/mypy clean; deviations D44–D53 in the 2b.1 outcome note (§9). **2b.2 (look, shell, onboarding, Settings, Pantry):** 180 frontend tests (78 before), 899 backend tests pass (2 opt-in skipped), type checks clean, static export builds; AA contrast tested, 375 px not yet checked on a device; deviations D54–D64 in the 2b.2 outcome note (§9). Footer fix H2 done before 2b.3a. **2b.3a (ranking and cards, no LLM calls):** 964 backend tests pass (2 opt-in skipped), 187 frontend tests, ruff, mypy and type check clean; deviations D65–D76 in the 2b.3a outcome note (§9). **2b.4 (A meal now: screens, with J2–J6):** 993 backend tests pass (2 opt-in skipped), 236 frontend tests, ruff, mypy and type check clean, static export builds; migration `0006_pantry_presets`; deviations D77–D88 in the 2b.4 outcome note (§9). **2b.4 fixes (M2–M13, M15, M17, M20):** 1056 backend tests pass (2 opt-in skipped), 244 frontend tests, ruff, mypy and type check clean; no migration; 37 new draft seed recipes (47 in all); solver shortlist; fixes outcome note (§9). **2b.3b (ideas, steps, More ideas, background batch, rate-limit waits, live test, screens; with N2, ground vs whole cuts):** 1132 backend tests pass (2 opt-in skipped), 263 frontend tests, ruff, mypy and type check clean, static export builds; no migration, no new dependency; the live Groq test ran (FLOW_SPEC §15.1); deviations D89–D101 in the 2b.3b outcome note (§9). **2b.3b approval pre-work (P2–P7):** 1143 backend tests pass with `--run-slow` (3 opt-in skipped); the default run is parallel and skips 6 `slow` tests (100 s, was about 20 min); 265 frontend tests; ruff, mypy and type check clean; no migration; new dev dependency pytest-xdist (approved); `LLM_IDEAS_MODEL` (20b by default in compose); deviations D102–D106 in 2b.3b's approval note (§9). **2b.5 (meal prep engine, with T2–T4):** 1218 backend tests pass with `--run-slow` (3 opt-in skipped), 266 (265 before) frontend tests; ruff, mypy and type check clean; migration `0007_recipe_freeze_note`; no new dependency; deviations D107–D126 in the 2b.5 outcome note (§9). **2b.5 approval (U1–U5):** the ideas pass carries an optional freeze note under the seeds' rules (D127): 1218 backend tests pass in the default run (9 skipped: 6 slow, 3 opt-in), ruff and mypy clean, no migration; FLOW_SPEC §19–§21 and the proposed steps 2b.9–2b.12 (§9) are written for your review. **2b.9 (cook-day schedule):** 1353 backend tests pass in the default run (13 skipped: 8 slow, 2 perf, 3 opt-in), 1363 with `--run-slow` and the perf tests (3 opt-in skipped); 266 frontend tests; ruff, mypy and type check clean, static export builds; migration `0008_step_timing`; no new dependency; the live Groq test ran (8.3K tokens); deviations D128–D142 in the 2b.9 outcome note (§9). **Time guard (Y2):** 1361 backend tests pass in the default run (13 skipped), 266 frontend tests; ruff, mypy and type check clean; no migration, no new dependency; your dev seed week went from 245 s to 171 s with a plan marked not proven best; D143–D147 in the 2b.9 approval note (§9). **2b.10 (smart prep data model):** 1497 backend tests pass in the default run (13 skipped), 266 frontend tests; ruff, mypy and type check clean; migration `0009_smart_prep`; the FoodKeeper rows transcribed (V1); 20 draft prep items and 12 assemblies (`docs/review/prep_items.md`); deviations D148–D156 in the 2b.10 outcome note (§9). **Day repairs (Y4):** 1500 backend tests pass in the default run (14 skipped), the slow solver tests pass with `--run-slow`; ruff and mypy clean; no migration, no new dependency; your dev seed week went from 171–245 s to 61.5 s (opt-in perf test), the time guard never cutting a solve short; D157–D160 in the 2b.10 approval note (§9). **2b.7 (the new plan screens, with Not for me):** 1515 backend tests pass in the default run (14 skipped), 304 frontend tests; ruff, mypy and type check clean, static export builds; migration `0010_recipe_hidden` (Z5); later phases' migrations move up by one; deviations D161–D167 in the 2b.7 outcome note (§9). **2b.6 (expanded, AA3–AA8: meal swap, ingredient options, budget tiers, the kitchen order):** 1548 backend tests pass in the default run (14 skipped), 324 frontend tests; ruff, mypy and type check clean, static export builds; migration `0011_price_tier` (later phases' migrations move up by one); deviations D168–D183 in the 2b.6 outcome note (§9). **2b.6 approval round (bugs A–E, items 1–9):** 1565 backend tests pass in the default run (14 skipped), 332 frontend tests; ruff, mypy and type check clean, the dev-server compile check passes; migration `0012_budget_lines`; no new dependency; D184–D199 in the 2b.6 approval note (§9). **2b.13 code side:** 1595 backend tests pass in the default run (14 skipped), 332 frontend tests; ruff, mypy and type check clean, the dev-server compile check passes; no migration, no new dependency; D200–D205 in the 2b.13 note (§9); not deployed: deliverable 3 and acceptance criteria 2–3 wait for you. |
+| 2b | Cook-first flow redesign | 2b.1 approved 2026-10-10 (D44–D53); 2b.2 approved 2026-10-10 (D54–D64, H1–H6); 2b.3a approved 2026-10-10 (D65–D76, J1–J6); 2b.4 approved 2026-10-10 (D77–D88, M1–M20); 2b.4 fixes approved 2026-10-10 (N1–N3); 2b.3b approved 2026-10-11 (D89–D101, P1–P8); pre-work P2–P7 done and approved 2026-10-11 (D102–D106, T1–T8); 2b.5 approved 2026-10-11 (D107–D126, U1); freeze note in the ideas pass done (D127, U2); designs for smart prep and parallel cooking approved 2026-10-11 (X1–X9; steps 2b.9–2b.13); 2b.9 approved 2026-10-11 (D128–D142, Y1–Y3); time guard built 2026-10-11 (D143–D147); 2b.10 approved 2026-10-12 (D148–D156, Z1–Z4); day repairs built 2026-10-12 (Y4, D157–D160); 2b.7 approved 2026-10-12 (D161–D167, Z5; AA1–AA8); 2b.6 (expanded: swap, ingredient options, budget tiers, the kitchen order) built 2026-10-12 (D168–D183), approved 2026-10-13 (AB1–AB13); its approval round built 2026-10-13 (D184–D199); 2b.13's code side built 2026-10-13 (D200–D205); **2b.13 deployed by you 2026-10-13** (https://mealprepbro-one.vercel.app, Vercel + Neon; AC1); live-test fixes built 2026-10-13 (AC2–AC7, D206–D216), committed, not pushed | 2026-10-10 | | `docs/FLOW_SPEC.md`; PRD "Primary user flow"; 14 build steps, built in the order 2b.1, 2b.2, 2b.3a, **2b.4, 2b.3b**, 2b.5, then **2b.9, 2b.10, 2b.7, 2b.13 (deploy), 2b.11, 2b.12, 2b.6, 2b.8** (H3, X8; §9); changes F1–F21 approved (FLOW_SPEC §16); decisions E1–E17 (§12.1). Two-stage generation added the same day (E15, E17; built in 2b.3b). **2b.1 (backend foundations):** 898 backend tests pass (2 opt-in skipped), 78 frontend tests, ruff/mypy clean; deviations D44–D53 in the 2b.1 outcome note (§9). **2b.2 (look, shell, onboarding, Settings, Pantry):** 180 frontend tests (78 before), 899 backend tests pass (2 opt-in skipped), type checks clean, static export builds; AA contrast tested, 375 px not yet checked on a device; deviations D54–D64 in the 2b.2 outcome note (§9). Footer fix H2 done before 2b.3a. **2b.3a (ranking and cards, no LLM calls):** 964 backend tests pass (2 opt-in skipped), 187 frontend tests, ruff, mypy and type check clean; deviations D65–D76 in the 2b.3a outcome note (§9). **2b.4 (A meal now: screens, with J2–J6):** 993 backend tests pass (2 opt-in skipped), 236 frontend tests, ruff, mypy and type check clean, static export builds; migration `0006_pantry_presets`; deviations D77–D88 in the 2b.4 outcome note (§9). **2b.4 fixes (M2–M13, M15, M17, M20):** 1056 backend tests pass (2 opt-in skipped), 244 frontend tests, ruff, mypy and type check clean; no migration; 37 new draft seed recipes (47 in all); solver shortlist; fixes outcome note (§9). **2b.3b (ideas, steps, More ideas, background batch, rate-limit waits, live test, screens; with N2, ground vs whole cuts):** 1132 backend tests pass (2 opt-in skipped), 263 frontend tests, ruff, mypy and type check clean, static export builds; no migration, no new dependency; the live Groq test ran (FLOW_SPEC §15.1); deviations D89–D101 in the 2b.3b outcome note (§9). **2b.3b approval pre-work (P2–P7):** 1143 backend tests pass with `--run-slow` (3 opt-in skipped); the default run is parallel and skips 6 `slow` tests (100 s, was about 20 min); 265 frontend tests; ruff, mypy and type check clean; no migration; new dev dependency pytest-xdist (approved); `LLM_IDEAS_MODEL` (20b by default in compose); deviations D102–D106 in 2b.3b's approval note (§9). **2b.5 (meal prep engine, with T2–T4):** 1218 backend tests pass with `--run-slow` (3 opt-in skipped), 266 (265 before) frontend tests; ruff, mypy and type check clean; migration `0007_recipe_freeze_note`; no new dependency; deviations D107–D126 in the 2b.5 outcome note (§9). **2b.5 approval (U1–U5):** the ideas pass carries an optional freeze note under the seeds' rules (D127): 1218 backend tests pass in the default run (9 skipped: 6 slow, 3 opt-in), ruff and mypy clean, no migration; FLOW_SPEC §19–§21 and the proposed steps 2b.9–2b.12 (§9) are written for your review. **2b.9 (cook-day schedule):** 1353 backend tests pass in the default run (13 skipped: 8 slow, 2 perf, 3 opt-in), 1363 with `--run-slow` and the perf tests (3 opt-in skipped); 266 frontend tests; ruff, mypy and type check clean, static export builds; migration `0008_step_timing`; no new dependency; the live Groq test ran (8.3K tokens); deviations D128–D142 in the 2b.9 outcome note (§9). **Time guard (Y2):** 1361 backend tests pass in the default run (13 skipped), 266 frontend tests; ruff, mypy and type check clean; no migration, no new dependency; your dev seed week went from 245 s to 171 s with a plan marked not proven best; D143–D147 in the 2b.9 approval note (§9). **2b.10 (smart prep data model):** 1497 backend tests pass in the default run (13 skipped), 266 frontend tests; ruff, mypy and type check clean; migration `0009_smart_prep`; the FoodKeeper rows transcribed (V1); 20 draft prep items and 12 assemblies (`docs/review/prep_items.md`); deviations D148–D156 in the 2b.10 outcome note (§9). **Day repairs (Y4):** 1500 backend tests pass in the default run (14 skipped), the slow solver tests pass with `--run-slow`; ruff and mypy clean; no migration, no new dependency; your dev seed week went from 171–245 s to 61.5 s (opt-in perf test), the time guard never cutting a solve short; D157–D160 in the 2b.10 approval note (§9). **2b.7 (the new plan screens, with Not for me):** 1515 backend tests pass in the default run (14 skipped), 304 frontend tests; ruff, mypy and type check clean, static export builds; migration `0010_recipe_hidden` (Z5); later phases' migrations move up by one; deviations D161–D167 in the 2b.7 outcome note (§9). **2b.6 (expanded, AA3–AA8: meal swap, ingredient options, budget tiers, the kitchen order):** 1548 backend tests pass in the default run (14 skipped), 324 frontend tests; ruff, mypy and type check clean, static export builds; migration `0011_price_tier` (later phases' migrations move up by one); deviations D168–D183 in the 2b.6 outcome note (§9). **2b.6 approval round (bugs A–E, items 1–9):** 1565 backend tests pass in the default run (14 skipped), 332 frontend tests; ruff, mypy and type check clean, the dev-server compile check passes; migration `0012_budget_lines`; no new dependency; D184–D199 in the 2b.6 approval note (§9). **2b.13 code side:** 1595 backend tests pass in the default run (14 skipped), 332 frontend tests; ruff, mypy and type check clean, the dev-server compile check passes; no migration, no new dependency; D200–D205 in the 2b.13 note (§9). **2b.13 live deploy:** done by you 2026-10-13. **Live-test fixes (AC3–AC6: tier order, honest upgrades, Taking longer than usual, streamed and cached cards):** 1612 backend tests pass in the default run (14 skipped), 349 frontend tests (332 before); ruff, mypy and the type check clean; no migration, no new dependency; D206–D216 in 2b.13's live-test note (§9). |
 | 3 | Feedback loop | Not started | | | Favorites moved to 2b. |
 | 4 | Daily overrides | Not started | | | |
 | 5 | Grocery intelligence | Not started | | | |
@@ -3327,6 +3332,105 @@ clean, the static export builds, the dev-server compile check passes. No migrati
   it refuses this PC's `.env` (insecure cookie, local database), migrates a fresh database from 0001 to 0012 with
   production-style settings, then the app starts without `/docs` and refuses an insecure cookie.
 
+**Deployed 2026-10-13, by you (deliverable 3; AC1, §12.1):** https://mealprepbro-one.vercel.app on Vercel + Neon.
+Acceptance criteria 2–3 are yours to confirm (I can't reach the live site or Neon); please tell me anything in
+`docs/deploy.md` that didn't match what you did.
+
+**Live-test fixes, built 2026-10-13 (AC2–AC7; D206–D216), committed, not pushed.** 1612 backend tests pass in the
+default run (14 skipped: slow, perf and opt-in), 349 frontend tests (332 before); ruff, mypy and the type check are
+clean. No migration, no new dependency. CLAUDE.md has the no-push rule (AC2). `POST /cook/meal-prep/tiers` is now a
+stream (AC6), so the live site needs the new frontend and backend together (one push does both).
+
+What was built, and why:
+- **1. Prices that never go backwards (AC3; AB-Q1, option b).** The cards are priced in order, Broke mode first,
+  and each one after it starts from the card below: its meals must eat at least the regular groceries the
+  cheaper card's meals eat (D207). So a higher tier costs the same or more, and a card never shows a lower number
+  than the card below: at or under it, or up to 50 cents over, it says "Same as Cheapest this week". The plan you
+  tap is held to the same floor (D208).
+- **2. Honest upgrades (AC4).** A bit better and Fancy count the meals that really have an upgrade or a premium
+  protein; "0 meals with salmon, shrimp or similar" is never said. Short of what the tier aims for, the card says
+  why in plain words, with the fix as a button when there is one (D210): "No meals with salmon, shrimp or similar
+  this week: the recipes with them are medium to cook, and none of your cook days allows medium recipes." +
+  **Allow medium recipes on Saturday**; or "… take about 55 min start to finish; your longest cook day for them
+  allows 45 min" + **Allow 55 min on Saturday**; or the recipes use equipment you don't have, a food you don't eat,
+  an item with no price; or none of your dinner recipes has them; or more don't fit the week's other limits.
+- **3. "Taking longer than usual", never "No week fits" (AC5).** The investigation (D206): your live "No week fits"
+  on all four cards was most likely not a timeout or a cold start but a week that can't be planned at all: a
+  dinner-only week starting on a day that isn't a cook day (the seed settings have Tuesday and Friday off, and
+  Oct 13 was a Tuesday). Reproduced on your dev database (the solver proves it in 1.5 s); a day later the same
+  answers start on a Wednesday and work. Such a week now says why ("Tue 13's dinner comes before your first cook
+  day (Wed 14), so nothing can be cooked for it.") with **Cook on Tuesday too**; "No week fits your limits with the
+  … tier's groceries" is left only for a week the solver proves impossible. A card that runs out of time says
+  "Taking longer than usual." with **Try again** (still pickable), and a database that doesn't answer is "Taking
+  longer than usual" with Try again too (D211). Each request now has a run record saying which happened (D212).
+- **4. Faster cards (AC6).** Each card shows as soon as it's ready (D213), and a card already worked out for the
+  same week, answers, settings and data comes back at once, from this page for 10 minutes and from the server's
+  run records for 12 hours (D214).
+
+Decisions and deviations:
+- **D206. The live failure's cause, reproduced, not proven:** the old cards kept no run record and I didn't access
+  Neon, so I couldn't see the live run. In the old code a time-limited solve with no plan already said "There
+  wasn't time to price this one" (checked: HiGHS through PuLP reports a solve stopped before any plan as "no
+  solution found", for a maximizing model too), and a cold start ends in an error, not "No week fits"; only a proven
+  infeasible week said it, and the Tuesday start reproduces it exactly. The new run record (D212) will say which
+  one it was next time.
+- **D207. The floor is on the food the meals eat, not on what is bought** (a deviation in form from AB-Q1's
+  "starting from the plan below"): the first build held the regular groceries' cash to the card below's, and a test
+  showed the solver meeting it with a surplus bag of lentils (and a package's cash figure could be padded with
+  nothing bought). Now a tier's eaten portions must come to at least the card below's regular groceries at each
+  item's cheapest unit price (stock-up items apart), so only meals with pricier groceries meet it. It is soft (100
+  points a dollar short against 1.5 a dollar saved), so it never leaves a week with no plan; each card's floor is
+  the most any priced card below it eats. Your pantry and package sizes can still put a card's cash under the card
+  below: on your dev week A bit better's meals eat exactly what Cheapest's do, but its own list buys about $7.27
+  against Cheapest's $19.31 (its recipes can use more of your pantry: one better item, like fresh broccoli, keeps a
+  recipe out of Cheapest altogether). Per your rule it then says "Same as Cheapest this week" instead of the lower
+  price, although that list costs less (AC-Q1, §12.2). "Equal" is within 50 cents over (the numbers are "about").
+- **D208. The plan you tap keeps its card's floor** (from that day's run record for the same answers), so it costs
+  the same or more too; without the cards (Same as last time on another day, other answers) a tier plans on its
+  own. A swap drops the floor (a swap may save money).
+- **D209. A tier's upgrade reward is per portion** (10 points ≈ $6.70 a portion, was a meal), so a household of
+  two still includes its salmon dinners.
+- **D210. A shortfall's fix:** a mood fix goes on the cook day with the most minutes that fit those recipes (a
+  weekend day on a tie, then the earliest); it is that day's own mood, a new optional `mood` on a cook session
+  (CookSession), which beats the answers' mood for that day. Like the "no plan fits" minutes fix, a Mix it up week
+  becomes A few sessions on your cook days so one day can change; one big cook day takes it on its own day. The
+  cook-style screen shows "Sat 17: fancy recipes allowed" under the sessions.
+- **D211. Card statuses:** `timed_out` ("Taking longer than usual.", Try again, still pickable) replaces
+  `not_priced`. A database that doesn't answer after the connect retries is a 503 problem "Taking longer than
+  usual" (code `db_unavailable`, Retry-After 5) from any endpoint, and a stream that hits it ends with the same
+  problem; the Cook flow's streams now always send their result line, even when recording the crash fails.
+- **D212. The run record** (generation_run, purpose `tier_cards`, one per request): the answers and day; each
+  card's outcome and why (answers, no_candidates, precheck, uncovered, infeasible; or solver_limit, budget), its
+  floor, load time, solves (status and seconds) and the card itself; `slow` = `cold_start` or `time_budget` when a
+  card ran out of time; and `start`: database connections, retries and seconds, and the function's age. A cold
+  start is a retried connection, 2 s or more connecting, or a function under 30 s old. A small ASGI middleware
+  counts each request's connections; the stream's worker counts its own. In Neon's SQL Editor: `select id,
+  status, progress->'slow', progress->'start', progress->'timed_out' from generation_run where purpose =
+  'tier_cards' order by id desc limit 10;`
+- **D213. `POST /cook/meal-prep/tiers` is NDJSON** (started, a card line per tier, heartbeats, the result with all
+  four), like the other Cook streams. The cards are still priced one after another (each needs the floor of the
+  one below), so streaming shows them as they finish; it doesn't shorten the total (about 51 s for your dev
+  dinner week on this PC).
+- **D214. The cache.** Server: a card is reused when its inputs' fingerprint matches an earlier run's (a hash of the
+  tier's whole problem in a fixed order: constraints with the floor, recipes, ingredients, prices and pantry lots;
+  plus your settings, the answers, a version number and the deploy's commit), from the last 30 runs within 12 h. A
+  card that ran out of time is never reused, so Try again works out only what's missing. A reuse still builds the
+  four problems (0.7 s for your dev week on this PC; more on Vercel + Neon). This page also keeps the last complete
+  set for the same answers for 10 minutes, so reopening the step shows them with no request at all.
+- **D215. The dead-end check** (`diagnostics.uncovered`) runs only for the tier cards; the full plan's "no plan
+  fits" still explains the same case with its elastic re-solve ("Dinner can't be filled on Tue 13 …").
+- **D216. Your dev week (7 dinners from Wed 14, your dev settings), before → after:** Broke $10.01, Cheapest $19.31,
+  A bit better $7.19, Fancy $17.16 → Broke $10.01, Cheapest $19.31, A bit better (its own list about $7.27, 4 meals
+  with an upgrade) and Fancy (about $17.16, 3 with salmon or shrimp) both "Same as Cheapest this week"; each one's
+  meals eat at least Cheapest's $13.73 of food; 60 s the first time, 0.6 s again. With Tuesday and Friday off and
+  every cook day simple: Broke $15.87, Cheapest "Same as Broke mode this week", A bit better $17.55, Fancy $24.85
+  with "No meals with salmon, shrimp or similar this week: the recipes with them are medium to cook, and none of
+  your cook days allows medium recipes." and **Allow medium recipes on Saturday**; starting on the Tuesday: all
+  four "Tue 13's dinner comes before your first cook day (Wed 14), so nothing can be cooked for it." with **Cook on
+  Tuesday too**.
+
+**Dev database.** No migration and no seed change (nothing to upgrade or re-seed).
+
 #### 2b.6 Swap (backend)
 
 *Reads FLOW_SPEC §7 (C6 swap), §13.1 (E5), §13.3 (pinned re-solve), §15.*
@@ -4284,9 +4388,32 @@ your instruction; real design decisions stop and wait):
 | AB12 | Then 2b.13, code side only | The login rate limit on the real client address (X-Forwarded-For only from the trusted proxy); production safety checks at startup; every production variable in `.env.example` with placeholders, nothing secret in the history; `docs/deploy.md` as a beginner-friendly checklist. No accounts, no push, no deploy. |
 | AB13 | Order | If too much for one session: commit A–E and 1–9 first, stop, and say what's left. |
 
+**The live deploy and your live testing (2026-10-13).** Built the same day as D206–D216 (2b.13's live-test note, §9):
+
+| # | Topic | Decision |
+|---|---|---|
+| AC1 | Deploy (2b.13) | Done by you: the app is live at https://mealprepbro-one.vercel.app on Vercel + Neon. |
+| AC2 | No push | A CLAUDE.md rule: never run `git push` (pushing master redeploys production); commit locally, you review and push. |
+| AC3 | 1. Tier prices never go backwards (AB-Q1, option b) | Price each tier starting from the plan of the tier below, so a higher tier costs the same or more; Broke never costs more than Cheapest; when two come out equal, "Same as Cheapest this week" instead of a lower price. Live example (dinner-only week): Broke $19.73, Cheapest $19.66, A bit better $18.36, Fancy $18.42. |
+| AC4 | 2. Honest upgrades | Fancy showed "0 meals with salmon, shrimp or similar". When the premium rule can't be met (no cook day set to fancy mood, time or slots don't allow), the card says why in plain words and offers the fix as a button ("Allow fancy recipes on Saturday"), never claims premium meals it doesn't have; the same for A bit better's upgrades. |
+| AC5 | 3. "No week fits", then it worked | Investigate (Neon waking from scale-to-zero, or the time budget on Vercel's slower CPU). A timeout or cold start shows "Taking longer than usual" with Try again, never "No week fits"; the run record logs which happened; tests for each path. |
+| AC6 | 4. Card speed | Show each card as soon as its estimate is ready; cache results for the same week and settings so reopening the screen is instant. |
+| AC7 | Working rules | Routine commands inside the repo (tests, lint, type checks, builds, this repo's containers) without asking; never push; stop for real design decisions or anything outside the repo. End with: commit (no push), fresh-clone check, test output, summary, and what to check on the live site. |
+
 ### 12.2 Remaining questions (from applying your answers)
 
-- **AB-Q1: the tier cards' order (open, from the 2b.6 approval, D199).** The four tiers now differ in what they
+- **AC-Q1: a higher tier whose own list costs less (open, from AC3, D207).** Each tier's meals now eat at least
+  the regular groceries of the tier below's, and a card never shows a lower number than the card below. But your
+  pantry and package sizes can still make a higher tier's own shopping list cost less: on your dev week A bit
+  better's list is about $7.27 against Cheapest's $19.31, and the card says "Same as Cheapest this week" (your
+  rule), while the plan you build from it shows its real, lower total. Options: **a.** keep it as built;
+  **b.** say what's true when it's more than 50 cents under: "Costs less than Cheapest this week: about $7.27";
+  **c.** "No more than Cheapest this week" (true in both cases, no number).
+- **AC-Q2: the dead end's fix button (open, from AC5, D206).** A week whose first meal comes before your first
+  cook day now offers **Cook on Tuesday too** (that day becomes a cook day with your longest cook day's minutes).
+  The other natural fix is **Start tomorrow** (the plan moves a day). Keep the one, add the other, or swap?
+
+- **AB-Q1: answered 2026-10-13 (AC3), option b; built as D207–D208.** The question as asked: **the tier cards' order (from the 2b.6 approval, D199).** The four tiers now differ in what they
   include, and every week meets your calories and protein floor, but their prices aren't ordered by construction:
   every tier plans cost first within its rules, so a higher tier whose upgrades happen to be cheap (fresh broccoli
   at $1.99 a lb) can come out below a lower one, and the cards are quick, time-limited estimates that can land a few

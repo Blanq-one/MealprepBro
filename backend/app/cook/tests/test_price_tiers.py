@@ -2,6 +2,7 @@
 per ingredient (Broke's staples, protein foods by protein per dollar), what a tier lets a plan buy, its
 variety, the upgrades it includes, the four cards' quick estimates, and a full plan for the tier you tap."""
 
+import json
 from dataclasses import replace
 from decimal import Decimal
 from typing import Any
@@ -185,7 +186,9 @@ def test_four_cards_with_estimates_then_a_full_plan_for_the_tier_you_tap(
     answers = {"mode": "prep", "prep": THREE_DAYS, "shopping": "make_a_list"}
     reply = api.post("/api/v1/cook/meal-prep/tiers", json=answers)
     assert reply.status_code == 200, reply.text
-    cards = reply.json()
+    result = json.loads(reply.text.splitlines()[-1])  # NDJSON since AC6: the result line has all four
+    assert result["event"] == "result", result
+    cards = result["cards"]
     assert [c["tier"] for c in cards] == ["broke", "cheapest", "better", "fancy"]
     assert [c["label"] for c in cards] == ["Broke mode", "Cheapest", "A bit better", "Fancy"]
     estimated = [c for c in cards if c["status"] == "estimated"]

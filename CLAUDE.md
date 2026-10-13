@@ -75,6 +75,7 @@ Safe internal temperatures and storage/reheating guidance come from a hardcoded 
 6. Mark progress in `docs/BUILD_PLAN.md` (phase status, date, notes).
 7. If something in the plan turns out to be wrong mid-phase, stop and tell me before changing direction.
 8. Commit at the end of each phase with a clear message.
+9. **Never run `git push`.** Pushing to master redeploys production (Vercel, https://mealprepbro-one.vercel.app). Commit locally; I review and push myself.
 
 ## Machine boundaries
 

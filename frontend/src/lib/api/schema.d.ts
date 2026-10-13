@@ -205,8 +205,11 @@ export interface paths {
          * Meal Prep Tiers
          * @description The shopping step's four budget tier cards for these answers (step 2b.6, AA6; its approval, item 2):
          *     Broke mode, Cheapest, A bit better and Fancy, each with its estimated regular groceries, the stock-up
-         *     items apart, and protein, from a quick solve (saved recipes, no LLM).
-         *     Tap one and POST /cook/meal-prep with its `price_tier` for the full plan.
+         *     items apart, and protein, from a quick solve (saved recipes, no LLM). Priced in that order, each held to
+         *     cost at least the one below (AC3). A stream of JSON lines (`TierStreamEvent`, AC6): `started`, a `card`
+         *     line per tier as soon as it's ready, heartbeats, then one `result`; a card worked out earlier for the
+         *     same week, answers, settings and data comes at once. Tap one and POST /cook/meal-prep with its
+         *     `price_tier` for the full plan.
          */
         post: operations["meal_prep_tiers_api_v1_cook_meal_prep_tiers_post"];
         delete?: never;
@@ -1784,6 +1787,7 @@ export interface components {
             day: string;
             /** Minutes */
             minutes: number;
+            mood?: components["schemas"]["RecipeMood"] | null;
         };
         /**
          * CookStreamEvent
@@ -3134,6 +3138,11 @@ export interface components {
              * @description daily floor; 0 = none
              */
             protein_target_g?: number | null;
+            /**
+             * Regular Floor Cents
+             * @description a tier only: meals eating at least this in regular groceries
+             */
+            regular_floor_cents?: number | null;
             secondary_priority?: components["schemas"]["NutritionPriority"] | null;
             /**
              * Slot Kcal
@@ -4453,6 +4462,12 @@ export interface components {
         TierCardOut: {
             /** Blurb */
             blurb: string;
+            /**
+             * Cached
+             * @default false
+             */
+            cached: boolean;
+            fix?: components["schemas"]["TierFixOut"] | null;
             /** Includes Display */
             includes_display?: string | null;
             /** Label */
@@ -4461,11 +4476,15 @@ export interface components {
             protein_per_day_display?: string | null;
             /** Reason */
             reason?: string | null;
+            /** Same As Display */
+            same_as_display?: string | null;
+            /** Shortfall Display */
+            shortfall_display?: string | null;
             /**
              * Status
              * @enum {string}
              */
-            status: "estimated" | "none_fits" | "not_priced";
+            status: "estimated" | "none_fits" | "timed_out";
             /** Stock Up Cents */
             stock_up_cents?: number | null;
             /** Stock Up Display */
@@ -4475,6 +4494,52 @@ export interface components {
             total_cents?: number | null;
             /** Total Display */
             total_display?: string | null;
+        };
+        /**
+         * TierFixOut
+         * @description A tier card's fix, as a button (AC4, AC5): a cook day's mood, or its minutes (a day that isn't a cook
+         *     day becomes one). The app sends the same answers again with that one change.
+         */
+        TierFixOut: {
+            /**
+             * Day
+             * Format: date
+             */
+            day: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "mood" | "minutes";
+            /** Label */
+            label: string;
+            /** Minutes */
+            minutes?: number | null;
+            mood?: components["schemas"]["RecipeMood"] | null;
+        };
+        /**
+         * TierStreamEvent
+         * @description One line of POST /cook/meal-prep/tiers (NDJSON, AC6): `started` (the run id), a `card` line for each
+         *     tier as soon as its estimate is ready (Broke mode first), heartbeats, then one `result` with all four.
+         */
+        TierStreamEvent: {
+            card?: components["schemas"]["TierCardOut"] | null;
+            /** Cards */
+            cards?: components["schemas"]["TierCardOut"][];
+            /** Elapsed S */
+            elapsed_s: number;
+            /**
+             * Event
+             * @enum {string}
+             */
+            event: "started" | "card" | "heartbeat" | "result";
+            /** Pad */
+            pad?: string | null;
+            problem?: components["schemas"]["ProblemOut"] | null;
+            /** Run Id */
+            run_id?: number | null;
+            /** Status */
+            status?: ("succeeded" | "partial" | "failed") | null;
         };
         /**
          * TimelineLineOut
@@ -5062,13 +5127,14 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Successful Response */
+            /** @description NDJSON event lines */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TierCardOut"][];
+                    "application/json": components["schemas"]["TierStreamEvent"];
+                    "application/x-ndjson": unknown;
                 };
             };
             /** @description Validation Error */

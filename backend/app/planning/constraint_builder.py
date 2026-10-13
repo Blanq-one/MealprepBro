@@ -202,6 +202,7 @@ def build_constraints(
             price_tier=tier.value if tier is not None else None,
             upgraded_meals_min=upgraded,
             premium_meals_min=premium,
+            regular_floor_cents=request.regular_floor_cents if tier is not None else None,
             extra_lots=tuple(request.extra_lots),
             cap_week_use=tuple(cap_week_use),
             daily_amount_caps=diet.daily_caps,

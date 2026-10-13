@@ -192,6 +192,10 @@ class PlanConstraints(_Frozen):
     # protein (rewarded up to these counts, so a week that can't reach them still plans)
     upgraded_meals_min: int = Field(default=0, ge=0, le=50)
     premium_meals_min: int = Field(default=0, ge=0, le=50)
+    # the tier cards' order (AC3): the week's meals eat at least this many cents of regular groceries
+    # (stock-up items apart, at unit prices): the tier below's, so a higher tier never costs less; None = no
+    # floor
+    regular_floor_cents: int | None = Field(default=None, ge=0)
     # ---- step 2b.6 approval (B) ----
     kcal_allowances: tuple[KcalAllowance, ...] = ()  # limits a close-fit swap you picked goes past
 

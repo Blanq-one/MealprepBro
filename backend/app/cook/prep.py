@@ -11,7 +11,8 @@ Pure: the caller passes your settings and today's date. Anything you didn't answ
   goals         High protein: protein first and the capped protein reward (E11); High carb, Iron rich: the
                 nutrition priority (two goals: primary and secondary in tap order); Low calorie: 85% of each
                 meal's calories (§18 Q1); Cheap: the cheapest grocery mode; Quick: every cook day ready within
-                N minutes, start to finish (V11); mood: every cook day's mood
+                N minutes, start to finish (V11); mood: every cook day's mood (a session with its own
+                mood keeps it: a tier card's "Allow fancy recipes on Saturday", AC4)
   your pantry   items turned off aren't used; "have it" items count for this plan (with an amount: that much;
                 without one: enough); "could buy" items are the only purchases in "Use what I have", and a
                 small preference on a shopping list
@@ -24,7 +25,7 @@ from datetime import date, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
 from app.cook.answers import GOAL_LABELS, LOW_CALORIE_SHARE, QUICK_DEFAULT_MINUTES, SLOT_LABELS
-from app.domain.enums import GroceryMode, MealSlot, NutritionPriority, PlanningMode
+from app.domain.enums import GroceryMode, MealSlot, NutritionPriority, PlanningMode, RecipeMood
 from app.domain.price_tiers import LABELS as TIER_LABELS
 from app.schemas.constraints import ExtraLot, PortionRequest
 from app.schemas.cook import NUTRITION_GOALS, CookAnswers, GoalTile, PrepAmount
@@ -105,15 +106,17 @@ def _cook_days(
     prep: PrepAmount, settings: UserSettings, start: date, days: int, today: date
 ) -> tuple[list[DayOverride], dict[date, int]]:
     """The cook style's days and start-to-finish minutes (C1b, V11). Returns the day overrides and every cook
-    day with its minutes (before Quick and mood)."""
+    day with its minutes (before Quick and mood). A session with its own mood keeps it (AC4)."""
     plan_days = [start + timedelta(days=i) for i in range(days)]
     schedule = {d: settings.cook_day(WEEKDAYS[d.weekday()]) for d in plan_days}
+    moods: dict[date, RecipeMood] = {}
     if prep.cook_style == "mix":
         return [], {d: s.cook_minutes for d, s in schedule.items() if s.is_cook_day}
     if prep.cook_style == "sessions":
         if not prep.sessions:
             raise PrepAnswersError("Pick at least one cook day for your sessions.")
         chosen = {s.day: s.minutes for s in prep.sessions}
+        moods = {s.day: s.mood for s in prep.sessions if s.mood is not None}
     else:  # big_day, same_dish
         day = day_of(prep.cook_day, today)
         longest = max((d.cook_minutes for d in settings.cook_schedule if d.is_cook_day), default=60)
@@ -129,7 +132,8 @@ def _cook_days(
     if all(minutes == 0 for minutes in chosen.values()):
         raise PrepAnswersError("Give your cook day some time.")
     overrides = [
-        DayOverride(day=d, is_cook_day=chosen.get(d, 0) > 0, cook_minutes=chosen.get(d, 0)) for d in plan_days
+        DayOverride(day=d, is_cook_day=chosen.get(d, 0) > 0, cook_minutes=chosen.get(d, 0), mood=moods.get(d))
+        for d in plan_days
     ]
     return overrides, {d: m for d, m in chosen.items() if m > 0}
 
@@ -147,7 +151,7 @@ def _with_goals(
         changes: dict[str, object] = {}
         if quick is not None and minutes > quick:
             changes["cook_minutes"] = quick
-        if answers.mood is not None:
+        if answers.mood is not None and current.mood is None:  # a session's own mood stays (AC4)
             changes["mood"] = answers.mood
         by_day[day] = current.model_copy(update=changes)
     return [by_day[d] for d in sorted(by_day)]

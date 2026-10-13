@@ -1576,6 +1576,16 @@
       "minimum": 0.0,
       "title": "Minutes",
       "type": "integer"
+     },
+     "mood": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/RecipeMood"
+       },
+       {
+        "type": "null"
+       }
+      ]
      }
     },
     "required": [
@@ -5492,6 +5502,19 @@
       "description": "daily floor; 0 = none",
       "title": "Protein Target G"
      },
+     "regular_floor_cents": {
+      "anyOf": [
+       {
+        "minimum": 0.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "a tier only: meals eating at least this in regular groceries",
+      "title": "Regular Floor Cents"
+     },
      "secondary_priority": {
       "anyOf": [
        {
@@ -9277,6 +9300,21 @@
       "title": "Blurb",
       "type": "string"
      },
+     "cached": {
+      "default": false,
+      "title": "Cached",
+      "type": "boolean"
+     },
+     "fix": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/TierFixOut"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
      "includes_display": {
       "anyOf": [
        {
@@ -9314,11 +9352,33 @@
       ],
       "title": "Reason"
      },
+     "same_as_display": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Same As Display"
+     },
+     "shortfall_display": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Shortfall Display"
+     },
      "status": {
       "enum": [
        "estimated",
        "none_fits",
-       "not_priced"
+       "timed_out"
       ],
       "title": "Status",
       "type": "string"
@@ -9378,6 +9438,146 @@
      "status"
     ],
     "title": "TierCardOut",
+    "type": "object"
+   },
+   "TierFixOut": {
+    "description": "A tier card's fix, as a button (AC4, AC5): a cook day's mood, or its minutes (a day that isn't a cook\nday becomes one). The app sends the same answers again with that one change.",
+    "properties": {
+     "day": {
+      "format": "date",
+      "title": "Day",
+      "type": "string"
+     },
+     "kind": {
+      "enum": [
+       "mood",
+       "minutes"
+      ],
+      "title": "Kind",
+      "type": "string"
+     },
+     "label": {
+      "title": "Label",
+      "type": "string"
+     },
+     "minutes": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Minutes"
+     },
+     "mood": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/RecipeMood"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "required": [
+     "kind",
+     "label",
+     "day"
+    ],
+    "title": "TierFixOut",
+    "type": "object"
+   },
+   "TierStreamEvent": {
+    "description": "One line of POST /cook/meal-prep/tiers (NDJSON, AC6): `started` (the run id), a `card` line for each\ntier as soon as its estimate is ready (Broke mode first), heartbeats, then one `result` with all four.",
+    "properties": {
+     "card": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/TierCardOut"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "cards": {
+      "items": {
+       "$ref": "#/components/schemas/TierCardOut"
+      },
+      "title": "Cards",
+      "type": "array"
+     },
+     "elapsed_s": {
+      "title": "Elapsed S",
+      "type": "number"
+     },
+     "event": {
+      "enum": [
+       "started",
+       "card",
+       "heartbeat",
+       "result"
+      ],
+      "title": "Event",
+      "type": "string"
+     },
+     "pad": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Pad"
+     },
+     "problem": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/ProblemOut"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "run_id": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Run Id"
+     },
+     "status": {
+      "anyOf": [
+       {
+        "enum": [
+         "succeeded",
+         "partial",
+         "failed"
+        ],
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Status"
+     }
+    },
+    "required": [
+     "event",
+     "elapsed_s"
+    ],
+    "title": "TierStreamEvent",
     "type": "object"
    },
    "TimelineLineOut": {
@@ -10512,7 +10712,7 @@
   },
   "/api/v1/cook/meal-prep/tiers": {
    "post": {
-    "description": "The shopping step's four budget tier cards for these answers (step 2b.6, AA6; its approval, item 2):\nBroke mode, Cheapest, A bit better and Fancy, each with its estimated regular groceries, the stock-up\nitems apart, and protein, from a quick solve (saved recipes, no LLM).\nTap one and POST /cook/meal-prep with its `price_tier` for the full plan.",
+    "description": "The shopping step's four budget tier cards for these answers (step 2b.6, AA6; its approval, item 2):\nBroke mode, Cheapest, A bit better and Fancy, each with its estimated regular groceries, the stock-up\nitems apart, and protein, from a quick solve (saved recipes, no LLM). Priced in that order, each held to\ncost at least the one below (AC3). A stream of JSON lines (`TierStreamEvent`, AC6): `started`, a `card`\nline per tier as soon as it's ready, heartbeats, then one `result`; a card worked out earlier for the\nsame week, answers, settings and data comes at once. Tap one and POST /cook/meal-prep with its\n`price_tier` for the full plan.",
     "operationId": "meal_prep_tiers_api_v1_cook_meal_prep_tiers_post",
     "requestBody": {
      "content": {
@@ -10529,15 +10729,12 @@
       "content": {
        "application/json": {
         "schema": {
-         "items": {
-          "$ref": "#/components/schemas/TierCardOut"
-         },
-         "title": "Response Meal Prep Tiers Api V1 Cook Meal Prep Tiers Post",
-         "type": "array"
+         "$ref": "#/components/schemas/TierStreamEvent"
         }
-       }
+       },
+       "application/x-ndjson": {}
       },
-      "description": "Successful Response"
+      "description": "NDJSON event lines"
      },
      "422": {
       "content": {

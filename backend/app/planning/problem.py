@@ -203,6 +203,9 @@ class ExcludedRecipe:
     mood: RecipeMood | None = None
     active_minutes: int | None = None
     minutes_needed: int | None = None  # step 2b.9: start to finish for its smallest batch, on its own
+    # what it would count as in a tier (AC4: a card says why its upgrades fall short), as on a candidate
+    tier_rank: int = 0
+    premium_protein: bool = False
 
 
 @dataclass(frozen=True)

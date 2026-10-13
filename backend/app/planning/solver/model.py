@@ -77,11 +77,16 @@ PROTEIN_REWARD_PER_G = 0.02  # the High protein tile: points per gram of a day's
 # tie-breaker, so with the plan's other terms equal it stays in the band, while a dollar, and the pull toward
 # your calorie target (a 10% smaller lunch loses about 55 kcal = 0.11 points for 4 g = 0.02), count for more
 PROTEIN_OVER_PER_G = 0.005
-# a tier's upgrades (2b.6 approval, item 2): points per meal with an upgraded item (or a premium protein) up
-# to the tier's count, about $6.70 of groceries at the cost-first weights every tier plans with, so a tier
-# includes them whenever they fit (a salmon dinner costs about $4 more than a chicken one)
+# a tier's upgrades (2b.6 approval, item 2): points per portion of a meal with an upgraded item (or a premium
+# protein) up to the tier's count, about $6.70 of groceries at the cost-first weights every tier plans with,
+# so a tier includes them whenever they fit (a salmon dinner costs about $4 a portion more than a chicken
+# one); per portion since AC4, so a household of two still includes them
 UPGRADE_REWARD = 10.0
 UPGRADE_RANK = RANK[IngredientTier.BETTER]
+# the tier cards' order (AC3): points per dollar the regular groceries a tier's meals eat fall short of the
+# tier below's, far above what a dollar saves (1.5 at the cost-first weights), so a higher tier costs the
+# same or more whenever it can; soft, so the floor never leaves a week with no plan
+FLOOR_SHORT_PER_DOLLAR = 100.0
 # A perishable package with more than this share left over counts as "opened for a sliver of it".
 SMALL_FRACTION_LEFT = 0.75
 # Package counts are integers only for perishable packs of at least this price (chicken trays, big yogurt
@@ -309,6 +314,35 @@ def amount_per_portion(problem: PlanningProblem, ingredient_id: int, unit: str) 
         if amount > 0:
             out[r.version_id] = _f(amount / r.base_servings)
     return out
+
+
+def regular_value(problem: PlanningProblem, recipe: CandidateRecipe) -> float:
+    """Cents of regular groceries (stock-up items apart) one portion eats at multiplier 1, each at its
+    cheapest unit price at your stores: what the tier cards' floor compares (AC3)."""
+    stores = set(problem.constraints.store_ids)
+    total = 0.0
+    for ingredient_id, per_portion in recipe.need_per_portion.items():
+        plan = problem.ingredients.get(ingredient_id)
+        if plan is None or plan.unlimited or plan.stock_up:
+            continue
+        prices = [o.cents_per_unit for o in plan.offers if o.store_id in stores]
+        if prices:
+            total += _f(per_portion) * _f(min(prices))
+    return total
+
+
+def eaten_value(problem: PlanningProblem, solution: "SolverSolution") -> int:
+    """Cents of regular groceries a planned week's meals eat, at unit prices (the next tier card's floor)."""
+    c = problem.constraints
+    total = 0.0
+    for m in solution.meals:
+        batch = solution.batches[m.batch_index]
+        total += (
+            c.household_size
+            * regular_value(problem, problem.candidate(batch.version_id))
+            * _f(batch.multiplier)
+        )
+    return round(total)
 
 
 def _median_costs(problem: PlanningProblem) -> dict[MealSlot, Decimal]:
@@ -878,6 +912,18 @@ def build_model(
         limit = max(c.purchase_limit_cents - t.budget_cents, 0)
         extra = slack("budget", "budget") if elastic else 0
         prob += limited_cost <= limit + extra, "purchase_limit"
+    floor_short: list[Any] = []
+    if c.regular_floor_cents and not elastic and not cheapest:  # a tier costs at least the one below (AC3)
+        # on the food the meals eat, never on what's bought: a surplus bag of lentils or a package's cash
+        # can't meet it, only meals with pricier groceries can
+        value = {r.version_id: regular_value(problem, r) for r in problem.candidates}
+        eaten = pulp.lpSum(
+            household * value[batches[bi].recipe.version_id] * _f(batches[bi].size_multiplier) * sv
+            for (bi, _e, _s), sv in scaled.items()
+        )
+        short = pulp.LpVariable("floor_short", lowBound=0)
+        prob += eaten + short >= c.regular_floor_cents, "regular_floor"
+        floor_short.append(short)
 
     # ---- objective ----
     if elastic:
@@ -1001,7 +1047,8 @@ def build_model(
     objective.extend(-w.batch * y[b.index] for b in batches)
     objective.extend(PROTEIN_REWARD_PER_G * earned for earned in protein_reward)
     objective.extend(-PROTEIN_OVER_PER_G * over for over in protein_over)
-    objective.extend(UPGRADE_REWARD * got for got in upgrades)
+    objective.extend(UPGRADE_REWARD * c.household_size * got for got in upgrades)
+    objective.extend(-FLOOR_SHORT_PER_DOLLAR / 100 * short for short in floor_short)
     objective.extend(-w.daily_amount_over * over for over in amount_over)
     if near is not None:  # a close fit: the least past your limits first
         for kind, group in slacks.items():
